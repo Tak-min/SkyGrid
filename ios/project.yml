@@ -1,0 +1,100 @@
+name: SkyGrid
+options:
+  bundleIdPrefix: com.takmin.skygrid
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+packages:
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios.git
+    from: "5.43.0"
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    from: "12.17.0"
+targets:
+  SkyGrid:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SkyGrid/Sources
+      - path: SkyGrid/Resources
+        buildPhase: resources
+      - path: SkyGrid/GoogleService-Info.plist
+        buildPhase: resources
+    configFiles:
+      Debug: SkyGrid/Config/Debug.xcconfig
+      Release: SkyGrid/Config/Release.xcconfig
+    dependencies:
+      - package: RevenueCat
+        product: RevenueCat
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseStorage
+      - package: Firebase
+        product: FirebaseMessaging
+      - package: Firebase
+        product: FirebaseFunctions
+      - package: Firebase
+        product: FirebaseAppCheck
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.takmin.skygrid
+        PRODUCT_MODULE_NAME: SkyGrid
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: NVZB82UK53
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: SkyGrid/Config/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SkyGrid/Config/SkyGrid.entitlements
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_KEY_CFBundleDisplayName: Sky Grid
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_NSCameraUsageDescription: "Sky Grid uses the camera only to capture your morning sky. Choosing from the photo library is not available."
+        SWIFT_STRICT_CONCURRENCY: targeted
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  SkyGridTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SkyGrid/Tests
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: SkyGrid
+  SkyGridUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SkyGrid/UITests
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: SkyGrid
+schemes:
+  SkyGrid:
+    build:
+      targets:
+        SkyGrid: all
+    test:
+      config: Debug
+      targets:
+        - SkyGridTests
+        - SkyGridUITests
+    run:
+      config: Debug

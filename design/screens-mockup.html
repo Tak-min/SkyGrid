@@ -1,0 +1,1427 @@
+<meta charset="utf-8">
+<title>Sky Grid — 画面デザイン v1</title>
+
+<style>
+/* ============================================================
+   Sky Grid — 画面デザイン v1
+   トークン: VISION.md §6「デザインの方向性」に準拠
+   ============================================================ */
+
+/* ---- 盤面(プレゼン台紙)トークン ------------------------- */
+:root {
+  --board:      #D9DCDE;
+  --board-2:    #E3E5E7;
+  --board-ink:  #26292C;
+  --board-ink2: #5C6165;
+  --board-ink3: #878C90;
+  --rule:       #C4C8CB;
+  --frame:      #2A2D31;
+  --shadow:     0 34px 64px -26px rgba(20,24,30,.45), 0 2px 6px rgba(20,24,30,.10);
+
+  /* 選択中の朝(JSで差し替え) */
+  --sky:     #7EA3C8;
+  --sky-top: #4B7CAF;
+  --sky-mid: #7CA5CB;
+  --sky-bot: #C8D7E4;
+
+  --step: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --board:      #0B0C0F;
+    --board-2:    #14161A;
+    --board-ink:  #E6E8EA;
+    --board-ink2: #99A0A8;
+    --board-ink3: #666C74;
+    --rule:       #212429;
+    --frame:      #23262B;
+    --shadow:     0 34px 70px -24px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04);
+  }
+}
+:root[data-theme="dark"] {
+  --board:      #0B0C0F;
+  --board-2:    #14161A;
+  --board-ink:  #E6E8EA;
+  --board-ink2: #99A0A8;
+  --board-ink3: #666C74;
+  --rule:       #212429;
+  --frame:      #23262B;
+  --shadow:     0 34px 70px -24px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04);
+}
+:root[data-theme="light"] {
+  --board:      #D9DCDE;
+  --board-2:    #E3E5E7;
+  --board-ink:  #26292C;
+  --board-ink2: #5C6165;
+  --board-ink3: #878C90;
+  --rule:       #C4C8CB;
+  --frame:      #2A2D31;
+  --shadow:     0 34px 64px -26px rgba(20,24,30,.45), 0 2px 6px rgba(20,24,30,.10);
+}
+
+/* ---- アプリ内トークン(端末の外観に追従) ------------------ */
+.stage[data-app="light"], .swatchbar[data-app="light"] {
+  --app-bg:   #FAF7F2;
+  --app-ink:  #1A1A18;
+  --app-ink2: #6E6A62;
+  --app-ink3: #A8A399;
+  --app-rule: #E6E0D6;
+  --app-fill: #EFEAE1;
+  --app-scrim: rgba(26,26,24,.06);
+  /* 空白の日 — 明暗どちらでもモザイクの中で「静かな灰」に見える強さ。
+     単一の不透明度では成立しないため、テーマごとに別値を持つ。 */
+  --ghost: rgba(26,26,24,.075);
+  --ghost-faint: rgba(26,26,24,.032);
+}
+.stage[data-app="dark"], .swatchbar[data-app="dark"] {
+  --app-bg:   #12141A;
+  --app-ink:  #F2F3F5;
+  --app-ink2: #8B919C;
+  --app-ink3: #565C68;
+  --app-rule: #21242C;
+  --app-fill: #191C23;
+  --app-scrim: rgba(255,255,255,.06);
+  --ghost: rgba(228,233,240,.24);
+  --ghost-faint: rgba(228,233,240,.075);
+}
+
+/* ---- ベース ---------------------------------------------- */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--board);
+  color: var(--board-ink);
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  min-height: 100vh;
+  padding: clamp(24px, 5vw, 64px) clamp(16px, 4vw, 56px) 88px;
+  background:
+    radial-gradient(1200px 620px at 50% -8%,
+      color-mix(in oklab, var(--sky) 16%, transparent), transparent 70%);
+  transition: background 700ms cubic-bezier(.4,0,.2,1);
+}
+
+.wrap { max-width: 1400px; margin: 0 auto; }
+
+:where(a, button, input):focus-visible {
+  outline: 2px solid var(--board-ink);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* ---- マストヘッド ----------------------------------------- */
+.masthead {
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mast-eyebrow {
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: var(--board-ink3);
+  margin: 0 0 18px;
+}
+
+.mast-title {
+  font-family: ui-serif, "New York", "Hiragino Mincho ProN", Georgia, serif;
+  font-size: clamp(30px, 3.9vw, 54px);
+  font-weight: 500;
+  letter-spacing: .005em;
+  line-height: 1.28;
+  margin: 0;
+}
+
+.mast-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 36px;
+  margin-top: 26px;
+}
+
+.mast-lede {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--board-ink2);
+  max-width: 44ch;
+}
+
+/* ---- コントロール ----------------------------------------- */
+.controls { display: flex; flex-wrap: wrap; gap: 26px 34px; align-items: flex-end; }
+
+.ctrl-label {
+  font-size: 10px;
+  letter-spacing: .18em;
+  color: var(--board-ink3);
+  margin: 0 0 8px;
+}
+
+.mornings { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.morning {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 13px 8px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--board-ink2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color .25s, color .25s, background .25s;
+}
+.morning:hover { border-color: var(--board-ink3); }
+.morning[aria-pressed="true"] {
+  border-color: var(--board-ink);
+  color: var(--board-ink);
+  background: color-mix(in oklab, var(--board-2) 70%, transparent);
+}
+
+.morning i {
+  width: 22px; height: 22px;
+  display: block;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+}
+
+.morning b { font-weight: 500; }
+.morning small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: var(--board-ink3);
+  font-variant-numeric: tabular-nums;
+}
+.morning span { text-align: left; line-height: 1.35; }
+
+/* セグメント切替(端末の外観・画面の状態) */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.seg button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--board-ink3);
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background .22s, color .22s;
+}
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button:hover { color: var(--board-ink2); }
+.seg button[aria-pressed="true"] {
+  background: var(--board-ink);
+  color: var(--board);
+}
+
+/* ---- 端末の並び -------------------------------------------- */
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(26px, 3vw, 44px);
+  padding: clamp(40px, 6vw, 76px) 0 0;
+}
+
+.slot { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+.device {
+  padding: 4px;
+  background: var(--frame);
+  border-radius: 50px;
+  box-shadow: var(--shadow);
+}
+
+.screen {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  border-radius: 46px;
+  overflow: hidden;
+  background: var(--app-bg);
+  color: var(--app-ink);
+  transition: background 600ms cubic-bezier(.4,0,.2,1), color 600ms;
+  display: flex;
+  flex-direction: column;
+}
+
+.island {
+  position: absolute;
+  top: 11px; left: 50%;
+  transform: translateX(-50%);
+  width: 104px; height: 30px;
+  border-radius: 16px;
+  background: #0A0B0D;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.homebar {
+  position: absolute;
+  bottom: 8px; left: 50%;
+  transform: translateX(-50%);
+  width: 138px; height: 5px;
+  border-radius: 3px;
+  background: var(--app-ink);
+  opacity: .28;
+  z-index: 40;
+}
+.screen.on-photo .homebar { background: #fff; opacity: .55; }
+
+/* ステータスバー */
+.statusbar {
+  position: relative;
+  z-index: 30;
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 30px 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-ink);
+}
+.screen.on-photo .statusbar { color: #fff; }
+.statusbar svg { display: block; }
+
+/* キャプション */
+.slot figcaption { max-width: 390px; }
+.cap-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.cap-n {
+  font-family: ui-serif, "New York", Georgia, serif;
+  font-size: 13px;
+  color: var(--board-ink3);
+  font-variant-numeric: tabular-nums;
+}
+.cap-title { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+.cap-body {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--board-ink2);
+}
+
+/* ============================================================
+   共通の空・素材
+   ============================================================ */
+.sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 60% at 72% 88%,
+      color-mix(in oklab, var(--sky-bot) 85%, white 15%), transparent 62%),
+    linear-gradient(to bottom,
+      var(--sky-top) 0%,
+      var(--sky-mid) 52%,
+      var(--sky-bot) 100%);
+  transition: background 700ms cubic-bezier(.4,0,.2,1);
+}
+
+.clouds {
+  position: absolute;
+  inset: 0;
+  opacity: .42;
+  background:
+    radial-gradient(64% 6%  at 30% 30%, rgba(255,255,255,.50), transparent 76%),
+    radial-gradient(80% 5%  at 66% 41%, rgba(255,255,255,.34), transparent 78%),
+    radial-gradient(52% 4%  at 38% 52%, rgba(255,255,255,.26), transparent 80%),
+    radial-gradient(90% 4%  at 58% 62%, rgba(255,255,255,.20), transparent 82%);
+  filter: blur(5px);
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: .055;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.skyline {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 17%;
+  background: #171A20;
+  opacity: .88;
+  clip-path: polygon(
+    0% 100%, 0% 72%, 4% 72%, 4% 58%, 9% 58%, 9% 78%, 14% 78%,
+    14% 48%, 15% 48%, 15% 26%, 15.7% 26%, 15.7% 48%, 20% 48%,
+    20% 74%, 27% 74%, 27% 62%, 33% 62%, 33% 82%, 39% 82%,
+    39% 54%, 44% 54%, 44% 70%, 51% 70%, 51% 46%, 52.8% 46%,
+    52.8% 32%, 53.5% 32%, 53.5% 46%, 58% 46%, 58% 76%, 65% 76%,
+    65% 64%, 71% 64%, 71% 80%, 78% 80%, 78% 52%, 84% 52%,
+    84% 68%, 91% 68%, 91% 76%, 100% 76%, 100% 100%
+  );
+}
+
+/* ============================================================
+   画面 1 — カメラ
+   ============================================================ */
+/* ビューファインダーはステータスバーの下まで回り込む(全画面ライブビュー) */
+.cam { position: absolute; inset: 0; z-index: 1; }
+.cam .skyline { height: 11%; }
+
+.cam-ui {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 84px;
+  background: linear-gradient(to top,
+    rgba(8,10,14,.52) 0%, rgba(8,10,14,.30) 11%, rgba(8,10,14,.08) 22%, transparent 34%);
+}
+
+.shutter {
+  appearance: none;
+  width: 84px; height: 84px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,.94);
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 6px 26px rgba(8,10,14,.28);
+}
+.shutter:active { transform: scale(.94); }
+.shutter i {
+  width: 67px; height: 67px;
+  border-radius: 50%;
+  background: var(--sky);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.4);
+  transition: background 700ms cubic-bezier(.4,0,.2,1);
+}
+
+/* 撮影後の確認状態 */
+.review {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: none;
+  background: linear-gradient(to top,
+    rgba(8,10,14,.52) 0%, rgba(8,10,14,.30) 13%, rgba(8,10,14,.06) 26%, transparent 38%);
+}
+.screen[data-state="review"] .review { display: block; }
+.screen[data-state="review"] .cam-ui { display: none; }
+
+.review-chip {
+  position: absolute;
+  top: 74px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 15px 9px 10px;
+  border-radius: 3px;
+  background: rgba(12,14,18,.42);
+  backdrop-filter: blur(18px) saturate(1.1);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  color: #fff;
+}
+.review-chip i {
+  width: 20px; height: 20px;
+  border-radius: 1px;
+  background: var(--sky);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.4);
+  transition: background 700ms;
+}
+.review-chip span {
+  font-size: 12px;
+  letter-spacing: .08em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.review-actions {
+  position: absolute;
+  left: 0; right: 0; bottom: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 34px;
+}
+.btn-ghost {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: rgba(255,255,255,.82);
+  padding: 12px 4px;
+  cursor: pointer;
+}
+.btn-primary {
+  appearance: none;
+  border: 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #18181A;
+  background: var(--sky);
+  padding: 15px 30px;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: background 700ms cubic-bezier(.4,0,.2,1), transform .18s;
+}
+.btn-primary:active { transform: scale(.97); }
+
+/* ============================================================
+   画面 2 — 今日
+   ============================================================ */
+.today {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 24px 30px;
+  gap: 0;
+  min-height: 0;
+}
+
+.datestamp {
+  font-size: 11.5px;
+  letter-spacing: .16em;
+  color: var(--app-ink3);
+  font-variant-numeric: tabular-nums;
+}
+
+.bigrow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.bignum {
+  font-size: 96px;
+  font-weight: 200;
+  letter-spacing: -.05em;
+  line-height: .86;
+  font-variant-numeric: tabular-nums;
+  color: var(--app-ink);
+}
+.bignum .colon {
+  color: var(--sky);
+  transition: color 700ms cubic-bezier(.4,0,.2,1);
+}
+.screen[data-state="pre"] .bignum { color: var(--app-ink3); }
+.screen[data-state="pre"] .bignum .colon { color: var(--app-ink3); }
+
+.hexchip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 9px;
+}
+.hexchip i {
+  width: 14px; height: 14px;
+  border-radius: 1px;
+  background: var(--sky);
+  box-shadow: inset 0 0 0 1px var(--app-scrim);
+  transition: background 700ms;
+}
+.hexchip span {
+  font-size: 11px;
+  letter-spacing: .07em;
+  color: var(--app-ink2);
+  font-variant-numeric: tabular-nums;
+}
+.screen[data-state="pre"] .hexchip { visibility: hidden; }
+
+/* 今朝の1枚 */
+.photo {
+  position: relative;
+  flex: 1;
+  min-height: 190px;
+  margin-top: 22px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--app-fill);
+}
+.screen[data-state="pre"] .photo .sky,
+.screen[data-state="pre"] .photo .clouds,
+.screen[data-state="pre"] .photo .skyline,
+.screen[data-state="pre"] .photo .grain { display: none; }
+
+.photo-empty {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 1px solid var(--app-rule);
+  border-radius: 18px;
+  color: var(--app-ink2);
+}
+.screen[data-state="pre"] .photo-empty { display: flex; }
+.photo-empty span { font-size: 14px; letter-spacing: .06em; }
+
+/* 今週 */
+.section {
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-rule);
+}
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 13px;
+}
+.section-head h2 {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  color: var(--app-ink2);
+}
+.section-head .meta {
+  font-size: 11px;
+  letter-spacing: .06em;
+  color: var(--app-ink3);
+  font-variant-numeric: tabular-nums;
+}
+
+.week { display: flex; gap: 10px; }
+.week-day { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+.week-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--c, transparent);
+  transition: background 600ms;
+}
+.week-cell.is-empty  { background: var(--ghost); }
+/* まだ来ていない日は、撮らなかった日より薄い。同じ灰にすると
+   「サボった日」と「これからの日」が同じ重さで並んでしまう。 */
+.week-cell.is-future { background: var(--ghost-faint); }
+.week-cell.is-today { box-shadow: 0 0 0 1.5px var(--app-ink); background: var(--sky); }
+.week-day em {
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: var(--app-ink3);
+}
+.screen[data-state="pre"] .week-cell.is-today {
+  background: var(--ghost);
+  box-shadow: 0 0 0 1.5px var(--app-ink3);
+}
+
+/* バディ */
+.buddies { display: flex; gap: 12px; max-width: 236px; }
+.buddy { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.buddy-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 5px;
+  background: var(--c, transparent);
+  transition: filter 500ms, background 600ms;
+}
+.buddy-cell.is-waiting { background: var(--ghost); }
+.buddy em {
+  font-style: normal;
+  font-size: 10.5px;
+  letter-spacing: .02em;
+  color: var(--app-ink3);
+}
+.screen[data-state="pre"] .buddy-cell:not(.is-waiting) {
+  filter: blur(9px) saturate(.55);
+}
+
+/* ============================================================
+   画面 3 — Sky Grid
+   ============================================================ */
+.grid-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 24px 30px;
+  min-height: 0;
+}
+
+.year {
+  font-family: ui-serif, "New York", Georgia, serif;
+  font-size: 38px;
+  font-weight: 500;
+  letter-spacing: -.015em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 0;
+}
+.year-sub {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  letter-spacing: .14em;
+  color: var(--app-ink2);
+  font-variant-numeric: tabular-nums;
+}
+
+.gridwrap { margin: 20px auto 0; width: max-content; }
+
+.months {
+  display: grid;
+  grid-template-columns: repeat(12, var(--cell));
+  gap: var(--cgap);
+  margin-bottom: 9px;
+}
+.months em {
+  font-style: normal;
+  font-size: 8.5px;
+  letter-spacing: .02em;
+  color: var(--app-ink3);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid365 {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(12, var(--cell));
+  grid-template-rows: repeat(31, var(--cell));
+  gap: var(--cgap);
+}
+.gridwrap { --cell: 18px; --cgap: 1.5px; }
+
+/* 注: セルの状態クラスは必ず is- 接頭辞をつける。`.today` のような素の名前は
+   「今日」画面のコンテナ .today と衝突し、その padding がグリッド項目の
+   自動最小サイズになってセルだけ 48×36 に膨らむ(実際に踏んだ)。 */
+.cell { border-radius: 2px; background: var(--c); }
+.cell.is-void { visibility: hidden; }
+/* 撮らなかった日は「穴」にしない。枠線で囲うと点検表に、
+   地色のまま抜くとダークで黒い空洞になる。どちらも咎める形。 */
+.cell.is-miss   { background: var(--ghost); }
+.cell.is-future { background: var(--ghost-faint); }
+.cell.is-today  { background: var(--sky); box-shadow: 0 0 0 1.5px var(--app-ink); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .grid365 .cell { animation: fadecell .5s both; animation-delay: var(--d); }
+}
+@keyframes fadecell { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
+
+.grid-foot {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--app-rule);
+}
+.grid-foot .legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  color: var(--app-ink3);
+}
+.grid-foot .legend i {
+  width: 11px; height: 11px;
+  border-radius: 2px;
+  background: var(--ghost);
+}
+.export {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--app-ink);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+/* ============================================================
+   仕様メモ
+   ============================================================ */
+.notes {
+  margin-top: clamp(64px, 8vw, 108px);
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
+}
+.notes-title {
+  font-family: ui-serif, "New York", Georgia, serif;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -.01em;
+  margin: 0 0 26px;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(228px, 1fr));
+  gap: 0;
+}
+.col { padding: 4px 26px 8px; border-left: 1px solid var(--rule); }
+.col:first-child { padding-left: 0; border-left: 0; }
+.col h3 {
+  margin: 0 0 14px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  color: var(--board-ink3);
+}
+.col ul { margin: 0; padding: 0; list-style: none; }
+.col li {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--board-ink2);
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.col li i {
+  width: 15px; height: 15px;
+  flex: none;
+  border-radius: 1px;
+  box-shadow: inset 0 0 0 1px rgba(128,128,128,.35);
+}
+.col li code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: .02em;
+  color: var(--board-ink);
+}
+.col p { margin: 0 0 12px; font-size: 12.5px; line-height: 1.7; color: var(--board-ink2); }
+.col .neg { color: var(--board-ink3); }
+
+.decisions {
+  margin-top: 44px;
+  padding: 26px 28px;
+  background: color-mix(in oklab, var(--board-2) 78%, transparent);
+  border-radius: 3px;
+}
+.decisions h3 {
+  margin: 0 0 16px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  color: var(--board-ink3);
+}
+.decisions ol { margin: 0; padding-left: 1.35em; }
+.decisions li {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--board-ink2);
+  margin-bottom: 11px;
+  max-width: 78ch;
+}
+.decisions li:last-child { margin-bottom: 0; }
+.decisions strong { color: var(--board-ink); font-weight: 600; }
+
+.colophon {
+  margin-top: 40px;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--board-ink3);
+  max-width: 70ch;
+}
+
+/* ---- 小さい画面 ------------------------------------------- */
+@media (max-width: 470px) {
+  .stage { zoom: .82; }
+  .page { overflow-x: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="mast-eyebrow">SKY GRID — 画面デザイン v1 · 2026.07.29</p>
+    <h1 class="mast-title">朝、空を一枚。その日の平均色が、一マスになる。</h1>
+
+    <div class="mast-foot">
+      <p class="mast-lede">このアプリは固定のブランドカラーを持たない。今朝の空から抽出した平均色が、その日一日のアクセントカラーとして全画面を流れる。下の「今日の空」を切り替えると、3画面が同時に色を変える。</p>
+
+    <div class="controls">
+      <div>
+        <p class="ctrl-label">今日の空</p>
+        <div class="mornings" role="group" aria-label="今日の空を選ぶ">
+          <button class="morning" data-morning="clear" aria-pressed="true">
+            <i style="background:#7EA3C8"></i>
+            <span><b>快晴</b><small>10月2日 · #7EA3C8</small></span>
+          </button>
+          <button class="morning" data-morning="overcast" aria-pressed="false">
+            <i style="background:#9EA7AD"></i>
+            <span><b>曇り</b><small>6月19日 · #9EA7AD</small></span>
+          </button>
+          <button class="morning" data-morning="dawn" aria-pressed="false">
+            <i style="background:#CE9E8B"></i>
+            <span><b>夜明け</b><small>4月17日 · #CE9E8B</small></span>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <p class="ctrl-label">端末の外観</p>
+        <div class="seg" role="group" aria-label="端末の外観">
+          <button data-appearance="light" aria-pressed="true">ライト</button>
+          <button data-appearance="dark" aria-pressed="false">ダーク</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </header>
+
+  <main class="stage" data-app="light">
+
+    <!-- ============ 1. カメラ ============ -->
+    <figure class="slot">
+      <div class="device">
+        <div class="screen on-photo" id="s-cam" data-state="live">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span data-role="clock">5:44</span>
+            <svg width="62" height="12" viewBox="0 0 62 12" fill="currentColor" aria-hidden="true">
+              <rect x="0" y="7" width="3" height="5" rx="1"/>
+              <rect x="5" y="5" width="3" height="7" rx="1"/>
+              <rect x="10" y="3" width="3" height="9" rx="1"/>
+              <rect x="15" y="1" width="3" height="11" rx="1"/>
+              <path d="M28 4.2a7.6 7.6 0 0 1 9 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              <path d="M30.4 7a4.2 4.2 0 0 1 4.2 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              <circle cx="32.5" cy="9.6" r="1.1"/>
+              <rect x="45" y="2" width="14" height="8" rx="2.4" opacity=".45"/>
+              <rect x="46.4" y="3.4" width="9" height="5.2" rx="1.4"/>
+              <rect x="60" y="4.6" width="1.6" height="2.8" rx=".8" opacity=".45"/>
+            </svg>
+          </div>
+
+          <div class="cam">
+            <div class="sky"></div>
+            <div class="clouds"></div>
+            <div class="skyline"></div>
+            <div class="grain"></div>
+
+            <div class="cam-ui">
+              <button class="shutter" aria-label="空を撮る"><i></i></button>
+            </div>
+
+            <div class="review">
+              <div class="review-chip">
+                <i></i><span data-role="hex">#7EA3C8</span>
+              </div>
+              <div class="review-actions">
+                <button class="btn-ghost">撮り直す</button>
+                <button class="btn-primary">これにする</button>
+              </div>
+            </div>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+
+      <figcaption>
+        <div class="cap-head"><span class="cap-n">01</span><span class="cap-title">カメラ</span></div>
+        <p class="cap-body">起床直後。ボタンは一つだけ。<strong>シャッターの中身は、いまレンズが捉えている空の平均色</strong>——押す前から、今日の一マスの色が見えている。撮影後の選択肢は「撮り直す」「これにする」の二つで終わり。</p>
+        <div class="seg" role="group" aria-label="カメラの状態">
+          <button data-state-for="s-cam" data-value="live" aria-pressed="true">ライブ</button>
+          <button data-state-for="s-cam" data-value="review" aria-pressed="false">撮影後</button>
+        </div>
+      </figcaption>
+    </figure>
+
+    <!-- ============ 2. 今日 ============ -->
+    <figure class="slot">
+      <div class="device">
+        <div class="screen" id="s-today" data-state="post">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span data-role="clock">5:44</span>
+            <svg width="62" height="12" viewBox="0 0 62 12" fill="currentColor" aria-hidden="true">
+              <rect x="0" y="7" width="3" height="5" rx="1"/>
+              <rect x="5" y="5" width="3" height="7" rx="1"/>
+              <rect x="10" y="3" width="3" height="9" rx="1"/>
+              <rect x="15" y="1" width="3" height="11" rx="1"/>
+              <path d="M28 4.2a7.6 7.6 0 0 1 9 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              <path d="M30.4 7a4.2 4.2 0 0 1 4.2 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              <circle cx="32.5" cy="9.6" r="1.1"/>
+              <rect x="45" y="2" width="14" height="8" rx="2.4" opacity=".45"/>
+              <rect x="46.4" y="3.4" width="9" height="5.2" rx="1.4"/>
+              <rect x="60" y="4.6" width="1.6" height="2.8" rx=".8" opacity=".45"/>
+            </svg>
+          </div>
+
+          <div class="today">
+            <p class="datestamp" data-role="date" style="margin:0">2026年10月2日 金</p>
+
+            <div class="bigrow">
+              <div class="bignum" data-role="bigtime">5<span class="colon">:</span>41</div>
+              <div class="hexchip"><i></i><span data-role="hex">#7EA3C8</span></div>
+            </div>
+
+            <div class="photo">
+              <div class="sky"></div>
+              <div class="clouds"></div>
+              <div class="skyline"></div>
+              <div class="grain"></div>
+              <div class="photo-empty">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.9l1.3-2h6.6l1.3 2h1.9A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/>
+                  <circle cx="12" cy="13" r="3.6"/>
+                </svg>
+                <span>空を撮る</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-head">
+                <h2>今週</h2>
+                <span class="meta" data-role="weekmeta">4日 + 今日</span>
+              </div>
+              <div class="week" data-role="week"></div>
+            </div>
+
+            <div class="section">
+              <div class="section-head"><h2>バディ</h2></div>
+              <div class="buddies" data-role="buddies"></div>
+            </div>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+
+      <figcaption>
+        <div class="cap-head"><span class="cap-n">02</span><span class="cap-title">今日</span></div>
+        <p class="cap-body">主役は写真ではなく<strong>撮影時刻の数字</strong>。コロンだけが今日の色をまとう。今週は7マスだけ——無限フィードにも、達成率にもしない。「投稿前」に切り替えると、バディの色は自分が撮るまで伏せられたまま。</p>
+        <div class="seg" role="group" aria-label="今日の状態">
+          <button data-state-for="s-today" data-value="pre" aria-pressed="false">投稿前</button>
+          <button data-state-for="s-today" data-value="post" aria-pressed="true">投稿後</button>
+        </div>
+      </figcaption>
+    </figure>
+
+    <!-- ============ 3. Sky Grid ============ -->
+    <figure class="slot">
+      <div class="device">
+        <div class="screen" id="s-grid">
+          <div class="island"></div>
+          <div class="statusbar">
+            <span>21:10</span>
+            <svg width="62" height="12" viewBox="0 0 62 12" fill="currentColor" aria-hidden="true">
+              <rect x="0" y="7" width="3" height="5" rx="1"/>
+              <rect x="5" y="5" width="3" height="7" rx="1"/>
+              <rect x="10" y="3" width="3" height="9" rx="1"/>
+              <rect x="15" y="1" width="3" height="11" rx="1"/>
+              <path d="M28 4.2a7.6 7.6 0 0 1 9 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              <path d="M30.4 7a4.2 4.2 0 0 1 4.2 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+              <circle cx="32.5" cy="9.6" r="1.1"/>
+              <rect x="45" y="2" width="14" height="8" rx="2.4" opacity=".45"/>
+              <rect x="46.4" y="3.4" width="9" height="5.2" rx="1.4"/>
+              <rect x="60" y="4.6" width="1.6" height="2.8" rx=".8" opacity=".45"/>
+            </svg>
+          </div>
+
+          <div class="grid-screen">
+            <h1 class="year" data-role="year">2025</h1>
+            <p class="year-sub" data-role="yearsub">353の朝</p>
+
+            <div class="gridwrap">
+              <div class="months" aria-hidden="true">
+                <em>1月</em><em></em><em></em><em>4月</em><em></em><em></em><em>7月</em><em></em><em></em><em>10月</em><em></em><em></em>
+              </div>
+              <div class="grid365" data-role="grid" role="img" aria-label="1年365日の空の色モザイク。1列が1ヶ月、1マスが1日。"></div>
+            </div>
+
+            <div class="grid-foot">
+              <span class="legend"><i></i>撮らなかった日</span>
+              <button class="export">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 15V3.5"/><path d="M8 7l4-4 4 4"/>
+                  <path d="M4.5 14v4.5A2.5 2.5 0 0 0 7 21h10a2.5 2.5 0 0 0 2.5-2.5V14"/>
+                </svg>
+                書き出す
+              </button>
+            </div>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+
+      <figcaption>
+        <div class="cap-head"><span class="cap-n">03</span><span class="cap-title">Sky Grid</span></div>
+        <p class="cap-body"><strong>1列が1ヶ月、1マスが1日。</strong>左から右へ読むと、冬の淡い青 → 春の霞 → 梅雨の灰 → 夏の濃紺 → 秋の琥珀、と季節が流れる。撮らなかった日は赤い印ではなく、ただの空白として静かに残る。9:16縦型でそのまま書き出せる比率。</p>
+        <div class="seg" role="group" aria-label="表示する年">
+          <button data-year="2025" aria-pressed="true">2025(完走)</button>
+          <button data-year="2026" aria-pressed="false">2026(進行中)</button>
+        </div>
+      </figcaption>
+    </figure>
+
+  </main>
+
+  <!-- ============ 仕様メモ ============ -->
+  <section class="notes">
+    <h2 class="notes-title">この案が守っているもの</h2>
+
+    <div class="cols">
+      <div class="col">
+        <h3>色</h3>
+        <ul>
+          <li><i style="background:#FAF7F2"></i><code>#FAF7F2</code> 温白 · Light地</li>
+          <li><i style="background:#1A1A18"></i><code>#1A1A18</code> 墨 · Light文字</li>
+          <li><i style="background:#12141A"></i><code>#12141A</code> 夜明け前 · Dark地</li>
+          <li><i style="background:linear-gradient(135deg,#7EA3C8,#9EA7AD 50%,#CE9E8B)"></i><code>dynamic</code> 今日の空の色</li>
+        </ul>
+        <p style="margin-top:14px" class="neg">平均色は原理的に必ず低彩度になる。3つの例は「映えない代わりに必ず品よく収まる」実際の抽出結果に近い値を置いている。</p>
+      </div>
+
+      <div class="col">
+        <h3>文字</h3>
+        <p>見出し: <code>New York</code>(iOS標準セリフ / <code>ui-serif</code>)</p>
+        <p>本文・数値: <code>SF Pro</code>(<code>-apple-system</code>)、数字は必ず <code>tabular-nums</code></p>
+        <p>時刻の巨大数字は Ultralight(200)。太字で祝わない。コロン1文字だけがその日の色を持つ。</p>
+      </div>
+
+      <div class="col">
+        <h3>置かないもの</h3>
+        <ul>
+          <li class="neg">ランキング / レベル / バッジ</li>
+          <li class="neg">コイン / ポイント報酬</li>
+          <li class="neg">マスコットキャラクター</li>
+          <li class="neg">進捗バー / 達成率 / 炎アイコン</li>
+          <li class="neg">紙吹雪 / 効果音 / レベルアップ演出</li>
+          <li class="neg">絵文字をUIアイコンとして使うこと</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="decisions">
+      <h3>依頼者の判断が要る点</h3>
+      <ol>
+        <li><strong>「今週 5/7」の分数表示を外している。</strong> VISION §3では週単位のリズムを主指標としているが、分数は「点数」として読まれやすい。7マスそのものがリズムを語るため、右上は「4日 + 今日」という事実の記述に留めた。分数を戻すかどうかは判断が必要。</li>
+        <li><strong>「今日」画面にバディ行を追加している。</strong> VISION §6の主要3画面の記述にはないが、相互ブラー(§3のペイン#1)がこのアプリ最大の差別化要素であり、可視化しないと設計が伝わらないため小さく追加した。不要なら削除可。</li>
+        <li><strong>Sky Gridの列=月・行=日という構造。</strong> GitHubの草(列=週)を意図的に避けた——あれは「連続記録の壁」に見え、ゲーミフィケーション側に寄る。月列なら季節が横に流れる。ただし1マス21ptと小さく、実機での視認性は要検証。</li>
+        <li><strong>空の平均色の実測。</strong> ここでの3色は推定値。実装前に実際の朝空を <code>CIAreaAverage</code> で数十枚通し、抽出色の実分布(特に夜明けの空が濁った茶色に寄らないか)を確認したい。</li>
+      </ol>
+    </div>
+
+    <p class="colophon">書体はiOS標準のNew York / SF Proをそのまま呼び出している(Web上の近似ではなく実物)。macOS・iOSのSafari/Chromeで見ると実機とほぼ同じ字面になる。Sky Gridの365マスは、月ごとの平均的な空色を基準に日ごとの揺らぎ・梅雨の灰色寄り・秋の琥珀寄りを決定論的に生成している(乱数シード固定、再現可能)。</p>
+  </section>
+
+</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ---------- 朝の定義 ---------- */
+  const MORNINGS = {
+    clear: {
+      sky: "#7EA3C8", top: "#4B7CAF", mid: "#7CA5CB", bot: "#C8D7E4",
+      captured: "5:41", clock: "5:44", date: "2026年10月2日 金",
+      week: ["#B3C2CE", "#A6B8C9", "miss", "#9FB6CC", "today", "future", "future"],
+      buddies: [["rin", "#A9BBCB"], ["sou", "#8FAAC6"], ["mika", "wait"], ["yuu", "#BFB6AA"]]
+    },
+    overcast: {
+      sky: "#9EA7AD", top: "#879097", mid: "#A0A8AE", bot: "#C3C8CB",
+      captured: "6:02", clock: "6:05", date: "2026年6月19日 金",
+      week: ["#B0B4B6", "#9FA6AA", "#A8ADAF", "miss", "today", "future", "future"],
+      buddies: [["rin", "#A5ABAE"], ["sou", "#B4B7B6"], ["mika", "wait"], ["yuu", "#98A0A6"]]
+    },
+    dawn: {
+      sky: "#CE9E8B", top: "#6E6683", mid: "#CF9A88", bot: "#F0C7A4",
+      captured: "5:12", clock: "5:15", date: "2026年4月17日 金",
+      week: ["#C6B0A2", "miss", "#BFC3C0", "#D2A793", "today", "future", "future"],
+      buddies: [["rin", "#D3AB98"], ["sou", "#C3BCB2"], ["mika", "wait"], ["yuu", "#B9A79C"]]
+    }
+  };
+
+  const DOW = ["月", "火", "水", "木", "金", "土", "日"];
+  const $  = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+  /* ---------- 色ユーティリティ ---------- */
+  const hexToRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const rgbToHex = ([r, g, b]) =>
+    "#" + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("").toUpperCase();
+
+  function rgbToHsl([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    if (mx === mn) return [0, 0, l];
+    const d = mx - mn;
+    const s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn);
+    let h;
+    if (mx === r) h = ((g - b) / d + (g < b ? 6 : 0));
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    return [h * 60, s, l];
+  }
+
+  function hslToRgb([h, s, l]) {
+    h = ((h % 360) + 360) % 360 / 360;
+    if (s === 0) { const v = l * 255; return [v, v, v]; }
+    const q = l < .5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const f = t => {
+      t = (t + 1) % 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    return [f(h + 1 / 3) * 255, f(h) * 255, f(h - 1 / 3) * 255];
+  }
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const mixHex = (a, b, t) => rgbToHex(hexToRgb(a).map((v, i) => lerp(v, hexToRgb(b)[i], t)));
+
+  /* 決定論的乱数(シード固定 → 毎回同じグリッド) */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  /* ---------- 年間の空色モデル(日本の朝空を想定) ---------- */
+  const MONTH_SKY = [
+    "#BDCAD6", // 1月 冬の淡い青(明るく低彩度)
+    "#B3C3D3", // 2月
+    "#BEC6CC", // 3月 春霞
+    "#CEC8BA", // 4月 黄砂・霞(わずかに暖色へ)
+    "#A0BCD6", // 5月 澄んだ青
+    "#ADB1B4", // 6月 梅雨の灰(ほぼ無彩)
+    "#7CA4CA", // 7月 夏の青
+    "#6493C0", // 8月 濃い夏空(最も深い)
+    "#84A4C2", // 9月
+    "#9CB6CD", // 10月 秋晴れ
+    "#C6B8A8", // 11月 低い陽の暖色
+    "#B4BDC9"  // 12月 冷えた空
+  ];
+  /* 曇天率 — 梅雨(6月)と秋雨(9月)が高い */
+  const GREY_BIAS = [.18, .20, .26, .24, .24, .52, .30, .22, .30, .22, .18, .16];
+  /* 焼けた朝の出現率 — 空気の乾く晩秋〜冬に集中させる(年中ランダムだと斑点に見える) */
+  const BURN_BIAS = [.07, .06, .04, .04, .03, .01, .02, .03, .05, .08, .09, .08];
+  const DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  function baseColorFor(m, d) {
+    /* 月の中心をアンカーにして前後の月と線形補間 */
+    const pos = m + (d - 0.5) / DAYS[m];      // 0.0 – 12.0
+    const a = Math.floor(pos - 0.5);
+    const t = pos - 0.5 - a;
+    const c1 = MONTH_SKY[(a + 12) % 12];
+    const c2 = MONTH_SKY[(a + 13) % 12];
+    return mixHex(c1, c2, t);
+  }
+
+  function dayColor(m, d, rnd) {
+    let [h, s, l] = rgbToHsl(hexToRgb(baseColorFor(m, d)));
+    const r1 = rnd(), r2 = rnd(), r3 = rnd(), r4 = rnd();
+
+    h += (r1 - .5) * 12;
+    s *= 0.70 + r2 * 0.62;
+    l += (r3 - .5) * 0.10;
+
+    if (r4 < GREY_BIAS[m]) {
+      /* 曇天 — ほぼ無彩色に落ちる */
+      s *= 0.16; l -= 0.01;
+    } else if (r4 > 1 - BURN_BIAS[m]) {
+      /* 焼けた朝 — 色相を補間せず暖色帯へ直接置く(青←→橙を線形補間すると
+         黄緑を通ってしまい、モザイク全体に黄色い斑点が散る) */
+      h = 16 + (r1 - .5) * 20;
+      s = Math.min(0.32, 0.18 + r2 * 0.16);
+      l = Math.min(0.82, l + 0.03);
+    }
+
+    s = Math.max(0.02, Math.min(0.40, s));
+    l = Math.max(0.40, Math.min(0.87, l));
+    return rgbToHex(hslToRgb([h, s, l]));
+  }
+
+  /* ---------- 365マスの生成 ---------- */
+  const gridEl  = $('[data-role="grid"]');
+  const yearEl  = $('[data-role="year"]');
+  const subEl   = $('[data-role="yearsub"]');
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function buildYear(year) {
+    const complete = year === 2025;
+    const rnd = mulberry32(year === 2025 ? 20250101 : 20260101);
+    const missRnd = mulberry32(year === 2025 ? 777 : 4242);
+    const lastDoy = complete ? 366 : 210;   // 2026は7月29日まで
+
+    const frag = document.createDocumentFragment();
+    let doy = 0, shot = 0;
+
+    for (let m = 0; m < 12; m++) {
+      for (let d = 1; d <= 31; d++) {
+        const cell = document.createElement("div");
+        if (d > DAYS[m]) {
+          cell.className = "cell is-void";
+          frag.appendChild(cell);
+          continue;
+        }
+        doy++;
+        const color = dayColor(m, d, rnd);
+        const missed = missRnd() < 0.034;
+        let note;
+
+        if (doy > lastDoy) {
+          cell.className = "cell is-future";
+          note = "まだ来ていない朝";
+        } else if (doy === lastDoy && !complete) {
+          cell.className = "cell is-today";
+          note = "今日";
+          shot++;
+        } else if (missed) {
+          cell.className = "cell is-miss";
+          note = "撮らなかった日";
+        } else {
+          cell.className = "cell";
+          cell.style.setProperty("--c", color);
+          note = color;
+          shot++;
+        }
+
+        cell.title = `${m + 1}月${d}日 · ${note}`;
+        if (!reduced) cell.style.setProperty("--d", (m * 46 + d * 3) + "ms");
+        frag.appendChild(cell);
+      }
+    }
+
+    gridEl.replaceChildren(frag);
+    yearEl.textContent = year;
+    subEl.textContent = `${shot}の朝`;
+  }
+
+  /* ---------- 今週・バディ ---------- */
+  function buildWeek(cfg) {
+    const host = $('[data-role="week"]');
+    host.replaceChildren(...cfg.week.map((v, i) => {
+      const day = document.createElement("div");
+      day.className = "week-day";
+      const cell = document.createElement("div");
+      cell.className = "week-cell" +
+        (v === "miss" ? " is-empty" : "") +
+        (v === "future" ? " is-future" : "") +
+        (v === "today" ? " is-today" : "");
+      if (v !== "miss" && v !== "future" && v !== "today") cell.style.setProperty("--c", v);
+      const em = document.createElement("em");
+      em.textContent = DOW[i];
+      day.append(cell, em);
+      return day;
+    }));
+  }
+
+  function buildBuddies(cfg) {
+    const host = $('[data-role="buddies"]');
+    host.replaceChildren(...cfg.buddies.map(([name, c]) => {
+      const b = document.createElement("div");
+      b.className = "buddy";
+      const cell = document.createElement("div");
+      cell.className = "buddy-cell" + (c === "wait" ? " is-waiting" : "");
+      if (c !== "wait") cell.style.setProperty("--c", c);
+      const em = document.createElement("em");
+      em.textContent = "@" + name;
+      b.append(cell, em);
+      return b;
+    }));
+  }
+
+  /* ---------- 朝の切り替え ---------- */
+  function applyMorning(key) {
+    const cfg = MORNINGS[key];
+    const root = document.documentElement.style;
+    root.setProperty("--sky", cfg.sky);
+    root.setProperty("--sky-top", cfg.top);
+    root.setProperty("--sky-mid", cfg.mid);
+    root.setProperty("--sky-bot", cfg.bot);
+
+    $$('[data-role="hex"]').forEach(el => el.textContent = cfg.sky);
+    $$('[data-role="clock"]').forEach(el => el.textContent = cfg.clock);
+    $('[data-role="date"]').textContent = cfg.date;
+
+    const [hh, mm] = cfg.captured.split(":");
+    $('[data-role="bigtime"]').innerHTML = `${hh}<span class="colon">:</span>${mm}`;
+
+    buildWeek(cfg);
+    buildBuddies(cfg);
+
+    $$(".morning").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.morning === key)));
+  }
+
+  /* ---------- イベント ---------- */
+  $$(".morning").forEach(b => b.addEventListener("click", () => applyMorning(b.dataset.morning)));
+
+  let manualAppearance = false;
+  function setAppearance(mode) {
+    $(".stage").dataset.app = mode;
+    $$("[data-appearance]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.appearance === mode)));
+  }
+  $$("[data-appearance]").forEach(b => b.addEventListener("click", () => {
+    manualAppearance = true;
+    setAppearance(b.dataset.appearance);
+  }));
+
+  $$("[data-state-for]").forEach(b => b.addEventListener("click", () => {
+    const screen = document.getElementById(b.dataset.stateFor);
+    screen.dataset.state = b.dataset.value;
+    $$(`[data-state-for="${b.dataset.stateFor}"]`)
+      .forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+
+  $$("[data-year]").forEach(b => b.addEventListener("click", () => {
+    buildYear(Number(b.dataset.year));
+    $$("[data-year]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+
+  /* 端末の外観は、閲覧者のテーマに初期追従(手動で変えたら固定) */
+  function syncAppearance() {
+    if (manualAppearance) return;
+    const forced = document.documentElement.dataset.theme;
+    const dark = forced ? forced === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    setAppearance(dark ? "dark" : "light");
+  }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncAppearance);
+  new MutationObserver(syncAppearance)
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  /* ---------- 初期化 ---------- */
+  applyMorning("clear");
+  buildYear(2025);
+  syncAppearance();
+})();
+</script>

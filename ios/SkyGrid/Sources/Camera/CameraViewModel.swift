@@ -1,0 +1,115 @@
+import CoreImage
+import Foundation
+import Observation
+import UIKit
+
+/// Orchestrates capture → extract sky color → compress → write pending bytes to
+/// disk → produce a `PostDraft`. Does NOT write to `PostRepository` or enqueue an
+/// upload itself — that hand-off is the caller's job (Task #8/#9's `UploadQueue`),
+/// which keeps this view model testable and focused purely on the capture pipeline
+/// (blueprint build-order: Camera lands before Persistence/Upload).
+@MainActor
+@Observable
+final class CameraViewModel {
+    enum Phase: Equatable {
+        case live
+        case reviewing(capturedImage: UIImage, skyColor: SkyColor)
+        case failed(String)
+
+        static func == (lhs: Phase, rhs: Phase) -> Bool {
+            switch (lhs, rhs) {
+            case (.live, .live): return true
+            case let (.reviewing(li, ls), .reviewing(ri, rs)): return li === ri && ls == rs
+            case let (.failed(l), .failed(r)): return l == r
+            default: return false
+            }
+        }
+    }
+
+    private(set) var phase: Phase = .live
+    private(set) var liveSkyColor: SkyColor?
+    /// Only consumed by `CameraView` when there's no real `AVCaptureSession` to bind
+    /// a preview layer to (i.e. the Simulator backend) — see `CameraView`.
+    private(set) var latestPreviewImage: UIImage?
+
+    private let ownerUid: String
+    private let cameraSource: CameraSource
+    private let clock: Clock
+    private let wakeGoal: WakeGoal
+    private let sampler = LivePreviewSampler()
+    private var sampleLoopTask: Task<Void, Never>?
+
+    init(ownerUid: String, cameraSource: CameraSource, clock: Clock, wakeGoal: WakeGoal) {
+        self.ownerUid = ownerUid
+        self.cameraSource = cameraSource
+        self.clock = clock
+        self.wakeGoal = wakeGoal
+    }
+
+    func start() async {
+        do {
+            try await cameraSource.start()
+            sampleLoopTask = Task { [weak self] in
+                guard let self else { return }
+                for await frame in self.cameraSource.previewFrames {
+                    guard self.sampler.shouldSample() else { continue }
+                    self.liveSkyColor = SkyColorExtractor.extract(from: frame)
+                    self.latestPreviewImage = UIImage(ciImage: frame)
+                }
+            }
+        } catch {
+            phase = .failed("The camera could not start.")
+        }
+    }
+
+    func stop() {
+        sampleLoopTask?.cancel()
+        cameraSource.stop()
+    }
+
+    func capture() async {
+        do {
+            let image = try await cameraSource.capturePhoto()
+            guard let skyColor = SkyColorExtractor.extract(from: image) else {
+                phase = .failed("The sky color could not be detected.")
+                return
+            }
+            phase = .reviewing(capturedImage: image, skyColor: skyColor)
+        } catch {
+            phase = .failed("The photo could not be captured.")
+        }
+    }
+
+    func retake() {
+        phase = .live
+    }
+
+    /// Finalizes the reviewed photo: compresses it, persists pending bytes to
+    /// `ImageFileStore` (Application Support, never Caches), and returns a
+    /// ready-to-enqueue `PostDraft`. Returns `nil` if not currently reviewing a
+    /// photo or if compression/writing fails.
+    func confirmCapture() -> PostDraft? {
+        guard case .reviewing(let image, let skyColor) = phase,
+              let (mainData, thumbData) = ImageProcessor.processedPair(from: image)
+        else { return nil }
+
+        let now = clock.now
+        let localDate = LocalDate(date: now, timeZone: clock.timeZone)
+        let imageID = UUID()
+
+        guard let fullURL = try? ImageFileStore.writePendingImage(mainData, filename: "\(imageID.uuidString).jpg"),
+              let thumbURL = try? ImageFileStore.writePendingImage(thumbData, filename: "\(imageID.uuidString)_thumb.jpg")
+        else { return nil }
+
+        return PostDraft(
+            ownerUid: ownerUid,
+            localDate: localDate,
+            capturedAt: now,
+            skyColor: skyColor,
+            minutesFromGoal: wakeGoal.minutesFromGoal(capturedAt: now, timeZone: clock.timeZone),
+            imageID: imageID,
+            localFullImageURL: fullURL,
+            localThumbImageURL: thumbURL
+        )
+    }
+}

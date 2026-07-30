@@ -1,0 +1,16 @@
+# Secrets (never commit real API keys)
+ios/SkyGrid/Config/Secrets.xcconfig
+
+# Xcode
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+ios/DerivedData/
+ios/.build/
+ios/build/
+
+# Node (Cloud Functions)
+ios/functions/node_modules/
+ios/functions/lib/
+
+# macOS
+.DS_Store

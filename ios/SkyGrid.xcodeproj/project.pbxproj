@@ -1,0 +1,1301 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0036C159EA737E8650E27D79 /* GridLayoutMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE39B2D2D1B78B2B5EC4B614 /* GridLayoutMath.swift */; };
+		03B5D7D34E491DAA8C82B861 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531084A1F75F338E4A45CC85 /* ShareSheet.swift */; };
+		04C41D55F7B9281D7068F93B /* BigTimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */; };
+		0545DAEEF2E00C2A8E71EC1C /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 068F1BE807A1588E40B46E89 /* FirebaseAppCheck */; };
+		09420A7F5E15A84F20BC404A /* SkyGridUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */; };
+		0999E1B3F926013D1FC47ED8 /* FriendsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6A3B5CC0ADD2C9D6F8F4CDF /* FriendsViewModel.swift */; };
+		0A3B444EFC749E0E946DAF5D /* PostRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */; };
+		0AF2AF74483FAC6BD88908B1 /* PostPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06EFCFEBF86821B0DBBBA94 /* PostPublisher.swift */; };
+		0B5ED10C14C0F2046C95EF96 /* PostStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BACEF1CC5D7C6A30CC8F3B /* PostStatusBanner.swift */; };
+		0D08CA1587327FC4F7CA31B8 /* FirebaseFriendRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693330AB30D1C5DE9A429663 /* FirebaseFriendRepository.swift */; };
+		0D705181B9D38C4BC85CD9AB /* AccountDeletionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5FFDFF024E0F5F0A04B163 /* AccountDeletionService.swift */; };
+		111340BF6049F7D65B747105 /* PaywallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D89CFE518D3C5B6A064724 /* PaywallViewModel.swift */; };
+		118B02C945955E4B9640D024 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6732698298E8B949C2C00DF1 /* GoogleService-Info.plist */; };
+		1626FCA14759AC287433C68A /* PurchasesServicing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A72AC4FD203CEA83150C460 /* PurchasesServicing.swift */; };
+		16BFDDB59059721177158CD2 /* ProGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */; };
+		1709C3767925D0139A8D207B /* UploadQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C06D7AD160C0956C2C73E8 /* UploadQueue.swift */; };
+		17B78EFE784768727DE3AA0A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B4AE5E7BA49A92C1C962AD /* Theme.swift */; };
+		22E196A552BB8EE03B4ECDFB /* PaywallPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */; };
+		26540071FB4476467A5F1568 /* GridLayoutMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */; };
+		29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */; };
+		2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40E82FC02E08596714BA7FB /* RootView.swift */; };
+		2E14D29C579773ADF5F2F5F1 /* GridArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087C71720687FEA840D1BCE1 /* GridArchiveView.swift */; };
+		33D71F66E9BC0DC37D1A945A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */; };
+		3769C03A8261944DBB234CFA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD181FD3F9CD149F317299BA /* Assets.xcassets */; };
+		3783962C8C57500685EB4D03 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 0AF085D3C6D7750CCAC773AC /* FirebaseFunctions */; };
+		38B29DA22E13F9633322DDD3 /* SkyGridExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9707DFE75C337522093E25A5 /* SkyGridExportView.swift */; };
+		3AD6F998EEC62AF4B9B808E5 /* RevenueCatConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6733AE9FAF3EBC515702D196 /* RevenueCatConfig.swift */; };
+		3F1C1221C32E6A4754A7F7A6 /* BuddyTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB41B2F732D5C25821B6051 /* BuddyTile.swift */; };
+		44CE64858E6E6A18AD409B73 /* WakeGoal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F748C3EC4D32E455D9427F7 /* WakeGoal.swift */; };
+		46968A01BEE2FBE99E0F7125 /* ServiceEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1238F3EDFD5D891AA112A8 /* ServiceEnvironment.swift */; };
+		48C0F6F1523810869AF829F8 /* FriendRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F57291326970B094543254 /* FriendRequestsView.swift */; };
+		4BA845FD309C5FDC34D7CD44 /* AppStartupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C066803C0C09197672F84395 /* AppStartupController.swift */; };
+		4D0178A5D5C0B27708C30C4D /* FirebaseContentSafetyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */; };
+		51206B88C29F69D7E89FC54C /* ShareCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896D44D44B9A318AC1D6831F /* ShareCardRenderer.swift */; };
+		523CBFDDEB46964B8ED61F4E /* SkyPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9C6B1CE06EF73E6B5B7EAE /* SkyPost.swift */; };
+		539EDA42CFB950F02BCC4FB4 /* TodayPhotoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C064C2501016587055152C8 /* TodayPhotoCard.swift */; };
+		540BEF6C8554DE04A2573138 /* HandleClaimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADD269C003226844C3BBB5B /* HandleClaimView.swift */; };
+		54B783EFF5A040C4C127567C /* CameraSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B156A846BD6D16D03BA1658D /* CameraSessionController.swift */; };
+		5657A2439D2F9FB3235C90A1 /* SkyColorDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */; };
+		566D77E3E428EEC352F015DC /* UserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03121E39C84779B0B43F9764 /* UserRepository.swift */; };
+		57AEC44E97085242D82EE8CB /* ContentSafetyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC4667AB0112EDBEF166F43 /* ContentSafetyRepository.swift */; };
+		57E37E5EDCF65B9C244A572E /* NotificationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F40477A5D361698E46D76F2 /* NotificationRouter.swift */; };
+		5B9541BE9E3BB595469F3CC6 /* LivePreviewSampler.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE78E41FB4C4D3379CF5B611 /* LivePreviewSampler.swift */; };
+		5D41EFF530694D781B52FB17 /* clear_sky.png in Resources */ = {isa = PBXBuildFile; fileRef = FE576FCB0DF36AD57438D08E /* clear_sky.png */; };
+		5DB8DB1770D51E87EF95DB9A /* ServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF16BFCD3C19F0AFA074361 /* ServiceFactory.swift */; };
+		5E231E656EEA92440D8DD0F6 /* MorningAlarmSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */; };
+		61705FFBA67541492EEBB035 /* BuddyRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130FA656FED8CCC97C00BAA5 /* BuddyRow.swift */; };
+		6211FA6EAECA6C92CD4A11CD /* HandleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CF6408E55C637CB12A7C79 /* HandleTests.swift */; };
+		62D371902E633F9E431148A7 /* TimeZonePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */; };
+		633B92B960D7D1F46F7ED371 /* LocalStoreContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F125065E951B193C7012001 /* LocalStoreContainer.swift */; };
+		657DB87FDB4CFF80E29D6E78 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A5C1EF18ACF9C35C82483C1B /* FirebaseStorage */; };
+		67424D7061C96DB4C79B1AE8 /* BuddiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49AC2202E0868FB93F5D007B /* BuddiesView.swift */; };
+		67582E6C7F2757FEBA5B6AAF /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 7A2F9AC7FEDF52ACCCB77DD2 /* FirebaseMessaging */; };
+		6855FABADB7E8A62C3A00773 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A927580850A3394C8C30C4A3 /* CameraViewModel.swift */; };
+		69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */; };
+		6B314D6B5FF83D8EFCC172DC /* BuddyRevealGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */; };
+		6FEE92D9AD3A87B9DF26190C /* AddBuddyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */; };
+		768812D1C860F17A1025743A /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */; };
+		7889754EF83A9BC4FABD9A5C /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7005B019440911A08B733C9C /* FirebaseAuth */; };
+		7BD7DDA744B97999595E92B2 /* FirebaseRepositoryError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA8996478709BCDADA1C141 /* FirebaseRepositoryError.swift */; };
+		7C1052A3348A0D64AB39949F /* WeekRhythmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A42CCE5459D2B84AB5ADBCB9 /* WeekRhythmView.swift */; };
+		7F46E4434A0FCA720A72D106 /* Handle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2D5AC5AD961AE6659864318 /* Handle.swift */; };
+		7FEF740F4EC293989E2D5A20 /* LocalDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29616E74D33131D97D03C4A6 /* LocalDefaults.swift */; };
+		805B9D2D3F41C2C5B93D4C5B /* PersonalizationProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */; };
+		833F269B76A024546360D8D3 /* SkyGridApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B877BE3CFC484D9D98406261 /* SkyGridApp.swift */; };
+		83CF699A774D52C1BE8E651A /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64724AE9311BCBE64D785927 /* AppServices.swift */; };
+		8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */; };
+		8BA5BF3FB14D4B28A78DEC9B /* ImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1512D261F73427D29CF1ECB /* ImageStore.swift */; };
+		8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */; };
+		91A57694C601C9789E95494A /* GridCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3AD0FDB72D81461B58527B /* GridCanvas.swift */; };
+		92AB0781583020CF0AC93B74 /* SkyGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D592401F4AA5D9EA498C5E6F /* SkyGridView.swift */; };
+		96161510D35059AFB0855DF4 /* SkyColorExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F460544F954279E3A86BFE9 /* SkyColorExtractor.swift */; };
+		97B3EC0B6DFD4B254FDC5EAE /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9E89B3BC61DAD003FF5FB7 /* Haptics.swift */; };
+		9CA29FF725BF91173ED29EA9 /* FirebasePostRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C856196405B33988CBE21663 /* FirebasePostRepository.swift */; };
+		9CDFBE38EAD3893389F2454E /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 019FE329E5EF8FD84ED28979 /* RevenueCat */; };
+		9FBA7F296942F2D9FDCE220F /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B84167ED16C9B88AC593F1 /* ImageProcessor.swift */; };
+		A1036E2C1EEC9390679582F7 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0E8E0123775F322B6B2E0B /* Typography.swift */; };
+		A6D484118FFD38385978B4E2 /* StreakCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0540437D43AF806B0EDF1375 /* StreakCalculator.swift */; };
+		A73532A7336134B3C0372AD9 /* LaunchGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8945AFCB6B9F61F9F5436235 /* LaunchGate.swift */; };
+		A7E8BB5A0D4AE334716D86EE /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEAF0DB8B065969DB18A168A /* WelcomeView.swift */; };
+		AA8BC5A9E132FEA6EA1F344D /* FirebaseImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */; };
+		AB2B0E119BF9C3478B4B03E8 /* FirebaseUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */; };
+		AC6D5CF00AFA32E554B4FED3 /* WeekRhythm.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0891E1A60B6C28DB901200 /* WeekRhythm.swift */; };
+		AC951EAC9D1AC1FEA36DC492 /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */; };
+		B24379350D7D1725FFA119EE /* golden_hour.png in Resources */ = {isa = PBXBuildFile; fileRef = 63F419878A6D379538DE954D /* golden_hour.png */; };
+		B2B2EC2EB744283C732D4016 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3247098004C9D5F5DB487BFE /* TodayView.swift */; };
+		B82B9B25C76792D539F9D70B /* AppStartupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A1DD4AB119E2EA11E7E8D4 /* AppStartupView.swift */; };
+		BAE274D953AEEC8F21B4105E /* ContentReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBE626ECA74382CDC96957E5 /* ContentReport.swift */; };
+		BBFAF60FFF364B7F0A3D3A19 /* RepositoryError.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */; };
+		BC0D4E5333DF96C055FC1841 /* Clock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B78E3CFF8FD9CB7BB7E5F23 /* Clock.swift */; };
+		BD45B6EC1855280158BDFFEB /* PendingUpload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 399D785A4FF2ECB99992BD10 /* PendingUpload.swift */; };
+		BE2A9130ADD69A20286ADDF0 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFEDC0478E6AD05FF0887391 /* AppRouter.swift */; };
+		BE54EEFE6039ABF724B05F89 /* RestDayPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FA4676D6B100913B2096B9 /* RestDayPolicy.swift */; };
+		C05BAD13433A3B570BFAB949 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CEB114493C082271200CF8F /* UserProfile.swift */; };
+		C076866EA2110D42F64C5DEC /* FriendRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D0AF054E16234EFB09A2468 /* FriendRepository.swift */; };
+		C0989E5EC678F1A95C2C0097 /* StreakCalculatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1A3C90FF9151B784398B50 /* StreakCalculatorTests.swift */; };
+		C0BCC8302A7E6A3B7BB2D2C2 /* FirebaseDocumentCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BE272CCACA06B1E3005D3E /* FirebaseDocumentCodec.swift */; };
+		C42F15EF77B9643891298E51 /* FirebaseDeviceRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57FF583C65D9840D4ACB666D /* FirebaseDeviceRegistrar.swift */; };
+		C7B5AAE99142F0E8FDFE9ECD /* WeekRhythmTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7C3472C4E695E07F9D978C /* WeekRhythmTests.swift */; };
+		C8B29456F3F766C5CC47A30E /* Friendship.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BF7AA070B5D2A30076223F /* Friendship.swift */; };
+		C96012A1E8A27AFEFEDD7EBD /* EntitlementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8505967AF27F6734DB422A85 /* EntitlementStore.swift */; };
+		C9E66D6FE70A5B5724C60993 /* UploadTriggers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D70E24F9606F52435C88DA /* UploadTriggers.swift */; };
+		D1DAF0FCBD24BD57B71BF22D /* UploadQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A106169F1B40CFAEFB8BC4 /* UploadQueueTests.swift */; };
+		D20CD19BB38111C343CB95DF /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */; };
+		D3135E7486A44D558AF157C0 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3DD7839BDCF230A7AE8F936 /* Layout.swift */; };
+		D3749B2D566AC3F41063F462 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A7BF16B757C167E7799973 /* SettingsView.swift */; };
+		D4E05414E3DAF916F1D1AD68 /* OnboardingCoordinatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */; };
+		D65F8897C56943C170476E99 /* CameraSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7045408A10B0C698E571F531 /* CameraSource.swift */; };
+		DA7F362CB6B55F49E23DF687 /* RevenueCatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D9ED01CECCEFC13BBAD319C /* RevenueCatService.swift */; };
+		DC69B9AC25AF58733BA32103 /* PaywallEntryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2A1E4935C2F01342AFEC2E /* PaywallEntryPoint.swift */; };
+		DD5BB911FB2CACFCA6B9BFA9 /* ShutterButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1BB7DF5A481993A934D539 /* ShutterButton.swift */; };
+		DDFB74EF9323A0DAE2D027EA /* ExitOffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F00BAA41559853188D26763 /* ExitOffer.swift */; };
+		DE09389A9184EF4D83A3E625 /* PurchasesEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A4BCC91E66EDC15773BE965 /* PurchasesEnvironment.swift */; };
+		E1A4B81469EE0630ADE00088 /* FirebaseAsync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F6B7C4C22D4B7B68E45FA57 /* FirebaseAsync.swift */; };
+		E5768E9031FE2B5AE0CBB959 /* LocalDateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD23650166A18C5BF4671015 /* LocalDateTests.swift */; };
+		E5C5E616D811AC590B2680A1 /* TodayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF76E707C52CA8021139C3F5 /* TodayViewModel.swift */; };
+		E87922CD54E95934223F2841 /* PersonalizationQuestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE08F2693E2014B6F411183 /* PersonalizationQuestionsView.swift */; };
+		E8A87BDA1A437D2740E1C528 /* LaunchGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */; };
+		ED281546431F7E899784C3CD /* PersonalizedPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E7DB5261372B33FD7508EA /* PersonalizedPlanView.swift */; };
+		F01541962CC29C4786ED3636 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D6E8364DF1BD0DC7912BF56 /* CameraView.swift */; };
+		F35ACD21DBA2EC1AA156C4F2 /* RitualGridMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B5D7C1B6464998C35306B26 /* RitualGridMark.swift */; };
+		F3B83571F3DFC0124517F154 /* RetryPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */; };
+		F4351425D10C31CF3CCFE2A0 /* UploadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB78CDB872AA9BFD7CA228B1 /* UploadState.swift */; };
+		F46CEF08F53E6A1DCE6E4E4D /* RetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */; };
+		F5750D43D5F807D1E59E967A /* TimeZonePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABE9214A14000FFD1A8CDCB /* TimeZonePolicyTests.swift */; };
+		F895399715D2D6374CD22858 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 971FE35331B41C1D9C120101 /* FirebaseFirestore */; };
+		F994B4461B28FFE17199A889 /* FirebaseAuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 175C29F37106C472FAD174B5 /* FirebaseAuthSession.swift */; };
+		F9F04A8B066CD6D489EECB79 /* SkyColorExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */; };
+		FB8FC2362E7E09CE88E3B69F /* LocalDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1651F3A167F06A63A99A9BE9 /* LocalDate.swift */; };
+		FC2D36F220B62364F7923993 /* SkyColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37C1EA135CD21F85869C40CE /* SkyColor.swift */; };
+		FCB0ECDFFCE513D3DE26CEC4 /* ImageFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CED1196E56E4C621B48F448 /* ImageFileStore.swift */; };
+		FCE49CB8F5517364586B76F1 /* WakeGoalPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CE1E526D62EABA393B5D /* WakeGoalPickerView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		70D855185BF5BCF7E7D4AC83 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 60B532877EDB854F7FD07C82 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E383EC8EDC102B43B7A488D4;
+			remoteInfo = SkyGrid;
+		};
+		81AEF846DE89B5CB0D4678DE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 60B532877EDB854F7FD07C82 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E383EC8EDC102B43B7A488D4;
+			remoteInfo = SkyGrid;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDraft.swift; sourceTree = "<group>"; };
+		03121E39C84779B0B43F9764 /* UserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserRepository.swift; sourceTree = "<group>"; };
+		0540437D43AF806B0EDF1375 /* StreakCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakCalculator.swift; sourceTree = "<group>"; };
+		087C71720687FEA840D1BCE1 /* GridArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridArchiveView.swift; sourceTree = "<group>"; };
+		0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBuddyView.swift; sourceTree = "<group>"; };
+		0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicy.swift; sourceTree = "<group>"; };
+		130FA656FED8CCC97C00BAA5 /* BuddyRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyRow.swift; sourceTree = "<group>"; };
+		13BACEF1CC5D7C6A30CC8F3B /* PostStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostStatusBanner.swift; sourceTree = "<group>"; };
+		1651F3A167F06A63A99A9BE9 /* LocalDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDate.swift; sourceTree = "<group>"; };
+		175C29F37106C472FAD174B5 /* FirebaseAuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAuthSession.swift; sourceTree = "<group>"; };
+		1836B35A721254A99B0DF929 /* SkyGrid.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SkyGrid.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1AA8996478709BCDADA1C141 /* FirebaseRepositoryError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseRepositoryError.swift; sourceTree = "<group>"; };
+		1B5D7C1B6464998C35306B26 /* RitualGridMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RitualGridMark.swift; sourceTree = "<group>"; };
+		1CEB114493C082271200CF8F /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		1D6E8364DF1BD0DC7912BF56 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		1F460544F954279E3A86BFE9 /* SkyColorExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorExtractor.swift; sourceTree = "<group>"; };
+		1F6B7C4C22D4B7B68E45FA57 /* FirebaseAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAsync.swift; sourceTree = "<group>"; };
+		28A371182E1C9D56C7820C6F /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		29616E74D33131D97D03C4A6 /* LocalDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDefaults.swift; sourceTree = "<group>"; };
+		2ABE9214A14000FFD1A8CDCB /* TimeZonePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZonePolicyTests.swift; sourceTree = "<group>"; };
+		2ADD269C003226844C3BBB5B /* HandleClaimView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandleClaimView.swift; sourceTree = "<group>"; };
+		2B3AD0FDB72D81461B58527B /* GridCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCanvas.swift; sourceTree = "<group>"; };
+		2D1A3C90FF9151B784398B50 /* StreakCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakCalculatorTests.swift; sourceTree = "<group>"; };
+		2D666341BEDF4B71F79EF742 /* SkyGridTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SkyGridTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F0E8E0123775F322B6B2E0B /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		2F125065E951B193C7012001 /* LocalStoreContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreContainer.swift; sourceTree = "<group>"; };
+		3247098004C9D5F5DB487BFE /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		33753E5CA5E9FC720F3A1C8C /* SkyGridUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SkyGridUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		37C1EA135CD21F85869C40CE /* SkyColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColor.swift; sourceTree = "<group>"; };
+		399D785A4FF2ECB99992BD10 /* PendingUpload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingUpload.swift; sourceTree = "<group>"; };
+		49AC2202E0868FB93F5D007B /* BuddiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddiesView.swift; sourceTree = "<group>"; };
+		4CED1196E56E4C621B48F448 /* ImageFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFileStore.swift; sourceTree = "<group>"; };
+		51E7DB5261372B33FD7508EA /* PersonalizedPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizedPlanView.swift; sourceTree = "<group>"; };
+		531084A1F75F338E4A45CC85 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
+		5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorDisplay.swift; sourceTree = "<group>"; };
+		57FF583C65D9840D4ACB666D /* FirebaseDeviceRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseDeviceRegistrar.swift; sourceTree = "<group>"; };
+		5D9ED01CECCEFC13BBAD319C /* RevenueCatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatService.swift; sourceTree = "<group>"; };
+		5DE08F2693E2014B6F411183 /* PersonalizationQuestionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationQuestionsView.swift; sourceTree = "<group>"; };
+		5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridUITests.swift; sourceTree = "<group>"; };
+		632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigTimeView.swift; sourceTree = "<group>"; };
+		63F419878A6D379538DE954D /* golden_hour.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = golden_hour.png; sourceTree = "<group>"; };
+		64724AE9311BCBE64D785927 /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
+		65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLayoutMathTests.swift; sourceTree = "<group>"; };
+		6732698298E8B949C2C00DF1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		6733AE9FAF3EBC515702D196 /* RevenueCatConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatConfig.swift; sourceTree = "<group>"; };
+		693330AB30D1C5DE9A429663 /* FirebaseFriendRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseFriendRepository.swift; sourceTree = "<group>"; };
+		69D70E24F9606F52435C88DA /* UploadTriggers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadTriggers.swift; sourceTree = "<group>"; };
+		6A4BCC91E66EDC15773BE965 /* PurchasesEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesEnvironment.swift; sourceTree = "<group>"; };
+		6BB41B2F732D5C25821B6051 /* BuddyTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyTile.swift; sourceTree = "<group>"; };
+		6C9C6B1CE06EF73E6B5B7EAE /* SkyPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyPost.swift; sourceTree = "<group>"; };
+		6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorTests.swift; sourceTree = "<group>"; };
+		6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningAlarmSettingsView.swift; sourceTree = "<group>"; };
+		6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchGateTests.swift; sourceTree = "<group>"; };
+		7045408A10B0C698E571F531 /* CameraSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSource.swift; sourceTree = "<group>"; };
+		73F57291326970B094543254 /* FriendRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRequestsView.swift; sourceTree = "<group>"; };
+		7B78E3CFF8FD9CB7BB7E5F23 /* Clock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clock.swift; sourceTree = "<group>"; };
+		7C2A1E4935C2F01342AFEC2E /* PaywallEntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallEntryPoint.swift; sourceTree = "<group>"; };
+		7D0AF054E16234EFB09A2468 /* FriendRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRepository.swift; sourceTree = "<group>"; };
+		7DC4667AB0112EDBEF166F43 /* ContentSafetyRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSafetyRepository.swift; sourceTree = "<group>"; };
+		7E1238F3EDFD5D891AA112A8 /* ServiceEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceEnvironment.swift; sourceTree = "<group>"; };
+		7F748C3EC4D32E455D9427F7 /* WakeGoal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeGoal.swift; sourceTree = "<group>"; };
+		84BE272CCACA06B1E3005D3E /* FirebaseDocumentCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseDocumentCodec.swift; sourceTree = "<group>"; };
+		8505967AF27F6734DB422A85 /* EntitlementStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementStore.swift; sourceTree = "<group>"; };
+		87D89CFE518D3C5B6A064724 /* PaywallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewModel.swift; sourceTree = "<group>"; };
+		8945AFCB6B9F61F9F5436235 /* LaunchGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchGate.swift; sourceTree = "<group>"; };
+		896D44D44B9A318AC1D6831F /* ShareCardRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCardRenderer.swift; sourceTree = "<group>"; };
+		8A72AC4FD203CEA83150C460 /* PurchasesServicing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesServicing.swift; sourceTree = "<group>"; };
+		8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPolicyTests.swift; sourceTree = "<group>"; };
+		8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProGate.swift; sourceTree = "<group>"; };
+		8C064C2501016587055152C8 /* TodayPhotoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayPhotoCard.swift; sourceTree = "<group>"; };
+		8E9E89B3BC61DAD003FF5FB7 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		8F40477A5D361698E46D76F2 /* NotificationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouter.swift; sourceTree = "<group>"; };
+		90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseContentSafetyRepository.swift; sourceTree = "<group>"; };
+		92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyRevealGate.swift; sourceTree = "<group>"; };
+		9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseUserRepository.swift; sourceTree = "<group>"; };
+		96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZonePolicy.swift; sourceTree = "<group>"; };
+		9707DFE75C337522093E25A5 /* SkyGridExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridExportView.swift; sourceTree = "<group>"; };
+		9F00BAA41559853188D26763 /* ExitOffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExitOffer.swift; sourceTree = "<group>"; };
+		9F475C0E96E7506F4ADBD33C /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		A1BF7AA070B5D2A30076223F /* Friendship.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Friendship.swift; sourceTree = "<group>"; };
+		A2CF6408E55C637CB12A7C79 /* HandleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandleTests.swift; sourceTree = "<group>"; };
+		A2D5AC5AD961AE6659864318 /* Handle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Handle.swift; sourceTree = "<group>"; };
+		A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationProfile.swift; sourceTree = "<group>"; };
+		A42CCE5459D2B84AB5ADBCB9 /* WeekRhythmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekRhythmView.swift; sourceTree = "<group>"; };
+		A7A1DD4AB119E2EA11E7E8D4 /* AppStartupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStartupView.swift; sourceTree = "<group>"; };
+		A927580850A3394C8C30C4A3 /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
+		AB78CDB872AA9BFD7CA228B1 /* UploadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadState.swift; sourceTree = "<group>"; };
+		AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
+		AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRepository.swift; sourceTree = "<group>"; };
+		AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryError.swift; sourceTree = "<group>"; };
+		AE78E41FB4C4D3379CF5B611 /* LivePreviewSampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePreviewSampler.swift; sourceTree = "<group>"; };
+		B0C06D7AD160C0956C2C73E8 /* UploadQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadQueue.swift; sourceTree = "<group>"; };
+		B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinatorView.swift; sourceTree = "<group>"; };
+		B1512D261F73427D29CF1ECB /* ImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStore.swift; sourceTree = "<group>"; };
+		B156A846BD6D16D03BA1658D /* CameraSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSessionController.swift; sourceTree = "<group>"; };
+		B877BE3CFC484D9D98406261 /* SkyGridApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridApp.swift; sourceTree = "<group>"; };
+		BBE626ECA74382CDC96957E5 /* ContentReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentReport.swift; sourceTree = "<group>"; };
+		BD181FD3F9CD149F317299BA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BD23650166A18C5BF4671015 /* LocalDateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDateTests.swift; sourceTree = "<group>"; };
+		BE0891E1A60B6C28DB901200 /* WeekRhythm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekRhythm.swift; sourceTree = "<group>"; };
+		BEAF0DB8B065969DB18A168A /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
+		BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationProfileTests.swift; sourceTree = "<group>"; };
+		C066803C0C09197672F84395 /* AppStartupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStartupController.swift; sourceTree = "<group>"; };
+		C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		C40E82FC02E08596714BA7FB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		C6A3B5CC0ADD2C9D6F8F4CDF /* FriendsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsViewModel.swift; sourceTree = "<group>"; };
+		C856196405B33988CBE21663 /* FirebasePostRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebasePostRepository.swift; sourceTree = "<group>"; };
+		CA1BB7DF5A481993A934D539 /* ShutterButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShutterButton.swift; sourceTree = "<group>"; };
+		CF76E707C52CA8021139C3F5 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
+		CFEDC0478E6AD05FF0887391 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		D06EFCFEBF86821B0DBBBA94 /* PostPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPublisher.swift; sourceTree = "<group>"; };
+		D3DD7839BDCF230A7AE8F936 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
+		D592401F4AA5D9EA498C5E6F /* SkyGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridView.swift; sourceTree = "<group>"; };
+		D6FA4676D6B100913B2096B9 /* RestDayPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestDayPolicy.swift; sourceTree = "<group>"; };
+		D7B84167ED16C9B88AC593F1 /* ImageProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessor.swift; sourceTree = "<group>"; };
+		DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicyTests.swift; sourceTree = "<group>"; };
+		DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseImageStore.swift; sourceTree = "<group>"; };
+		E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorExtractorTests.swift; sourceTree = "<group>"; };
+		E1B4AE5E7BA49A92C1C962AD /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		EBF16BFCD3C19F0AFA074361 /* ServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceFactory.swift; sourceTree = "<group>"; };
+		ECF7CE1E526D62EABA393B5D /* WakeGoalPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeGoalPickerView.swift; sourceTree = "<group>"; };
+		EE39B2D2D1B78B2B5EC4B614 /* GridLayoutMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLayoutMath.swift; sourceTree = "<group>"; };
+		F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningAlarmScheduler.swift; sourceTree = "<group>"; };
+		F7A7BF16B757C167E7799973 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F8A106169F1B40CFAEFB8BC4 /* UploadQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadQueueTests.swift; sourceTree = "<group>"; };
+		FA5FFDFF024E0F5F0A04B163 /* AccountDeletionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionService.swift; sourceTree = "<group>"; };
+		FB7C3472C4E695E07F9D978C /* WeekRhythmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekRhythmTests.swift; sourceTree = "<group>"; };
+		FE576FCB0DF36AD57438D08E /* clear_sky.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = clear_sky.png; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A32D64A99F779CF705934818 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9CDFBE38EAD3893389F2454E /* RevenueCat in Frameworks */,
+				7889754EF83A9BC4FABD9A5C /* FirebaseAuth in Frameworks */,
+				F895399715D2D6374CD22858 /* FirebaseFirestore in Frameworks */,
+				657DB87FDB4CFF80E29D6E78 /* FirebaseStorage in Frameworks */,
+				67582E6C7F2757FEBA5B6AAF /* FirebaseMessaging in Frameworks */,
+				3783962C8C57500685EB4D03 /* FirebaseFunctions in Frameworks */,
+				0545DAEEF2E00C2A8E71EC1C /* FirebaseAppCheck in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		020E35EDEB4897090426AFA7 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				4CED1196E56E4C621B48F448 /* ImageFileStore.swift */,
+				29616E74D33131D97D03C4A6 /* LocalDefaults.swift */,
+				2F125065E951B193C7012001 /* LocalStoreContainer.swift */,
+				399D785A4FF2ECB99992BD10 /* PendingUpload.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		0B9A88FFA839DB62994A84EC /* Firebase */ = {
+			isa = PBXGroup;
+			children = (
+				1F6B7C4C22D4B7B68E45FA57 /* FirebaseAsync.swift */,
+				175C29F37106C472FAD174B5 /* FirebaseAuthSession.swift */,
+				90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */,
+				57FF583C65D9840D4ACB666D /* FirebaseDeviceRegistrar.swift */,
+				84BE272CCACA06B1E3005D3E /* FirebaseDocumentCodec.swift */,
+				693330AB30D1C5DE9A429663 /* FirebaseFriendRepository.swift */,
+				DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */,
+				C856196405B33988CBE21663 /* FirebasePostRepository.swift */,
+				1AA8996478709BCDADA1C141 /* FirebaseRepositoryError.swift */,
+				9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */,
+			);
+			path = Firebase;
+			sourceTree = "<group>";
+		};
+		12CF8018DE69D67B018DAA46 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */,
+				B156A846BD6D16D03BA1658D /* CameraSessionController.swift */,
+				7045408A10B0C698E571F531 /* CameraSource.swift */,
+				1D6E8364DF1BD0DC7912BF56 /* CameraView.swift */,
+				A927580850A3394C8C30C4A3 /* CameraViewModel.swift */,
+				CA1BB7DF5A481993A934D539 /* ShutterButton.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		1D2FE319E6D5EFDC1A8F3B60 /* SkyGrid */ = {
+			isa = PBXGroup;
+			children = (
+				6732698298E8B949C2C00DF1 /* GoogleService-Info.plist */,
+				480636E3A8EBA3ABB20621A1 /* Config */,
+				347421E22D0721CF1A5BFAAF /* Resources */,
+				EC3935372C3A80E5FE85ACBE /* Sources */,
+				F0F15EE65EE6584812D365FD /* Tests */,
+				69CB35A0D3087177707383E7 /* UITests */,
+			);
+			path = SkyGrid;
+			sourceTree = "<group>";
+		};
+		1E378872DAD682307E592D57 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */,
+				CFEDC0478E6AD05FF0887391 /* AppRouter.swift */,
+				64724AE9311BCBE64D785927 /* AppServices.swift */,
+				C066803C0C09197672F84395 /* AppStartupController.swift */,
+				A7A1DD4AB119E2EA11E7E8D4 /* AppStartupView.swift */,
+				8945AFCB6B9F61F9F5436235 /* LaunchGate.swift */,
+				C40E82FC02E08596714BA7FB /* RootView.swift */,
+				7E1238F3EDFD5D891AA112A8 /* ServiceEnvironment.swift */,
+				EBF16BFCD3C19F0AFA074361 /* ServiceFactory.swift */,
+				B877BE3CFC484D9D98406261 /* SkyGridApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		25D426B7AED8A2BB083571C6 /* Friends */ = {
+			isa = PBXGroup;
+			children = (
+				0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */,
+				49AC2202E0868FB93F5D007B /* BuddiesView.swift */,
+				92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */,
+				73F57291326970B094543254 /* FriendRequestsView.swift */,
+				C6A3B5CC0ADD2C9D6F8F4CDF /* FriendsViewModel.swift */,
+				2ADD269C003226844C3BBB5B /* HandleClaimView.swift */,
+			);
+			path = Friends;
+			sourceTree = "<group>";
+		};
+		313BB76308FDCA82A3591D53 /* Paywall */ = {
+			isa = PBXGroup;
+			children = (
+				9F00BAA41559853188D26763 /* ExitOffer.swift */,
+				7C2A1E4935C2F01342AFEC2E /* PaywallEntryPoint.swift */,
+				E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */,
+				87D89CFE518D3C5B6A064724 /* PaywallViewModel.swift */,
+				8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */,
+			);
+			path = Paywall;
+			sourceTree = "<group>";
+		};
+		34651F9EE11A22B3872D6045 /* Publishing */ = {
+			isa = PBXGroup;
+			children = (
+				D06EFCFEBF86821B0DBBBA94 /* PostPublisher.swift */,
+			);
+			path = Publishing;
+			sourceTree = "<group>";
+		};
+		347421E22D0721CF1A5BFAAF /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BD181FD3F9CD149F317299BA /* Assets.xcassets */,
+				58681E92A1AA4FC6CD55087F /* Fixtures */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		480636E3A8EBA3ABB20621A1 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				9F475C0E96E7506F4ADBD33C /* Debug.xcconfig */,
+				28A371182E1C9D56C7820C6F /* Release.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		58681E92A1AA4FC6CD55087F /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				FE576FCB0DF36AD57438D08E /* clear_sky.png */,
+				63F419878A6D379538DE954D /* golden_hour.png */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		591BE92866774E10143D6512 /* Purchases */ = {
+			isa = PBXGroup;
+			children = (
+				8505967AF27F6734DB422A85 /* EntitlementStore.swift */,
+				6A4BCC91E66EDC15773BE965 /* PurchasesEnvironment.swift */,
+				8A72AC4FD203CEA83150C460 /* PurchasesServicing.swift */,
+				6733AE9FAF3EBC515702D196 /* RevenueCatConfig.swift */,
+				5D9ED01CECCEFC13BBAD319C /* RevenueCatService.swift */,
+			);
+			path = Purchases;
+			sourceTree = "<group>";
+		};
+		69CB35A0D3087177707383E7 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		96C6F94CA6A8B6E2CAA83655 = {
+			isa = PBXGroup;
+			children = (
+				1D2FE319E6D5EFDC1A8F3B60 /* SkyGrid */,
+				A0BD2F078DC6FA3B573D37CC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		98708DA3CFC41C472CE1F77D /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				FA5FFDFF024E0F5F0A04B163 /* AccountDeletionService.swift */,
+				7B78E3CFF8FD9CB7BB7E5F23 /* Clock.swift */,
+				7DC4667AB0112EDBEF166F43 /* ContentSafetyRepository.swift */,
+				7D0AF054E16234EFB09A2468 /* FriendRepository.swift */,
+				B1512D261F73427D29CF1ECB /* ImageStore.swift */,
+				AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */,
+				AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */,
+				03121E39C84779B0B43F9764 /* UserRepository.swift */,
+				0B9A88FFA839DB62994A84EC /* Firebase */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		9AE96A3B39B9D8D3C6FB5AF6 /* Upload */ = {
+			isa = PBXGroup;
+			children = (
+				0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */,
+				B0C06D7AD160C0956C2C73E8 /* UploadQueue.swift */,
+				69D70E24F9606F52435C88DA /* UploadTriggers.swift */,
+			);
+			path = Upload;
+			sourceTree = "<group>";
+		};
+		A0BD2F078DC6FA3B573D37CC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1836B35A721254A99B0DF929 /* SkyGrid.app */,
+				2D666341BEDF4B71F79EF742 /* SkyGridTests.xctest */,
+				33753E5CA5E9FC720F3A1C8C /* SkyGridUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B284D4CA5F488C5C9858885E /* Streak */ = {
+			isa = PBXGroup;
+			children = (
+				D6FA4676D6B100913B2096B9 /* RestDayPolicy.swift */,
+				0540437D43AF806B0EDF1375 /* StreakCalculator.swift */,
+				96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */,
+				7F748C3EC4D32E455D9427F7 /* WakeGoal.swift */,
+				BE0891E1A60B6C28DB901200 /* WeekRhythm.swift */,
+			);
+			path = Streak;
+			sourceTree = "<group>";
+		};
+		B7CF503B3E14AB83099CD3A3 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BBE626ECA74382CDC96957E5 /* ContentReport.swift */,
+				A1BF7AA070B5D2A30076223F /* Friendship.swift */,
+				A2D5AC5AD961AE6659864318 /* Handle.swift */,
+				1651F3A167F06A63A99A9BE9 /* LocalDate.swift */,
+				00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */,
+				37C1EA135CD21F85869C40CE /* SkyColor.swift */,
+				6C9C6B1CE06EF73E6B5B7EAE /* SkyPost.swift */,
+				AB78CDB872AA9BFD7CA228B1 /* UploadState.swift */,
+				1CEB114493C082271200CF8F /* UserProfile.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		BA5226B28D079426236C93C1 /* SkyColor */ = {
+			isa = PBXGroup;
+			children = (
+				D7B84167ED16C9B88AC593F1 /* ImageProcessor.swift */,
+				AE78E41FB4C4D3379CF5B611 /* LivePreviewSampler.swift */,
+				1F460544F954279E3A86BFE9 /* SkyColorExtractor.swift */,
+			);
+			path = SkyColor;
+			sourceTree = "<group>";
+		};
+		BB6D94CBCC1D05A18821163D /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				F7A7BF16B757C167E7799973 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		BEF5A36321E1DAF2FA0EA3CA /* Grid */ = {
+			isa = PBXGroup;
+			children = (
+				087C71720687FEA840D1BCE1 /* GridArchiveView.swift */,
+				2B3AD0FDB72D81461B58527B /* GridCanvas.swift */,
+				EE39B2D2D1B78B2B5EC4B614 /* GridLayoutMath.swift */,
+				896D44D44B9A318AC1D6831F /* ShareCardRenderer.swift */,
+				9707DFE75C337522093E25A5 /* SkyGridExportView.swift */,
+				D592401F4AA5D9EA498C5E6F /* SkyGridView.swift */,
+			);
+			path = Grid;
+			sourceTree = "<group>";
+		};
+		CA1C273648696CD169B136A5 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */,
+				A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */,
+				5DE08F2693E2014B6F411183 /* PersonalizationQuestionsView.swift */,
+				51E7DB5261372B33FD7508EA /* PersonalizedPlanView.swift */,
+				1B5D7C1B6464998C35306B26 /* RitualGridMark.swift */,
+				ECF7CE1E526D62EABA393B5D /* WakeGoalPickerView.swift */,
+				BEAF0DB8B065969DB18A168A /* WelcomeView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		E702E425969751676051B732 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				8E9E89B3BC61DAD003FF5FB7 /* Haptics.swift */,
+				D3DD7839BDCF230A7AE8F936 /* Layout.swift */,
+				531084A1F75F338E4A45CC85 /* ShareSheet.swift */,
+				5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */,
+				E1B4AE5E7BA49A92C1C962AD /* Theme.swift */,
+				2F0E8E0123775F322B6B2E0B /* Typography.swift */,
+				AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		EC3935372C3A80E5FE85ACBE /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				1E378872DAD682307E592D57 /* App */,
+				12CF8018DE69D67B018DAA46 /* Camera */,
+				98708DA3CFC41C472CE1F77D /* Data */,
+				E702E425969751676051B732 /* DesignSystem */,
+				25D426B7AED8A2BB083571C6 /* Friends */,
+				BEF5A36321E1DAF2FA0EA3CA /* Grid */,
+				B7CF503B3E14AB83099CD3A3 /* Models */,
+				EDF614BB78AC7CBB8574750C /* Notifications */,
+				CA1C273648696CD169B136A5 /* Onboarding */,
+				313BB76308FDCA82A3591D53 /* Paywall */,
+				020E35EDEB4897090426AFA7 /* Persistence */,
+				34651F9EE11A22B3872D6045 /* Publishing */,
+				591BE92866774E10143D6512 /* Purchases */,
+				BB6D94CBCC1D05A18821163D /* Settings */,
+				BA5226B28D079426236C93C1 /* SkyColor */,
+				B284D4CA5F488C5C9858885E /* Streak */,
+				FCC599EF9109B426DFDB061B /* Today */,
+				9AE96A3B39B9D8D3C6FB5AF6 /* Upload */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		EDF614BB78AC7CBB8574750C /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */,
+				6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */,
+				8F40477A5D361698E46D76F2 /* NotificationRouter.swift */,
+			);
+			path = Notifications;
+			sourceTree = "<group>";
+		};
+		F0F15EE65EE6584812D365FD /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */,
+				A2CF6408E55C637CB12A7C79 /* HandleTests.swift */,
+				6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */,
+				BD23650166A18C5BF4671015 /* LocalDateTests.swift */,
+				8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */,
+				BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */,
+				DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */,
+				E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */,
+				6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */,
+				2D1A3C90FF9151B784398B50 /* StreakCalculatorTests.swift */,
+				2ABE9214A14000FFD1A8CDCB /* TimeZonePolicyTests.swift */,
+				F8A106169F1B40CFAEFB8BC4 /* UploadQueueTests.swift */,
+				FB7C3472C4E695E07F9D978C /* WeekRhythmTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		FCC599EF9109B426DFDB061B /* Today */ = {
+			isa = PBXGroup;
+			children = (
+				632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */,
+				130FA656FED8CCC97C00BAA5 /* BuddyRow.swift */,
+				6BB41B2F732D5C25821B6051 /* BuddyTile.swift */,
+				13BACEF1CC5D7C6A30CC8F3B /* PostStatusBanner.swift */,
+				8C064C2501016587055152C8 /* TodayPhotoCard.swift */,
+				3247098004C9D5F5DB487BFE /* TodayView.swift */,
+				CF76E707C52CA8021139C3F5 /* TodayViewModel.swift */,
+				A42CCE5459D2B84AB5ADBCB9 /* WeekRhythmView.swift */,
+			);
+			path = Today;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		387704944CDA11D55B40EC49 /* SkyGridTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4670C66A2146B33B2F801769 /* Build configuration list for PBXNativeTarget "SkyGridTests" */;
+			buildPhases = (
+				AD908FA53EDE257516BDE94D /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9B2F02A07D37C3EE083C3645 /* PBXTargetDependency */,
+			);
+			name = SkyGridTests;
+			packageProductDependencies = (
+			);
+			productName = SkyGridTests;
+			productReference = 2D666341BEDF4B71F79EF742 /* SkyGridTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B327B1FD14249DD677B5C83B /* SkyGridUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 52299A20EE9EE23439089593 /* Build configuration list for PBXNativeTarget "SkyGridUITests" */;
+			buildPhases = (
+				F3A9B31F0A6E25AE254C7E34 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EC61D03FD0D10786209F29DC /* PBXTargetDependency */,
+			);
+			name = SkyGridUITests;
+			packageProductDependencies = (
+			);
+			productName = SkyGridUITests;
+			productReference = 33753E5CA5E9FC720F3A1C8C /* SkyGridUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		E383EC8EDC102B43B7A488D4 /* SkyGrid */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49174F483F2328DB3731B455 /* Build configuration list for PBXNativeTarget "SkyGrid" */;
+			buildPhases = (
+				76D69E0EEA07F80D1880C296 /* Sources */,
+				7C831C060F209001E2CA0DED /* Resources */,
+				A32D64A99F779CF705934818 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SkyGrid;
+			packageProductDependencies = (
+				019FE329E5EF8FD84ED28979 /* RevenueCat */,
+				7005B019440911A08B733C9C /* FirebaseAuth */,
+				971FE35331B41C1D9C120101 /* FirebaseFirestore */,
+				A5C1EF18ACF9C35C82483C1B /* FirebaseStorage */,
+				7A2F9AC7FEDF52ACCCB77DD2 /* FirebaseMessaging */,
+				0AF085D3C6D7750CCAC773AC /* FirebaseFunctions */,
+				068F1BE807A1588E40B46E89 /* FirebaseAppCheck */,
+			);
+			productName = SkyGrid;
+			productReference = 1836B35A721254A99B0DF929 /* SkyGrid.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		60B532877EDB854F7FD07C82 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					B327B1FD14249DD677B5C83B = {
+						TestTargetID = E383EC8EDC102B43B7A488D4;
+					};
+					E383EC8EDC102B43B7A488D4 = {
+						DevelopmentTeam = NVZB82UK53;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 9EA8F2AB123CDE4218DA5614 /* Build configuration list for PBXProject "SkyGrid" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 96C6F94CA6A8B6E2CAA83655;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				FBB01C720C952F2F9FDB366B /* XCRemoteSwiftPackageReference "purchases-ios" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A0BD2F078DC6FA3B573D37CC /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E383EC8EDC102B43B7A488D4 /* SkyGrid */,
+				387704944CDA11D55B40EC49 /* SkyGridTests */,
+				B327B1FD14249DD677B5C83B /* SkyGridUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		7C831C060F209001E2CA0DED /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3769C03A8261944DBB234CFA /* Assets.xcassets in Resources */,
+				118B02C945955E4B9640D024 /* GoogleService-Info.plist in Resources */,
+				5D41EFF530694D781B52FB17 /* clear_sky.png in Resources */,
+				B24379350D7D1725FFA119EE /* golden_hour.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		76D69E0EEA07F80D1880C296 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D705181B9D38C4BC85CD9AB /* AccountDeletionService.swift in Sources */,
+				6FEE92D9AD3A87B9DF26190C /* AddBuddyView.swift in Sources */,
+				33D71F66E9BC0DC37D1A945A /* AppDelegate.swift in Sources */,
+				BE2A9130ADD69A20286ADDF0 /* AppRouter.swift in Sources */,
+				83CF699A774D52C1BE8E651A /* AppServices.swift in Sources */,
+				4BA845FD309C5FDC34D7CD44 /* AppStartupController.swift in Sources */,
+				B82B9B25C76792D539F9D70B /* AppStartupView.swift in Sources */,
+				04C41D55F7B9281D7068F93B /* BigTimeView.swift in Sources */,
+				67424D7061C96DB4C79B1AE8 /* BuddiesView.swift in Sources */,
+				6B314D6B5FF83D8EFCC172DC /* BuddyRevealGate.swift in Sources */,
+				61705FFBA67541492EEBB035 /* BuddyRow.swift in Sources */,
+				3F1C1221C32E6A4754A7F7A6 /* BuddyTile.swift in Sources */,
+				768812D1C860F17A1025743A /* CameraPreviewView.swift in Sources */,
+				54B783EFF5A040C4C127567C /* CameraSessionController.swift in Sources */,
+				D65F8897C56943C170476E99 /* CameraSource.swift in Sources */,
+				F01541962CC29C4786ED3636 /* CameraView.swift in Sources */,
+				6855FABADB7E8A62C3A00773 /* CameraViewModel.swift in Sources */,
+				BC0D4E5333DF96C055FC1841 /* Clock.swift in Sources */,
+				BAE274D953AEEC8F21B4105E /* ContentReport.swift in Sources */,
+				57AEC44E97085242D82EE8CB /* ContentSafetyRepository.swift in Sources */,
+				C96012A1E8A27AFEFEDD7EBD /* EntitlementStore.swift in Sources */,
+				DDFB74EF9323A0DAE2D027EA /* ExitOffer.swift in Sources */,
+				E1A4B81469EE0630ADE00088 /* FirebaseAsync.swift in Sources */,
+				F994B4461B28FFE17199A889 /* FirebaseAuthSession.swift in Sources */,
+				4D0178A5D5C0B27708C30C4D /* FirebaseContentSafetyRepository.swift in Sources */,
+				C42F15EF77B9643891298E51 /* FirebaseDeviceRegistrar.swift in Sources */,
+				C0BCC8302A7E6A3B7BB2D2C2 /* FirebaseDocumentCodec.swift in Sources */,
+				0D08CA1587327FC4F7CA31B8 /* FirebaseFriendRepository.swift in Sources */,
+				AA8BC5A9E132FEA6EA1F344D /* FirebaseImageStore.swift in Sources */,
+				9CA29FF725BF91173ED29EA9 /* FirebasePostRepository.swift in Sources */,
+				7BD7DDA744B97999595E92B2 /* FirebaseRepositoryError.swift in Sources */,
+				AB2B0E119BF9C3478B4B03E8 /* FirebaseUserRepository.swift in Sources */,
+				C076866EA2110D42F64C5DEC /* FriendRepository.swift in Sources */,
+				48C0F6F1523810869AF829F8 /* FriendRequestsView.swift in Sources */,
+				0999E1B3F926013D1FC47ED8 /* FriendsViewModel.swift in Sources */,
+				C8B29456F3F766C5CC47A30E /* Friendship.swift in Sources */,
+				2E14D29C579773ADF5F2F5F1 /* GridArchiveView.swift in Sources */,
+				91A57694C601C9789E95494A /* GridCanvas.swift in Sources */,
+				0036C159EA737E8650E27D79 /* GridLayoutMath.swift in Sources */,
+				7F46E4434A0FCA720A72D106 /* Handle.swift in Sources */,
+				540BEF6C8554DE04A2573138 /* HandleClaimView.swift in Sources */,
+				97B3EC0B6DFD4B254FDC5EAE /* Haptics.swift in Sources */,
+				FCB0ECDFFCE513D3DE26CEC4 /* ImageFileStore.swift in Sources */,
+				9FBA7F296942F2D9FDCE220F /* ImageProcessor.swift in Sources */,
+				8BA5BF3FB14D4B28A78DEC9B /* ImageStore.swift in Sources */,
+				A73532A7336134B3C0372AD9 /* LaunchGate.swift in Sources */,
+				D3135E7486A44D558AF157C0 /* Layout.swift in Sources */,
+				5B9541BE9E3BB595469F3CC6 /* LivePreviewSampler.swift in Sources */,
+				FB8FC2362E7E09CE88E3B69F /* LocalDate.swift in Sources */,
+				7FEF740F4EC293989E2D5A20 /* LocalDefaults.swift in Sources */,
+				633B92B960D7D1F46F7ED371 /* LocalStoreContainer.swift in Sources */,
+				29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */,
+				5E231E656EEA92440D8DD0F6 /* MorningAlarmSettingsView.swift in Sources */,
+				57E37E5EDCF65B9C244A572E /* NotificationRouter.swift in Sources */,
+				D4E05414E3DAF916F1D1AD68 /* OnboardingCoordinatorView.swift in Sources */,
+				DC69B9AC25AF58733BA32103 /* PaywallEntryPoint.swift in Sources */,
+				D20CD19BB38111C343CB95DF /* PaywallView.swift in Sources */,
+				111340BF6049F7D65B747105 /* PaywallViewModel.swift in Sources */,
+				BD45B6EC1855280158BDFFEB /* PendingUpload.swift in Sources */,
+				805B9D2D3F41C2C5B93D4C5B /* PersonalizationProfile.swift in Sources */,
+				E87922CD54E95934223F2841 /* PersonalizationQuestionsView.swift in Sources */,
+				ED281546431F7E899784C3CD /* PersonalizedPlanView.swift in Sources */,
+				8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */,
+				0AF2AF74483FAC6BD88908B1 /* PostPublisher.swift in Sources */,
+				0A3B444EFC749E0E946DAF5D /* PostRepository.swift in Sources */,
+				0B5ED10C14C0F2046C95EF96 /* PostStatusBanner.swift in Sources */,
+				16BFDDB59059721177158CD2 /* ProGate.swift in Sources */,
+				DE09389A9184EF4D83A3E625 /* PurchasesEnvironment.swift in Sources */,
+				1626FCA14759AC287433C68A /* PurchasesServicing.swift in Sources */,
+				BBFAF60FFF364B7F0A3D3A19 /* RepositoryError.swift in Sources */,
+				BE54EEFE6039ABF724B05F89 /* RestDayPolicy.swift in Sources */,
+				F46CEF08F53E6A1DCE6E4E4D /* RetryPolicy.swift in Sources */,
+				3AD6F998EEC62AF4B9B808E5 /* RevenueCatConfig.swift in Sources */,
+				DA7F362CB6B55F49E23DF687 /* RevenueCatService.swift in Sources */,
+				F35ACD21DBA2EC1AA156C4F2 /* RitualGridMark.swift in Sources */,
+				2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */,
+				46968A01BEE2FBE99E0F7125 /* ServiceEnvironment.swift in Sources */,
+				5DB8DB1770D51E87EF95DB9A /* ServiceFactory.swift in Sources */,
+				D3749B2D566AC3F41063F462 /* SettingsView.swift in Sources */,
+				51206B88C29F69D7E89FC54C /* ShareCardRenderer.swift in Sources */,
+				03B5D7D34E491DAA8C82B861 /* ShareSheet.swift in Sources */,
+				DD5BB911FB2CACFCA6B9BFA9 /* ShutterButton.swift in Sources */,
+				FC2D36F220B62364F7923993 /* SkyColor.swift in Sources */,
+				5657A2439D2F9FB3235C90A1 /* SkyColorDisplay.swift in Sources */,
+				96161510D35059AFB0855DF4 /* SkyColorExtractor.swift in Sources */,
+				833F269B76A024546360D8D3 /* SkyGridApp.swift in Sources */,
+				38B29DA22E13F9633322DDD3 /* SkyGridExportView.swift in Sources */,
+				92AB0781583020CF0AC93B74 /* SkyGridView.swift in Sources */,
+				523CBFDDEB46964B8ED61F4E /* SkyPost.swift in Sources */,
+				A6D484118FFD38385978B4E2 /* StreakCalculator.swift in Sources */,
+				17B78EFE784768727DE3AA0A /* Theme.swift in Sources */,
+				62D371902E633F9E431148A7 /* TimeZonePolicy.swift in Sources */,
+				539EDA42CFB950F02BCC4FB4 /* TodayPhotoCard.swift in Sources */,
+				B2B2EC2EB744283C732D4016 /* TodayView.swift in Sources */,
+				E5C5E616D811AC590B2680A1 /* TodayViewModel.swift in Sources */,
+				A1036E2C1EEC9390679582F7 /* Typography.swift in Sources */,
+				1709C3767925D0139A8D207B /* UploadQueue.swift in Sources */,
+				F4351425D10C31CF3CCFE2A0 /* UploadState.swift in Sources */,
+				C9E66D6FE70A5B5724C60993 /* UploadTriggers.swift in Sources */,
+				C05BAD13433A3B570BFAB949 /* UserProfile.swift in Sources */,
+				566D77E3E428EEC352F015DC /* UserRepository.swift in Sources */,
+				AC951EAC9D1AC1FEA36DC492 /* ViewModifiers.swift in Sources */,
+				44CE64858E6E6A18AD409B73 /* WakeGoal.swift in Sources */,
+				FCE49CB8F5517364586B76F1 /* WakeGoalPickerView.swift in Sources */,
+				AC6D5CF00AFA32E554B4FED3 /* WeekRhythm.swift in Sources */,
+				7C1052A3348A0D64AB39949F /* WeekRhythmView.swift in Sources */,
+				A7E8BB5A0D4AE334716D86EE /* WelcomeView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD908FA53EDE257516BDE94D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				26540071FB4476467A5F1568 /* GridLayoutMathTests.swift in Sources */,
+				6211FA6EAECA6C92CD4A11CD /* HandleTests.swift in Sources */,
+				E8A87BDA1A437D2740E1C528 /* LaunchGateTests.swift in Sources */,
+				E5768E9031FE2B5AE0CBB959 /* LocalDateTests.swift in Sources */,
+				22E196A552BB8EE03B4ECDFB /* PaywallPolicyTests.swift in Sources */,
+				8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */,
+				F3B83571F3DFC0124517F154 /* RetryPolicyTests.swift in Sources */,
+				F9F04A8B066CD6D489EECB79 /* SkyColorExtractorTests.swift in Sources */,
+				69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */,
+				C0989E5EC678F1A95C2C0097 /* StreakCalculatorTests.swift in Sources */,
+				F5750D43D5F807D1E59E967A /* TimeZonePolicyTests.swift in Sources */,
+				D1DAF0FCBD24BD57B71BF22D /* UploadQueueTests.swift in Sources */,
+				C7B5AAE99142F0E8FDFE9ECD /* WeekRhythmTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3A9B31F0A6E25AE254C7E34 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				09420A7F5E15A84F20BC404A /* SkyGridUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9B2F02A07D37C3EE083C3645 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E383EC8EDC102B43B7A488D4 /* SkyGrid */;
+			targetProxy = 70D855185BF5BCF7E7D4AC83 /* PBXContainerItemProxy */;
+		};
+		EC61D03FD0D10786209F29DC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E383EC8EDC102B43B7A488D4 /* SkyGrid */;
+			targetProxy = 81AEF846DE89B5CB0D4678DE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		06907FA0FEABD9367DA67D95 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		075A23FC11708E271CB1CA88 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridTests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SkyGrid.app/SkyGrid";
+			};
+			name = Debug;
+		};
+		0A6E747080CF3CD46ECCFC2D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		6EC146CE9C356632BAF73F9E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridUITests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SkyGrid;
+			};
+			name = Release;
+		};
+		6EC71F5393E30902D24FEFB5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridUITests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SkyGrid;
+			};
+			name = Debug;
+		};
+		AC76979C2BB0E441698CF5F4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 28A371182E1C9D56C7820C6F /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NVZB82UK53;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sky Grid";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Sky Grid uses the camera only to capture your morning sky. Choosing from the photo library is not available.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
+				PRODUCT_MODULE_NAME = SkyGrid;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B52C6B99C84A107E810F37FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9F475C0E96E7506F4ADBD33C /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = NVZB82UK53;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sky Grid";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Sky Grid uses the camera only to capture your morning sky. Choosing from the photo library is not available.";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
+				PRODUCT_MODULE_NAME = SkyGrid;
+				SDKROOT = iphoneos;
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F727A0DAEEF244090FB34F20 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridTests;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SkyGrid.app/SkyGrid";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4670C66A2146B33B2F801769 /* Build configuration list for PBXNativeTarget "SkyGridTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				075A23FC11708E271CB1CA88 /* Debug */,
+				F727A0DAEEF244090FB34F20 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		49174F483F2328DB3731B455 /* Build configuration list for PBXNativeTarget "SkyGrid" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B52C6B99C84A107E810F37FF /* Debug */,
+				AC76979C2BB0E441698CF5F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		52299A20EE9EE23439089593 /* Build configuration list for PBXNativeTarget "SkyGridUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6EC71F5393E30902D24FEFB5 /* Debug */,
+				6EC146CE9C356632BAF73F9E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9EA8F2AB123CDE4218DA5614 /* Build configuration list for PBXProject "SkyGrid" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A6E747080CF3CD46ECCFC2D /* Debug */,
+				06907FA0FEABD9367DA67D95 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.17.0;
+			};
+		};
+		FBB01C720C952F2F9FDB366B /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.43.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		019FE329E5EF8FD84ED28979 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FBB01C720C952F2F9FDB366B /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
+		};
+		068F1BE807A1588E40B46E89 /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		0AF085D3C6D7750CCAC773AC /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
+		7005B019440911A08B733C9C /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		7A2F9AC7FEDF52ACCCB77DD2 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		971FE35331B41C1D9C120101 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		A5C1EF18ACF9C35C82483C1B /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 20211BBDFD85AAF63FEEEA83 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 60B532877EDB854F7FD07C82 /* Project object */;
+}

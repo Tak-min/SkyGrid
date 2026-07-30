@@ -1,0 +1,37 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function relationshipId(first, second) {
+      return first < second ? first + '_' + second : second + '_' + first;
+    }
+
+    function activeBuddy(ownerUid) {
+      let relationship = firestore.get(
+        /databases/(default)/documents/friendships/$(relationshipId(request.auth.uid, ownerUid))
+      );
+      return signedIn()
+        && firestore.exists(
+          /databases/(default)/documents/friendships/$(relationshipId(request.auth.uid, ownerUid))
+        )
+        && relationship.data.members.hasAll([request.auth.uid, ownerUid])
+        && relationship.data.status == 'accepted'
+        && relationship.data.blockedBy.size() == 0;
+    }
+
+    match /posts/{uid}/{fileName} {
+      allow get: if signedIn() && (request.auth.uid == uid || activeBuddy(uid));
+      allow list: if false;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg'
+        && fileName.matches('[A-Za-z0-9-]+(_thumb)?\\.jpg');
+      allow update: if false;
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+  }
+}

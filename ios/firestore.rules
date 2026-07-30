@@ -1,0 +1,156 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function relationshipId(first, second) {
+      return first < second ? first + '_' + second : second + '_' + first;
+    }
+
+    function relationshipWith(uid) {
+      return get(/databases/$(database)/documents/friendships/$(relationshipId(request.auth.uid, uid)));
+    }
+
+    function activeBuddy(uid) {
+      let relationship = relationshipWith(uid);
+      return signedIn()
+        && exists(/databases/$(database)/documents/friendships/$(relationshipId(request.auth.uid, uid)))
+        && relationship.data.members.hasAll([request.auth.uid, uid])
+        && relationship.data.status == 'accepted'
+        && relationship.data.blockedBy.size() == 0;
+    }
+
+    function validProfileKeys() {
+      return request.resource.data.keys().hasOnly([
+        'handle', 'displayName', 'timezone', 'wakeGoalMinutes',
+        'streakCurrent', 'streakLongest', 'isPro', 'createdAt'
+      ]);
+    }
+
+    function validPostKeys() {
+      return request.resource.data.keys().hasOnly([
+        'ownerUid', 'capturedAt', 'uploadedAt', 'imagePath', 'thumbPath',
+        'skyColorHex', 'minutesFromGoal', 'reactions'
+      ]);
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || activeBuddy(uid));
+      allow list: if false;
+
+      // A profile is born atomically with its immutable handle document.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && validProfileKeys()
+        && request.resource.data.handle is string
+        && getAfter(/databases/$(database)/documents/handles/$(request.resource.data.handle)).data.uid == request.auth.uid;
+
+      // Subscription status and streak values are server-owned. Client settings can
+      // be changed without touching the identity or entitlement fields.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName', 'timezone', 'wakeGoalMinutes'
+        ]);
+      allow delete: if false;
+
+      match /posts/{localDate} {
+        allow get, list: if signedIn() && (request.auth.uid == uid || activeBuddy(uid));
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && validPostKeys()
+          && request.resource.data.ownerUid == uid
+          && request.resource.data.capturedAt <= request.time
+          && request.resource.data.uploadedAt == request.time
+          && request.resource.data.imagePath.matches('posts/' + uid + '/[A-Za-z0-9-]+\\.jpg')
+          && request.resource.data.thumbPath.matches('posts/' + uid + '/[A-Za-z0-9-]+_thumb\\.jpg')
+          && request.resource.data.skyColorHex.matches('#[A-Fa-f0-9]{6}')
+          && request.resource.data.reactions.size() == 0;
+        allow update: if false;
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
+    }
+
+    match /handles/{handle} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.handle == handle;
+      allow update, delete: if false;
+    }
+
+    match /friendships/{pairId} {
+      allow get, list: if signedIn() && resource.data.members.hasAny([request.auth.uid]);
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['members', 'status', 'requestedBy', 'createdAt', 'blockedBy'])
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] < request.resource.data.members[1]
+        && request.resource.data.members.hasAny([request.auth.uid])
+        && request.resource.data.requestedBy == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.blockedBy.size() == 0
+        && pairId == relationshipId(request.resource.data.members[0], request.resource.data.members[1]);
+      allow update: if signedIn()
+        && resource.data.members.hasAny([request.auth.uid])
+        && request.resource.data.members == resource.data.members
+        && request.resource.data.requestedBy == resource.data.requestedBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && resource.data.status == 'pending'
+            && request.resource.data.status == 'accepted'
+            && resource.data.requestedBy != request.auth.uid
+          )
+          ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blockedBy'])
+            && request.resource.data.status == resource.data.status
+            && request.resource.data.blockedBy.hasOnly(resource.data.members)
+            && (
+              (
+                request.resource.data.blockedBy.size() == resource.data.blockedBy.size() + 1
+                && request.resource.data.blockedBy.hasAll(resource.data.blockedBy)
+                && request.resource.data.blockedBy.hasAny([request.auth.uid])
+              )
+              ||
+              (
+                request.resource.data.blockedBy.size() + 1 == resource.data.blockedBy.size()
+                && resource.data.blockedBy.hasAll(request.resource.data.blockedBy)
+                && !request.resource.data.blockedBy.hasAny([request.auth.uid])
+              )
+            )
+          )
+        );
+      allow delete: if signedIn() && resource.data.members.hasAny([request.auth.uid]);
+    }
+
+    match /reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['reporterUid', 'subjectUid', 'createdAt', 'status'])
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.subjectUid is string
+        && request.resource.data.status == 'received'
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
+
+    match /users/{uid}/devices/{tokenId} {
+      allow get, list: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['fcmToken', 'updatedAt', 'platform'])
+        && request.resource.data.fcmToken is string
+        && request.resource.data.platform == 'ios';
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
