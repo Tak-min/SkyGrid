@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky Grid — Privacy Policy</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<nav><a href="/">Support</a> · <a href="/privacy">Privacy Policy</a></nav>
+<h1>Privacy Policy</h1>
+<p class="updated">Last updated: 2026-07-30</p>
+
+<p>Sky Grid ("the app") is a morning photo streak app. This policy describes
+what data the app collects, why, and how you can delete it.</p>
+
+<h2>Data we collect</h2>
+<table>
+<tr><th>Data</th><th>Why</th><th>Where it's stored</th></tr>
+<tr><td>Account identifier (anonymous ID, or your Apple ID if you choose Sign in with Apple)</td><td>To identify your account and sync your data across devices</td><td>Firebase Authentication</td></tr>
+<tr><td>Handle / display name</td><td>Shown to your buddies</td><td>Firebase Firestore</td></tr>
+<tr><td>Your morning sky photos, capture time, and extracted color</td><td>The core feature of the app</td><td>Firebase Cloud Storage / Firestore</td></tr>
+<tr><td>Streak count, wake-goal time, subscription (Pro) status</td><td>To power the app's core mechanics and paywall</td><td>Firebase Firestore</td></tr>
+<tr><td>Buddy relationships (who you've connected with)</td><td>To show buddy posts and enforce mutual-blur</td><td>Firebase Firestore</td></tr>
+<tr><td>Push notification device token</td><td>To send your morning reminder and buddy-posted notifications</td><td>Firebase Cloud Messaging</td></tr>
+<tr><td>In-app purchase receipt data</td><td>To grant Pro entitlements</td><td>RevenueCat, Apple (StoreKit)</td></tr>
+</table>
+
+<p>We do <strong>not</strong> collect your photo library, contacts, location,
+or browsing history, and the app has no advertising or analytics SDK.</p>
+
+<h2>Who we share data with</h2>
+<ul>
+<li><strong>Firebase (Google)</strong> — hosts our backend (authentication, database, photo storage, push notifications, and account-deletion logic).</li>
+<li><strong>RevenueCat</strong> — manages subscription state; receives your anonymized purchase/entitlement data, not your photos or profile.</li>
+<li><strong>Apple</strong> — processes payments for subscriptions and in-app purchases via StoreKit; Sign in with Apple is optional.</li>
+</ul>
+<p>We do not sell your data, and we do not share it with advertisers.</p>
+
+<h2>Buddies and visibility</h2>
+<p>Your morning photo is visible only to buddies you've mutually accepted.
+Until you post your own photo for the day, a buddy's photo stays blurred to
+you (and vice versa). You can remove a buddy or block a relationship at any
+time from the app, which immediately revokes their access to your photos.</p>
+
+<h2>Reporting and moderation</h2>
+<p>If you see a photo or profile that concerns you, you can report it from
+within the app. Reports are reviewed and are not visible to other users.</p>
+
+<h2>Deleting your data</h2>
+<p>You can permanently delete your account and all associated data (profile,
+photos, streak history, buddy relationships) from Settings → Delete Account.
+This is handled by a server-side function and cannot be undone.</p>
+
+<h2>Children's privacy</h2>
+<p>Sky Grid is not directed at children under 13, and we do not knowingly
+collect data from children under 13.</p>
+
+<h2>Changes to this policy</h2>
+<p>If this policy changes in a way that materially affects how your data is
+used, we'll update the "Last updated" date above and, where required, notify
+you in-app.</p>
+
+<h2>Contact</h2>
+<p>Questions about this policy or your data: <strong>taku810616@gmail.com</strong></p>
+</main>
+</body>
+</html>

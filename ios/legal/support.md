@@ -2,7 +2,7 @@
 
 ## Contact
 
-For help, bug reports, or account issues, email **{{SUPPORT_EMAIL}}**. We
+For help, bug reports, or account issues, email **taku810616@gmail.com**. We
 typically respond within a few days.
 
 ## Common questions

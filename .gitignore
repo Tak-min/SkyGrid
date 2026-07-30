@@ -22,3 +22,9 @@ ios/firebase-debug.log
 
 # macOS
 .DS_Store
+
+# Wrangler (Cloudflare) local cache — accidentally uploaded as a public asset
+# once when it landed inside legal/site/; see dev-notes 2026-07-30.
+ios/legal/.wrangler/
+ios/legal/site/.wrangler/
+ios/legal/node_modules/

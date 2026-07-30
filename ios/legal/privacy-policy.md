@@ -62,4 +62,4 @@ you in-app.
 
 ## Contact
 
-Questions about this policy or your data: **{{SUPPORT_EMAIL}}**
+Questions about this policy or your data: **taku810616@gmail.com**
