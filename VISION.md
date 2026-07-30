@@ -21,11 +21,11 @@
 **2. 上記以外に残っている必要タスク(このセッションで洗い出し済み)**
 - **APNsキーのFirebase登録(未着手・新規に判明した項目):** バディ投稿通知(Cloud Functionsの`deleteAccount`と同様のFCMトリガー、VISION.md§4)が実機に届くには、Apple Developer Portalの「Keys」でAPNs Authentication Key(.p8)を発行し、Firebase Console → プロジェクト設定 → Cloud Messaging → Appleアプリの構成、にアップロードする必要がある。現状未着手で、他のどの節にも記載がなかったため今回追加
 - **App Check enforcement:** App Check APIは有効化済みだが、Firestore/Storage/Functionsへの「強制」モードは未設定。iOS側の`AppAttestProviderFactory`(Release)実装に対応するFirebase Console側のApp Attestプロバイダ登録が必要かどうか未確認
-- **Storage Rulesのクロスサービス参照の実地検証:** `storage.rules`の`activeBuddy()`は`firestore.get()`でFirestoreを参照する設計で実装・デプロイ済み(コンパイルは通過済み)だが、実際に2アカウント間でバディの写真が正しく閲覧できるかは複数アカウントでのテストが必要(Sign in with Apple整備後、テストアカウント2つで検証するのが自然なタイミング)
+- ~~Storage Rulesのクロスサービス参照の実地検証~~ → **2026-07-30完了。** Firebase Emulator Suite(`@firebase/rules-unit-testing`)で承認済み/pending/ブロック済み/無関係/未認証の全パターンを検証し、`activeBuddy()`のクロスサービス参照(Storage→Firestore)が意図通り動くことを実証済み。詳細・ハマった点(プロジェクトID不一致で検知不能になる罠)は[dev-notes/rules-emulator-verification_2026-07-30.md](dev-notes/rules-emulator-verification_2026-07-30.md)参照。次回以降`npm --prefix rules-tests run test:emulator`で再実行可能
 - **サポートURL・プライバシーポリシーの実URL投入:** Codexの実装メモ(本ファイル上部)に記載の通り未完了。App Store提出・アプリ内の安全説明/連絡先設定(VISION.md§4のApp Review Guideline 1.2対応)の両方に必要
 - **アプリアイコン/ビジュアルデザイン:** 依頼者の方針転換により中断されたまま(§6参照)。再着手のタイミングは依頼者と相談
 - **BGProcessingTaskトリガーの実機検証・実装、AlarmKitの物理iPhone実機回帰確認:** 既存の既知の残課題(上記Codex更新メモ参照)
-- **実写真でのSkyColorExtractor回帰テスト:** 既存の既知の残課題(§8参照)
+- ~~実写真でのSkyColorExtractor回帰テスト~~ → **2026-07-30完了。** Wikimedia Commonsの実写真4枚(快晴/曇天/夕焼け/劇的な雲+シルエット)を追加し、Pillowによる独立クロスチェック計算値を根拠にテストを実装、51件全パス確認済み。副産物として、テストフィクスチャが誤って本体アプリのApp Storeバイナリに同梱されていた設計ミスも発見・修正(`SkyGridTests`専用リソースへ移設)。詳細は[dev-notes/sky-color-extractor-real-photos_2026-07-30.md](dev-notes/sky-color-extractor-real-photos_2026-07-30.md)
 
 **方針転換の経緯(2026-07-29、同日中に2段階):**
 1. 依頼者指示によりデザイン制作(Canva MCP + Opus)を開始 → デザイン用HTMLモックアップ(`design/screens-mockup.html`)は完成
@@ -136,7 +136,7 @@ reports/{id}                           // 通報(App Review必須)
 2. 日付境界: `localDate`は端末のローカル暦日で決定。時差移動・DSTで「同日2投稿」「1日消失」が起きうるため`timezone`を保存し変更検知時の扱いを明示(推奨: 過去は書き換えない)
 3. Cloud FunctionsはBlazeプラン必須で予算暴走リスクがある唯一の箇所。Budget Alertを$5に設定。要検証: 新規プロジェクトのCloud Storage既定バケット作成自体にBlazeが必要になっている可能性
 4. 画像サイズがコストの支配項。アップロード前に長辺1440px/JPEG q0.7(200〜400KB)+サムネ320pxに圧縮
-5. 要検証: Storage Security Rulesから友達関係を参照できるか(クロスサービス`firestore.get()`)。使えない場合は画像パスを推測不能なUUIDにし、Rulesは「認証済みなら読める」に留める割り切りでMVPは進めてよい
+5. ~~要検証: Storage Security Rulesから友達関係を参照できるか~~ → 2026-07-30、Firebase Emulator Suiteで実証済み(動作する)。詳細は[dev-notes/rules-emulator-verification_2026-07-30.md](dev-notes/rules-emulator-verification_2026-07-30.md)
 6. UGCを含むためApp Review Guideline 1.2(通報・ブロック・不適切コンテンツ対応・連絡先明示)とアプリ内アカウント削除(5.1.1)はMVP必須、後回し不可
 
 **不正対策はUIに落とす(技術検証ではなく社会的説明責任):**

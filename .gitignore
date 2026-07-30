@@ -12,5 +12,13 @@ ios/build/
 ios/functions/node_modules/
 ios/functions/lib/
 
+# Node (Rules unit tests)
+ios/rules-tests/node_modules/
+
+# Firebase emulator artifacts
+ios/firestore-debug.log
+ios/ui-debug.log
+ios/firebase-debug.log
+
 # macOS
 .DS_Store

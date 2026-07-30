@@ -10,5 +10,14 @@
       "source": "functions",
       "codebase": "default"
     }
-  ]
+  ],
+  "emulators": {
+    "firestore": {
+      "port": 8180
+    },
+    "storage": {
+      "port": 9299
+    },
+    "singleProjectMode": true
+  }
 }

@@ -68,6 +68,10 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: SkyGrid/Tests
+        excludes:
+          - "Fixtures/**"
+      - path: SkyGrid/Tests/Fixtures
+        buildPhase: resources
     settings:
       base:
         SWIFT_VERSION: "5.0"
@@ -96,5 +100,9 @@ schemes:
       targets:
         - SkyGridTests
         - SkyGridUITests
+      environmentVariables:
+        FIRAAppCheckDebugToken: "2920ed9c-3a77-4d4d-ad35-85bbfa4eec33"
     run:
       config: Debug
+      environmentVariables:
+        FIRAAppCheckDebugToken: "2920ed9c-3a77-4d4d-ad35-85bbfa4eec33"
