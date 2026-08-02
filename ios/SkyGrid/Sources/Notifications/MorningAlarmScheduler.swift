@@ -75,11 +75,15 @@ enum MorningAlarmScheduler {
     /// one all-days wake alarm at the supplied local wall-clock time.
     static func enable(wakeGoalMinutes: Int) async -> MorningAlarmState {
         let normalizedMinutes = min(max(wakeGoalMinutes, 0), 23 * 60 + 59)
+        let state: MorningAlarmState
         if #available(iOS 26.0, *) {
             LocalDefaults.morningAlarmBackend = "automatic"
-            return await scheduleAlarmKit(minutes: normalizedMinutes)
+            state = await scheduleAlarmKit(minutes: normalizedMinutes)
+        } else {
+            state = await scheduleReminder(minutes: normalizedMinutes)
         }
-        return await scheduleReminder(minutes: normalizedMinutes)
+        await refreshMorningRitualFollowUps(minutes: normalizedMinutes)
+        return state
     }
 
     /// An explicit escape hatch for an iOS 26 user who declined AlarmKit. This is
@@ -87,7 +91,10 @@ enum MorningAlarmScheduler {
     /// substitute for a system alarm.
     static func enableReminderFallback(wakeGoalMinutes: Int) async -> MorningAlarmState {
         LocalDefaults.morningAlarmBackend = "reminder"
-        return await scheduleReminder(minutes: min(max(wakeGoalMinutes, 0), 23 * 60 + 59))
+        let normalizedMinutes = min(max(wakeGoalMinutes, 0), 23 * 60 + 59)
+        let state = await scheduleReminder(minutes: normalizedMinutes)
+        await refreshMorningRitualFollowUps(minutes: normalizedMinutes)
+        return state
     }
 
     static func disable() async {
@@ -97,6 +104,41 @@ enum MorningAlarmScheduler {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
         LocalDefaults.morningAlarmEnabled = false
         LocalDefaults.morningAlarmBackend = "automatic"
+        await MorningFollowUpScheduler.cancelAll()
+        await MorningRitualActivity.end(status: .captured)
+    }
+
+    /// The follow-up nudge and the alarm share one wake time; this keeps them in
+    /// lockstep every time the alarm (re)schedules, mirroring the AlarmKit
+    /// cancel-then-reschedule idempotency already used for the alarm itself.
+    private static func refreshMorningRitualFollowUps(minutes: Int) async {
+        let today = LocalDate(date: Date(), timeZone: .current)
+        await MorningFollowUpScheduler.refreshWindow(wakeGoalMinutes: minutes, today: today)
+    }
+
+    /// Re-issues `AlarmManager.shared.schedule(id:configuration:)` for the current
+    /// wake time on every launch, while an alarm is enabled. AlarmKit persists a
+    /// schedule's bound `secondaryIntent` at the moment `schedule` is called; a later
+    /// app update (a new build of `OpenMorningCameraIntent`, a changed alert layout)
+    /// does **not** retroactively refresh an alarm that was already scheduled by an
+    /// older binary. Without this, the on-device alarm can keep firing correctly
+    /// (that part is OS-owned) while its secondary button silently references stale
+    /// intent behavior from whatever build was running the last time someone opened
+    /// Settings and touched the toggle. `enable`/`enableReminderFallback` are already
+    /// idempotent (cancel-then-reschedule under one fixed identifier), so calling this
+    /// unconditionally on every cold launch is safe and does not re-prompt for
+    /// authorization once it has already been granted.
+    static func resyncIfNeeded() async {
+        guard LocalDefaults.morningAlarmEnabled else { return }
+        let minutes = LocalDefaults.wakeGoalMinutes
+        if LocalDefaults.morningAlarmBackend == "reminder" {
+            _ = await enableReminderFallback(wakeGoalMinutes: minutes)
+        } else {
+            _ = await enable(wakeGoalMinutes: minutes)
+        }
+        // enable/enableReminderFallback already refresh the follow-up window as
+        // part of scheduling, which is what keeps it rolling forward on every
+        // cold launch.
     }
 
     private static func reminderState() async -> MorningAlarmState {
@@ -199,6 +241,13 @@ private extension MorningAlarmScheduler {
             return authorization == .denied ? .denied(.systemAlarm) : .failed(.systemAlarm)
         }
 
+        // AlarmKit authorization alone does not grant UNUserNotificationCenter
+        // authorization, which the follow-up nudge needs. Asking here piggybacks
+        // on the one moment someone has already deliberately turned on the
+        // morning wake flow, rather than a separate, unexplained prompt later. A
+        // denial here only loses the soft nudge — the alarm itself is unaffected.
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+
         // Never leave a fallback notification behind after upgrading to the real
         // system alarm; duplicate morning prompts are worse than a failed update.
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
@@ -219,6 +268,7 @@ private extension MorningAlarmScheduler {
         let configuration = AlarmManager.AlarmConfiguration.alarm(
             schedule: schedule,
             attributes: attributes,
+            stopIntent: MorningAlarmStoppedIntent(),
             secondaryIntent: OpenMorningCameraIntent(),
             sound: .default
         )
@@ -251,17 +301,55 @@ private extension MorningAlarmScheduler {
 }
 
 @available(iOS 26.0, *)
-private struct SkyGridAlarmMetadata: AlarmMetadata {}
+struct SkyGridAlarmMetadata: AlarmMetadata {}
 
 /// AlarmKit invokes this after the person dismisses their morning alarm. Opening
 /// the app is intentional here: the only next step is the one-tap camera ritual.
+///
+/// Deliberately not `private`: App Intents are looked up by the system via their
+/// mangled type name, and `private`/`fileprivate` types carry an extra file-scoped
+/// discriminator in that mangled name that plain `internal` types don't — one less
+/// variable in how AlarmKit resolves this type across app rebuilds.
 @available(iOS 26.0, *)
-private struct OpenMorningCameraIntent: LiveActivityIntent {
+struct OpenMorningCameraIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Open Sky Grid"
-    static var openAppWhenRun: Bool = true
+    // `openAppWhenRun` was deprecated in iOS 26.0 in favor of `supportedModes`;
+    // `.foreground(.immediate)` is Apple's documented replacement for "always
+    // bring the app forward when this intent runs."
+    static var supportedModes: IntentModes = .foreground(.immediate)
 
     func perform() async throws -> some IntentResult {
         LocalDefaults.openCameraAfterMorningAlarm = true
+        return .result()
+    }
+}
+
+/// AlarmKit runs this in the app's process when the alarm's Stop button is
+/// tapped — `AlarmManager` has already silenced the alarm itself by the time this
+/// runs (that part is system-owned and cannot be gated on app logic; see the
+/// morning-ritual dev-note for the confirmed platform constraint). This exists
+/// only to start the "sky not captured yet" Live Activity for the person who just
+/// dismissed the alarm without opening the camera.
+///
+/// Deliberately not `private`: see the comment on `OpenMorningCameraIntent` above
+/// — App Intents are looked up by mangled type name, and a file-scoped access
+/// modifier changes that name across rebuilds.
+@available(iOS 26.0, *)
+struct MorningAlarmStoppedIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Sky Grid morning alarm stopped"
+    static var isDiscoverable: Bool { false }
+    // No `supportedModes` override: the default is background execution. This
+    // must NOT bring the app forward — the person chose not to open it.
+
+    func perform() async throws -> some IntentResult {
+        let today = LocalDate(date: Date(), timeZone: .current)
+        let hasPostToday = LocalDefaults.lastCapturedLocalDateID == today.docID
+        await MorningRitualCoordinator.reconcile(
+            today: today,
+            hasPostToday: hasPostToday,
+            now: Date(),
+            timeZone: .current
+        )
         return .result()
     }
 }
