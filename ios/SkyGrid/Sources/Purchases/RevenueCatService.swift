@@ -15,21 +15,34 @@ struct RevenueCatService: PurchasesServicing {
         }
     }
 
+    func entitlementSummary() async -> EntitlementSummary {
+        do {
+            let info = try await Purchases.shared.customerInfo()
+            guard let entitlement = info.entitlements[RevenueCatConfig.entitlementID], entitlement.isActive else {
+                return .free
+            }
+            return EntitlementSummary(
+                status: .subscribed,
+                plan: await Self.plan(for: entitlement)
+            )
+        } catch {
+            Self.logger.error("Failed to fetch subscription plan: \(error.localizedDescription)")
+            return .unknown
+        }
+    }
+
     func fetchPaywall() async throws -> PaywallContent {
         let offerings = try await Purchases.shared.offerings()
         guard let offering = offerings.current else { throw PurchaseError.noOfferingAvailable }
-        let packages = offering.availablePackages
-        let eligibility = await Purchases.shared.checkTrialOrIntroDiscountEligibility(
-            productIdentifiers: packages.map(\.storeProduct.productIdentifier)
-        )
-        let products = packages.map { pkg in
+        let products = offering.availablePackages.compactMap { pkg -> PurchaseProduct? in
+            let period = Self.period(for: pkg.packageType)
+            // The catalog is deliberately restricted to the three paid variants
+            // that correspond to Sky Grid's four-state model (plus Free).
+            guard [.monthly, .annual, .lifetime].contains(period) else { return nil }
             let pricePerMonth = pkg.storeProduct.pricePerMonth?.decimalValue
             let pricePerMonthLabel = pricePerMonth.flatMap { ppm in
                 pkg.storeProduct.priceFormatter?.string(from: ppm as NSDecimalNumber)
             }
-            let intro = pkg.storeProduct.introductoryDiscount
-            let isEligibleForIntro = eligibility[pkg.storeProduct.productIdentifier]?.status.isEligible == true
-            let hasDiscountedIntroPrice = isEligibleForIntro && intro?.paymentMode != .freeTrial
             return PurchaseProduct(
                 id: pkg.identifier,
                 title: pkg.storeProduct.localizedTitle,
@@ -37,16 +50,13 @@ struct RevenueCatService: PurchasesServicing {
                 periodLabel: Self.periodLabel(for: pkg.packageType),
                 offeringID: offering.identifier,
                 storeProductID: pkg.storeProduct.productIdentifier,
-                period: Self.period(for: pkg.packageType),
+                period: period,
                 pricePerMonth: pricePerMonth,
                 pricePerMonthLabel: pricePerMonthLabel,
                 price: pkg.storeProduct.price,
-                introductoryPrice: hasDiscountedIntroPrice ? intro?.price : nil,
-                introductoryPriceLabel: hasDiscountedIntroPrice ? intro?.localizedPriceString : nil,
-                introductoryDescription: isEligibleForIntro ? Self.introDescription(for: intro) : nil,
                 billingDescription: Self.billingDescription(
                     price: pkg.storeProduct.localizedPriceString,
-                    period: Self.period(for: pkg.packageType)
+                    period: period
                 )
             )
         }
@@ -89,11 +99,43 @@ struct RevenueCatService: PurchasesServicing {
         info.entitlements[RevenueCatConfig.entitlementID]?.isActive == true ? .subscribed : .notSubscribed
     }
 
+    private static func plan(for entitlement: EntitlementInfo) async -> SubscriptionPlan {
+        let period = await packagePeriod(for: entitlement.productIdentifier)
+        // A paid entitlement from an older catalog keeps access, while its
+        // display remains inside the same four-plan contract.
+        switch period {
+        case .monthly: return .monthly
+        case .annual: return .annual
+        case .lifetime: return .lifetime
+        default:
+            // A lifetime entitlement has no expiry even when an old offering is no
+            // longer returned by RevenueCat. A legacy subscription with an
+            // unresolved package remains paid and is shown as the conservative
+            // recurring plan rather than inventing a fifth display state.
+            return entitlement.expirationDate == nil ? .lifetime : .monthly
+        }
+    }
+
+    private static func packagePeriod(for productID: String) async -> PurchasePeriod {
+        if let offerings = try? await Purchases.shared.offerings(),
+           let package = offerings.all.values
+            .flatMap(\.availablePackages)
+            .first(where: { $0.storeProduct.productIdentifier == productID }) {
+            return period(for: package.packageType)
+        }
+
+        switch productID {
+        case "com.takmin.skygrid.pro.monthly": return .monthly
+        case "com.takmin.skygrid.pro.annual": return .annual
+        case "com.takmin.skygrid.pro.lifetime": return .lifetime
+        default: return .unknown
+        }
+    }
+
     private static func periodLabel(for type: PackageType) -> String? {
         switch type {
         case .annual: return "Annual"
         case .monthly: return "Monthly"
-        case .weekly: return "Weekly"
         case .lifetime: return "Lifetime"
         default: return nil
         }
@@ -103,7 +145,6 @@ struct RevenueCatService: PurchasesServicing {
         switch type {
         case .annual: return .annual
         case .monthly: return .monthly
-        case .weekly: return .weekly
         case .lifetime: return .lifetime
         default: return .unknown
         }
@@ -113,35 +154,9 @@ struct RevenueCatService: PurchasesServicing {
         switch period {
         case .annual: return "Then \(price) per year. Auto-renews unless cancelled."
         case .monthly: return "\(price) per month. Auto-renews unless cancelled."
-        case .weekly: return "\(price) per week. Auto-renews unless cancelled."
         case .lifetime: return "One payment. No renewal."
         case .unknown: return nil
         }
     }
 
-    private static func introDescription(for discount: StoreProductDiscount?) -> String? {
-        guard let discount else { return nil }
-        let duration = durationDescription(for: discount.subscriptionPeriod, count: discount.numberOfPeriods)
-        switch discount.paymentMode {
-        case .freeTrial:
-            return "\(duration) free trial."
-        case .payAsYouGo, .payUpFront:
-            return "Introductory price for \(duration)."
-        @unknown default:
-            return nil
-        }
-    }
-
-    private static func durationDescription(for period: SubscriptionPeriod, count: Int) -> String {
-        let value = period.value * count
-        let unit: String
-        switch period.unit {
-        case .day: unit = value == 1 ? "day" : "days"
-        case .week: unit = value == 1 ? "week" : "weeks"
-        case .month: unit = value == 1 ? "month" : "months"
-        case .year: unit = value == 1 ? "year" : "years"
-        @unknown default: unit = "period"
-        }
-        return "\(value)-\(unit)"
-    }
 }

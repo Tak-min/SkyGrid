@@ -8,6 +8,7 @@ final class PaywallViewModel {
     enum ViewState: Equatable {
         case loading
         case loaded(PaywallContent)
+        case entitlementUnavailable
         case failed(String)
     }
 
@@ -21,13 +22,24 @@ final class PaywallViewModel {
         self.purchases = purchases
     }
 
-    func load() async {
+    /// For automatic reminders, re-check the entitlement immediately before
+    /// loading products. This prevents a stale .unknown state from ever showing
+    /// purchase controls to an existing subscriber.
+    func load(verifyEntitlement: Bool) async -> EntitlementStatus? {
         state = .loading
+        if verifyEntitlement {
+            let status = await purchases.entitlementStatus()
+            guard status == .notSubscribed else {
+                state = status == .unknown ? .entitlementUnavailable : .failed("Your Pro access is already active.")
+                return status
+            }
+        }
         do {
             state = .loaded(try await purchases.fetchPaywall())
         } catch {
             state = .failed(Self.message(for: error))
         }
+        return nil
     }
 
     /// Returns `true` if entitlement was granted — caller should exit the funnel.

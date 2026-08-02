@@ -1,0 +1,124 @@
+import SwiftUI
+
+/// The shared container every paywall step renders inside: a scrollable content
+/// area plus a CTA region fixed to the bottom via `.safeAreaInset`, so the primary
+/// action and the free path are always on screen without scrolling (see D3 in
+/// `session-handoff-paywall-alarm_2026-08-01.md`).
+struct PaywallStepScaffold<Content: View, CTA: View>: View {
+    let flow: PaywallFlow
+    let step: PaywallStep
+    @ViewBuilder var content: () -> Content
+    @ViewBuilder var cta: () -> CTA
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: SGSpacing.xl) {
+                content()
+            }
+            .padding(SGSpacing.xl)
+            .padding(.bottom, 24)
+        }
+        .background(PaywallStepScaffold.background.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: SGSpacing.md) {
+                if flow.steps.count > 1 {
+                    PaywallStepIndicator(flow: flow, current: step)
+                }
+                cta()
+            }
+            .padding(.horizontal, SGSpacing.xl)
+            .padding(.top, SGSpacing.md)
+            .padding(.bottom, SGSpacing.sm)
+            .background(.ultraThinMaterial)
+        }
+    }
+
+    static var background: some View {
+        LinearGradient(
+            colors: [SGT.fill, SGT.background, SGT.background],
+            startPoint: .top,
+            endPoint: .center
+        )
+    }
+}
+
+private struct PaywallStepIndicator: View {
+    let flow: PaywallFlow
+    let current: PaywallStep
+
+    var body: some View {
+        HStack(spacing: SGSpacing.xs) {
+            ForEach(flow.steps, id: \.self) { step in
+                Circle()
+                    .fill(step == current ? SGT.ink : SGT.rule)
+                    .frame(width: 6, height: 6)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// A fallback screen shown instead of any step when an automatic reminder cannot
+/// yet confirm someone is not already subscribed. It bypasses the step machinery
+/// entirely: no purchase control exists anywhere outside `.plan`, so this state
+/// never risks exposing one before the check clears (see §8 in the paywall
+/// redesign dev-note).
+struct PaywallStatusView: View {
+    let onRetry: () -> Void
+    let onRestore: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.md) {
+            Spacer()
+            Text("We couldn’t confirm your Pro status.")
+                .font(SGFont.body(17))
+                .foregroundStyle(SGT.ink)
+            Text("Check your connection before choosing a plan. If you already purchased Pro, restore it first.")
+                .font(SGFont.caption(13))
+                .foregroundStyle(SGT.ink2)
+            Button("Try again", action: onRetry)
+                .buttonStyle(SkyPrimaryButtonStyle())
+            Button("Restore purchases", action: onRestore)
+                .buttonStyle(SkySecondaryButtonStyle())
+            Spacer()
+        }
+        .padding(SGSpacing.xl)
+        .frame(maxWidth: .infinity)
+        .background(PaywallStepScaffold<EmptyView, EmptyView>.background.ignoresSafeArea())
+    }
+}
+
+struct PaywallBenefit: View {
+    let symbol: String
+    let title: String
+    let detail: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: SGSpacing.md) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .medium))
+                .frame(width: 20)
+                .foregroundStyle(SGT.ink)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink)
+                Text(detail)
+                    .font(SGFont.caption(13))
+                    .foregroundStyle(SGT.ink2)
+            }
+        }
+    }
+}
+
+enum PaywallLegal {
+    static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+
+    static var privacyURL: URL? {
+        guard let rawValue = Bundle.main.object(forInfoDictionaryKey: "SkyGridPrivacyPolicyURL") as? String,
+              let url = URL(string: rawValue),
+              url.scheme?.lowercased() == "https"
+        else { return nil }
+        return url
+    }
+}

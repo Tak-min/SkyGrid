@@ -11,10 +11,61 @@ enum EntitlementStatus: Equatable, Sendable {
     case unknown
 }
 
+/// The commercial plans exposed by Sky Grid. This intentionally has exactly four
+/// cases; network verification remains a separate `EntitlementStatus` concern.
+enum SubscriptionPlan: String, CaseIterable, Equatable, Sendable {
+    case free
+    case monthly
+    case annual
+    case lifetime
+
+    var homeLabel: String {
+        switch self {
+        case .free: return "Free"
+        case .monthly: return "Monthly"
+        case .annual: return "Annual"
+        case .lifetime: return "Lifetime"
+        }
+    }
+
+    var statusSymbol: String {
+        switch self {
+        case .free: return "sparkles"
+        case .monthly: return "calendar"
+        case .annual: return "calendar.badge.checkmark"
+        case .lifetime: return "infinity"
+        }
+    }
+
+    /// A current paid subscription should be shown as status, not as another
+    /// purchase invitation. The free and unresolved states retain a manual way
+    /// to view the available plans.
+    var canOpenPaywall: Bool {
+        switch self {
+        case .free:
+            return true
+        case .monthly, .annual, .lifetime:
+            return false
+        }
+    }
+
+    var isPaid: Bool { self != .free }
+}
+
+struct EntitlementSummary: Equatable, Sendable {
+    let status: EntitlementStatus
+    let plan: SubscriptionPlan
+
+    static let free = EntitlementSummary(status: .notSubscribed, plan: .free)
+    /// We never turn an unresolved entitlement check into paid access. The
+    /// verification state remains `.unknown`, while the product display stays
+    /// inside the four-plan contract.
+    static let unknown = EntitlementSummary(status: .unknown, plan: .free)
+}
+
 enum PurchasePeriod: Equatable, Sendable {
     case annual
     case monthly
-    case weekly
     case lifetime
     case unknown
 }
@@ -33,9 +84,6 @@ struct PurchaseProduct: Identifiable, Equatable, Sendable {
     var pricePerMonth: Decimal?
     var pricePerMonthLabel: String?
     var price: Decimal?
-    var introductoryPrice: Decimal?
-    var introductoryPriceLabel: String?
-    var introductoryDescription: String?
     var billingDescription: String?
 
     init(
@@ -49,9 +97,6 @@ struct PurchaseProduct: Identifiable, Equatable, Sendable {
         pricePerMonth: Decimal? = nil,
         pricePerMonthLabel: String? = nil,
         price: Decimal? = nil,
-        introductoryPrice: Decimal? = nil,
-        introductoryPriceLabel: String? = nil,
-        introductoryDescription: String? = nil,
         billingDescription: String? = nil
     ) {
         self.id = id
@@ -64,14 +109,8 @@ struct PurchaseProduct: Identifiable, Equatable, Sendable {
         self.pricePerMonth = pricePerMonth
         self.pricePerMonthLabel = pricePerMonthLabel
         self.price = price
-        self.introductoryPrice = introductoryPrice
-        self.introductoryPriceLabel = introductoryPriceLabel
-        self.introductoryDescription = introductoryDescription
         self.billingDescription = billingDescription
     }
-
-    var displayedPriceLabel: String { introductoryPriceLabel ?? priceLabel }
-    var displayedPrice: Decimal? { introductoryPrice ?? price }
 }
 
 struct PaywallContent: Equatable, Sendable {
@@ -107,7 +146,20 @@ struct UnconfiguredPurchasesService: PurchasesServicing {
 
 protocol PurchasesServicing: Sendable {
     func entitlementStatus() async -> EntitlementStatus
+    func entitlementSummary() async -> EntitlementSummary
     func fetchPaywall() async throws -> PaywallContent
     func purchase(product: PurchaseProduct) async throws -> EntitlementStatus
     func restorePurchases() async throws -> EntitlementStatus
+}
+
+extension PurchasesServicing {
+    func entitlementSummary() async -> EntitlementSummary {
+        switch await entitlementStatus() {
+        case .notSubscribed: return .free
+        // A custom purchase service cannot infer a paid plan without RevenueCat's
+        // product mapping. Keep the UI in the four-plan model until it can.
+        case .subscribed: return EntitlementSummary(status: .subscribed, plan: .monthly)
+        case .unknown: return .unknown
+        }
+    }
 }

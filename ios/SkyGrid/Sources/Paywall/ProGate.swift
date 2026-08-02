@@ -8,7 +8,9 @@ enum ProGate {
     /// Whether `date` is within the free tier's visible archive window, measured
     /// from `today`.
     static func isWithinFreeArchiveWindow(_ date: LocalDate, today: LocalDate) -> Bool {
-        date <= today && date.daysUntil(today) <= freeArchiveWindowDays
+        // Today counts as one of the advertised 30 days, so the oldest free
+        // record is `today - 29`, not `today - 30`.
+        date <= today && date.daysUntil(today) < freeArchiveWindowDays
     }
 
     static func canViewFullYearGrid(isPro: Bool) -> Bool {

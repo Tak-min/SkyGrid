@@ -5,7 +5,10 @@ import Observation
 @MainActor
 @Observable
 final class EntitlementStore {
-    private(set) var status: EntitlementStatus = .notSubscribed
+    /// Until the first entitlement refresh completes, the app must not infer that a
+    /// person is eligible for an automatic purchase reminder.
+    private(set) var status: EntitlementStatus = .unknown
+    private(set) var plan: SubscriptionPlan = .free
     private(set) var isRefreshing = false
 
     private let purchases: any PurchasesServicing
@@ -19,7 +22,17 @@ final class EntitlementStore {
     func refresh() async {
         guard !isRefreshing else { return }
         isRefreshing = true
-        status = await purchases.entitlementStatus()
+        let summary = await purchases.entitlementSummary()
+        status = summary.status
+        plan = summary.plan
         isRefreshing = false
+    }
+
+    /// Lets Settings offer Restore without holding a `PaywallViewModel` of its own.
+    /// Returns `true` once entitlement has been re-confirmed as subscribed.
+    func restore() async -> Bool {
+        guard let status = try? await purchases.restorePurchases() else { return false }
+        await refresh()
+        return status == .subscribed
     }
 }

@@ -1,9 +1,10 @@
 import Foundation
 import RevenueCat
 
-/// Phase 2: only becomes active once the founder creates a real RevenueCat App and
-/// drops the API key into `Config/Secrets.xcconfig` (see `Secrets.example.xcconfig`).
-/// `ServiceFactory.hasFirebaseConfiguration` gates whether this ever gets called.
+/// RevenueCat is configured only after Firebase has established the app's UID. This
+/// makes the RevenueCat App User ID and Firebase UID identical, which is necessary
+/// for authenticated webhook synchronisation on the server.
+@MainActor
 enum RevenueCatConfig {
     /// Must match the entitlement identifier configured in the RevenueCat dashboard.
     static let entitlementID = "premium"
@@ -13,12 +14,24 @@ enum RevenueCatConfig {
         return !key.isEmpty && !key.contains("YOUR_")
     }
 
-    static func configureIfNeeded() {
+    private static var configuredUserID: String?
+
+    static func configureOrIdentify(appUserID: String) async {
         guard let key = rawAPIKey, isConfigured else { return }
+        guard !appUserID.isEmpty else { return }
+
+        if let configuredUserID {
+            guard configuredUserID != appUserID else { return }
+            _ = try? await Purchases.shared.logIn(appUserID)
+            self.configuredUserID = appUserID
+            return
+        }
+
         #if DEBUG
         Purchases.logLevel = .debug
         #endif
-        Purchases.configure(withAPIKey: key)
+        Purchases.configure(withAPIKey: key, appUserID: appUserID)
+        configuredUserID = appUserID
     }
 
     private static var rawAPIKey: String? {
