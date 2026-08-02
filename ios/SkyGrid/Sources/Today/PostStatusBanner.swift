@@ -5,15 +5,22 @@ import SwiftUI
 /// visible retry affordance (blueprint §5.3).
 struct PostStatusBanner: View {
     let pending: [PendingUploadSummary]
+    let onRetry: () -> Void
 
     var body: some View {
         if pending.contains(where: { $0.state == .failed }) {
-            Text("Not sent yet · trying again")
-                .font(SGFont.caption())
-                .foregroundStyle(SGT.ink2)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .quietCard()
+            HStack(spacing: SGSpacing.md) {
+                Text("Photo is waiting to send")
+                    .font(SGFont.caption())
+                    .foregroundStyle(SGT.ink2)
+                Spacer()
+                Button("Retry now", action: onRetry)
+                    .font(SGFont.caption(13))
+                    .foregroundStyle(SGT.ink)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .quietCard()
         } else if pending.contains(where: { $0.state == .pendingLocal || $0.state == .uploading }) {
             Text("Sending…")
                 .font(SGFont.caption())

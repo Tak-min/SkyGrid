@@ -1,5 +1,17 @@
 import Foundation
 
+/// `Optional<Wrapped>` values passed through a generic `T` parameter double-box when
+/// bridged to `Any?`, so `UserDefaults.set(_:forKey:)` receives a non-property-list
+/// object and CoreFoundation raises an uncaught exception. Detecting the nil case
+/// through this protocol lets the wrapper route it to `removeObject` instead.
+private protocol AnyOptional {
+    var isNilValue: Bool { get }
+}
+
+extension Optional: AnyOptional {
+    var isNilValue: Bool { self == nil }
+}
+
 @propertyWrapper
 struct UserDefaultBacked<T> {
     let key: String
@@ -7,7 +19,13 @@ struct UserDefaultBacked<T> {
 
     var wrappedValue: T {
         get { UserDefaults.standard.object(forKey: key) as? T ?? defaultValue }
-        set { UserDefaults.standard.set(newValue, forKey: key) }
+        set {
+            if let optional = newValue as? AnyOptional, optional.isNilValue {
+                UserDefaults.standard.removeObject(forKey: key)
+            } else {
+                UserDefaults.standard.set(newValue, forKey: key)
+            }
+        }
     }
 }
 
@@ -44,10 +62,39 @@ enum LocalDefaults {
         }
     }
 
-    /// A voluntary exit offer is shown at most once per installation. This avoids
-    /// repeatedly interrupting someone who has explicitly chosen the free tier.
-    @UserDefaultBacked(key: "didPresentExitOffer", defaultValue: false)
-    static var didPresentExitOffer: Bool
+    /// Automatic prompts are based only on a successfully persisted capture's
+    /// local calendar date. They never record photos, preference answers, wake
+    /// times, or any other personal data.
+    @UserDefaultBacked(key: "automaticPaywallAccountID", defaultValue: nil)
+    static var automaticPaywallAccountID: String?
+
+    @UserDefaultBacked(key: "completedCaptureCount", defaultValue: 0)
+    static var completedCaptureCount: Int
+
+    @UserDefaultBacked(key: "lastCompletedCaptureLocalDate", defaultValue: nil)
+    static var lastCompletedCaptureLocalDate: String?
+
+    @UserDefaultBacked(key: "lastAutomaticPaywallPromptCaptureCount", defaultValue: nil)
+    static var lastAutomaticPaywallPromptCaptureCount: Int?
+
+    @UserDefaultBacked(key: "lastAutomaticPaywallPromptLocalDate", defaultValue: nil)
+    static var lastAutomaticPaywallPromptLocalDate: String?
+
+    @UserDefaultBacked(key: "consecutiveAutomaticPaywallDismissals", defaultValue: 0)
+    static var consecutiveAutomaticPaywallDismissals: Int
+
+    @UserDefaultBacked(key: "automaticPaywallSnoozedUntil", defaultValue: nil)
+    static var automaticPaywallSnoozedUntil: Date?
+
+    static func resetAutomaticPaywallState() {
+        automaticPaywallAccountID = nil
+        completedCaptureCount = 0
+        lastCompletedCaptureLocalDate = nil
+        lastAutomaticPaywallPromptCaptureCount = nil
+        lastAutomaticPaywallPromptLocalDate = nil
+        consecutiveAutomaticPaywallDismissals = 0
+        automaticPaywallSnoozedUntil = nil
+    }
 
     /// The user has explicitly turned on their morning wake flow. This is a user
     /// preference only; the scheduler still checks AlarmKit / notification state
@@ -66,15 +113,24 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "openCameraAfterMorningAlarm", defaultValue: false)
     static var openCameraAfterMorningAlarm: Bool
 
+    /// The `LocalDate.docID` of the most recent completed capture, used only to
+    /// decide whether the morning ritual Live Activity/follow-up notification are
+    /// still relevant. Deliberately separate from `lastCompletedCaptureLocalDate`
+    /// (paywall-scoped, wiped by `resetAutomaticPaywallState()`) — an unrelated
+    /// paywall-state reset must never re-arm a nudge for a day already captured.
+    @UserDefaultBacked(key: "lastCapturedLocalDateID", defaultValue: nil)
+    static var lastCapturedLocalDateID: String?
+
     static func resetAccountScopedValues() {
         lastKnownTimeZoneIdentifier = nil
         handle = nil
         wakeGoalMinutes = 360
         onboardingDone = false
         personalizationProfileData = nil
-        didPresentExitOffer = false
+        resetAutomaticPaywallState()
         morningAlarmEnabled = false
         morningAlarmBackend = "automatic"
         openCameraAfterMorningAlarm = false
+        lastCapturedLocalDateID = nil
     }
 }

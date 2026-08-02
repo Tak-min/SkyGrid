@@ -114,4 +114,48 @@ struct SkyColorExtractorTests {
         #expect(r > g, "expected red to dominate green in a warm/fire-toned sky, got \(extracted.hex)")
         #expect((60...160).contains(Int(r)), "red channel drifted from Pillow cross-check: \(extracted.hex)")
     }
+
+    @Test("a photo with a non-up imageOrientation still samples the visual top band, not the raw buffer's top")
+    func nonUpOrientationSamplesVisualTopBand() throws {
+        // clear_sky.png is sky-on-top/ground-on-bottom in its raw pixel buffer.
+        // Rotate the raw pixels 90° so sky physically ends up on the left edge,
+        // then tag the result `.right` — the orientation that tells any correct
+        // consumer "rotate 90° CW to view", which puts sky back on top. Regression
+        // guard for `CIImage(image:)` respecting `imageOrientation` (verified true
+        // on this SDK — a decoder that ignored it would sample the raw top edge,
+        // now ground, and fail the blue-dominant assertion below).
+        let upImage = try loadFixture("clear_sky")
+        let rotatedSize = CGSize(width: upImage.size.height, height: upImage.size.width)
+        let renderer = UIGraphicsImageRenderer(size: rotatedSize)
+        let rotatedRaw = renderer.image { context in
+            context.cgContext.translateBy(x: rotatedSize.width / 2, y: rotatedSize.height / 2)
+            context.cgContext.rotate(by: -.pi / 2)
+            upImage.draw(in: CGRect(
+                x: -upImage.size.width / 2, y: -upImage.size.height / 2,
+                width: upImage.size.width, height: upImage.size.height
+            ))
+        }
+        let taggedImage = UIImage(
+            cgImage: try #require(rotatedRaw.cgImage),
+            scale: upImage.scale,
+            orientation: .right
+        )
+
+        let extracted = try #require(SkyColorExtractor.extract(from: taggedImage))
+
+        // Same assertion as the up-oriented fixture: must read sky-blue, not the
+        // #3A5F3A ground band.
+        let (r, g, b) = channels(extracted.hex)
+        #expect(b > g, "expected a blue-dominant sky sample, got \(extracted.hex) — orientation was likely ignored")
+        #expect(r > 0x30 && r < 0x70, "red channel out of expected sky range: \(extracted.hex)")
+    }
+
+    @Test("archive thumbnails decode to their display-sized bitmap")
+    func archiveThumbnailIsDownsampled() throws {
+        let source = try #require(UIImage(named: "real_clear_sky.jpg", in: Bundle(for: FixtureBundleMarker.self), with: nil))
+        let data = try #require(source.jpegData(compressionQuality: 1))
+        let thumbnail = try #require(ImageProcessor.displayThumbnail(from: data, maxPixelSize: 72))
+
+        #expect(max(thumbnail.size.width, thumbnail.size.height) <= 72)
+    }
 }

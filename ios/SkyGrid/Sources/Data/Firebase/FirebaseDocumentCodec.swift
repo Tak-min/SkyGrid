@@ -79,7 +79,8 @@ enum FirebaseDocumentCodec {
             members: members.sorted(),
             status: status,
             requestedBy: requestedBy,
-            createdAt: createdAt
+            createdAt: createdAt,
+            blockedBy: (data["blockedBy"] as? [String]) ?? []
         )
     }
 

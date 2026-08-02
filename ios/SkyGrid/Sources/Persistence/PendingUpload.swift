@@ -59,6 +59,13 @@ struct PendingUploadSummary: Sendable, Equatable {
     let state: UploadState
     let attemptCount: Int
     let lastError: String?
+    let fullImagePath: String
+    let thumbImagePath: String
+    /// Whether a retry could still put bytes in Storage. Keyed on the *full* image
+    /// only: `UploadQueue.uploadIfNeeded` attempts the full image before the
+    /// thumbnail and throws `localFileMissing` immediately, so a missing full image
+    /// means no retry can ever land either object.
+    let hasLocalFullImage: Bool
 
     init(_ model: PendingUpload) {
         queueID = model.queueID
@@ -67,5 +74,14 @@ struct PendingUploadSummary: Sendable, Equatable {
         state = model.state
         attemptCount = model.attemptCount
         lastError = model.lastError
+        fullImagePath = model.fullImagePath
+        thumbImagePath = model.thumbImagePath
+        // Re-resolve from the filename alone, never the stored absolute URL — a
+        // container's UUID segment can change across an app container reassignment
+        // (see `UploadQueue.pendingImageURL`), which would silently strand a
+        // previously-persisted `URL`.
+        hasLocalFullImage = FileManager.default.fileExists(
+            atPath: ImageFileStore.pendingImageURL(filename: model.localFullImageURL.lastPathComponent).path
+        )
     }
 }

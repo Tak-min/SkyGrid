@@ -7,15 +7,20 @@ struct TodayView: View {
     @State private var viewModel: TodayViewModel
     let imageFetching: any ImageFetching
     let onOpenCamera: () -> Void
-
+    let subscriptionPlan: SubscriptionPlan
+    let onOpenPaywall: () -> Void
     init(
         viewModel: TodayViewModel,
         imageFetching: any ImageFetching,
-        onOpenCamera: @escaping () -> Void
+        onOpenCamera: @escaping () -> Void,
+        subscriptionPlan: SubscriptionPlan,
+        onOpenPaywall: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.imageFetching = imageFetching
         self.onOpenCamera = onOpenCamera
+        self.subscriptionPlan = subscriptionPlan
+        self.onOpenPaywall = onOpenPaywall
     }
 
     var body: some View {
@@ -28,19 +33,16 @@ struct TodayView: View {
                     heading
                     morningRecord
                     rhythmSection
-
-                    if !viewModel.buddies.isEmpty {
-                        VStack(alignment: .leading, spacing: SGSpacing.md) {
-                            sectionLabel("BUDDIES")
-                            BuddyRow(buddies: viewModel.buddies, viewerHasPostedToday: viewModel.todayPost != nil)
-                        }
+                    PostStatusBanner(pending: viewModel.pendingSummary) {
+                        Task { await viewModel.retryFailedUploads() }
                     }
-
-                    PostStatusBanner(pending: viewModel.pendingSummary)
                 }
                 .padding(.horizontal, SGSpacing.xl)
                 .padding(.top, SGSpacing.sm)
-                .padding(.bottom, 42)
+                // The floating three-tab bar occupies significantly more vertical
+                // space than the former two-tab bar. Keep the alarm row and upload
+                // status fully reachable above it.
+                .padding(.bottom, 128)
                 .frame(maxWidth: .infinity)
             }
         }
@@ -67,34 +69,64 @@ struct TodayView: View {
                     .foregroundStyle(SGT.ink)
             }
             Spacer()
-            Text(viewModel.todayPost == nil ? "Not yet" : "Recorded")
-                .font(SGFont.caption(12))
-                .foregroundStyle(SGT.ink2)
-                .padding(.horizontal, SGSpacing.md)
-                .padding(.vertical, SGSpacing.sm)
-                .background(SGT.fill.opacity(0.82), in: Capsule())
+            VStack(alignment: .trailing, spacing: SGSpacing.xs) {
+                if subscriptionPlan.canOpenPaywall {
+                    Button(action: onOpenPaywall) {
+                        planStatusBadge
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel). Open plans")
+                } else {
+                    planStatusBadge
+                        .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel)")
+                }
+
+                Text(viewModel.todayPost == nil ? "Not yet" : "Recorded")
+                    .font(SGFont.caption(11))
+                    .foregroundStyle(SGT.ink3)
+            }
         }
+    }
+
+    private var planStatusBadge: some View {
+        Label(subscriptionPlan.homeLabel, systemImage: subscriptionPlan.statusSymbol)
+            .font(SGFont.caption(11))
+            .lineLimit(1)
+            .foregroundStyle(SGT.ink2)
+            .padding(.horizontal, SGSpacing.sm)
+            .padding(.vertical, 7)
+            .background(SGT.fill.opacity(0.82), in: Capsule())
     }
 
     @ViewBuilder
     private var morningRecord: some View {
         if let post = viewModel.todayPost {
-            ZStack(alignment: .bottomLeading) {
-                TodayPhotoCard(post: post, imageFetching: imageFetching)
-                LinearGradient(colors: [.clear, .black.opacity(0.62)], startPoint: .center, endPoint: .bottom)
-                    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                    Text("CAPTURED")
-                        .font(SGFont.caption(12))
-                        .foregroundStyle(.white.opacity(0.78))
-                    BigTimeView(capturedAt: post.capturedAt, timeZone: .current, color: .white)
-                    Text(captureAndUploadLabel(for: post))
-                        .font(SGFont.caption(12))
-                        .foregroundStyle(.white.opacity(0.82))
+            VStack(alignment: .leading, spacing: SGSpacing.md) {
+                ZStack(alignment: .bottomLeading) {
+                    TodayPhotoCard(post: post, imageFetching: imageFetching)
+                    LinearGradient(colors: [.clear, .black.opacity(0.62)], startPoint: .center, endPoint: .bottom)
+                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                        Text("CAPTURED")
+                            .font(SGFont.caption(12))
+                            .foregroundStyle(.white.opacity(0.78))
+                        BigTimeView(capturedAt: post.capturedAt, timeZone: .current, color: .white)
+                        Text(captureAndUploadLabel(for: post))
+                            .font(SGFont.caption(12))
+                            .foregroundStyle(.white.opacity(0.82))
+                    }
+                    .padding(SGSpacing.xl)
                 }
-                .padding(SGSpacing.xl)
+                .accessibilityElement(children: .combine)
+
+                if viewModel.todayIntegrity == .orphaned {
+                    OrphanedPostBanner(
+                        isRecovering: viewModel.isRecoveringOrphanedPost,
+                        errorMessage: viewModel.orphanedPostRecoveryError,
+                        onRetake: { Task { await viewModel.recoverOrphanedPost() } }
+                    )
+                }
             }
-            .accessibilityElement(children: .combine)
         } else {
             emptyMorningRecord
         }
@@ -105,7 +137,9 @@ struct TodayView: View {
             ZStack(alignment: .bottomLeading) {
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
                     .fill(emptySkyGradient)
-                    .frame(height: 330)
+                    // Keep the daily capture dominant without pushing the
+                    // week rhythm and alarm under the persistent tab bar.
+                    .frame(height: 280)
                     .overlay(alignment: .topTrailing) {
                         Circle()
                             .fill(.white.opacity(0.24))

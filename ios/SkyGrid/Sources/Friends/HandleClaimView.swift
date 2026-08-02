@@ -7,7 +7,7 @@ struct HandleClaimView: View {
     @State private var errorMessage: String?
     let uid: String
     let userRepository: any UserRepository
-    let onClaimed: () -> Void
+    let onClaimed: (Handle) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
@@ -19,10 +19,14 @@ struct HandleClaimView: View {
                 .foregroundStyle(SGT.ink2)
 
             TextField("Handle", text: $handleInput)
+                .textFieldStyle(.plain)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                .font(SGFont.body(17))
+                .foregroundStyle(SGT.ink)
+                .padding(.horizontal, SGSpacing.md)
+                .frame(minHeight: 52)
                 .quietCard()
-                .padding(.horizontal, 12)
 
             Button("Save handle") { Task { await claim() } }
                 .frame(maxWidth: .infinity)
@@ -45,9 +49,15 @@ struct HandleClaimView: View {
         }
         do {
             try await userRepository.claimHandle(handle, for: uid)
-            onClaimed()
-        } catch {
+            onClaimed(handle)
+        } catch RepositoryError.handleAlreadyTaken {
             errorMessage = "That handle is already in use."
+        } catch RepositoryError.network {
+            errorMessage = "No connection. Check your network and try again."
+        } catch RepositoryError.permissionDenied {
+            errorMessage = "Sky Grid could not verify this app. Reopen the latest version and try again."
+        } catch {
+            errorMessage = "Could not save your handle. Please try again."
         }
     }
 }

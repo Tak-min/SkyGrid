@@ -25,6 +25,8 @@ extension View {
 /// flow (open camera / enable alarm / confirm photo). Keeping the style centralized
 /// also keeps hit areas at or above Apple's 44pt minimum.
 struct SkyPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SGFont.body(16))
@@ -32,13 +34,15 @@ struct SkyPrimaryButtonStyle: ButtonStyle {
             .frame(minHeight: 54)
             .padding(.horizontal, SGSpacing.lg)
             .background(SGT.ink, in: Capsule())
-            .opacity(configuration.isPressed ? 0.72 : 1)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
+            .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 
 struct SkySecondaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SGFont.body(16))
@@ -47,6 +51,6 @@ struct SkySecondaryButtonStyle: ButtonStyle {
             .padding(.horizontal, SGSpacing.lg)
             .background(SGT.fill, in: Capsule())
             .overlay(Capsule().strokeBorder(SGT.rule, lineWidth: 1))
-            .opacity(configuration.isPressed ? 0.72 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
     }
 }

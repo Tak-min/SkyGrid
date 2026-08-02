@@ -8,5 +8,6 @@ enum RepositoryError: Error, Sendable {
     case handleAlreadyTaken
     case alreadyPostedToday
     case network(underlying: String)
+    case permissionDenied(underlying: String)
     case unknown(underlying: String)
 }

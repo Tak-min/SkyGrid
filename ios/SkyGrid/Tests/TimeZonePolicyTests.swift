@@ -36,8 +36,8 @@ struct ProGateTests {
     func limitsFreeArchiveWindow() {
         let today = LocalDate(year: 2026, month: 7, day: 30)
 
-        #expect(ProGate.isWithinFreeArchiveWindow(today.adding(days: -30), today: today))
-        #expect(!ProGate.isWithinFreeArchiveWindow(today.adding(days: -31), today: today))
+        #expect(ProGate.isWithinFreeArchiveWindow(today.adding(days: -29), today: today))
+        #expect(!ProGate.isWithinFreeArchiveWindow(today.adding(days: -30), today: today))
         #expect(!ProGate.isWithinFreeArchiveWindow(today.adding(days: 1), today: today))
     }
 }

@@ -27,4 +27,24 @@ struct FirebaseImageStore: ImageFetching, ImageUploading {
             throw FirebaseRepositoryError.map(error)
         }
     }
+
+    func imageExists(path: String) async -> Bool {
+        (try? await storage.reference(withPath: path).getMetadata()) != nil
+    }
+
+    func imagePresence(path: String) async -> RemoteImagePresence {
+        do {
+            _ = try await storage.reference(withPath: path).getMetadata()
+            return .present
+        } catch {
+            let nsError = error as NSError
+            // -13010 is StorageErrorCode.objectNotFound — the one Storage response
+            // that positively proves the object was never written, as opposed to a
+            // network/App-Check/permission failure that only proves the read failed.
+            if nsError.domain == "FirebaseStorage.StorageErrorCode", nsError.code == -13010 {
+                return .absent
+            }
+            return .indeterminate
+        }
+    }
 }

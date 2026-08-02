@@ -9,8 +9,7 @@ struct AppStartupView: View {
             switch startup.state {
             case .idle, .loading:
                 VStack(spacing: 14) {
-                    RitualGridMark()
-                        .frame(width: 42, height: 42)
+                    RitualGridMark(side: 42)
                     ProgressView()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -22,18 +21,9 @@ struct AppStartupView: View {
                 .environment(\.appServices, services)
                 .environment(appRouter)
             case .deleted:
-                ContentUnavailableView {
-                    Label("Account deleted", systemImage: "checkmark.circle")
-                } description: {
-                    Text("Your Sky Grid data has been removed from this device and the service.")
-                } actions: {
-                    Button("Start fresh") {
-                        Task { await startup.startNewAnonymousSession() }
-                    }
-                    .buttonStyle(.borderedProminent)
+                AccountDeletedView {
+                    Task { await startup.startNewAnonymousSession() }
                 }
-                .padding(24)
-                .background(SGT.background)
             case .failed(let error):
                 ContentUnavailableView {
                     Label("Sky Grid needs setup", systemImage: "cloud.slash")

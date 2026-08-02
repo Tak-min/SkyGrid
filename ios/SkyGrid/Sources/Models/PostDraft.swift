@@ -15,9 +15,9 @@ struct PostDraft: Sendable {
     let localFullImageURL: URL
     let localThumbImageURL: URL
 
-    /// `posts/{uid}/{imageUUID}.jpg` — uid-scoped, unguessable UUID filename.
-    /// See blueprint §3.4: this is the MVP's substitute for cross-service Storage
-    /// Rules, so the uid segment and the UUID scheme are both load-bearing.
-    var imagePath: String { "posts/\(ownerUid)/\(imageID.uuidString).jpg" }
-    var thumbPath: String { "posts/\(ownerUid)/\(imageID.uuidString)_thumb.jpg" }
+    /// `posts/{uid}/{localDate}/{imageUUID}.jpg` — uid- and day-scoped with an
+    /// unguessable filename. The day segment lets Storage Rules enforce mutual
+    /// reveal before returning a buddy's bytes, rather than relying on UI blur.
+    var imagePath: String { "posts/\(ownerUid)/\(localDate.docID)/\(imageID.uuidString).jpg" }
+    var thumbPath: String { "posts/\(ownerUid)/\(localDate.docID)/\(imageID.uuidString)_thumb.jpg" }
 }

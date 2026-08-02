@@ -10,23 +10,27 @@ struct CameraView: View {
     @State private var isCapturing = false
     @State private var confirmationError: String?
     private let liveSession: AVCaptureSession
+    let onDismiss: () -> Void
     let onConfirmed: (PostDraft) async throws -> Void
 
     init(
         viewModel: CameraViewModel,
         liveSession: AVCaptureSession,
+        onDismiss: @escaping () -> Void,
         onConfirmed: @escaping (PostDraft) async throws -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.liveSession = liveSession
+        self.onDismiss = onDismiss
         self.onConfirmed = onConfirmed
     }
 
     var body: some View {
         ZStack {
+            Color.black.ignoresSafeArea()
             content
         }
-        .background(.black)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
             await viewModel.start()
         }
@@ -72,6 +76,7 @@ struct CameraView: View {
                         .frame(width: 18, height: 18)
                         .overlay(Circle().strokeBorder(.white.opacity(0.7), lineWidth: 1))
                         .accessibilityLabel("Current sky color")
+                    closeButton
                 }
                 .padding(.horizontal, SGSpacing.xl)
                 .padding(.top, 14)
@@ -138,6 +143,16 @@ struct CameraView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 28)
             }
+
+            VStack {
+                HStack {
+                    Spacer()
+                    closeButton
+                }
+                Spacer()
+            }
+            .padding(.horizontal, SGSpacing.lg)
+            .padding(.top, SGSpacing.sm)
         }
     }
 
@@ -149,8 +164,26 @@ struct CameraView: View {
                 .font(SGFont.body())
             Button("Try again") { viewModel.retake() }
                 .buttonStyle(SkySecondaryButtonStyle())
+            Button("Close camera", action: onDismiss)
+                .font(SGFont.body())
+                .foregroundStyle(.white.opacity(0.84))
+                .frame(minHeight: 44)
         }
         .foregroundStyle(.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var closeButton: some View {
+        Button(action: onDismiss) {
+            Image(systemName: "xmark")
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .background(.black.opacity(0.28), in: Circle())
+                .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
+        }
+        .foregroundStyle(.white)
+        .accessibilityLabel("Close camera")
+        .disabled(isCapturing || isConfirming)
     }
 
     private func confirm(image: UIImage) {
@@ -166,6 +199,13 @@ struct CameraView: View {
             do {
                 try await onConfirmed(draft)
                 Haptics.postCompleted()
+            } catch RepositoryError.alreadyPostedToday {
+                // A permanent rejection, not a transient one — Firestore's
+                // create-only rule means retrying this same draft can never
+                // succeed. Say so plainly instead of the generic message, which
+                // read as "try again" when trying again cannot help.
+                confirmationError = "You've already recorded today's sky."
+                isConfirming = false
             } catch {
                 confirmationError = "Your post could not be saved."
                 isConfirming = false
@@ -180,9 +220,10 @@ private struct CameraChoiceButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SGFont.body(16))
+            .lineLimit(1)
+            .minimumScaleFactor(0.75)
             .foregroundStyle(emphasized ? Color.black : Color.white)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: 54)
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 54)
             .background(emphasized ? Color.white : Color.white.opacity(0.16), in: Capsule())
             .overlay {
                 if !emphasized {

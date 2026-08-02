@@ -21,6 +21,7 @@ struct Friendship: Hashable, Sendable {
     let status: FriendshipStatus
     let requestedBy: String
     let createdAt: Date
+    let blockedBy: [String]
 
     func otherMember(than uid: String) -> String? {
         members.first { $0 != uid }

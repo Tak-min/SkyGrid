@@ -8,6 +8,7 @@ final class FriendsViewModel {
     /// `nil` while the profile listener is connecting. A handle is intentionally
     /// requested only when someone enters the buddy feature, never at first launch.
     private(set) var hasHandle: Bool?
+    private(set) var handle: Handle?
     var errorMessage: String?
 
     let uid: String
@@ -41,7 +42,8 @@ final class FriendsViewModel {
         profileObservationTask = Task { [weak self] in
             guard let self else { return }
             for await profile in self.userRepository.observeProfile(uid: self.uid) {
-                self.hasHandle = profile?.handle != nil
+                self.handle = profile?.handle
+                self.hasHandle = self.handle != nil
             }
         }
     }
@@ -53,7 +55,8 @@ final class FriendsViewModel {
         profileObservationTask = nil
     }
 
-    func markHandleClaimed() {
+    func markHandleClaimed(_ handle: Handle) {
+        self.handle = handle
         hasHandle = true
     }
 

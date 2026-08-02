@@ -13,10 +13,11 @@ enum ServiceFactory {
         }
 
         let uid = try await FirebaseAuthSession.ensureCurrentUser()
+        await RevenueCatConfig.configureOrIdentify(appUserID: uid)
         let firestore = Firestore.firestore()
         let postRepository = FirebasePostRepository(firestore: firestore)
         let imageStore = FirebaseImageStore()
-        let uploadQueue = UploadQueue(modelContainer: LocalStoreContainer.make(), uploader: makeImageUploader())
+        let uploadQueue = UploadQueue(modelContainer: LocalStoreContainer.make(), uploader: imageStore)
         let uploadTriggers = UploadTriggers(queue: uploadQueue)
         let purchases = makePurchasesService()
         let entitlements = EntitlementStore(purchases: purchases)
@@ -24,6 +25,7 @@ enum ServiceFactory {
         uploadTriggers.startObserving()
         Task { await uploadQueue.kick() }
         deviceRegistrar.start(for: uid)
+        Task { await MorningAlarmScheduler.resyncIfNeeded() }
 
         return AppServices(
             currentUid: uid,
@@ -36,16 +38,13 @@ enum ServiceFactory {
             imageFetching: imageStore,
             uploadQueue: uploadQueue,
             postPublisher: PostPublisher(postRepository: postRepository, uploadQueue: uploadQueue),
+            orphanedPostRecovery: OrphanedPostRecovery(postRepository: postRepository, uploadQueue: uploadQueue, imageStore: imageStore),
             purchases: purchases,
             entitlements: entitlements,
             deviceRegistrar: deviceRegistrar,
             uploadTriggers: uploadTriggers,
             cameraSourceFactory: makeCameraSource
         )
-    }
-
-    private static func makeImageUploader() -> any ImageUploading {
-        FirebaseImageStore()
     }
 
     private static func makeCameraSource() -> CameraSessionController {

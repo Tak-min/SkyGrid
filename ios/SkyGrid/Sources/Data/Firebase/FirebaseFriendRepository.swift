@@ -1,8 +1,10 @@
 @preconcurrency import FirebaseFirestore
 import Foundation
+import os
 
 @MainActor
 final class FirebaseFriendRepository: FriendRepository {
+    private static let logger = Logger(subsystem: "com.takmin.skygrid", category: "friends")
     private let firestore: Firestore
 
     init(firestore: Firestore = Firestore.firestore()) {
@@ -13,8 +15,12 @@ final class FirebaseFriendRepository: FriendRepository {
         let query = firestore.collection("friendships").whereField("members", arrayContains: uid)
         return AsyncStream { continuation in
             let listener = query.addSnapshotListener { snapshot, error in
-                guard error == nil else {
-                    continuation.finish()
+                if let error {
+                    // See FirebasePostRepository.observePost: ending the stream on
+                    // the first error would freeze buddy state forever instead of
+                    // letting the SDK's automatic retry recover it.
+                    Self.logger.error("observeFriendships(\(uid, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
+                    continuation.yield([])
                     return
                 }
                 let friendships = (snapshot?.documents ?? [])
@@ -22,6 +28,30 @@ final class FirebaseFriendRepository: FriendRepository {
                     .compactMap(FirebaseDocumentCodec.friendship(from:))
                     .sorted { $0.createdAt > $1.createdAt }
                 continuation.yield(friendships)
+            }
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    func observeBlockedFriendships(uid: String) -> AsyncStream<[Friendship]> {
+        // Same query as `observeFriendships` (Firestore only allows one
+        // array-contains clause per query, and Security Rules can only prove a
+        // `list` query safe when it is constrained by the exact field the rule
+        // inspects — `members`, not `blockedBy`). The `blockedBy` filter therefore
+        // has to happen client-side rather than as a second query clause.
+        let query = firestore.collection("friendships").whereField("members", arrayContains: uid)
+        return AsyncStream { continuation in
+            let listener = query.addSnapshotListener { snapshot, error in
+                if let error {
+                    Self.logger.error("observeBlockedFriendships(\(uid, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
+                    continuation.yield([])
+                    return
+                }
+                let blocked = (snapshot?.documents ?? [])
+                    .compactMap(FirebaseDocumentCodec.friendship(from:))
+                    .filter { $0.blockedBy.contains(uid) }
+                    .sorted { $0.createdAt > $1.createdAt }
+                continuation.yield(blocked)
             }
             continuation.onTermination = { _ in listener.remove() }
         }
