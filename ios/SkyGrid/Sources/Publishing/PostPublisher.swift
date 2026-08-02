@@ -21,27 +21,30 @@ final class PostPublisher: PostPublishing {
     }
 
     func publish(_ draft: PostDraft) async throws {
+        // Persist the image outbox before awaiting Firestore. Firestore queues an
+        // offline write durably but its completion does not arrive until the
+        // server acknowledges it; the previous order could therefore lose the
+        // only local record of a photo if the app was terminated offline.
+        try await uploadQueue.enqueue(draft)
+
         do {
             try await postRepository.createPost(draft)
+        } catch RepositoryError.alreadyPostedToday {
+            // Unlike a transient failure, this is a *permanent* rejection — Firestore's
+            // create-only rule means no retry of this draft will ever succeed. Roll
+            // back the outbox row so it doesn't upload bytes no post document will
+            // ever reference (the accepted capture already owns this queue slot).
+            try? await uploadQueue.cancel(
+                queueID: PendingUpload.queueID(ownerUid: draft.ownerUid, localDateID: draft.localDate.docID),
+                imageID: draft.imageID.uuidString
+            )
+            throw RepositoryError.alreadyPostedToday
         } catch {
-            removeCapturedFiles(for: draft)
+            // Keep the locally durable outbox and its Application Support files.
+            // A transient Firestore/App Check failure must never destroy a morning
+            // capture. The queue will resume its Storage half once the dependency
+            // recovers, while Firestore's own offline persistence retains its write.
             throw error
         }
-
-        do {
-            try await uploadQueue.enqueue(draft)
-        } catch {
-            // Do not leave a successful-looking post whose image can never be
-            // retried. This is deliberately best-effort compensation; Firestore
-            // remains the durable source for the record while SwiftData owns bytes.
-            try? await postRepository.deletePost(uid: draft.ownerUid, localDate: draft.localDate)
-            removeCapturedFiles(for: draft)
-            throw error
-        }
-    }
-
-    private func removeCapturedFiles(for draft: PostDraft) {
-        ImageFileStore.deletePendingImage(at: draft.localFullImageURL)
-        ImageFileStore.deletePendingImage(at: draft.localThumbImageURL)
     }
 }
