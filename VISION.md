@@ -1,56 +1,279 @@
 # VISION — Sky Grid(朝の空ストリークアプリ)
 
-## ⭐ HANDOFF — 次セッションはここから読む (2026-07-30時点)
+> **本ファイルの構成(2026-08-02に整理):** 積み重なっていた日付順の引き継ぎメモ(⭐ HANDOFF)を、
+> 「これまでの流れ」「現在の残タスク」「今のアプリケーションの現状」の3節に統合した。
+> 詳細調査・実装ログは各`dev-notes/*.md`が一次情報源であり、本ファイルはそれらの要約・
+> ナビゲーションとして機能する。§1以降(競合調査・マネタイズ・ペインポイント・技術アーキテクチャ・
+> 広報・デザイン方向性)はプロダクトのコンセプト自体を定義する「設計判断」であり、流れの整理とは
+> 別物として当時の記述をそのまま維持している。
 
-**Sign in with Apple 一式 + RevenueCatダッシュボード設定が完了(2026-07-30、詳細は[dev-notes/apple-signin-and-revenuecat-setup_2026-07-30.md](dev-notes/apple-signin-and-revenuecat-setup_2026-07-30.md))。** Apple Developer PortalのCapabilityは実機デプロイ時に自動登録済みだった。Firebase ConsoleのAppleプロバイダ有効化、App Store Connectでのアプリレコード作成(名前衝突のため「Sky Grid: Morning & Wake」で登録)とサブスクリプション/IAP商品3件(月額$3.99/年額$19.99/ライフタイム$39.99、ドル建て)作成、RevenueCatダッシュボードのApp/Entitlement(`premium`)/Product/Offering設定、`Secrets.xcconfig`へのAPIキー投入まですべて完了。**ただしRevenueCat公式ステータスページで判明した進行中のApple側障害**(2026-07-24以降登録のBundle IDでApp Store Server APIが401を返す)**の影響で、商品のStore Statusが「Could not check」のまま未検証。2026-07-30時点で再確認したが、ステータスページの最新更新(2026-07-29 09:18 UTC)は依然「Not Resolved」(Appleの修正待ち)。次回セッション開始時に改めて[ステータスページ](https://status.revenuecat.com/incidents/mr3l9wqygn3d)を確認すること。** 次に残る優先事項は (1) 上記障害解消確認、(2) iOS 26 実機での AlarmKit 発火・ロック画面・Focus・App Intent の回帰確認。Simulator は UI とスケジュールコードのビルド／遷移確認に使ったが、実アラームの音・ロック画面発火の証明には使えない。
+---
 
-**現在地:** 企画フェーズ完了後、依頼者指示により**デザイン制作より先にアプリコードの実装を最優先で進めた**(下記「方針転換」参照)。`~/Desktop/SkyGrid/ios/`にXcodeGenベースのプロジェクトが実在し、**オンボーディング→ハンドル設定→今日画面→撮影→投稿作成→アップロードキュー登録→(通知タップ時)カメラ直行、までLocalモックバックエンドでシミュレータ上に一気通貫に動く。** ユニットテスト39件パス、`build_sim`/`test_sim`両方エラー・警告ゼロ。**iPhone 15 Pro(「俺のGALAXY Pro Max」)へのワイヤレスデバッグ実機デプロイも2026-07-29に成功済み**(手順は[dev-notes/ios-phase1-implementation_2026-07-29.md](dev-notes/ios-phase1-implementation_2026-07-29.md)の「実機デプロイ手順」節)。~~Firebase/Firestore/Auth(Phase 2)は未着手~~ **→ 2026-07-30時点で本番構築済み(下記参照)。** 詳細な実装ログ・落とし穴は同dev-notesを参照(次回セッション必読、特に「エージェント委譲の失敗」節)。
+## これまでの流れ
 
-**Codex実装更新(2026-07-29):** Today／カメラ／Grid／オンボーディングを全面再設計し、Today と Sky Grid を常時到達可能な2タブに変更。Grid は全365日が一望できる12か月×31日の配列へ更新し、画面内の共有操作から9:16書き出しを行う。`MorningAlarmScheduler` は iOS 26+ で AlarmKit の毎日・現地時刻アラームを設定し、アラーム画面の「空を撮る」操作から `LiveActivityIntent` でカメラへ直行する。iOS 17–25 は同等機能と偽らない通常リマインダーにフォールバックする。`NSAlarmKitUsageDescription`、明示的な許可要求、削除時のアラーム取消、設定画面の状態表示も実装済み。**iPhone 17 Pro Simulator (iOS 26.5) で `xcodebuild test` は42テスト成功（UIテスト2件を含む）、Today/Grid の実レンダリングを確認済み。** ~~Firebase/Auth/Firestore/Storage本番実装~~**→2026-07-30完了。** 実際に受信できるサポートURL・プライバシーポリシーの投入、AlarmKit の物理 iPhone 実機回帰は引き続き未完了(下記「次回セッションTODO」参照)。
+**2026-07-29(企画→実装優先への方針転換):** 競合調査(Daybreak等、依頼者判断により大きな脅威では
+ないと結論)・ペインポイント→機能マッピング・技術アーキテクチャ・デザイン方向性を確定。依頼者の
+指示で「デザイン制作(Canva MCP)より先にアプリコード実装を最優先」する方針に転換し、Canva側の
+制作は中断。XcodeGenベースのプロジェクトを作成し、Localモックバックエンドでオンボーディング→
+撮影→投稿→アップロードキュー→バディ→Sky Grid→共有までを一気通貫で動作させた
+([dev-notes/ios-phase1-implementation_2026-07-29.md](dev-notes/ios-phase1-implementation_2026-07-29.md))。
+同日、Codexへの委譲でToday/カメラ/Grid/オンボーディングを全面再設計し、AlarmKitによる毎日の
+現地時刻アラームを導入。
 
-**Claude(Sonnet)によるFirebase本番構築(2026-07-29〜30、上記Codex更新の後続作業):** Codexが書いたFirebase向けコード(`Data/Firebase/`、`firestore.rules`、`storage.rules`、`functions/`)を実際のFirebaseプロジェクトに接続。`sky-grid-app`プロジェクト作成、Blazeプラン+予算アラート(¥750)、Firestore Native DB(asia-northeast1)、Storageバケット(ユーザー本人がConsoleで"Get Started"クリック済み)、Firestore/Storage両セキュリティルールのデプロイ、匿名認証有効化、Cloud Functions `deleteAccount`デプロイまで**全完了**。シミュレータでの実疎通(匿名サインインが実Firebaseにユーザーを作成すること)も確認済み。build_sim/test_sim 47件全パス。詳細・ハマった点は[dev-notes/firebase-backend-provisioning_2026-07-29.md](dev-notes/firebase-backend-provisioning_2026-07-29.md)。
+**2026-07-29〜30(Firebase本番構築):** Claude(Sonnet)がCodexの書いたFirebase向けコードを実際の
+Firebaseプロジェクト(`sky-grid-app`)に接続。Auth(匿名)/Firestore(Native, asia-northeast1)/
+Storage/Cloud Functionsを構築し、Security Rulesをデプロイ、App Check enforcementを有効化
+([dev-notes/firebase-backend-provisioning_2026-07-29.md](dev-notes/firebase-backend-provisioning_2026-07-29.md)、
+[dev-notes/app-check-enforcement_2026-07-30.md](dev-notes/app-check-enforcement_2026-07-30.md))。
+Sign in with Apple一式とRevenueCatダッシュボード設定
+([dev-notes/apple-signin-and-revenuecat-setup_2026-07-30.md](dev-notes/apple-signin-and-revenuecat-setup_2026-07-30.md))、
+legal pagesのCloudflare Workersデプロイ
+([dev-notes/legal-pages-cloudflare-deploy_2026-07-30.md](dev-notes/legal-pages-cloudflare-deploy_2026-07-30.md))、
+実写真でのSkyColorExtractor回帰テストも完了。
 
-### 次回セッションTODO(2026-07-30時点、依頼者の指示によりコスト都合で一旦区切り。着手前に本節から読むこと)
+**2026-07-30(実機不具合の調査・修正):** 実機(iPhone 15 Pro)で見つかった不具合4件
+(写真アップロード失敗・オンボーディング未完了・レイアウト崩れ・通知タップ不具合)の根本原因を
+特定・修正([dev-notes/real-device-bugfix-round_2026-07-30.md](dev-notes/real-device-bugfix-round_2026-07-30.md))。
 
-**1. ~~Sign in with Apple 一式~~ → 2026-07-30完了(下記参照)**
-- ~~(a) Apple Developer Portal~~ → Capabilityは既に有効化済みだった(手動作業不要と確認)
-- ~~Firebase Console側の設定~~ → Services ID/Team ID/秘密鍵は不要と確認、Appleプロバイダ有効化のみで完了
-- ~~(b) App Store Connect~~ → 完了。ただし「Sky Grid」は名前衝突のため実際の登録名は「Sky Grid: Morning & Wake」(アプリ内表示名は「Sky Grid」のまま)
-- ~~(c) RevenueCatダッシュボード設定~~ → 完了(Entitlement `premium`、商品3件、Offering設定、APIキー投入済み)。詳細・ハマった点・**未解決のApple側障害**は[dev-notes/apple-signin-and-revenuecat-setup_2026-07-30.md](dev-notes/apple-signin-and-revenuecat-setup_2026-07-30.md)を参照。価格はドル建てで確定(月額$3.99/年額$19.99/ライフタイム$39.99、依頼者指示により円建てドラフトから変更)
+**2026-07-31(App Store Connect審査提出準備):** 年齢制限・プライバシーポリシーURL・プライバシー
+申告(データの種類5種)を確定・公開。「審査へ提出」ボタンが有効化される状態まで到達したが、
+**依頼者の最終確認待ちのため意図的に未押下のまま。** RevenueCat Webhookの本番ロールアウトを実施し、
+その過程で「3日間無料トライアル」がApp Store Connect・RevenueCatのどちらにも実際には設定された
+ことがない事実を確認
+([dev-notes/revenuecat-webhook-production-rollout_2026-07-31.md](dev-notes/revenuecat-webhook-production-rollout_2026-07-31.md))。
 
-**2. 上記以外に残っている必要タスク(このセッションで洗い出し済み)**
-- ~~APNsキーのFirebase登録~~ → **2026-07-30、依頼者本人が実施完了と報告。** Apple Developer PortalでAPNs Authentication Key(.p8)を発行、Firebase Console → Cloud Messaging → Appleアプリの構成、へ登録。**注意: Firebase Console側の登録状態を確認できる公開APIが存在せず、この場での独立検証(ブラウザ確認等)はできていない。** 実際にバディ投稿通知が実機に届くかは、次回セッションで実機プッシュ通知テストにより最終確認すること
-- ~~App Check enforcement~~ → **2026-07-30完了。** Firestore/Storage両サービスをApp Check Admin APIで`ENFORCED`に変更済み。iOS側`AppAttestProviderFactory`(Release)に対応するApp Attestプロバイダ登録はAPI確認の結果既に存在していた(手動登録不要と判明)。Debug/Simulator用に固定デバッグトークンを発行してtest schemeの`FIRAAppCheckDebugToken`環境変数に配線し、有効化前後でtest_sim 51件パスのベースライン→回帰なしを確認済み(手順・ハマった点は[dev-notes/app-check-enforcement_2026-07-30.md](dev-notes/app-check-enforcement_2026-07-30.md))。Cloud Functionsの`deleteAccount`は元々コード側で`enforceAppCheck: true`済み(変更なし)
-- ~~Storage Rulesのクロスサービス参照の実地検証~~ → **2026-07-30完了。** Firebase Emulator Suite(`@firebase/rules-unit-testing`)で承認済み/pending/ブロック済み/無関係/未認証の全パターンを検証し、`activeBuddy()`のクロスサービス参照(Storage→Firestore)が意図通り動くことを実証済み。詳細・ハマった点(プロジェクトID不一致で検知不能になる罠)は[dev-notes/rules-emulator-verification_2026-07-30.md](dev-notes/rules-emulator-verification_2026-07-30.md)参照。次回以降`npm --prefix rules-tests run test:emulator`で再実行可能
-- ~~サポートURL・プライバシーポリシーの実URL投入~~ → **2026-07-30完了。** Cloudflare Workers(静的アセット)に`skygrid-legal`としてデプロイ: https://skygrid-legal.taku810616.workers.dev/ (サポート) / https://skygrid-legal.taku810616.workers.dev/privacy (プライバシーポリシー)。`Secrets.xcconfig`/`Secrets.example.xcconfig`の両方に反映済み、build_sim確認済み。ページ内容(実際のデータフローに基づく)は`ios/legal/privacy-policy.md`・`ios/legal/support.md`が原本、`ios/legal/site/`がデプロイ用HTML。サポートメールは依頼者確認の上でtaku810616@gmail.com。デプロイ時のハマった点は[dev-notes/legal-pages-cloudflare-deploy_2026-07-30.md](dev-notes/legal-pages-cloudflare-deploy_2026-07-30.md)参照
-- **アプリアイコン/ビジュアルデザイン:** 依頼者の方針転換により中断されたまま(§6参照)。再着手のタイミングは依頼者と相談
-- **BGProcessingTaskトリガーの実機検証・実装、AlarmKitの物理iPhone実機回帰確認:** 既存の既知の残課題(上記Codex更新メモ参照)
-- ~~実写真でのSkyColorExtractor回帰テスト~~ → **2026-07-30完了。** Wikimedia Commonsの実写真4枚(快晴/曇天/夕焼け/劇的な雲+シルエット)を追加し、Pillowによる独立クロスチェック計算値を根拠にテストを実装、51件全パス確認済み。副産物として、テストフィクスチャが誤って本体アプリのApp Storeバイナリに同梱されていた設計ミスも発見・修正(`SkyGridTests`専用リソースへ移設)。詳細は[dev-notes/sky-color-extractor-real-photos_2026-07-30.md](dev-notes/sky-color-extractor-real-photos_2026-07-30.md)
+**2026-08-01(Paywall多段階フロー再設計):** value→features→planの3ステップ構成へ完全実装
+([dev-notes/paywall-multistep-redesign-implementation_2026-08-01.md](dev-notes/paywall-multistep-redesign-implementation_2026-08-01.md))。
 
-**方針転換の経緯(2026-07-29、同日中に2段階):**
-1. 依頼者指示によりデザイン制作(Canva MCP + Opus)を開始 → デザイン用HTMLモックアップ(`design/screens-mockup.html`)は完成
-2. 直後に依頼者から「クラウドのアーティファクト更新は不要、実際のアプリコード完成を最優先に」と明確な方針転換指示 → デザイン制作エージェントを中断し、実装計画をcode-architect(Opus)に委譲 → 返ってきたブループリントに基づき、タスク#1〜#11を全てSonnet(自分自身)が直接実装
+**2026-08-02(AlarmKit Live Activity + 幽霊投稿の自己修復):** AlarmKitのStopボタンを起点にした
+Live Activity + フォローアップ通知を新規Widget Extension込みで実装(実機検証は未実施)
+([dev-notes/live-activity-morning-nudge_2026-08-02.md](dev-notes/live-activity-morning-nudge_2026-08-02.md))。
+続けて、「投稿済みなのに写真が存在しない」幽霊ドキュメント問題の根本原因を特定し、検知・
+ユーザー確認つき自己修復機構を実装(こちらも実機検証は未実施、
+[dev-notes/orphaned-post-recovery_2026-08-02.md](dev-notes/orphaned-post-recovery_2026-08-02.md))。
 
-**確定事項(変更なし):**
-- アプリ名: **Sky Grid**
-- コンセプト: 朝起きて外の写真を1枚撮るだけ。365マスの色モザイク「Sky Grid」が核となる差別化要素
-- 技術アーキテクチャ: Firebase(Auth/Firestore/Storage/FCM/Cloud Functions 1本)+ SwiftUIネイティブ、iOS 17.0以上、Bundle ID `com.takmin.skygrid`(既存プロジェクトの命名規則`com.takmin.{app}`に準拠、当初案の`com.taku8.skygrid`から変更)
-- 課金基盤: UnhookのRevenueCat/Paywall実装を移植・SGTトークンで再スキン済み(コードは完成、実APIキー未設定でPhase 1はプレビュー実装で動作)
-- 広報方針: プレローンチ導線(ウェイトリスト)は不採用、早期ローンチ優先(変更なし)
+**2026-08-02(本セッション):** ハードペイウォール vs ソフトペイウォールの外部リサーチを実施し、
+現行のソフトペイウォール方針の継続を結論(バディの相互ブラーというネットワーク効果がハード
+ペイウォールと構造的に衝突するため)。当初「トライアルが短い」という評価をしたが、依頼者の
+指摘でトライアル自体が存在しないという事実誤認を訂正
+([dev-notes/paywall-hard-vs-soft-research_2026-08-02.md](dev-notes/paywall-hard-vs-soft-research_2026-08-02.md))。
+続けて本ファイルの構造整理(本セクション以下)と、次回セッション向けのコンセプト整合性監査の
+準備を実施。
 
-**未確定・次回セッションで詰めること:**
-1. **ペイウォール設計は依頼者と協議しながら深掘りする(意図的に未確定のまま)。** `Purchases/PreviewPurchasesService.swift`には下記「マネタイズ/ペイウォール」節のドラフト価格をそのまま転記しただけ
-2. **アプリアイコンは単色プレースホルダー。** デザイン制作(Canva MCP等)は中断されたままなので、次回改めて着手するか判断すること
+**2026-08-02(同日後半、残タスク一括処理セッション):** 依頼者から「審査へ提出」済み(Apple側で
+審査待ち)・3日間トライアル撤去理由(トライアルではなく実際の課金導線への切り替えが目的)の
+確定回答を得て記録を更新。以下を自律的に実施:
+1. `ios/`配下の未コミット変更を、機能単位の8コミットに整理してコミット完了
+   (ツール設定ディレクトリは`.gitignore`へ追加、詳細は残タスク#6参照)。
+2. App Checkデバッグトークン期限切れ説を、`exchangeDebugToken`への直接curl再検証(登録済み値・
+   未登録のランダムUUID・iOS bundle IDヘッダー付きの3パターン全てで同一の403)と、実際に
+   ビルドしたアプリのFirestoreリスナーエラー(2026-08-02 15:11 JST時点でも`permission denied`
+   継続)の両方で反証(残タスク#10参照)。
+3. RevenueCat Test Storeに`monthly_v2`/`yearly_v2`/`lifetime_v2`を実売価格
+   ($5.99/$44.99/$59.99)で新規作成し、`premium`エンタイトルメントを付与、`default` Offering の
+   3パッケージを差し替え完了(残タスク#9参照)。
+4. 最新コードをiOS 26.5シミュレータへビルド・インストール・起動して動作確認
+   (残タスク#7・#8、ただしApp Check障害と実機不在により完全な検証はできず、詳細は該当項目参照)。
+5. UIアニメーション強化(残タスク#13)の設計をcode-architectへ委譲。
+6. 項目4(WakeGoalPicker権限ダイアログ)・項目12(BGProcessingTask)は深掘り調査のみ実施し、
+   依頼者の設計判断待ちとして残す。
+7. バディ投稿プッシュ通知の欠落(残タスク#14)を実機2台がないため後回しと確定し、
+   メモリ`skygrid-buddy-push-notification-gap`に記録。
 
-**次の開発フェーズの優先順位(2026-07-29更新):**
+---
 
-1. **【最優先】Apple Developer / Firebase / RevenueCat のセットアップ。** 下記「実装前チェックリスト」節を参照。コードは既にプロトコル境界越しにFirebase版へ差し替え可能な設計(`ServiceFactory`が唯一の分岐点)なので、外部セットアップさえ終われば`Data/Firestore/`の実装(Phase 2)に進める
-2. **デザイン制作の扱いを依頼者と確認。** アイコン・共有カードのビジュアル制作は方針転換により後回しになったまま。改めて着手するタイミングを依頼者と相談すること
-3. **BGProcessingTaskトリガーの実機検証・実装。** `UploadTriggers`は現状フォアグラウンド復帰+ネットワーク疎通の2トリガーのみ
+## 現在の残タスク
 
-**次回セッションの起動フレーズ:**
-- 「Sky Gridの実装を進めて」または「Sky Grid、続き」
-- 確実に本ファイルから始めたい場合は「`~/Desktop/SkyGrid/VISION.md`を読んで進めて」と明示してもよい
+### 依頼者の判断が必要(エージェント単独では進められない)
+
+1. ~~「審査へ提出」ボタンを押すかどうかの最終確認。~~ **解決(2026-08-02):** 依頼者が既に提出済み。
+   Apple側で審査待ちの状態。
+2. **ExitOfferコード(`SKYGRID20`)がApp Store Connect側で実際に作成・外部告知済みかの確認。**
+   コード側は既に削除済み(`PaywallEntryPoint.permitsExitOffer`等一式)だが、`Secrets.xcconfig`に
+   実際の値が入っていたため、ASC側にオファーが実在するかは依頼者側での確認が必要。
+   **未確認のまま(2026-08-02時点でも未着手)。**
+3. ~~3日間トライアルを撤去した理由の確認。~~ **解決(2026-08-02):** 依頼者確認済み。トライアルではなく、
+   ExitOfferコード・無料利用者への減額(ディスカウント)を軸にした実際の課金導線へ切り替えるため、
+   意図的にトライアルを撤去した(トライアル維持のA/Bテストは不要と判断)。
+4. **`WakeGoalPickerView`の権限確認ダイアログ仕様 — 依頼者の設計判断が必要。** 本セッションで
+   コードを再確認した結果、**現状は既に「ソフト」寄り**: `WakeGoalPickerView.swift`の
+   「Save time and continue」ボタンは、AlarmKit/通知の権限状態に一切関係なく常に有効で、
+   タップすると即座に次へ進む(権限リクエストは「Set a Morning Alarm」ボタンを明示的に押した
+   時のみ発火)。つまり**現状は「確認ダイアログなし・無条件に進める」**というもっとも柔らかい形。
+   2026-08-01のセッション引き継ぎ(`dev-notes/session-handoff-liveactivity-and-bugfixes_2026-08-02.md`)
+   にある提案は、「権限未取得のまま進もうとしたら確認ダイアログを一枚挟む」という**新機能の追加**
+   であり、既存の「権限取得を絶対に必須条件にしない」という設計哲学
+   (`OnboardingCoordinatorView.swift`のdocコメント)と衝突しうる。選択肢は3つ:
+   (a) 何もしない(現状維持、ダイアログなし)、
+   (b) ソフトな確認ダイアログを追加(「アラームを設定せずに進みますか?」+ Cancel/Continue、
+   Continueは常に有効)、
+   (c) ハードゲート(権限取得かスキップの明示選択をしないと進めない)——これは設計哲学と直接衝突する
+   ため非推奨。次回、依頼者の意向を確認して実装すること。
+5. **App Store Connect本番価格の変更($5.99→$3.99、年額/ライフタイムの目標額)。** 依頼者確認
+   (2026-08-02): 審査完了後に依頼者自身が実施予定のため、現時点では意図的に未着手。
+6. ~~`ios/`配下の大量未コミット変更(40ファイル超)のコミット方針。~~ **解決(2026-08-02):** 機能単位で
+   8コミットに整理してコミット済み(paywall再設計/Live Activity/幽霊投稿自己修復/オンボーディング
+   復元・実機バグ修正/Firebase・Functions・legal/残りのソース更新/tooling設定/branding・screenshots
+   アセット)。ツール設定ディレクトリ(`.build/`, `.vscode/`, `.zed/`, `.gemini/`, `.kiro/`,
+   `.opencode/`, `.codex/`, `opencode.json`)は`.gitignore`に追加、`.claude/settings.local.json`と
+   `scheduled_tasks.lock`もローカル専用としてignore対象に追加した(共有すべき`.claude/settings.json`
+   ・`rules/argent.md`・`.mcp.json`・`ios/.agents/`等は逆にコミット済み)。VISION.md・dev-notesは
+   本セッション終了時に別途コミット予定。
+
+### 実機検証が必要(次回セッション最優先候補)
+
+7. **AlarmKit Live Activityの実機検証 — 未完了。** 本セッションでiOS 26.5シミュレータ
+   (iPhone 17 Pro)に最新ビルドをインストール・起動し、Today画面の「Morning alarm・07:19」表示
+   までは動作確認できた。ただしLive Activity自体の実地検証(Stopタップ→ロック画面カード表示)は、
+   このセッションから物理デバイスへの自動デプロイ手段がなく(xcodebuild MCPのデバイスワークフローは
+   本環境で未有効化)、シミュレータでは背景実行・ロック画面挙動が実機と異なるため確認できていない。
+   依頼者自身の実機での確認が必要。
+8. 「幽霊投稿」自己修復バナーの実機検証(実際に幽霊状態のアカウントでバナー表示・
+   「Clear and retake」動作の確認)。**未完了。** App Check障害(#10参照)によりシミュレータでの
+   Firestore読み書きが現在ブロックされているため、このセッションからは擬似的な幽霊状態すら
+   作れなかった。
+9. ~~RevenueCat Test Store価格の修正。~~ **解決(2026-08-02):** `monthly_v2`($5.99)/
+   `yearly_v2`($44.99)/`lifetime_v2`($59.99)をTest Storeに新規作成、`premium`エンタイトルメントを
+   各々に付与、`default` Offering の3パッケージ(`$rc_monthly`/`$rc_annual`/`$rc_lifetime`)を
+   新商品に差し替え済み(RevenueCatダッシュボードで保存・反映確認済み)。旧`monthly`/`yearly`/
+   `lifetime`商品はカタログに残存するが、どのOfferingからも参照されなくなったため実害なし。
+10. ~~App Check「デバッグトークン期限切れ」説の検証。~~ **反証・結論維持(2026-08-02):**
+    「期限切れ」説を`exchangeDebugToken`への直接検証で裏付けようとしたが、**逆に反証された**——
+    (a) 現在正しく登録済みのトークン値、(b) 一度も登録したことのない新規ランダムUUID、
+    (c) `X-Ios-Bundle-Identifier`ヘッダー付き、の3パターン全てで同一の
+    `403 App attestation failed`が発生(2026-08-02 15時台に直接curlで再現)。未登録の
+    ランダムUUIDが「期限切れ」になることは原理上あり得ないため、単純な「特定トークンの期限切れ」
+    という説明とは矛盾する。さらに、実際に最新ビルドをシミュレータで起動して確認したところ、
+    同時刻(15:11 JST)にFirestoreの`observeFriendships`/`observePost`等が全て
+    `Code=7 "Missing or insufficient permissions."`で継続的に失敗していることを実地確認——
+    2026-07-31発生から中3日以上経過してもDebug App Check Providerの障害が解消していない。
+    2026-08-01セッションの結論(「Googleバックエンド側の障害、クライアント側要因は排除済み」)を
+    引き続き支持する。Release/App Attest経路(実機・本番配布)は既に別途正常動作を確認済みのため
+    実ユーザーへの影響はない。
+11. ~~審査用スクリーンショットの再撮影・差し替え。~~ **解決(見送り、2026-08-02):** 既に旧レイアウトの
+    スクリーンショットで審査提出済みのため、新しい多段階Paywallレイアウトでの再撮影・差し替えは
+    行わない(このバージョンの審査が通ってから、次回リリースで対応)。
+12. **BGProcessingTaskトリガーの実機検証 — 依頼者の設計判断が必要。** 本セッションで確認した結果、
+    これは「実装済みだが未検証」ではなく**「そもそも未実装」**だった: `UploadTriggers.swift`の
+    doc commentに明記されている通り、現在配線されているアップロード再試行トリガーは
+    (1) アプリのフォアグラウンド復帰、(2) ネットワーク疎通回復、の2つのみ。`BGProcessingTask`
+    (アプリが完全に閉じている間もOSが定期的にバックグラウンドで再試行キューを消化する第3の経路)は
+    「Phase 2のフォローアップ」というコメントのまま何セッションも手つかず。`Info.plist`には
+    `BGTaskSchedulerPermittedIdentifiers`に`com.takmin.skygrid.upload`が既に登録されているが、
+    対応する`BGTaskScheduler.register(...)`呼び出しはコード中どこにも存在しない(登録キーだけ
+    先に用意されている状態)。次回、依頼者に「今実装すべきか」を確認: 現状の2トリガー
+    (フォアグラウンド復帰・ネットワーク回復)だけでも大半のケースはカバーできる可能性があり、
+    「アプリを閉じたまま長時間放置され、かつネットワークも一度も回復イベントを跨がない」という
+    狭いケースのみがBGProcessingTaskの追加価値になる。実装するなら新規のOS連携コードのため、
+    実機での動作検証(シミュレータではBGTaskSchedulerの発火タイミングが信頼できない)が必須。
+
+### 本セッションで新たに判明した検証待ち事項
+
+13. **§9由来のUI監査記録(アニメーション0件・シャドウ1箇所のみ・スペーシング未トークン化)は
+    もはや古い。** 本セッションで軽く確認したところ、アニメーション/spring/transitionは
+    現在6ファイルで使用、`.shadow()`は2箇所、`SGSpacing`という名前付きスペーシングトークンも
+    既に`DesignSystem/Layout.swift`に存在する。**依頼者の指示により、既存の枯れた儀式的トーン
+    (§6、ハプティックは投稿完了時の1回のみ・演出過多を明確に禁止)を壊さない範囲で、
+    アニメーションをさらに強化する設計をcode-architectへ委譲・実装した(詳細は
+    本ファイル末尾の追記、または該当dev-notesを参照)。**
+14. **バディ投稿時のプッシュ通知が実装されているか未確認、おそらく未実装。** §3/§4は
+    「バディの投稿でFCM通知が届く」ことを核心機能として明記しているが、`ios/functions/src/`には
+    `deleteAccount`と`revenueCatWebhook`の2関数しか存在せず、post作成をトリガーにFCM送信する
+    Cloud Functionは見当たらない。クライアント側にもバディ投稿通知を送信するコードが
+    grepで見つからなかった(FCMデバイストークンの登録処理`FirebaseDeviceRegistrar.swift`は
+    存在するが、登録先が使われている形跡が薄い)。**依頼者確認(2026-08-02): 実機が1台しかなく
+    2人でのバディフロー検証ができないため、意図的に後回し。** 実装するなら
+    `planner`/`architect`級の設計判断(新規Cloud Functions + Firestoreトリガー設計)が必要。
+    詳細はメモリ`skygrid-buddy-push-notification-gap`に記録済み——下記「コンセプト整合性監査」も参照。
+
+---
+
+## 今のアプリケーションの現状
+
+**バックエンド:** Firebase本番稼働中(`sky-grid-app`、Blazeプラン)。Auth(匿名+Sign in with
+Apple)、Firestore(Native、asia-northeast1)、Storage、FCM(デバイストークン登録のみ確認)。
+Cloud Functionsは2本稼働中: `deleteAccount`(App Check enforced、アカウント削除)、
+`revenueCatWebhook`(RevenueCatのentitlementをFirestoreへミラー)。**§4当初計画にあった
+「post作成→バディへFCM通知」のFirestoreトリガーは、コード上に存在が確認できていない**
+(上記「残タスク」#14参照)。
+
+**クライアント:** SwiftUI、iOS 17.0以上(AlarmKitのみiOS 26+限定、17-25は通常のローカル通知へ
+フォールバック)。`ServiceFactory`がLocal⇔Firebaseの唯一の分岐点。
+
+**動く機能:**
+- オンボーディング(質問は全てOptional化・初期選択解除済み)→ハンドル設定→Todayホーム
+- カメラ撮影→空色抽出(`CIAreaAverage`)→圧縮→投稿作成→オフラインアップロードキュー(SwiftData)
+- 「幽霊投稿」自己修復: Firestoreドキュメントは存在するがStorage画像が失われた状態を検知し、
+  ユーザー確認の上で安全に削除・再撮影を可能にする機構(実装済み、実機未検証)
+- Sky Grid(365マスモザイク)+ 共有カード書き出し(9:16)
+- ストリーク/週リズム計算(タイムゾーン変更・休息日の免除ロジック込み)
+- バディ機能(申請・承認・相互ブラー) — ただし投稿時のプッシュ通知の有無は要確認(上記参照)
+- 朝のリマインダー: iOS 26+はAlarmKit + Live Activity + フォローアップ通知(実機未検証)、
+  iOS 17-25は通常のローカル通知にフォールバック
+- Paywall: 多段階フロー(value→features→plan)、5エントリポイント(onboarding/home/archive/
+  settings/ritualMilestone)、自動リマインダーは`ritualMilestone`のみ(3回撮影後、控えめな頻度・
+  2回却下で14日封印)、30日無料アーカイブ制限、**トライアルなし**(意図的、理由は記録されて
+  いない)、Restore purchases対応
+- App Store Connect: アプリレコード作成済み、価格・プライバシー申告・年齢制限確定済み、
+  審査提出可能な状態(「審査へ提出」ボタンは依頼者の最終確認待ち)
+
+**既知の技術的負債・未検証事項:** 「現在の残タスク」節を参照(重複を避けるためここには列挙しない)。
+
+---
+
+## 次回セッション準備: コンセプト整合性監査
+
+依頼者からの依頼: 「アプリの詳細実装ではなく、このアプリ自体が何であるべきか・どんな
+コンセプトで開発されたかを最初から見直し、現在の設計・実装がそのコンセプトと一致しているか
+(乖離がないか)を検証してほしい」。本セッションはコスト都合のため深掘りを行わず、次回セッション
+がすぐ着手できるよう以下を準備した。
+
+### 監査の基準(「コンセプト」の定義、§3・§6が一次情報源)
+
+- **核となる差別化要素:** 朝1枚の空の写真を撮るだけ。365マスの色モザイク「Sky Grid」(§進行の
+  「確定事項」参照)。
+- **5つのペインポイント→機能マッピング(§3、確定)**: (1)相互ブラーによる社会的圧力、
+  (2)通知タップ→カメラ直行、(3)週単位のリズム+Rest Day許容、(4)加工なしの空色抽出、
+  (5)Sky Gridでの可視化。
+- **デザインの6つの柱(§6、確定)**: 儀式的・寡黙・非評価的なトーン/その日の空の色をアクセント
+  にする配色/「New York」+SF Proのタイポグラフィ/投稿完了時のハプティック1回のみ/
+  ランキング・レベル・バッジ・コイン・マスコット・ポイント報酬は明確に置かない。
+- **収益モデルの前提(§2)**: フリーミアム+年額主体のサブスク、ネットワーク効果を守るための
+  ソフトペイウォール(本セッションの調査で追加検証済み)。
+
+### 本セッションで既に見つかっている具体的な乖離候補(次回の出発点)
+
+1. **バディ投稿通知が実装されているか不明、おそらく未実装(残タスク#14)。** ペインポイント#1
+   「誰も見ていないので、サボっても何も起きない」への解であるはずの相互ブラー機構が、
+   「バディが投稿した」ことをリアルタイムに知る手段(プッシュ通知)を欠いている可能性がある。
+   もし本当に未実装なら、アプリを開いて確認しない限り相互の圧力が機能しないことになり、
+   コンセプトの根幹に関わる。**次回セッション最優先の確認事項として推奨。**
+2. **§9のUI監査記録(アニメーション・シャドウ・スペーシング)が古い(残タスク#13)。** 実際には
+   一定の改善が既に入っているため、§6のデザイン方針(「投稿完了・マイルストーン級の状態変化には
+   spring + ハプティックの両方を組み合わせるべき」等)に照らして、現状どこまで実現できているかを
+   実機/シミュレータで目視確認する必要がある。argent MCP(iOS Simulator)を使った実際の画面確認が
+   有効。
+3. **Cloud Functionsの実態が§4の計画(「1本のみ」)と異なる(残タスク#14と関連)。** 実際には
+   `deleteAccount`と`revenueCatWebhook`の2本が存在し、当初計画していた「post作成→バディへFCM」の
+   1本は見当たらない。MVP設計判断(§4)自体をどう更新すべきかも論点になり得る。
+
+### 次回セッションでの進め方(推奨、強制ではない)
+
+1. まず上記の乖離候補#1(バディ通知)から着手 — コード grep(`Sources/Data/Firebase/`,
+   `Sources/Friends/`, `ios/functions/src/`)で実装有無を確定させ、なければ「意図的な後回し」か
+   「実装漏れ」かを依頼者に確認する。
+2. argent MCP(iOS Simulatorをboot、`describe`/screenshotで画面確認)を使い、§6のデザイン方針
+   ひとつひとつに対して現在の主要3画面(カメラ/Today/Sky Grid)が実際にどう見えるかを確認する。
+   `~/.claude/rules/ecc/swift/ui-design.md`の監査手順(①アイコン層→②配色トークン→
+   ③マテリアル/シャドウの重複→④スペーシング/タイポグラフィ)に沿うとよい。
+3. §3のペインポイント→機能マッピングの各行について、「本当にその機能がその痛みを解消しているか」
+   を一行ずつ再検証する(実装の有無だけでなく、体験として機能しているか)。
+4. 見つかった乖離は「意図的な設計変更」なのか「実装漏れ」なのかを切り分けて依頼者に報告し、
+   後者のみ修正候補とする(前者は§1-6の該当箇所を更新して整合を取る)。
+5. この監査自体は調査・分析作業であり、Opusへのエスカレーションは不要(core-mental-model
+   の「調査・分析はSonnetに留まる」に該当)。ただし監査の結果、実際の設計変更(例:
+   バディ通知の追加実装)が必要と判明した場合は、その設計判断自体はplanner/architect/
+   code-architect(Opus)への委譲を検討すること。
 
 ---
 
@@ -77,7 +300,16 @@
 | 無料(永久) | 撮影・投稿・自分のストリーク・バディ数無制限・招待・共有カード書き出し(標準デザイン)・通知・直近30日のアーカイブ |
 | Pro | 全期間アーカイブ+Sky Grid年間ビュー・原本画質の永久保存・年間タイムラプス書き出し・共有カードのデザイン違い・週次サマリー統計・HealthKit(睡眠)連携・ストリークFreeze月2回 |
 
-価格目安(ドラフト、要検証): 月額¥600 / 年額¥2,900(ヒーロー、3日間無料トライアル)/ ライフタイム¥5,800
+価格目安(ドラフト、当初案): 月額¥600 / 年額¥2,900(ヒーロー)/ ライフタイム¥5,800
+
+**訂正(2026-08-02):** 当初案にあった「3日間無料トライアル」は、実装時点(2026-07-31以前)で
+意図的に撤去されており、**現在の課金導線にトライアルは一切存在しない**(無料プラン/有料プラン
+の即時課金という二択)。撤去理由は記録されておらず未確認(残タスク#3参照)。また、実際の
+App Store Connect本番価格はこのドラフト(円建て)とは異なりドル建て(月額$5.99→目標$3.99、
+年額/ライフタイムは要相談)で運用中——このドラフト価格表自体は初期の企画メモであり、現在の
+価格の正とはみなさないこと。詳細:
+[dev-notes/paywall-hard-vs-soft-research_2026-08-02.md](dev-notes/paywall-hard-vs-soft-research_2026-08-02.md)、
+[dev-notes/revenuecat-webhook-production-rollout_2026-07-31.md](dev-notes/revenuecat-webhook-production-rollout_2026-07-31.md)。
 
 提示タイミング案: 起動直後のハードペイウォールは禁止。7日ストリーク達成の瞬間に文脈提示。
 
@@ -131,11 +363,16 @@ reports/{id}                           // 通報(App Review必須)
 | Cloud Functions | Firestoreトリガー1本(post作成→バディへFCM)のみ | ✓(1本) |
 | ローカル通知 | 朝のリマインダーはサーバー不要・コスト0で完結 | ✓ |
 
+> **2026-08-02時点の実態との差異:** 上表・上記の計画は当初案のまま残している。実際に稼働中の
+> Cloud Functionsは`deleteAccount`と`revenueCatWebhook`の2本で、この表が想定する「post作成→
+> バディへFCM」のトリガーは実装が見当たらない。詳細・次のアクションは上記
+> 「次回セッション準備: コンセプト整合性監査」を参照。
+
 **実装前に潰しておくべき落とし穴:**
 1. Storage SDKにはオフラインキューが無い。撮影した瞬間にローカル保存+Firestoreのpost docだけ先に書き、画像アップロードは独自の再試行キューで後追いする(UX上は撮った時点でストリーク確定)
 2. 日付境界: `localDate`は端末のローカル暦日で決定。時差移動・DSTで「同日2投稿」「1日消失」が起きうるため`timezone`を保存し変更検知時の扱いを明示(推奨: 過去は書き換えない)
 3. Cloud FunctionsはBlazeプラン必須で予算暴走リスクがある唯一の箇所。Budget Alertを$5に設定。要検証: 新規プロジェクトのCloud Storage既定バケット作成自体にBlazeが必要になっている可能性
-4. 画像サイズがコストの支配項。アップロード前に長辺1440px/JPEG q0.7(200〜400KB)+サムネ320pxに圧縮
+4. 画像サイズがコストの支配項。アップロード前に長辺1440px/JPEG q0.7(200〜400KB)+サムネ320×320正方形(中央クロップ)に圧縮。~~サムネ320px~~→2026-07-31、実は「長辺320px」ではなく正方形クロップに変更(ピクセルアートのグリッド一貫性のため)。同日、`UIGraphicsImageRendererFormat`がデバイス表示スケール(3倍)を継承していた実バグも発見・修正(`format.scale = 1`)——修正前は全アップロードが意図の約9倍のピクセル数だった。詳細: [dev-notes/photo-grid-square-thumbnails_2026-07-31.md](dev-notes/photo-grid-square-thumbnails_2026-07-31.md)
 5. ~~要検証: Storage Security Rulesから友達関係を参照できるか~~ → 2026-07-30、Firebase Emulator Suiteで実証済み(動作する)。詳細は[dev-notes/rules-emulator-verification_2026-07-30.md](dev-notes/rules-emulator-verification_2026-07-30.md)
 6. UGCを含むためApp Review Guideline 1.2(通報・ブロック・不適切コンテンツ対応・連絡先明示)とアプリ内アカウント削除(5.1.1)はMVP必須、後回し不可
 
@@ -166,7 +403,7 @@ reports/{id}                           // 通報(App Review必須)
 
 ---
 
-## 6. デザインの方向性(確定、次回はこれを土台にビジュアル制作へ)
+## 6. デザインの方向性(確定、コンセプト監査の基準の一つ)
 
 ポジショニング: 「that girl」の高彩度・完璧主義には乗らず、その隣にある"静けさ"を取る。
 
@@ -183,66 +420,6 @@ reports/{id}                           // 通報(App Review必須)
 **次回セッションでの制作方針(依頼者指示、2026-07-29):**
 - Canva MCPでローカルにビジュアル案(アイコン、オンボーディング、Sky Grid画面、共有カード)を作成する
 - モデルは高位のものを意図的に使う(このマシン上のOpus、または`codex` MCP経由のSol)。デザインはこのアプリで勝てる唯一の要素という位置づけのため、コストより品質を優先する(通常のSonnet優先ルーティングをこのフェーズに限りオーバーライド)
-
----
-
-## 7. 実装前チェックリスト(2026-07-29 Firebase本番構築更新)
-
-- [x] **Xcodeプロジェクト雛形作成。** `~/Desktop/SkyGrid/ios/`(XcodeGen、`project.yml`)。Bundle ID `com.takmin.skygrid`(既存プロジェクトの命名規則`com.takmin.{app}`に準拠、Team `NVZB82UK53`)。iOS 17.0以上
-- [ ] Apple Developer Programの既存アカウントで`com.takmin.skygrid`のBundle ID登録・Sign in with Apple/Push Notifications capability有効化(**未着手**)
-- [x] **Firebaseプロジェクト`sky-grid-app`を実際に作成・構築済み(2026-07-29)。** Auth(匿名 済み/Sign in with Apple 未・Apple側設定待ち)/Firestore(Native、asia-northeast1)/Storage/Cloud Functions(Blaze、予算アラート¥750相当)を全て有効化、`GoogleService-Info.plist`を`ios/SkyGrid/`に配置・`project.yml`にも反映済み。詳細・ハマった点は[dev-notes/firebase-backend-provisioning_2026-07-29.md](dev-notes/firebase-backend-provisioning_2026-07-29.md)
-- [x] Firestore Security Rules・Storage Security Rulesともに実プロジェクトにデプロイ済み(2026-07-30)
-- [ ] App Store Connectで新規アプリレコード作成、アプリ名「Sky Grid」の空き確認(**未着手**)
-- [ ] RevenueCatダッシュボードで新規App作成、月額/年額/ライフタイムの3商品を設定(価格は要協議のため仮設定でよい)、APIキーを`ios/SkyGrid/Config/Secrets.xcconfig`に設定(`Secrets.example.xcconfig`参照)。コード側(`Purchases/RevenueCatService.swift`)は移植済み・未検証(**未着手**)
-
----
-
-## 8. iOS実装状況(Phase 1完了、2026-07-29)
-
-`~/Desktop/SkyGrid/ios/`にXcodeGenベースのプロジェクトが実在。詳細な実装ログ・落とし穴は[dev-notes/ios-phase1-implementation_2026-07-29.md](dev-notes/ios-phase1-implementation_2026-07-29.md)。
-
-**動く範囲(Localモックバックエンド、外部アカウント一切不要):**
-- オンボーディング(3画面)→ハンドル設定→今日画面 の起動フロー一式
-- カメラ撮影(シミュレータはフィクスチャ画像巡回、実機はAVFoundation実装)→`CIAreaAverage`による空色抽出→圧縮→投稿作成→オフラインアップロードキュー登録
-- Sky Grid画面(365マスモザイク、季節推移する決定論的モックデータ)、共有カード書き出し(9:16)
-- ストリーク/週リズム計算(タイムゾーン変更・休息日の免除ロジック込み)
-- バディ機能(申請・承認・相互ブラー)、ローカル通知→カメラ直行
-- RevenueCat/Paywall(Unhookから移植・SGTトークンで再スキン、プレビュー実装で動作)
-- ユニットテスト39件、`build_sim`/`test_sim`ともにエラー・警告ゼロで通過確認済み(2026-07-29時点)
-
-**未着手(2026-07-29 Firebase本番構築更新後の最新状態):** Cloud Storageバケット作成(Console一クリック待ち)、Sign in with Apple(Apple Developer側設定待ち)、実アイコン/デザイン制作、BGProcessingTaskトリガー、実写真でのSkyColorExtractor回帰テスト。Firebase本体(Auth匿名/Firestore/Cloud Functions)は実プロジェクトとして構築済み — 詳細は[dev-notes/firebase-backend-provisioning_2026-07-29.md](dev-notes/firebase-backend-provisioning_2026-07-29.md)参照。
-
-**設計判断の要点(code-architectブループリントより):** `ServiceFactory`が唯一の分岐点でLocal⇔Firebase切替。`GoogleService-Info.plist`の有無だけで自動判定(`-SGForceLocalBackend`起動引数で強制ローカルも可)。Firestoreの`post`ドキュメントはFirestore自身のオフライン永続化に任せ、画像バイトだけを独自の`UploadQueue`(SwiftData)で管理する設計。Storage画像パスは`posts/{uid}/{UUID}.jpg`でuid+推測不能UUID方式(クロスサービスRulesは試みず)。
-
----
-
-## 9. UI改善(2026-07-29完了、下記は刷新前の監査記録)
-
-**実施内容:** 儀式的なToday状態（未撮影／記録済み）、大きな時刻、空色由来のアクセント、7日リズム、カメラの二択レビュー、Grid共有、AlarmKit設定画面、視覚的オンボーディングを実装済み。下記は改修前に残した監査記録であり、現状の評価ではない。
-
-### 現状のUI実装に対する具体的なギャップ分析(コード監査済み、2026-07-29)
-
-`ios/SkyGrid/Sources/`を実際にgrepして確認した事実(推測ではない):
-
-| # | 事実 | 何が問題か |
-|---|---|---|
-| 1 | **アニメーション修飾子(`withAnimation`/`.animation(`/`.spring(`/`.transition(`)がコードベース全体で0件** | 投稿完了・週リズムのマス埋まり・バディタイルの色明滅(相互ブラー解除)・ストリーク更新など、本来「毎朝の小さな喜び」になるはずの瞬間が、現状すべて無演出でインスタントに切り替わる。VISION.md §6が明示する「投稿完了時に柔らかいハプティック1回」はコード上に実装済み(`Haptics.postCompleted()`)だが、**それに対応する視覚的な動きが伴っていない** — 触感と視覚が噛み合っていない状態 |
-| 2 | **`.shadow()`の使用は`ShutterButton.swift`の1箇所のみ** | ほぼ全ての画面が完全にフラットで、階層・奥行きの手がかりがない |
-| 3 | **spacing/paddingの数値がハードコードで11種類以上バラバラに散在**(`spacing: 16`が5箇所、`.padding(24)`が5箇所、`.padding(.vertical, 14)`が4箇所...と、名前付き定数を経由せず各Viewで直書き) | 画面間で微妙な余白の不揃いが起きやすい(coding-style.mdの「マジックナンバー禁止」にも抵触) |
-| 4 | **アプリアイコンは単色プレースホルダーのまま**(Canva等でのデザイン制作は依頼者の方針転換により中断・後回しになっている) | ホーム画面上での第一印象が「未完成」に見える最大の要因になりうる |
-| 5 | **Onboarding3画面(Welcome/WakeGoalPicker/PermissionsPrimer)が純粋にテキスト+ボタンのみ** | 初回起動の第一印象を作る画面が現状最も作り込みが薄い |
-| 6 | 絵文字を構造的アイコンとして使っている箇所は0件(監査済み・良好) | 特に問題なし — この点は既にクリア |
-
-### 次回セッションでの進め方(推奨)
-
-1. **設計判断としてOpus(このマシン上)への委譲を検討すること。** 依頼者は過去に「デザインが競争優位の唯一要素な案件では高位モデルにコストをかけてよい」と明示している。今回のUI改善は「実際に毎日使いたくなる」という主観的・感性的な品質判断を伴うため、実装の前に一度設計方針(アニメーション設計・エレベーション体系・スペーシングスケール・アイコン層の扱い)をOpus(architect/code-architect)に整理させてから、Sonnetが実装するのが望ましい。
-2. **`~/.claude/rules/ecc/swift/ui-design.md`(iOS UI Design Quality)の監査手順に沿うこと。** このルールは「なぜアプリが"generic"に見えるか」の監査順序(①アイコン層→②配色トークン→③マテリアル/シャドウの重複→④スペーシング/タイポグラフィ)を定めており、上記の事実整理は概ねこの順序に沿っている。特に「投稿完了・マイルストーン級の状態変化には`.spring()`アニメーション+ハプティックの両方を組み合わせるべき」という同ルールの指摘が、上表#1と直接一致する。
-3. **具体的な着手候補(優先度順):**
-   - 週リズムの7マスが埋まる瞬間・バディタイルの相互ブラー解除の瞬間に`.spring(response:dampingFraction:)`アニメーションを追加(ハプティックとの対応関係を作る)
-   - `DesignSystem/`にスペーシングトークン(例: 4/8/12/16/24/32の名前付き定数)を新設し、既存Viewの直書き数値を置換
-   - Onboarding3画面に最低限のビジュアル要素(SF Symbolベースのブランドマーク等、絵文字は使わない)を追加
-   - アプリアイコンのデザイン制作(中断されたまま — Canva MCP+高位モデルでの再着手を依頼者と確認)
-4. **実機(iPhone 15 Pro、ワイヤレスデバッグ設定済み)で視覚確認しながら進めること。** シミュレータのbuild_sim/test_simだけでなく、実際の画面での見え方・触感の一致を都度確認する(手順は本ファイル上部のdev-notes参照)。
 
 ---
 

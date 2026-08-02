@@ -39,3 +39,17 @@ curl -X PATCH "https://firebaseappcheck.googleapis.com/v1/projects/sky-grid-app/
 ## 結論
 
 Firestore/Storage双方が`ENFORCED`。Cloud Functions(`deleteAccount`)は元々コード側`enforceAppCheck: true`で個別にfail-closedだったため変更なし。
+
+## 追記: 明示的な Info.plist の反映漏れ（2026-07-31）
+
+`project.yml` の `INFOPLIST_KEY_SGDebugAppCheckToken` を設定しただけでは、
+このプロジェクトのように明示的な `SkyGrid/Config/Info.plist` を使う場合、
+カスタムキーは生成済みアプリの plist に自動追加されない。したがって
+`Bundle.main.object(forInfoDictionaryKey:)` は `nil` となり、`devicectl` 起動時は
+未登録のランダムな Debug token が使われて Firestore に拒否される。
+
+`Info.plist` に `SGDebugAppCheckToken` を明示し、その値を
+`$(INFOPLIST_KEY_SGDebugAppCheckToken)` としてビルド設定から展開する必要がある。
+修正後は Debug simulator の生成済み Info.plist に非空の値が含まれることを確認した。
+これはビルド時の検証であり、実機へのインストールおよび本番 Firestore への書き込みは
+まだ行っていない。
