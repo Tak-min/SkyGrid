@@ -1,8 +1,15 @@
 import Observation
 import SwiftUI
 
-enum OnboardingStep: Int {
-    case welcome, questions, wakeGoal, personalizedPlan
+enum OnboardingStep: Equatable {
+    case welcome
+    case intention
+    case pace
+    case frequency
+    case privacy
+    case reminder
+    case wakeGoal
+    case plan
 }
 
 @MainActor
@@ -13,13 +20,42 @@ final class OnboardingViewModel {
     var personalizationProfile = LocalDefaults.personalizationProfile
     private(set) var didComplete = false
 
-    func advance(onFinished: () -> Void) {
-        guard let next = OnboardingStep(rawValue: step.rawValue + 1) else {
-            complete()
-            onFinished()
-            return
-        }
-        step = next
+    func advanceToIntention() {
+        step = .intention
+    }
+
+    func advanceToPace() {
+        step = .pace
+    }
+
+    func advanceToFrequency() {
+        step = .frequency
+    }
+
+    func advanceToPrivacy() {
+        step = .privacy
+    }
+
+    func advanceToReminder() {
+        step = .reminder
+    }
+
+    func advanceToWakeGoal() {
+        step = .wakeGoal
+    }
+
+    func advanceToPlan() {
+        step = .plan
+    }
+
+    func goBack(to step: OnboardingStep) {
+        self.step = step
+    }
+
+    func skipToPlan() {
+        personalizationProfile = PersonalizationProfile()
+        wakeGoalMinutes = LocalDefaults.wakeGoalMinutes
+        step = .plan
     }
 
     func complete() {
@@ -45,21 +81,62 @@ struct OnboardingCoordinatorView: View {
         Group {
             switch viewModel.step {
             case .welcome:
-                WelcomeView { viewModel.advance(onFinished: onFinished) }
-            case .questions:
-                PersonalizationQuestionsView(profile: $viewModel.personalizationProfile) {
-                    viewModel.advance(onFinished: onFinished)
+                WelcomeView { viewModel.advanceToIntention() }
+            case .intention:
+                PersonalizationQuestionsView(
+                    profile: $viewModel.personalizationProfile,
+                    onBack: { viewModel.goBack(to: .welcome) },
+                    onSkip: viewModel.skipToPlan
+                ) {
+                    viewModel.advanceToPace()
+                }
+            case .pace:
+                PaceQuestionView(
+                    profile: $viewModel.personalizationProfile,
+                    onBack: { viewModel.goBack(to: .intention) },
+                    onSkip: viewModel.skipToPlan
+                ) {
+                    viewModel.advanceToFrequency()
+                }
+            case .frequency:
+                FrequencyQuestionView(
+                    profile: $viewModel.personalizationProfile,
+                    onBack: { viewModel.goBack(to: .pace) },
+                    onSkip: viewModel.skipToPlan
+                ) {
+                    viewModel.advanceToPrivacy()
+                }
+            case .privacy:
+                PrivacyQuestionView(
+                    profile: $viewModel.personalizationProfile,
+                    onBack: { viewModel.goBack(to: .frequency) },
+                    onSkip: viewModel.skipToPlan
+                ) {
+                    viewModel.advanceToReminder()
+                }
+            case .reminder:
+                ReminderQuestionView(
+                    profile: $viewModel.personalizationProfile,
+                    onBack: { viewModel.goBack(to: .privacy) },
+                    onSkip: viewModel.skipToPlan
+                ) {
+                    viewModel.advanceToWakeGoal()
                 }
             case .wakeGoal:
-                WakeGoalPickerView(minutes: $viewModel.wakeGoalMinutes) {
-                    viewModel.advance(onFinished: onFinished)
+                WakeGoalPickerView(
+                    minutes: $viewModel.wakeGoalMinutes,
+                    reminderPreference: viewModel.personalizationProfile.reminder ?? .gentleReminder,
+                    onBack: { viewModel.goBack(to: .reminder) }
+                ) {
+                    viewModel.advanceToPlan()
                 }
-            case .personalizedPlan:
+            case .plan:
                 PersonalizedPlanView(
                     profile: viewModel.personalizationProfile,
                     wakeGoalMinutes: viewModel.wakeGoalMinutes,
                     onExplorePro: { showPaywall = true },
-                    onContinueFree: finish
+                    onContinueFree: finish,
+                    onEditAnswers: { viewModel.goBack(to: .wakeGoal) }
                 )
             }
         }
@@ -74,10 +151,10 @@ struct OnboardingCoordinatorView: View {
                     wakeGoalMinutes: viewModel.wakeGoalMinutes
                 ),
                 onEntitlementGranted: {
-                    Task { await entitlements.refresh() }
+                    await entitlements.refresh()
                     finish()
                 },
-                onContinueWithFree: finish
+                onDismissed: { _ in finish() }
             )
         }
     }

@@ -5,7 +5,7 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SGSpacing.xl) {
-            OnboardingProgress(step: 1, total: 4)
+            OnboardingProgress(step: 1, total: 8)
 
             Spacer(minLength: 24)
             RitualGridMark()

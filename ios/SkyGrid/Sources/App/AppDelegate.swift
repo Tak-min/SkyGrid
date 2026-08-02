@@ -21,10 +21,25 @@ final class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
         notificationRouter = router
         UNUserNotificationCenter.current().delegate = router
 
+        let launchArguments = ProcessInfo.processInfo.arguments
         let hasFirebaseConfig = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil
-        let forceUnconfigured = ProcessInfo.processInfo.arguments.contains("-SkyGridForceFirebaseUnconfigured")
+        // UI audit runs use deterministic in-memory view data. They must never
+        // create an anonymous Firebase account or contact RevenueCat.
+        let isUIAudit = launchArguments.contains("-SkyGridUIAudit")
+        let forceUnconfigured = launchArguments.contains("-SkyGridForceFirebaseUnconfigured") || isUIAudit
         if hasFirebaseConfig && !forceUnconfigured {
             #if DEBUG
+            // `AppCheckDebugProviderFactory` reads `FIRAAppCheckDebugToken` from the
+            // process environment. The Xcode scheme sets that for Xcode-driven runs,
+            // but `xcrun devicectl device process launch` (used for physical-device
+            // installs) starts the process without it, so a real device silently gets
+            // an unregistered random token and every Firestore/Storage request is
+            // rejected once App Check enforcement is ON. Force the same
+            // already-registered token here so it's independent of launch mechanism.
+            if let debugToken = Bundle.main.object(forInfoDictionaryKey: "SGDebugAppCheckToken") as? String,
+               !debugToken.isEmpty {
+                setenv("FIRAAppCheckDebugToken", debugToken, 1)
+            }
             AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
             #else
             AppCheck.setAppCheckProviderFactory(AppAttestProviderFactory())
@@ -33,11 +48,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
             Messaging.messaging().delegate = self
             application.registerForRemoteNotifications()
         }
-
-        // RevenueCat configuration is independent from Firebase. When no public
-        // SDK key is present, the paywall stays unavailable rather than simulating
-        // a purchase.
-        RevenueCatConfig.configureIfNeeded()
 
         return true
     }

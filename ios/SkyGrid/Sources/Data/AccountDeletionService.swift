@@ -26,6 +26,16 @@ final class FirebaseAccountDeletionService: AccountDeleting {
         do {
             // The callable derives the target UID exclusively from the verified
             // Firebase Auth context. No client-supplied UID is sent or trusted.
+            // Limited-use App Check tokens are deliberately NOT requested: the App
+            // Check debug provider's limited-use exchange is rejected server-side in
+            // this project, the SDK then substitutes a placeholder token, and the
+            // callable rejects that as an undecodable JWT — making deletion
+            // impossible in every build configuration this app can currently test.
+            // `consumeAppCheckToken` server-side never actually enforced replay
+            // protection either (firebase-functions only records
+            // `alreadyConsumed`, it never rejects on it), so nothing is lost by
+            // removing it. Replay resistance instead comes from the callable being
+            // idempotent and scoped only to the verified caller's own uid.
             _ = try await functions.httpsCallable("deleteAccount").call()
         } catch {
             throw FirebaseRepositoryError.map(error)

@@ -2,79 +2,103 @@ import SwiftUI
 
 struct WakeGoalPickerView: View {
     @Binding var minutes: Int
+    let reminderPreference: ReminderPreference
+    let onBack: () -> Void
     let onNext: () -> Void
 
     @State private var alarmState = MorningAlarmState.off(MorningAlarmScheduler.preferredKind)
     @State private var isScheduling = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: SGSpacing.xl) {
-            OnboardingProgress(step: 3, total: 4)
-
-            Spacer(minLength: 16)
-            Text("The time your\nmorning begins")
-                .font(SGFont.serifTitle(38))
-                .foregroundStyle(SGT.ink)
-            Text("A time is enough for now. The alarm is optional.")
-                .font(SGFont.body(16))
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: SGSpacing.xl) {
+                HStack {
+                    Button("Back", action: onBack)
+                    Spacer()
+                }
+                .font(SGFont.caption(14))
                 .foregroundStyle(SGT.ink2)
-            Text(timeString)
-                .font(SGFont.bigTime(76))
-                .foregroundStyle(SGT.ink)
-                .contentTransition(.numericText())
-            DatePicker(
-                "Wake time",
-                selection: Binding(
-                    get: { date(for: minutes) },
-                    set: { minutes = minutes(for: $0) }
-                ),
-                displayedComponents: .hourAndMinute
-            )
-            .datePickerStyle(.wheel)
-            .labelsHidden()
-            .frame(maxWidth: .infinity)
-            .frame(height: 150)
-            .clipped()
-            .quietCard()
 
-            VStack(alignment: .leading, spacing: SGSpacing.sm) {
-                if alarmState.isScheduled {
-                    Label("Set for every day at this time", systemImage: "checkmark.circle.fill")
-                        .font(SGFont.caption())
-                        .foregroundStyle(SGT.ink2)
+                OnboardingProgress(step: 7, total: 8)
+
+                Text("The time your\nmorning begins")
+                    .font(SGFont.serifTitle(38))
+                    .foregroundStyle(SGT.ink)
+                Text("QUESTION 6 OF 6 · A time is enough for now. You can always change it.")
+                    .font(SGFont.body(16))
+                    .foregroundStyle(SGT.ink2)
+                Text(timeString)
+                    .font(SGFont.bigTime(76))
+                    .foregroundStyle(SGT.ink)
+                    .contentTransition(.numericText())
+                DatePicker(
+                    "Wake time",
+                    selection: Binding(
+                        get: { date(for: minutes) },
+                        set: { minutes = minutes(for: $0) }
+                    ),
+                    displayedComponents: .hourAndMinute
+                )
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .frame(maxWidth: .infinity)
+                .frame(height: 150)
+                .clipped()
+                .quietCard()
+
+                if reminderPreference != .noReminder {
+                    reminderControls
                 } else {
-                    Text(alarmMessage)
+                    Label("You chose no reminder. Capture is always ready from Today.", systemImage: "sun.horizon")
                         .font(SGFont.caption())
                         .foregroundStyle(SGT.ink2)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(SGSpacing.lg)
+                        .quietCard()
                 }
 
-                Button(action: scheduleAlarm) {
-                    if isScheduling {
-                        ProgressView().tint(SGT.ink)
-                    } else {
-                        Text(alarmActionTitle)
-                            .frame(maxWidth: .infinity)
-                    }
+                Button(action: advance) {
+                    Text("Save time and continue")
+                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(SkySecondaryButtonStyle())
+                .buttonStyle(SkyPrimaryButtonStyle())
                 .disabled(isScheduling)
             }
+            .padding(SGSpacing.xl)
+            .padding(.bottom, 32)
+        }
+    }
 
-            Spacer(minLength: 4)
-            Button(action: advance) {
-                Text("Save time and continue")
-                    .frame(maxWidth: .infinity)
+    private var reminderControls: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.sm) {
+            if alarmState.isScheduled {
+                Label("Set for every day at this time", systemImage: "checkmark.circle.fill")
+                    .font(SGFont.caption())
+                    .foregroundStyle(SGT.ink2)
+            } else {
+                Text(alarmMessage)
+                    .font(SGFont.caption())
+                    .foregroundStyle(SGT.ink2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .buttonStyle(SkyPrimaryButtonStyle())
+
+            Button(action: scheduleAlarm) {
+                if isScheduling {
+                    ProgressView().tint(SGT.ink)
+                } else {
+                    Text(alarmActionTitle)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .buttonStyle(SkySecondaryButtonStyle())
             .disabled(isScheduling)
         }
-        .padding(SGSpacing.xl)
     }
 
     private var alarmActionTitle: String {
         if alarmState.isScheduled { return "Update \(alarmState.kind.title)" }
-        return alarmState.kind == .systemAlarm ? "Set a System Alarm" : "Set a Morning Reminder"
+        return reminderPreference == .scheduledAlarm
+            ? "Set a Morning Alarm"
+            : "Set a Gentle Reminder"
     }
 
     private var timeString: String {

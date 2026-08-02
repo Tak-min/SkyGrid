@@ -19,7 +19,10 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        guard response.notification.request.identifier == MorningAlarmScheduler.notificationIdentifier else {
+        let identifier = response.notification.request.identifier
+        let isMorningNotification = identifier == MorningAlarmScheduler.notificationIdentifier
+            || identifier.hasPrefix(MorningFollowUpScheduler.identifierPrefix)
+        guard isMorningNotification else {
             completionHandler()
             return
         }

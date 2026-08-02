@@ -5,18 +5,21 @@ import SwiftUI
 /// targeting or sent to a purchase provider.
 struct PersonalizationQuestionsView: View {
     @Binding var profile: PersonalizationProfile
+    let onBack: () -> Void
+    let onSkip: () -> Void
     let onNext: () -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
-                OnboardingProgress(step: 2, total: 4)
+                onboardingNavigation
+                OnboardingProgress(step: 2, total: 8)
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text("What would make\nmornings easier?")
                         .font(SGFont.serifTitle(38))
                         .foregroundStyle(SGT.ink)
-                    Text("Choose one direction, or keep the quiet default. This stays on your device.")
+                    Text("QUESTION 1 OF 6 · Choose a direction. This stays on your device.")
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink2)
                 }
@@ -38,19 +41,20 @@ struct PersonalizationQuestionsView: View {
                 Button("Continue", action: onNext)
                     .frame(maxWidth: .infinity)
                     .buttonStyle(SkyPrimaryButtonStyle())
-
-                Button("Use the quiet default") {
-                    profile = PersonalizationProfile()
-                    onNext()
-                }
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 44)
             }
             .padding(SGSpacing.xl)
             .padding(.bottom, 32)
         }
+    }
+
+    private var onboardingNavigation: some View {
+        HStack {
+            Button("Back", action: onBack)
+            Spacer()
+            Button("Skip setup", action: onSkip)
+        }
+        .font(SGFont.caption(14))
+        .foregroundStyle(SGT.ink2)
     }
 
     private func choiceSection<Content: View>(
@@ -63,6 +67,154 @@ struct PersonalizationQuestionsView: View {
                 .tracking(1.3)
                 .foregroundStyle(SGT.ink3)
             VStack(spacing: 8, content: content)
+        }
+    }
+}
+
+/// A shared single-question page layout: navigation row, progress bar, heading,
+/// one choice list, and a Continue button. `RitualRhythmQuestionsView` and
+/// `PrivacyAndReminderQuestionsView` used to each pack two of these onto one
+/// screen — split into `PaceQuestionView`/`FrequencyQuestionView` and
+/// `PrivacyQuestionView`/`ReminderQuestionView` below so every question gets
+/// its own page, matching `PersonalizationQuestionsView`'s existing shape.
+private struct SingleQuestionPage<Content: View>: View {
+    let step: Int
+    let heading: String
+    let subheading: String
+    let onBack: () -> Void
+    let onSkip: () -> Void
+    let onNext: () -> Void
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: SGSpacing.xl) {
+                navigation
+                OnboardingProgress(step: step, total: 8)
+
+                VStack(alignment: .leading, spacing: SGSpacing.sm) {
+                    Text(heading)
+                        .font(SGFont.serifTitle(38))
+                        .foregroundStyle(SGT.ink)
+                    Text(subheading)
+                        .font(SGFont.body(16))
+                        .foregroundStyle(SGT.ink2)
+                }
+
+                VStack(spacing: 8, content: { content })
+
+                Button("Continue", action: onNext)
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(SkyPrimaryButtonStyle())
+            }
+            .padding(SGSpacing.xl)
+            .padding(.bottom, 32)
+        }
+    }
+
+    private var navigation: some View {
+        HStack {
+            Button("Back", action: onBack)
+            Spacer()
+            Button("Skip setup", action: onSkip)
+        }
+        .font(SGFont.caption(14))
+        .foregroundStyle(SGT.ink2)
+    }
+}
+
+struct PaceQuestionView: View {
+    @Binding var profile: PersonalizationProfile
+    let onBack: () -> Void
+    let onSkip: () -> Void
+    let onNext: () -> Void
+
+    var body: some View {
+        SingleQuestionPage(
+            step: 3,
+            heading: "Make the ritual\nyour own.",
+            subheading: "QUESTION 2 OF 6 · How should it feel? You can change this later.",
+            onBack: onBack,
+            onSkip: onSkip,
+            onNext: onNext
+        ) {
+            ForEach(RitualPace.allCases) { pace in
+                ChoiceRow(title: pace.title, detail: pace.detail, isSelected: profile.pace == pace) {
+                    profile.pace = pace
+                }
+            }
+        }
+    }
+}
+
+struct FrequencyQuestionView: View {
+    @Binding var profile: PersonalizationProfile
+    let onBack: () -> Void
+    let onSkip: () -> Void
+    let onNext: () -> Void
+
+    var body: some View {
+        SingleQuestionPage(
+            step: 4,
+            heading: "How often\nfeels right?",
+            subheading: "QUESTION 3 OF 6 · You can change this later.",
+            onBack: onBack,
+            onSkip: onSkip,
+            onNext: onNext
+        ) {
+            ForEach(RitualFrequency.allCases) { frequency in
+                ChoiceRow(title: frequency.title, detail: frequency.detail, isSelected: profile.frequency == frequency) {
+                    profile.frequency = frequency
+                }
+            }
+        }
+    }
+}
+
+struct PrivacyQuestionView: View {
+    @Binding var profile: PersonalizationProfile
+    let onBack: () -> Void
+    let onSkip: () -> Void
+    let onNext: () -> Void
+
+    var body: some View {
+        SingleQuestionPage(
+            step: 5,
+            heading: "Keep it private,\nor make room to share.",
+            subheading: "QUESTION 4 OF 6 · Who is this for? Nothing is sent from this answer.",
+            onBack: onBack,
+            onSkip: onSkip,
+            onNext: onNext
+        ) {
+            ForEach(RitualPrivacy.allCases) { privacy in
+                ChoiceRow(title: privacy.title, detail: privacy.detail, isSelected: profile.privacy == privacy) {
+                    profile.privacy = privacy
+                }
+            }
+        }
+    }
+}
+
+struct ReminderQuestionView: View {
+    @Binding var profile: PersonalizationProfile
+    let onBack: () -> Void
+    let onSkip: () -> Void
+    let onNext: () -> Void
+
+    var body: some View {
+        SingleQuestionPage(
+            step: 6,
+            heading: "What should\nbring you back?",
+            subheading: "QUESTION 5 OF 6 · Nothing is sent from this answer.",
+            onBack: onBack,
+            onSkip: onSkip,
+            onNext: onNext
+        ) {
+            ForEach(ReminderPreference.allCases) { reminder in
+                ChoiceRow(title: reminder.title, detail: reminder.detail, isSelected: profile.reminder == reminder) {
+                    profile.reminder = reminder
+                }
+            }
         }
     }
 }

@@ -14,6 +14,7 @@ struct AppServices {
     let imageFetching: any ImageFetching
     let uploadQueue: UploadQueue
     let postPublisher: any PostPublishing
+    let orphanedPostRecovery: any OrphanedPostRecovering
     let purchases: any PurchasesServicing
     let entitlements: EntitlementStore
     /// Retained so a refreshed FCM token is registered for the active Firebase UID.

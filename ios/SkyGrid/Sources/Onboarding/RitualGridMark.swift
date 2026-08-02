@@ -4,6 +4,12 @@ import SwiftUI
 /// becoming a quiet field of sky. It gives onboarding a visual anchor without
 /// importing a mascot, illustration, or a fixed marketing color.
 struct RitualGridMark: View {
+    let side: CGFloat
+
+    init(side: CGFloat = 172) {
+        self.side = side
+    }
+
     private let colors: [Color] = [
         Color(red: 0.78, green: 0.86, blue: 0.89),
         Color(red: 0.92, green: 0.76, blue: 0.61),
@@ -41,7 +47,7 @@ struct RitualGridMark: View {
                 }
             }
         }
-        .frame(width: 172, height: 172)
+        .frame(width: side, height: side)
         .accessibilityHidden(true)
     }
 }

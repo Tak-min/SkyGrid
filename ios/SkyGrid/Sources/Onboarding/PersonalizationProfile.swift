@@ -50,6 +50,30 @@ enum RitualPace: String, CaseIterable, Codable, Sendable, Identifiable {
     }
 }
 
+enum RitualFrequency: String, CaseIterable, Codable, Sendable, Identifiable {
+    case mostMornings
+    case weekdays
+    case wheneverItFits
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .mostMornings: return "Most mornings"
+        case .weekdays: return "Weekdays"
+        case .wheneverItFits: return "When it fits"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .mostMornings: return "A small daily mark, with room to miss one."
+        case .weekdays: return "A consistent start to the days that need it."
+        case .wheneverItFits: return "A record that grows at its own pace."
+        }
+    }
+}
+
 enum RitualPrivacy: String, CaseIterable, Codable, Sendable, Identifiable {
     case privateRitual
     case shareWithBuddy
@@ -74,10 +98,90 @@ enum RitualPrivacy: String, CaseIterable, Codable, Sendable, Identifiable {
     }
 }
 
+enum ReminderPreference: String, CaseIterable, Codable, Sendable, Identifiable {
+    case noReminder
+    case gentleReminder
+    case scheduledAlarm
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .noReminder: return "No reminder"
+        case .gentleReminder: return "A gentle reminder"
+        case .scheduledAlarm: return "A scheduled alarm"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .noReminder: return "I’ll open Sky Grid when I’m ready."
+        case .gentleReminder: return "A quiet nudge at the time I choose."
+        case .scheduledAlarm: return "A dedicated start to the morning."
+        }
+    }
+}
+
+/// Preference answers stay on-device and only shape copy, defaults, and the
+/// ordering of truthful archive benefits. They never affect price, eligibility,
+/// duration, or which features a plan includes.
+///
+/// Every answer starts unselected (`nil`) — the onboarding questions must never
+/// arrive with an option already checked, since that reads as the app having
+/// already decided for the person. `PersonalizedMorningPlanBuilder` and
+/// `PaywallEntryPoint` fall back to the same copy the old hardcoded defaults used
+/// to produce when an answer was never given.
 struct PersonalizationProfile: Equatable, Codable, Sendable {
-    var intent: MorningIntent = .steadierRhythm
-    var pace: RitualPace = .gentle
-    var privacy: RitualPrivacy = .privateRitual
+    var intent: MorningIntent?
+    var pace: RitualPace?
+    var frequency: RitualFrequency?
+    var privacy: RitualPrivacy?
+    var reminder: ReminderPreference?
+
+    init(
+        intent: MorningIntent? = nil,
+        pace: RitualPace? = nil,
+        frequency: RitualFrequency? = nil,
+        privacy: RitualPrivacy? = nil,
+        reminder: ReminderPreference? = nil
+    ) {
+        self.intent = intent
+        self.pace = pace
+        self.frequency = frequency
+        self.privacy = privacy
+        self.reminder = reminder
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case intent
+        case pace
+        case frequency
+        case privacy
+        case reminder
+    }
+
+    /// Existing installations stored only the first three answers (or, before this
+    /// change, always stored a non-optional default). Decoding each key
+    /// independently preserves whatever was actually answered.
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            intent: try values.decodeIfPresent(MorningIntent.self, forKey: .intent),
+            pace: try values.decodeIfPresent(RitualPace.self, forKey: .pace),
+            frequency: try values.decodeIfPresent(RitualFrequency.self, forKey: .frequency),
+            privacy: try values.decodeIfPresent(RitualPrivacy.self, forKey: .privacy),
+            reminder: try values.decodeIfPresent(ReminderPreference.self, forKey: .reminder)
+        )
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encodeIfPresent(intent, forKey: .intent)
+        try values.encodeIfPresent(pace, forKey: .pace)
+        try values.encodeIfPresent(frequency, forKey: .frequency)
+        try values.encodeIfPresent(privacy, forKey: .privacy)
+        try values.encodeIfPresent(reminder, forKey: .reminder)
+    }
 }
 
 struct PersonalizedMorningPlan: Equatable, Sendable {
@@ -93,7 +197,10 @@ enum PersonalizedMorningPlanBuilder {
         let headline: String
         let proLead: String
 
-        switch profile.intent {
+        // An unanswered question falls back to the same copy the old hardcoded
+        // default used to produce — the profile only ever refines this baseline,
+        // it never blocks reaching it.
+        switch profile.intent ?? .steadierRhythm {
         case .steadierRhythm:
             headline = "A quieter way to keep \(time)."
             proLead = "Keep the whole record as your rhythm takes shape."
@@ -105,18 +212,28 @@ enum PersonalizedMorningPlanBuilder {
             proLead = "Let every morning stay in the same long-view grid."
         }
 
-        let recommendation: String
-        switch profile.pace {
+        let paceRecommendation: String
+        switch profile.pace ?? .gentle {
         case .gentle:
-            recommendation = "Use a gentle alarm, then take one photo. Nothing else is required."
+            paceRecommendation = "Keep it gentle: one photo is enough."
         case .structured:
-            recommendation = "Let the alarm open a simple first action: the camera, then the day."
+            paceRecommendation = "Let the time you choose lead to one simple first action."
         case .flexible:
-            recommendation = "Keep the ritual light. A missed morning is simply an empty square."
+            paceRecommendation = "Keep it light. A missed morning is simply an empty square."
+        }
+
+        let frequencyRecommendation: String
+        switch profile.frequency ?? .mostMornings {
+        case .mostMornings:
+            frequencyRecommendation = "Most mornings are plenty."
+        case .weekdays:
+            frequencyRecommendation = "Keep weekends open and weekdays intentional."
+        case .wheneverItFits:
+            frequencyRecommendation = "Return whenever the sky gives you a minute."
         }
 
         let privacyNote: String
-        switch profile.privacy {
+        switch profile.privacy ?? .privateRitual {
         case .privateRitual:
             privacyNote = "Your first sky is private. Sharing is always your choice."
         case .shareWithBuddy:
@@ -127,7 +244,7 @@ enum PersonalizedMorningPlanBuilder {
 
         return PersonalizedMorningPlan(
             headline: headline,
-            recommendation: recommendation,
+            recommendation: "\(paceRecommendation) \(frequencyRecommendation)",
             privacyNote: privacyNote,
             proLead: proLead
         )
