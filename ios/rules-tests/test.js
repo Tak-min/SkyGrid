@@ -21,6 +21,29 @@ const PROJECT_ID = "sky-grid-app";
 const OWNER = "ownerUid";
 const BUDDY = "buddyUid";
 const STRANGER = "strangerUid";
+const HANDLE_CLAIMER = "handleClaimer";
+const LOCAL_DATE = "2026-07-31";
+
+function postPath(uid = OWNER) {
+  return `users/${uid}/posts/${LOCAL_DATE}`;
+}
+
+function imagePath(uid = OWNER) {
+  return `posts/${uid}/${LOCAL_DATE}/abc123.jpg`;
+}
+
+function profileData(handle) {
+  return {
+    ...(handle ? { handle } : {}),
+    displayName: "Sky Grid member",
+    timezone: "Asia/Tokyo",
+    wakeGoalMinutes: 420,
+    streakCurrent: 0,
+    streakLongest: 0,
+    isPro: false,
+    createdAt: new Date(),
+  };
+}
 
 function relationshipId(a, b) {
   return a < b ? `${a}_${b}` : `${b}_${a}`;
@@ -45,10 +68,16 @@ async function seedFriendship(overrides = {}) {
 
 async function uploadAsOwner() {
   await testEnv.withSecurityRulesDisabled(async (context) => {
-    const bucket = context.storage().ref(`posts/${OWNER}/abc123.jpg`);
+    const bucket = context.storage().ref(imagePath());
     await bucket.put(Buffer.from("fake-jpeg-bytes"), {
       contentType: "image/jpeg",
     });
+  });
+}
+
+async function seedPost(uid) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await context.firestore().doc(postPath(uid)).set({ ownerUid: uid });
   });
 }
 
@@ -81,11 +110,19 @@ beforeEach(async () => {
 describe("storage.rules activeBuddy() cross-service reference", () => {
   it("lets an accepted buddy read the owner's post image", async () => {
     await seedFriendship({ status: "accepted" });
+    await seedPost(BUDDY);
     await uploadAsOwner();
     const buddyCtx = testEnv.authenticatedContext(BUDDY);
     await assertSucceeds(
-      buddyCtx.storage().ref(`posts/${OWNER}/abc123.jpg`).getDownloadURL()
+      buddyCtx.storage().ref(imagePath()).getDownloadURL()
     );
+  });
+
+  it("blocks an accepted buddy before they post their own photo for the day", async () => {
+    await seedFriendship({ status: "accepted" });
+    await uploadAsOwner();
+    const buddyCtx = testEnv.authenticatedContext(BUDDY);
+    await assertFails(buddyCtx.storage().ref(imagePath()).getDownloadURL());
   });
 
   it("lets the owner always read their own post image", async () => {
@@ -93,7 +130,7 @@ describe("storage.rules activeBuddy() cross-service reference", () => {
     await uploadAsOwner();
     const ownerCtx = testEnv.authenticatedContext(OWNER);
     await assertSucceeds(
-      ownerCtx.storage().ref(`posts/${OWNER}/abc123.jpg`).getDownloadURL()
+      ownerCtx.storage().ref(imagePath()).getDownloadURL()
     );
   });
 
@@ -102,7 +139,7 @@ describe("storage.rules activeBuddy() cross-service reference", () => {
     await uploadAsOwner();
     const strangerCtx = testEnv.authenticatedContext(STRANGER);
     await assertFails(
-      strangerCtx.storage().ref(`posts/${OWNER}/abc123.jpg`).getDownloadURL()
+      strangerCtx.storage().ref(imagePath()).getDownloadURL()
     );
   });
 
@@ -111,7 +148,7 @@ describe("storage.rules activeBuddy() cross-service reference", () => {
     await uploadAsOwner();
     const buddyCtx = testEnv.authenticatedContext(BUDDY);
     await assertFails(
-      buddyCtx.storage().ref(`posts/${OWNER}/abc123.jpg`).getDownloadURL()
+      buddyCtx.storage().ref(imagePath()).getDownloadURL()
     );
   });
 
@@ -120,7 +157,7 @@ describe("storage.rules activeBuddy() cross-service reference", () => {
     await uploadAsOwner();
     const buddyCtx = testEnv.authenticatedContext(BUDDY);
     await assertFails(
-      buddyCtx.storage().ref(`posts/${OWNER}/abc123.jpg`).getDownloadURL()
+      buddyCtx.storage().ref(imagePath()).getDownloadURL()
     );
   });
 
@@ -129,7 +166,7 @@ describe("storage.rules activeBuddy() cross-service reference", () => {
     await uploadAsOwner();
     const anonCtx = testEnv.unauthenticatedContext();
     await assertFails(
-      anonCtx.storage().ref(`posts/${OWNER}/abc123.jpg`).getDownloadURL()
+      anonCtx.storage().ref(imagePath()).getDownloadURL()
     );
   });
 });
@@ -181,5 +218,72 @@ describe("firestore.rules activeBuddy() (same predicate, Firestore side)", () =>
     await assertFails(
       strangerCtx.firestore().collection("users").doc(OWNER).get()
     );
+  });
+
+  it("blocks an accepted buddy from reading today's post before their own post", async () => {
+    await seedFriendship({ status: "accepted" });
+    await seedPost(OWNER);
+    const buddyCtx = testEnv.authenticatedContext(BUDDY);
+    await assertFails(buddyCtx.firestore().doc(postPath()).get());
+  });
+
+  it("lets an accepted buddy read today's post after their own post", async () => {
+    await seedFriendship({ status: "accepted" });
+    await seedPost(OWNER);
+    await seedPost(BUDDY);
+    const buddyCtx = testEnv.authenticatedContext(BUDDY);
+    await assertSucceeds(buddyCtx.firestore().doc(postPath()).get());
+  });
+});
+
+describe("firestore.rules handle claims", () => {
+  it("allows a first handle and profile to be created atomically", async () => {
+    const handle = "fresh_handle";
+    const firestore = testEnv.authenticatedContext(HANDLE_CLAIMER).firestore();
+    const batch = firestore.batch();
+    batch.set(firestore.collection("handles").doc(handle), {
+      uid: HANDLE_CLAIMER,
+      createdAt: new Date(),
+    });
+    batch.set(firestore.collection("users").doc(HANDLE_CLAIMER), profileData(handle));
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it("allows a first handle for a profile that already exists", async () => {
+    const handle = "existing_profile";
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection("users").doc(HANDLE_CLAIMER).set(profileData());
+    });
+
+    const firestore = testEnv.authenticatedContext(HANDLE_CLAIMER).firestore();
+    const batch = firestore.batch();
+    batch.set(firestore.collection("handles").doc(handle), {
+      uid: HANDLE_CLAIMER,
+      createdAt: new Date(),
+    });
+    batch.update(firestore.collection("users").doc(HANDLE_CLAIMER), { handle });
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it("rejects a second handle for the same profile", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection("users").doc(HANDLE_CLAIMER).set(profileData("first_handle"));
+      await context.firestore().collection("handles").doc("first_handle").set({
+        uid: HANDLE_CLAIMER,
+        createdAt: new Date(),
+      });
+    });
+
+    const firestore = testEnv.authenticatedContext(HANDLE_CLAIMER).firestore();
+    const batch = firestore.batch();
+    batch.set(firestore.collection("handles").doc("second_handle"), {
+      uid: HANDLE_CLAIMER,
+      createdAt: new Date(),
+    });
+    batch.update(firestore.collection("users").doc(HANDLE_CLAIMER), { handle: "second_handle" });
+
+    await assertFails(batch.commit());
   });
 });

@@ -29,6 +29,7 @@ targets:
       Debug: SkyGrid/Config/Debug.xcconfig
       Release: SkyGrid/Config/Release.xcconfig
     dependencies:
+      - target: SkyGridWidgets
       - package: RevenueCat
         product: RevenueCat
       - package: Firebase
@@ -43,6 +44,8 @@ targets:
         product: FirebaseFunctions
       - package: Firebase
         product: FirebaseAppCheck
+      - package: Firebase
+        product: FirebaseAnalytics
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.takmin.skygrid
@@ -62,6 +65,34 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "Sky Grid uses the camera only to capture your morning sky. Choosing from the photo library is not available."
         SWIFT_STRICT_CONCURRENCY: targeted
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        Debug:
+          # The Debug provider needs a registered token even when the app is launched
+          # via devicectl. Its value is intentionally supplied only by ignored
+          # Secrets.xcconfig or CI, never by this tracked project definition.
+          INFOPLIST_KEY_SGDebugAppCheckToken: "$(APP_CHECK_DEBUG_TOKEN)"
+  SkyGridWidgets:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SkyGridWidgets
+      - path: SkyGrid/Sources/LiveActivity/MorningRitualAttributes.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.takmin.skygrid.SkyGridWidgets
+        PRODUCT_MODULE_NAME: SkyGridWidgets
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: NVZB82UK53
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: SkyGrid/Config/SkyGridWidgets-Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Sky Grid
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SKIP_INSTALL: YES
+        SWIFT_STRICT_CONCURRENCY: targeted
   SkyGridTests:
     type: bundle.unit-test
     platform: iOS
@@ -76,6 +107,8 @@ targets:
       base:
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: NVZB82UK53
     dependencies:
       - target: SkyGrid
   SkyGridUITests:
@@ -88,6 +121,8 @@ targets:
       base:
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: NVZB82UK53
     dependencies:
       - target: SkyGrid
 schemes:
@@ -101,8 +136,8 @@ schemes:
         - SkyGridTests
         - SkyGridUITests
       environmentVariables:
-        FIRAAppCheckDebugToken: "2920ed9c-3a77-4d4d-ad35-85bbfa4eec33"
+        FIRAAppCheckDebugToken: "$(APP_CHECK_DEBUG_TOKEN)"
     run:
       config: Debug
       environmentVariables:
-        FIRAAppCheckDebugToken: "2920ed9c-3a77-4d4d-ad35-85bbfa4eec33"
+        FIRAAppCheckDebugToken: "$(APP_CHECK_DEBUG_TOKEN)"

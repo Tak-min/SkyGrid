@@ -22,8 +22,17 @@ service firebase.storage {
         && relationship.data.blockedBy.size() == 0;
     }
 
-    match /posts/{uid}/{fileName} {
-      allow get: if signedIn() && (request.auth.uid == uid || activeBuddy(uid));
+    function hasPostedFor(localDate) {
+      return signedIn()
+        && firestore.exists(
+          /databases/(default)/documents/users/$(request.auth.uid)/posts/$(localDate)
+        );
+    }
+
+    match /posts/{uid}/{localDate}/{fileName} {
+      // Match the Firestore mutual-reveal policy before sending a buddy's bytes.
+      allow get: if signedIn()
+        && (request.auth.uid == uid || (activeBuddy(uid) && hasPostedFor(localDate)));
       allow list: if false;
       allow create: if signedIn()
         && request.auth.uid == uid

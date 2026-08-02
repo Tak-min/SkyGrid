@@ -1,6 +1,6 @@
 # Sky Grid — Privacy Policy
 
-_Last updated: 2026-07-30_
+_Last updated: 2026-07-31_
 
 Sky Grid ("the app") is a morning photo streak app. This policy describes what
 data the app collects, why, and how you can delete it.
@@ -9,25 +9,29 @@ data the app collects, why, and how you can delete it.
 
 | Data | Why | Where it's stored |
 |---|---|---|
-| Account identifier (anonymous ID, or your Apple ID if you choose Sign in with Apple) | To identify your account and sync your data across devices | Firebase Authentication |
+| Account identifier (anonymous Firebase ID and in-app handle) | To identify your account and sync your data across devices | Firebase Authentication / Firestore |
 | Handle / display name | Shown to your buddies | Firebase Firestore |
 | Your morning sky photos, capture time, and extracted color | The core feature of the app | Firebase Cloud Storage / Firestore |
 | Streak count, wake-goal time, subscription (Pro) status | To power the app's core mechanics and paywall | Firebase Firestore |
 | Buddy relationships (who you've connected with) | To show buddy posts and enforce mutual-blur | Firebase Firestore |
 | Push notification device token | To send your morning reminder and buddy-posted notifications | Firebase Cloud Messaging |
-| In-app purchase receipt data | To grant Pro entitlements | RevenueCat, Apple (StoreKit) |
+| In-app purchase and entitlement data, associated with your anonymous account ID | To grant Pro entitlements and restore purchases | RevenueCat, Apple (StoreKit) |
+| Limited paywall interaction events (screen entry, plan type selected, purchase/restore outcome, dismissal) and standard app-instance technical data | To measure and improve the subscription flow in aggregate | Firebase Analytics |
 
 We do **not** collect your photo library, contacts, location, or browsing
-history, and the app has no advertising or analytics SDK.
+history. Paywall analytics never includes your photos, onboarding answers,
+wake-goal time, handle, account identifier, price, or product identifier. We
+do not use analytics for advertising or sell analytics data.
 
 ## Who we share data with
 
 - **Firebase (Google)** — hosts our backend (authentication, database, photo
-  storage, push notifications, and account-deletion logic).
-- **RevenueCat** — manages subscription state; receives your anonymized
-  purchase/entitlement data, not your photos or profile.
+  storage, push notifications, account-deletion logic, and limited aggregate
+  product analytics).
+- **RevenueCat** — manages subscription state; receives purchase and entitlement
+  data associated with your anonymous account ID, but not your photos.
 - **Apple** — processes payments for subscriptions and in-app purchases via
-  StoreKit; Sign in with Apple is optional.
+  StoreKit.
 
 We do not sell your data, and we do not share it with advertisers.
 

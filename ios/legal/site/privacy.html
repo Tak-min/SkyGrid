@@ -10,7 +10,7 @@
 <main>
 <nav><a href="/">Support</a> · <a href="/privacy">Privacy Policy</a></nav>
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: 2026-07-30</p>
+<p class="updated">Last updated: 2026-07-31</p>
 
 <p>Sky Grid ("the app") is a morning photo streak app. This policy describes
 what data the app collects, why, and how you can delete it.</p>
@@ -18,23 +18,26 @@ what data the app collects, why, and how you can delete it.</p>
 <h2>Data we collect</h2>
 <table>
 <tr><th>Data</th><th>Why</th><th>Where it's stored</th></tr>
-<tr><td>Account identifier (anonymous ID, or your Apple ID if you choose Sign in with Apple)</td><td>To identify your account and sync your data across devices</td><td>Firebase Authentication</td></tr>
+<tr><td>Account identifier (anonymous Firebase ID and in-app handle)</td><td>To identify your account and sync your data across devices</td><td>Firebase Authentication / Firestore</td></tr>
 <tr><td>Handle / display name</td><td>Shown to your buddies</td><td>Firebase Firestore</td></tr>
 <tr><td>Your morning sky photos, capture time, and extracted color</td><td>The core feature of the app</td><td>Firebase Cloud Storage / Firestore</td></tr>
 <tr><td>Streak count, wake-goal time, subscription (Pro) status</td><td>To power the app's core mechanics and paywall</td><td>Firebase Firestore</td></tr>
 <tr><td>Buddy relationships (who you've connected with)</td><td>To show buddy posts and enforce mutual-blur</td><td>Firebase Firestore</td></tr>
 <tr><td>Push notification device token</td><td>To send your morning reminder and buddy-posted notifications</td><td>Firebase Cloud Messaging</td></tr>
-<tr><td>In-app purchase receipt data</td><td>To grant Pro entitlements</td><td>RevenueCat, Apple (StoreKit)</td></tr>
+<tr><td>In-app purchase and entitlement data, associated with your anonymous account ID</td><td>To grant Pro entitlements and restore purchases</td><td>RevenueCat, Apple (StoreKit)</td></tr>
+<tr><td>Limited paywall interaction events (screen entry, plan type selected, purchase/restore outcome, dismissal) and standard app-instance technical data</td><td>To measure and improve the subscription flow in aggregate</td><td>Firebase Analytics</td></tr>
 </table>
 
 <p>We do <strong>not</strong> collect your photo library, contacts, location,
-or browsing history, and the app has no advertising or analytics SDK.</p>
+or browsing history. Paywall analytics never includes your photos, onboarding
+answers, wake-goal time, handle, account identifier, price, or product
+identifier. We do not use analytics for advertising or sell analytics data.</p>
 
 <h2>Who we share data with</h2>
 <ul>
-<li><strong>Firebase (Google)</strong> — hosts our backend (authentication, database, photo storage, push notifications, and account-deletion logic).</li>
-<li><strong>RevenueCat</strong> — manages subscription state; receives your anonymized purchase/entitlement data, not your photos or profile.</li>
-<li><strong>Apple</strong> — processes payments for subscriptions and in-app purchases via StoreKit; Sign in with Apple is optional.</li>
+<li><strong>Firebase (Google)</strong> — hosts our backend (authentication, database, photo storage, push notifications, account-deletion logic, and limited aggregate product analytics).</li>
+<li><strong>RevenueCat</strong> — manages subscription state; receives purchase and entitlement data associated with your anonymous account ID, but not your photos.</li>
+<li><strong>Apple</strong> — processes payments for subscriptions and in-app purchases via StoreKit.</li>
 </ul>
 <p>We do not sell your data, and we do not share it with advertisers.</p>
 

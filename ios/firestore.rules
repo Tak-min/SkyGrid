@@ -22,6 +22,11 @@ service cloud.firestore {
         && relationship.data.blockedBy.size() == 0;
     }
 
+    function hasPostedFor(localDate) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid)/posts/$(localDate));
+    }
+
     function validProfileKeys() {
       return request.resource.data.keys().hasOnly([
         'handle', 'displayName', 'timezone', 'wakeGoalMinutes',
@@ -34,6 +39,16 @@ service cloud.firestore {
         'ownerUid', 'capturedAt', 'uploadedAt', 'imagePath', 'thumbPath',
         'skyColorHex', 'minutesFromGoal', 'reactions'
       ]);
+    }
+
+    // A handle is optional until someone uses the buddy feature. Once set, it is
+    // immutable, and its matching document must be created in the same atomic
+    // write. This also supports a profile that was created before a handle.
+    function isInitialHandleClaim() {
+      return !resource.data.keys().hasAny(['handle'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['handle'])
+        && request.resource.data.handle is string
+        && getAfter(/databases/$(database)/documents/handles/$(request.resource.data.handle)).data.uid == request.auth.uid;
     }
 
     match /users/{uid} {
@@ -51,21 +66,28 @@ service cloud.firestore {
       // be changed without touching the identity or entitlement fields.
       allow update: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'displayName', 'timezone', 'wakeGoalMinutes'
-        ]);
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'displayName', 'timezone', 'wakeGoalMinutes'
+          ])
+          || isInitialHandleClaim()
+        );
       allow delete: if false;
 
       match /posts/{localDate} {
-        allow get, list: if signedIn() && (request.auth.uid == uid || activeBuddy(uid));
+        // Mutual reveal is a privacy boundary, not merely a client-side blur.
+        // A buddy can read this day's post only after recording their own post for
+        // the same local date.
+        allow get, list: if signedIn()
+          && (request.auth.uid == uid || (activeBuddy(uid) && hasPostedFor(localDate)));
         allow create: if signedIn()
           && request.auth.uid == uid
           && validPostKeys()
           && request.resource.data.ownerUid == uid
           && request.resource.data.capturedAt <= request.time
           && request.resource.data.uploadedAt == request.time
-          && request.resource.data.imagePath.matches('posts/' + uid + '/[A-Za-z0-9-]+\\.jpg')
-          && request.resource.data.thumbPath.matches('posts/' + uid + '/[A-Za-z0-9-]+_thumb\\.jpg')
+          && request.resource.data.imagePath.matches('posts/' + uid + '/' + localDate + '/[A-Za-z0-9-]+\\.jpg')
+          && request.resource.data.thumbPath.matches('posts/' + uid + '/' + localDate + '/[A-Za-z0-9-]+_thumb\\.jpg')
           && request.resource.data.skyColorHex.matches('#[A-Fa-f0-9]{6}')
           && request.resource.data.reactions.size() == 0;
         allow update: if false;
@@ -147,6 +169,13 @@ service cloud.firestore {
         && request.resource.data.fcmToken is string
         && request.resource.data.platform == 'ios';
       allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    // RevenueCat lifecycle webhooks write this mirror through the Admin SDK only.
+    // It is never an entitlement source for the client, nor a client-writable
+    // profile field.
+    match /entitlements/{uid} {
+      allow read, write: if false;
     }
 
     match /{document=**} {

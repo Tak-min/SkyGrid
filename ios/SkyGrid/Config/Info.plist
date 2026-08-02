@@ -8,14 +8,14 @@
     <string>$(SKYGRID_PRIVACY_POLICY_URL)</string>
     <key>SkyGridSupportURL</key>
     <string>$(SKYGRID_SUPPORT_URL)</string>
-    <key>SkyGridExitOfferCode</key>
-    <string>$(SKYGRID_EXIT_OFFER_CODE)</string>
-    <key>SkyGridExitOfferDescription</key>
-    <string>$(SKYGRID_EXIT_OFFER_DESCRIPTION)</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>NSAlarmKitUsageDescription</key>
     <string>Sky Grid uses alarms at the time you choose to help you capture your morning sky.</string>
+    <key>SGDebugAppCheckToken</key>
+    <string>$(INFOPLIST_KEY_SGDebugAppCheckToken)</string>
+    <key>NSSupportsLiveActivities</key>
+    <true/>
     <key>UIBackgroundModes</key>
     <array>
         <string>remote-notification</string>
