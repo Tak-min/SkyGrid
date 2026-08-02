@@ -20,6 +20,7 @@ struct ShutterButton: View {
                 Circle()
                     .fill(displayColor.ambientGradient)
                     .frame(width: 72, height: 72)
+                    .skyAnimation(SGMotion.exchange, value: displayColor.hex)
                     .overlay {
                         if isWorking {
                             ProgressView().tint(displayColor.readableInk)
@@ -28,7 +29,16 @@ struct ShutterButton: View {
             }
             .shadow(color: .black.opacity(0.22), radius: 16, y: 8)
         }
+        .buttonStyle(ShutterButtonStyle())
         .accessibilityLabel("Capture the sky")
         .disabled(isWorking)
+    }
+}
+
+private struct ShutterButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .animation(SGMotion.press, value: configuration.isPressed)
     }
 }

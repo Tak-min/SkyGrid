@@ -175,6 +175,7 @@ private struct PlanOptionRow: View {
                 Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
                     .font(.system(size: 20))
                     .foregroundStyle(isSelected ? SGT.ink : SGT.ink3)
+                    .contentTransition(.symbolEffect(.replace))
                     .padding(.top, 3)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -220,6 +221,7 @@ private struct PlanOptionRow: View {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .strokeBorder(isSelected ? SGT.ink.opacity(0.44) : SGT.rule, lineWidth: 1)
             }
+            .skyAnimation(SGMotion.settle, value: isSelected)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

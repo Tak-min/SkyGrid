@@ -32,6 +32,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: SGSpacing.xxl) {
                     heading
                     morningRecord
+                        .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
                     rhythmSection
                     PostStatusBanner(pending: viewModel.pendingSummary) {
                         Task { await viewModel.retryFailedUploads() }
@@ -56,6 +57,7 @@ struct TodayView: View {
             startPoint: .top,
             endPoint: .center
         )
+        .skyAnimation(SGMotion.drift, value: accentColor.hex)
     }
 
     private var heading: some View {
@@ -127,8 +129,10 @@ struct TodayView: View {
                     )
                 }
             }
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
         } else {
             emptyMorningRecord
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
     }
 
@@ -179,6 +183,8 @@ struct TodayView: View {
                 Text("\(viewModel.weekRhythm.postedCount) / 7")
                     .font(SGFont.numeric(14, weight: .medium))
                     .foregroundStyle(SGT.ink2)
+                    .contentTransition(.numericText())
+                    .skyAnimation(SGMotion.exchange, value: viewModel.weekRhythm.postedCount)
             }
             WeekRhythmView(rhythm: viewModel.weekRhythm, accent: accentColor)
 

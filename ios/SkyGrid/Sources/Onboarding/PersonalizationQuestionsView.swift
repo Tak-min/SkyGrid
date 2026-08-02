@@ -231,6 +231,7 @@ private struct ChoiceRow: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 19, weight: .medium))
                     .foregroundStyle(isSelected ? SGT.ink : SGT.ink3)
+                    .contentTransition(.symbolEffect(.replace))
                     .padding(.top, 2)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
@@ -250,6 +251,7 @@ private struct ChoiceRow: View {
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(isSelected ? SGT.ink.opacity(0.38) : SGT.rule, lineWidth: 1)
             }
+            .skyAnimation(SGMotion.settle, value: isSelected)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])

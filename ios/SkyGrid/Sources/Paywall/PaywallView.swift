@@ -21,6 +21,7 @@ struct PaywallView: View {
     let onDismissed: (PaywallDismissalReason) -> Void
 
     @State private var step: PaywallStep
+    @State private var isMovingBackward = false
     @State private var viewedSteps: Set<PaywallStep> = []
     @State private var selectedProductID: String?
     @State private var hasResolvedExit = false
@@ -102,6 +103,7 @@ struct PaywallView: View {
                 onAdvance: advance,
                 onContinueWithFree: continueWithFree
             )
+            .transition(stepTransition)
         case .features:
             PaywallFeaturesStepView(
                 flow: flow,
@@ -110,6 +112,7 @@ struct PaywallView: View {
                 onAdvance: advance,
                 onContinueWithFree: continueWithFree
             )
+            .transition(stepTransition)
         case .plan:
             PaywallPlanStepView(
                 flow: flow,
@@ -121,17 +124,34 @@ struct PaywallView: View {
                 onRestore: restorePurchases,
                 onContinueWithFree: continueWithFree
             )
+            .transition(stepTransition)
         }
+    }
+
+    /// The plan-step CTA shelf stays fixed; only the reasoning above it moves —
+    /// forward and back slide in opposite directions so the motion itself signals
+    /// which way the person is navigating.
+    private var stepTransition: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: isMovingBackward ? .leading : .trailing).combined(with: .opacity),
+            removal: .move(edge: isMovingBackward ? .trailing : .leading).combined(with: .opacity)
+        )
     }
 
     private func advance() {
         guard let next = flow.next(after: step) else { return }
-        step = next
+        isMovingBackward = false
+        withAnimation(SGMotion.exchange) {
+            step = next
+        }
     }
 
     private func goBack() {
         guard let previous = flow.previous(before: step) else { return }
-        step = previous
+        isMovingBackward = true
+        withAnimation(SGMotion.exchange) {
+            step = previous
+        }
     }
 
     private func recordStepViewedIfNeeded(_ step: PaywallStep) {

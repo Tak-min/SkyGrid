@@ -29,6 +29,7 @@ struct CameraView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             content
+                .skyAnimation(SGMotion.exchange, value: viewModel.phase)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task {
@@ -44,10 +45,13 @@ struct CameraView: View {
         switch viewModel.phase {
         case .live:
             liveViewfinder
+                .transition(.opacity)
         case .reviewing(let image, _):
             reviewScreen(image: image)
+                .transition(.opacity)
         case .failed(let message):
             failureScreen(message: message)
+                .transition(.opacity)
         }
     }
 
@@ -75,6 +79,7 @@ struct CameraView: View {
                         .fill((viewModel.liveSkyColor?.color ?? Color.white).opacity(0.88))
                         .frame(width: 18, height: 18)
                         .overlay(Circle().strokeBorder(.white.opacity(0.7), lineWidth: 1))
+                        .skyAnimation(SGMotion.exchange, value: viewModel.liveSkyColor?.hex)
                         .accessibilityLabel("Current sky color")
                     closeButton
                 }
@@ -231,5 +236,7 @@ private struct CameraChoiceButtonStyle: ButtonStyle {
                 }
             }
             .opacity(configuration.isPressed ? 0.72 : 1)
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }

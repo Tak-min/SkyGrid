@@ -10,6 +10,7 @@ struct BigTimeView: View {
         Text(capturedAt.map(formattedTime) ?? "—:—")
             .font(SGFont.bigTime())
             .foregroundStyle(color)
+            .contentTransition(.numericText())
     }
 
     private func formattedTime(_ date: Date) -> String {

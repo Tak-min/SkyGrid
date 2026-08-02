@@ -11,5 +11,13 @@ enum SGSpacing {
 }
 
 enum SGMotion {
+    /// A value arriving into place (a mark filling a slot, a card settling in).
     static let settle = Animation.spring(response: 0.42, dampingFraction: 0.82)
+    /// Touch-down feedback on a control.
+    static let press = Animation.spring(response: 0.24, dampingFraction: 0.7)
+    /// One state replacing another, including digit roll-overs — a spring here
+    /// overshoots and reads as unstable.
+    static let exchange = Animation.easeInOut(duration: 0.26)
+    /// An ambient, non-interactive colour change (light in a room shifting).
+    static let drift = Animation.easeInOut(duration: 0.6)
 }

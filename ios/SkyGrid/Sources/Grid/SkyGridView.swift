@@ -106,6 +106,8 @@ struct SkyGridView: View {
                 Text("\(postedCount) / \(totalDays)")
                     .font(SGFont.numeric(16, weight: .medium))
                     .foregroundStyle(SGT.ink2)
+                    .contentTransition(.numericText())
+                    .skyAnimation(SGMotion.exchange, value: postedCount)
                 if canShare, let onShare {
                     Button(action: onShare) {
                         if isPreparingShare {
@@ -177,6 +179,8 @@ struct SkyGridView: View {
                     thumbnails: thumbnails,
                     onSelectPost: onSelectPost
                 )
+                .id(selectedMonth)
+                .transition(.opacity)
                 if monthlyPosts.isEmpty {
                     Text("No captures in \(monthName(for: selectedMonth)) yet.")
                         .font(SGFont.caption(13))
@@ -185,6 +189,7 @@ struct SkyGridView: View {
                 }
             }
         }
+        .skyAnimation(.easeOut(duration: 0.2), value: selectedMonth)
     }
 
     private var monthPicker: some View {
@@ -207,6 +212,7 @@ struct SkyGridView: View {
                             .id(month)
                         }
                     }
+                    .skyAnimation(.easeOut(duration: 0.2), value: selectedMonth)
             }
             .onAppear { proxy.scrollTo(selectedMonth, anchor: .center) }
             .onChange(of: selectedMonth) { _, month in
