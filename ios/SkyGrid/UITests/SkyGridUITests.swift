@@ -61,7 +61,7 @@ final class SkyGridUITests: XCTestCase {
         add(attachment)
 
         app.buttons["Continue"].tap()
-        XCTAssertTrue(app.staticTexts["QUESTIONS 2 & 3 OF 6 · You can change these later."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["QUESTION 2 OF 6 · How should it feel? You can change this later."].waitForExistence(timeout: 5))
 
         app.buttons["Skip setup"].tap()
         XCTAssertTrue(app.staticTexts["YOUR MORNING PLAN"].waitForExistence(timeout: 5))
