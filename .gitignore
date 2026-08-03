@@ -27,6 +27,7 @@ ios/firebase-debug.log
 .build/
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+ios/.claude/
 .vscode/
 .zed/
 .gemini/
@@ -40,3 +41,6 @@ opencode.json
 ios/legal/.wrangler/
 ios/legal/site/.wrangler/
 ios/legal/node_modules/
+waitlist/.wrangler/
+waitlist/site/.wrangler/
+waitlist/node_modules/

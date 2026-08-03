@@ -1,0 +1,328 @@
+:root {
+  color-scheme: light dark;
+  --bg: #FAF7F2;
+  --ink: #1A1A18;
+  --muted: #5C5C58;
+  --line: #E4DFD6;
+  --card: #FFFFFF;
+  --dawn-1: #F4A261;
+  --dawn-2: #E76F51;
+  --dawn-3: #6B8CAE;
+  --accent-ink: #FFFFFF;
+  --shadow: 0 20px 40px -24px rgba(26, 26, 24, 0.25);
+  --bezel-1: #2C2C2E;
+  --bezel-2: #151517;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12141A;
+    --ink: #F2F0EA;
+    --muted: #A8A6A0;
+    --line: #2A2C33;
+    --card: #191B22;
+    --shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.55);
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 640px; margin: 0 auto; padding: 0 24px; }
+section { padding: 56px 0; }
+h1, h2 {
+  font-family: "New York", Georgia, serif;
+  line-height: 1.15;
+  margin: 0 0 12px;
+}
+h3 { font-family: "New York", Georgia, serif; margin: 0 0 8px; }
+p { margin: 0 0 12px; }
+a { color: inherit; text-decoration-color: var(--muted); }
+img { max-width: 100%; display: block; }
+ol { list-style: none; margin: 0; padding: 0; }
+
+.eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dawn-2);
+  margin-bottom: 10px;
+}
+.section-head { text-align: center; max-width: 480px; margin: 0 auto 36px; }
+.section-head h2 { font-size: 1.7rem; }
+
+/* ---------- header ---------- */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 18px 24px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 28px; height: 28px; border-radius: 8px; }
+.brand span {
+  font-family: "New York", Georgia, serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dawn-2);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- hero ---------- */
+.hero { padding-top: 32px; text-align: center; }
+.hero-copy h1 {
+  font-size: clamp(2rem, 7vw, 2.7rem);
+  letter-spacing: -0.01em;
+}
+.hero-copy .lede {
+  color: var(--muted);
+  font-size: 1.05rem;
+  max-width: 480px;
+  margin: 0 auto 28px;
+}
+
+/* ---------- waitlist form ---------- */
+.waitlist-form {
+  display: flex;
+  gap: 8px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.waitlist-form input[type="email"] {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+}
+.waitlist-form input[type="email"]:focus {
+  outline: 2px solid var(--dawn-3);
+  outline-offset: 1px;
+}
+.waitlist-form button {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--dawn-1), var(--dawn-2));
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+.waitlist-form button:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.waitlist-form button:active { transform: translateY(0); }
+.waitlist-form button:disabled { opacity: 0.6; cursor: default; transform: none; }
+.hp-field { position: absolute; left: -9999px; top: -9999px; }
+
+.form-note { font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
+.form-status {
+  min-height: 1.2em;
+  font-size: 0.92rem;
+  margin-top: 14px;
+  transition: opacity 0.2s ease;
+}
+.form-status.success { color: var(--dawn-2); font-weight: 600; }
+.form-status.error { color: #C4483C; }
+
+@media (max-width: 420px) {
+  .waitlist-form { flex-direction: column; }
+}
+
+/* ---------- device frame (native app screenshot mockup) ---------- */
+.phone-frame {
+  position: relative;
+  border-radius: 40px;
+  padding: 12px;
+  background: linear-gradient(160deg, var(--bezel-1), var(--bezel-2));
+  box-shadow: var(--shadow), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.phone-frame img { border-radius: 28px; width: 100%; }
+.phone-frame::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 30%;
+  height: 18px;
+  background: #000;
+  border-radius: 12px;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+/* ---------- grid mosaic (decorative) ---------- */
+.mosaic-wrap { display: flex; justify-content: center; padding: 40px 0 8px; }
+.mosaic {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 4px;
+  width: min(100%, 340px);
+}
+.mosaic i {
+  display: block;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--tile, var(--dawn-3));
+  animation: shimmer 5s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes shimmer {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mosaic i, .badge .dot { animation: none; }
+}
+
+.divider { border: none; border-top: 1px solid var(--line); margin: 0; }
+
+/* ---------- how it works ---------- */
+.how-it-works { padding: 56px 0; }
+.steps { display: flex; flex-direction: column; gap: 44px; }
+.step { text-align: center; }
+.step .phone-frame--step { max-width: 220px; margin: 0 auto 20px; }
+.step-number {
+  display: block;
+  font-family: "New York", Georgia, serif;
+  font-size: 0.85rem;
+  color: var(--dawn-2);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.step-copy h3 { font-size: 1.25rem; }
+.step-copy p { color: var(--muted); max-width: 40ch; margin: 0 auto; }
+
+/* ---------- FAQ ---------- */
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq-item {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 4px 20px;
+  background: var(--card);
+}
+.faq-item summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0;
+  font-weight: 600;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item .chev { width: 18px; height: 18px; flex-shrink: 0; color: var(--muted); transition: transform 0.2s ease; }
+.faq-item[open] .chev { transform: rotate(180deg); }
+.faq-item p { color: var(--muted); padding-bottom: 18px; margin: 0; }
+
+/* ---------- secondary CTA ---------- */
+.cta-again { text-align: center; }
+.cta-again h2 { font-size: 1.6rem; }
+.cta-again .lede { color: var(--muted); max-width: 420px; margin: 0 auto 24px; }
+
+/* ---------- footer ---------- */
+footer {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 32px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.footer-brand { max-width: 260px; }
+.footer-brand .brand { margin-bottom: 8px; }
+.footer-links { display: flex; gap: 48px; }
+.footer-col { display: flex; flex-direction: column; gap: 10px; }
+.footer-col h3 {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0 0 2px;
+}
+.footer-col a { color: var(--muted); text-decoration: none; }
+.footer-col a:hover { color: var(--ink); }
+footer button.share {
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+footer button.share:hover { color: var(--ink); }
+.copyright { width: 100%; margin: 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.78rem; }
+
+/* ---------- desktop enhancement ---------- */
+@media (min-width: 860px) {
+  main { max-width: 1040px; }
+  header { max-width: 1040px; }
+  footer { max-width: 1040px; }
+
+  .hero { padding-top: 72px; }
+  .hero-copy { max-width: 640px; margin: 0 auto; }
+
+  .mosaic-wrap { padding: 56px 0 8px; }
+
+  .how-it-works .section-head,
+  .faq .section-head,
+  .faq-list,
+  .cta-again {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
+  .step { text-align: left; }
+  .step .phone-frame--step { margin: 0 0 20px; }
+  .step-copy p { margin: 0; }
+}

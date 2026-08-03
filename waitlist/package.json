@@ -1,0 +1,17 @@
+{
+  "name": "skygrid-waitlist",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 execute skygrid-waitlist --remote --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 execute skygrid-waitlist --local --file=./schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5",
+    "typescript": "^5",
+    "wrangler": "^4"
+  }
+}

@@ -1,0 +1,18 @@
+name = "skygrid-waitlist"
+main = "src/index.ts"
+compatibility_date = "2026-08-02"
+
+workers_dev = true
+
+routes = [
+  { pattern = "skygrid.my", custom_domain = true }
+]
+
+[assets]
+directory = "./site"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "skygrid-waitlist"
+database_id = "f83e2088-fc66-4c88-aa6c-a1d5ad451be2"
