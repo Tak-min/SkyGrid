@@ -80,6 +80,15 @@ Live Activity + フォローアップ通知を新規Widget Extension込みで実
 7. バディ投稿プッシュ通知の欠落(残タスク#14)を実機2台がないため後回しと確定し、
    メモリ`skygrid-buddy-push-notification-gap`に記録。
 
+**2026-08-02(ウェイトリストUI再設計 + ドメイン調査):** 依頼者からウェイトリストページのUIが
+「ウェブサイトネイティブでなく未完成」との指摘を受け、参考アプリ Erly(erly.co)の構造分析に基づき
+`waitlist/site/`を再設計(端末フレーム風モックアップ・番号付きHow it works・FAQアコーディオン等を
+追加、既存コピー・ブランドトークンは維持)。並行して安価なドメインレジストラを調査し、
+`skygrid.com`等の主要TLDが軒並み取得済みと判明する中で`skygrid.day`($10.81/年、初年度も更新も
+同額)を選定、Porkbunのカート/購入画面まで到達(アカウント作成・決済は依頼者本人の操作が必要な
+ため意図的に停止)。詳細:
+[dev-notes/waitlist-redesign-and-domain-search_2026-08-02.md](dev-notes/waitlist-redesign-and-domain-search_2026-08-02.md)。
+
 ---
 
 ## 現在の残タスク
@@ -191,6 +200,15 @@ Live Activity + フォローアップ通知を新規Widget Extension込みで実
     2人でのバディフロー検証ができないため、意図的に後回し。** 実装するなら
     `planner`/`architect`級の設計判断(新規Cloud Functions + Firestoreトリガー設計)が必要。
     詳細はメモリ`skygrid-buddy-push-notification-gap`に記録済み——下記「コンセプト整合性監査」も参照。
+15. ~~`skygrid.day`ドメインの購入完了。~~ **解決(2026-08-02、依頼者本人がPorkbunで購入完了)。**
+    ただし調査時に推奨した`skygrid.day`ではなく**`skygrid.my`を購入**(依頼者判断、理由未確認)。
+    2026-08-03、Cloudflareゾーン追加(依頼者操作)→ネームサーバー変更(依頼者操作、Porkbun側)→
+    `active`化確認→`waitlist/wrangler.toml`にCustom Domainとして`skygrid.my`を追加・デプロイ
+    (エージェント自律実施)まで完了。`https://skygrid.my/`稼働中、旧`workers.dev` URLも併存。
+    残: 「Always Use HTTPS」設定(依頼者操作、ダッシュボードのSSL/TLS→Edge Certificatesで
+    1クリック — wranglerトークンの権限外で自動化不可)、Porkbun Registrant Contactの個人名義
+    確認(`.my`はWHOIS privacy非対応)。詳細:
+    [dev-notes/waitlist-redesign-and-domain-search_2026-08-02.md](dev-notes/waitlist-redesign-and-domain-search_2026-08-02.md)。
 
 ---
 
