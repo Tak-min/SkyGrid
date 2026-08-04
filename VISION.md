@@ -89,6 +89,14 @@ Live Activity + フォローアップ通知を新規Widget Extension込みで実
 ため意図的に停止)。詳細:
 [dev-notes/waitlist-redesign-and-domain-search_2026-08-02.md](dev-notes/waitlist-redesign-and-domain-search_2026-08-02.md)。
 
+**2026-08-04(実機への最新ビルド反映):** 依頼者から「最新のビルド成果物が実機に反映されていない
+ように感じる」との指摘。確認したところ、直近コミット(motion polish・waitlistサイト追加を含む
+977bb08まで)がワイヤレスデバッグ経由で実機(iPhone 15 Pro)にインストールされていなかった
+(前回実機デプロイは2026-07-30時点の不具合修正時点で止まっていた可能性)。`xcodebuild`の
+device destinationビルド→`xcrun devicectl device install app`/`process launch`で最新コードを
+実機へインストール・起動し反映を確認。詳細は残タスク#7の訂正注記を参照(xcodebuild MCPの
+デバイスワークフロー未有効化とは別に、`devicectl`直接実行なら自動デプロイ可能)。
+
 ---
 
 ## 現在の残タスク
@@ -131,12 +139,14 @@ Live Activity + フォローアップ通知を新規Widget Extension込みで実
 
 ### 実機検証が必要(次回セッション最優先候補)
 
-7. **AlarmKit Live Activityの実機検証 — 未完了。** 本セッションでiOS 26.5シミュレータ
-   (iPhone 17 Pro)に最新ビルドをインストール・起動し、Today画面の「Morning alarm・07:19」表示
-   までは動作確認できた。ただしLive Activity自体の実地検証(Stopタップ→ロック画面カード表示)は、
-   このセッションから物理デバイスへの自動デプロイ手段がなく(xcodebuild MCPのデバイスワークフローは
-   本環境で未有効化)、シミュレータでは背景実行・ロック画面挙動が実機と異なるため確認できていない。
-   依頼者自身の実機での確認が必要。
+7. **AlarmKit Live Activityの実機検証 — 未完了(ビルドは実機へ反映済み)。** 従来「物理デバイスへの
+   自動デプロイ手段がない」としていたが誤りで、xcodebuild MCPのデバイスワークフローが未有効化
+   なだけであり、`xcrun devicectl`を直接叩けば自動デプロイ可能(2026-08-04に確認・実施)。
+   2026-08-04、`xcodebuild -destination 'platform=iOS,id=<udid>'`でDebugビルド→
+   `devicectl device install app`→`devicectl device process launch`の手順で、コミット
+   977bb08(motion polish・waitlist追加含む最新)を実機(iPhone 15 Pro、ワイヤレスデバッグ)へ
+   インストール・起動まで完了。ただしLive Activity自体の実地検証(Stopタップ→ロック画面カード
+   表示)はUI操作を伴うため未実施 — 依頼者自身の実機での確認が必要な点は変わらず。
 8. 「幽霊投稿」自己修復バナーの実機検証(実際に幽霊状態のアカウントでバナー表示・
    「Clear and retake」動作の確認)。**未完了。** App Check障害(#10参照)によりシミュレータでの
    Firestore読み書きが現在ブロックされているため、このセッションからは擬似的な幽霊状態すら
