@@ -86,6 +86,82 @@ export const deleteAccount = onCall(
 );
 
 /**
+ * Gives an eligible buddy the bytes for one exact photo.
+ *
+ * Cloud Storage Rules support direct owner reads reliably in production, but its
+ * Firestore cross-service lookups did not evaluate consistently for this app's
+ * App Check-enforced bucket. Keeping the friendship/mutual-post predicate here
+ * makes the server the single authority for shared bytes. Captures are capped at
+ * 2 MB by Storage Rules, so the base64 callable response stays below Functions'
+ * response limit without granting the runtime service account IAM signBlob access.
+ */
+export const imageDownloadURL = onCall(
+  { enforceAppCheck: true },
+  async (request) => {
+    const callerUID = request.auth?.uid;
+    if (!callerUID) {
+      throw new HttpsError("unauthenticated", "Sign in before viewing a photo.");
+    }
+
+    const requestedPath = typeof request.data?.path === "string" ? request.data.path : "";
+    const parsed = parsePostImagePath(requestedPath);
+    if (!parsed) {
+      throw new HttpsError("invalid-argument", "Invalid photo path.");
+    }
+
+    const db = admin.firestore();
+    const postRef = db.doc(`users/${parsed.ownerUID}/posts/${parsed.localDate}`);
+    const post = await postRef.get();
+    const postData = post.data();
+    if (!post.exists || postData?.ownerUid !== parsed.ownerUID
+      || (postData.imagePath !== requestedPath && postData.thumbPath !== requestedPath)) {
+      throw new HttpsError("not-found", "Photo is unavailable.");
+    }
+
+    if (callerUID !== parsed.ownerUID) {
+      const pairID = relationshipID(callerUID, parsed.ownerUID);
+      const [relationship, callerPost] = await Promise.all([
+        db.doc(`friendships/${pairID}`).get(),
+        db.doc(`users/${callerUID}/posts/${parsed.localDate}`).get(),
+      ]);
+      const relationshipData = relationship.data();
+      const members = relationshipData?.members;
+      const blockedBy = relationshipData?.blockedBy;
+      const callerPostData = callerPost.data();
+      const isActiveBuddy = relationship.exists
+        && Array.isArray(members)
+        && members.length === 2
+        && members.includes(callerUID)
+        && members.includes(parsed.ownerUID)
+        && relationshipData?.status === "accepted"
+        && Array.isArray(blockedBy)
+        && blockedBy.length === 0;
+      const hasPostedToday = callerPost.exists && callerPostData?.ownerUid === callerUID;
+      if (!isActiveBuddy || !hasPostedToday) {
+        throw new HttpsError("permission-denied", "Capture your own sky before viewing this photo.");
+      }
+    }
+
+    const file = admin.storage().bucket().file(requestedPath);
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new HttpsError("not-found", "Photo bytes are not ready yet.");
+    }
+    const [bytes] = await file.download();
+    return { base64: bytes.toString("base64") };
+  },
+);
+
+function parsePostImagePath(path: string): { ownerUID: string; localDate: string } | null {
+  const match = /^posts\/([^/]+)\/(\d{4}-\d{2}-\d{2})\/[A-Za-z0-9-]+(?:_thumb)?\.jpg$/.exec(path);
+  return match ? { ownerUID: match[1], localDate: match[2] } : null;
+}
+
+function relationshipID(first: string, second: string): string {
+  return first < second ? `${first}_${second}` : `${second}_${first}`;
+}
+
+/**
  * Mirrors RevenueCat lifecycle events into entitlements/{firebaseUid}.
  * The endpoint uses the Authorization value configured on the RevenueCat webhook
  * integration. It is intentionally not protected by Firebase App Check: webhook

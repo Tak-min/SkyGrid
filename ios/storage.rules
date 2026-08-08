@@ -5,34 +5,12 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function relationshipId(first, second) {
-      return first < second ? first + '_' + second : second + '_' + first;
-    }
-
-    function activeBuddy(ownerUid) {
-      let relationship = firestore.get(
-        /databases/(default)/documents/friendships/$(relationshipId(request.auth.uid, ownerUid))
-      );
-      return signedIn()
-        && firestore.exists(
-          /databases/(default)/documents/friendships/$(relationshipId(request.auth.uid, ownerUid))
-        )
-        && relationship.data.members.hasAll([request.auth.uid, ownerUid])
-        && relationship.data.status == 'accepted'
-        && relationship.data.blockedBy.size() == 0;
-    }
-
-    function hasPostedFor(localDate) {
-      return signedIn()
-        && firestore.exists(
-          /databases/(default)/documents/users/$(request.auth.uid)/posts/$(localDate)
-        );
-    }
-
     match /posts/{uid}/{localDate}/{fileName} {
-      // Match the Firestore mutual-reveal policy before sending a buddy's bytes.
-      allow get: if signedIn()
-        && (request.auth.uid == uid || (activeBuddy(uid) && hasPostedFor(localDate)));
+      // Shared reads are issued by the App Check-enforced imageDownloadURL
+      // callable after it checks the Firestore friendship and mutual-post policy.
+      // Keeping direct Storage reads owner-only avoids production failures in
+      // Storage Rules' Firestore cross-service lookup path.
+      allow get: if signedIn() && request.auth.uid == uid;
       allow list: if false;
       allow create: if signedIn()
         && request.auth.uid == uid
