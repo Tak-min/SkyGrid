@@ -155,6 +155,20 @@ header {
 .waitlist-form button:disabled { opacity: 0.6; cursor: default; transform: none; }
 .hp-field { position: absolute; left: -9999px; top: -9999px; }
 
+.download-cta {
+  display: inline-block;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 12px;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--dawn-1), var(--dawn-2));
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.download-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.download-cta:active { transform: translateY(0); }
+
 .form-note { font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
 .form-status {
   min-height: 1.2em;
