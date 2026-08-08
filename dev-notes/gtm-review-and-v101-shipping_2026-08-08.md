@@ -130,3 +130,23 @@ again after December 29th." は8月に出ており、**認証失敗を覆い隠�
 注: `altool --list-providers` は APIKey 認証に非対応
 (`AuthenticationFailure("list-providers does not support APIKey authentication.")`)。
 疎通確認は `--validate-app` で行う。
+
+## 追記: 1.0.1 (build 4) を審査提出済み(2026-08-08)
+
+Build 3 は**今日のUI/バディ/Live Activity作業を含まない**ため提出せず、
+全変更を含む **build 4** を新規にアップロードして提出した。
+
+- アップロード: `altool --upload-app`(上記のAPIキー経路)、Delivery UUID
+  `d9a90222-ed3e-43b9-943d-db5911432c86`。処理完了(VALID)まで約1〜2分。
+- リリースノートを差し替えた。既存文言は「Metadata update: refreshed subtitle and
+  keywords.」だったが、build 4 は**バディ機能の再構築・節目演出・Dynamic Island改善**を
+  含むので、そのまま出すとユーザーへの説明が事実と食い違う。
+- 輸出コンプライアンスは `usesNonExemptEncryption: False` が設定済みで追加操作不要だった。
+- 提出は ASC API の `reviewSubmissions` → `reviewSubmissionItems` → `PATCH submitted:true`。
+  結果: **1.0.1 = WAITING_FOR_REVIEW**、appInfo(名前/サブタイトル)も同時に
+  WAITING_FOR_REVIEW に入った(＝保留だったサブタイトル `Real alarm, daily sky ritual`
+  の変更が、このビルド添付によって初めて審査に乗った)。
+
+未確認のまま提出した点(審査とは独立に、実機で確認すべき):
+- 実機での Dynamic Island **展開表示**。
+- 本番Firebaseでの**2アカウント間の招待**フロー(シミュレータはApp Check 403で不可)。
