@@ -1,3 +1,4 @@
+import Foundation
 import Observation
 
 enum AppRoute: Equatable {
@@ -10,4 +11,14 @@ enum AppRoute: Equatable {
 @Observable
 final class AppRouter {
     var pendingRoute: AppRoute?
+
+    /// Live Activities cannot directly present the camera. Their only reliable
+    /// hand-off is a user tap, which opens this URL and leaves the existing
+    /// duplicate-capture guard in `RootView` in charge of the final decision.
+    func handle(url: URL) {
+        guard url.scheme?.lowercased() == "skygrid",
+              url.host?.lowercased() == "capture"
+        else { return }
+        pendingRoute = .camera
+    }
 }

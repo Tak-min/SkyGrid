@@ -29,31 +29,69 @@ struct BuddiesView: View {
                     .listRowInsets(EdgeInsets())
             }
 
-            switch viewModel.hasHandle {
-            case .some(false):
+            if viewModel.friendshipState == .unavailable {
                 Section {
-                    HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
-                        viewModel.markHandleClaimed(handle)
+                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                        Text("We couldn't refresh your buddies.")
+                            .font(SGFont.body(16))
+                            .foregroundStyle(SGT.ink)
+                        Text(viewModel.friendships.isEmpty ? "Your connections haven't been changed. Check your connection and try again." : "Showing the last confirmed connections on this device.")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(SGT.ink2)
+                        Button("Check again", action: viewModel.retryFriendships)
+                            .font(SGFont.body(15))
+                            .foregroundStyle(SGT.ink)
+                            .frame(minHeight: 44)
                     }
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
-                } header: {
-                    Text("YOUR INVITE HANDLE")
-                } footer: {
-                    Text("A handle is only for invitations. Your daily ritual works without one.")
+                    .listRowBackground(SGT.fill)
+                    .listRowSeparator(.hidden)
                 }
-            case .some(true):
+            }
+
+            switch viewModel.profileState {
+            case .unavailable:
                 Section {
-                    AddBuddyView(viewModel: viewModel)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
+                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                        Text("We couldn't load your invite settings.")
+                            .font(SGFont.body(16))
+                            .foregroundStyle(SGT.ink)
+                        Text("Your handle hasn't been changed. Check your connection and try again.")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(SGT.ink2)
+                        Button("Check invite settings again", action: viewModel.retryProfile)
+                            .font(SGFont.body(15))
+                            .foregroundStyle(SGT.ink)
+                            .frame(minHeight: 44)
+                    }
+                    .listRowBackground(SGT.fill)
+                    .listRowSeparator(.hidden)
                 }
-            case nil:
+            case .checking:
                 Section {
                     HStack(spacing: SGSpacing.sm) {
                         ProgressView()
                         Text("Preparing your buddy settings…")
                             .foregroundStyle(SGT.ink2)
+                    }
+                }
+            case .available:
+                if viewModel.hasHandle == false {
+                    Section {
+                        HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
+                            viewModel.markHandleClaimed(handle)
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
+                    } header: {
+                        Text("YOUR INVITE HANDLE")
+                    } footer: {
+                        Text("A handle is only for invitations. Your daily ritual works without one.")
+                    }
+                } else {
+                    Section {
+                        AddBuddyView(viewModel: viewModel)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets())
                     }
                 }
             }
@@ -71,8 +109,39 @@ struct BuddiesView: View {
                 }
             }
 
+            if viewModel.hasHandle == true, !viewModel.pendingOutgoing.isEmpty {
+                Section("SENT REQUESTS") {
+                    ForEach(viewModel.pendingOutgoing, id: \.pairId) { friendship in
+                        HStack(spacing: SGSpacing.sm) {
+                            Image(systemName: "paperplane.fill")
+                                .foregroundStyle(SGT.ink3)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(friendship.recipientHandle.map { "@" + $0.value } ?? "Pending invitation")
+                                    .font(SGFont.body(15))
+                                    .foregroundStyle(SGT.ink)
+                                Text("Waiting for them to accept")
+                                    .font(SGFont.caption(12))
+                                    .foregroundStyle(SGT.ink3)
+                            }
+                        }
+                        .frame(minHeight: 52)
+                        .listRowBackground(SGT.fill)
+                        .listRowSeparator(.hidden)
+                    }
+                }
+            }
+
             Section("YOUR BUDDIES") {
-                if viewModel.accepted.isEmpty {
+                if viewModel.friendshipState == .checking, viewModel.accepted.isEmpty {
+                    HStack(spacing: SGSpacing.sm) {
+                        ProgressView()
+                        Text("Checking your buddies…")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(SGT.ink2)
+                    }
+                    .listRowBackground(SGT.fill)
+                    .listRowSeparator(.hidden)
+                } else if viewModel.friendshipState == .available, viewModel.accepted.isEmpty {
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
                         Text(viewModel.hasHandle == false ? "Choose a handle to invite someone." : "No buddies yet")
                             .font(SGFont.body(16))
@@ -82,7 +151,9 @@ struct BuddiesView: View {
                         .foregroundStyle(SGT.ink3)
                         .listRowBackground(SGT.fill)
                         .listRowSeparator(.hidden)
-                } else {
+                }
+
+                if !viewModel.accepted.isEmpty {
                     ForEach(viewModel.accepted, id: \.pairId) { friendship in
                         if let otherUid = friendship.otherMember(than: viewModel.uid) {
                             NavigationLink {
@@ -109,6 +180,8 @@ struct BuddiesView: View {
         }
         .scrollContentBackground(.hidden)
         .background(SGT.background)
+        .contentMargins(.top, SGSpacing.sm, for: .scrollContent)
+        .listSectionSpacing(.custom(SGSpacing.xl))
         // Matches Today/Sky Grid's 128pt clearance: the floating tab bar otherwise
         // covers the final buddy row (see those views for the same fix).
         .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 128) }
@@ -123,25 +196,28 @@ struct BuddiesView: View {
 
 private struct BuddyRitualCard: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: SGSpacing.md) {
+        VStack(alignment: .center, spacing: SGSpacing.sm) {
             Label("MORNING TOGETHER", systemImage: "person.2.fill")
                 .font(SGFont.caption(11))
                 .tracking(1.2)
                 .foregroundStyle(SGT.ink3)
             Text("Two skies, revealed together.")
-                .font(SGFont.serifTitle(29))
+                .font(SGFont.serifTitle(27))
                 .foregroundStyle(SGT.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Invite one trusted person. Their photo stays private until you have both shown up for the morning.")
-                .font(SGFont.body(15))
+                .multilineTextAlignment(.center)
+            Text("Invite one trusted person. Each sky stays private until you have both captured that morning.")
+                .font(SGFont.body(14))
                 .foregroundStyle(SGT.ink2)
-            HStack(spacing: SGSpacing.sm) {
+                .multilineTextAlignment(.center)
+            HStack(spacing: 0) {
                 BuddyRitualStep(number: "1", label: "Invite")
                 BuddyRitualStep(number: "2", label: "Capture")
                 BuddyRitualStep(number: "3", label: "Reveal")
             }
+            .frame(maxWidth: .infinity)
         }
-        .padding(SGSpacing.lg)
+        .padding(SGSpacing.md)
         .background(SGT.fill, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -165,6 +241,7 @@ private struct BuddyRitualStep: View {
                 .font(SGFont.caption(12))
                 .foregroundStyle(SGT.ink2)
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
@@ -177,9 +254,11 @@ private struct BuddyNameRow: View {
         Text(displayName ?? "Buddy")
             .foregroundStyle(SGT.ink)
             .task {
-                for await profile in userRepository.observeProfile(uid: uid) {
-                    displayName = profile?.displayName
-                    break
+                for await observation in userRepository.observeProfile(uid: uid) {
+                    if case .value(let profile) = observation {
+                        displayName = profile?.displayName
+                        break
+                    }
                 }
             }
     }

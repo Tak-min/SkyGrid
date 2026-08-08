@@ -79,6 +79,8 @@ enum FirebaseDocumentCodec {
             members: members.sorted(),
             status: status,
             requestedBy: requestedBy,
+            requestedByHandle: (data["requestedByHandle"] as? String).flatMap(Handle.init(raw:)),
+            recipientHandle: (data["recipientHandle"] as? String).flatMap(Handle.init(raw:)),
             createdAt: createdAt,
             blockedBy: (data["blockedBy"] as? [String]) ?? []
         )

@@ -1,4 +1,5 @@
 import SwiftUI
+import AuthenticationServices
 
 struct AppStartupView: View {
     @Bindable var startup: AppStartupController
@@ -14,6 +15,15 @@ struct AppStartupView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(SGT.background)
+            case .authenticationRequired:
+                AccountAccessView(
+                    errorMessage: startup.authenticationError,
+                    onAppleAuthorization: { credential, rawNonce in
+                        Task { await startup.signInWithApple(credential: credential, rawNonce: rawNonce) }
+                    },
+                    onAppleAuthorizationFailure: startup.appleAuthorizationFailed,
+                    onContinueAsGuest: { Task { await startup.startNewAnonymousSession() } }
+                )
             case .ready(let services):
                 RootView(onAccountDeleted: {
                     Task { await startup.restartAfterAccountDeletion() }
@@ -25,10 +35,13 @@ struct AppStartupView: View {
                     Task { await startup.startNewAnonymousSession() }
                 }
             case .failed(let error):
+                // Every string here comes from `StartupFailureMessage`, never from
+                // `error.localizedDescription` — see that type for why.
+                let message = StartupFailureMessage.make(for: error)
                 ContentUnavailableView {
-                    Label("Sky Grid needs setup", systemImage: "cloud.slash")
+                    Label(message.title, systemImage: "cloud.slash")
                 } description: {
-                    Text(error.localizedDescription)
+                    Text(message.recovery)
                 } actions: {
                     Button("Try again") {
                         Task { await startup.startNewAnonymousSession() }
@@ -44,5 +57,88 @@ struct AppStartupView: View {
                 await startup.start()
             }
         }
+    }
+}
+
+/// Apple creates a durable Firebase identity. A temporary account remains
+/// available for a low-friction first photo, but it can later be linked from
+/// Settings without changing its Firebase UID or splitting its archive.
+private struct AccountAccessView: View {
+    let errorMessage: String?
+    let onAppleAuthorization: (ASAuthorizationAppleIDCredential, String) -> Void
+    let onAppleAuthorizationFailure: (Error) -> Void
+    let onContinueAsGuest: () -> Void
+    @State private var pendingAppleNonce: String?
+
+    var body: some View {
+        VStack(spacing: SGSpacing.xl) {
+            Spacer()
+            RitualGridMark(side: 56)
+            VStack(spacing: SGSpacing.sm) {
+                Text("KEEP YOUR SKY GRID")
+                    .font(SGFont.caption(12))
+                    .tracking(1.6)
+                    .foregroundStyle(SGT.ink3)
+                Text("Your mornings,\nkept together.")
+                    .font(SGFont.serifTitle(32))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(SGT.ink)
+                Text("Sign in with Apple to restore your archive whenever you return to Sky Grid.")
+                    .font(SGFont.body(15))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(SGT.ink2)
+            }
+
+            VStack(spacing: SGSpacing.md) {
+                SignInWithAppleButton(.signIn) { request in
+                    let nonce = AppleSignInNonce.make()
+                    pendingAppleNonce = nonce
+                    request.requestedScopes = [.email]
+                    request.nonce = AppleSignInNonce.sha256(nonce)
+                } onCompletion: { result in
+                    switch result {
+                    case .success(let authorization):
+                        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                              let nonce = pendingAppleNonce
+                        else {
+                            onAppleAuthorizationFailure(AppleAccountLinkError.invalidCredential)
+                            return
+                        }
+                        pendingAppleNonce = nil
+                        onAppleAuthorization(credential, nonce)
+                    case .failure(let error):
+                        pendingAppleNonce = nil
+                        onAppleAuthorizationFailure(error)
+                    }
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+                Button("Start without an account", action: onContinueAsGuest)
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+                    .frame(minHeight: 44)
+
+                Text("You can connect Apple later in Settings. Your photos are never merged into another account automatically.")
+                    .font(SGFont.caption(12))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(SGT.ink3)
+            }
+            .padding(.top, SGSpacing.md)
+
+            if let errorMessage, !errorMessage.isEmpty {
+                Text(errorMessage)
+                    .font(SGFont.caption(13))
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, SGSpacing.sm)
+            }
+            Spacer()
+        }
+        .padding(SGSpacing.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(SGT.background)
     }
 }

@@ -12,39 +12,17 @@ protocol PostPublishing: Sendable {
 
 @MainActor
 final class PostPublisher: PostPublishing {
-    private let postRepository: any PostRepository
     private let uploadQueue: UploadQueue
 
-    init(postRepository: any PostRepository, uploadQueue: UploadQueue) {
-        self.postRepository = postRepository
+    init(uploadQueue: UploadQueue) {
         self.uploadQueue = uploadQueue
     }
 
     func publish(_ draft: PostDraft) async throws {
-        // Persist the image outbox before awaiting Firestore. Firestore queues an
-        // offline write durably but its completion does not arrive until the
-        // server acknowledges it; the previous order could therefore lose the
-        // only local record of a photo if the app was terminated offline.
+        // `enqueue` persists both JPEG locations and the Firestore payload before
+        // networking. Its state machine commits Firestore first and only then makes
+        // the row eligible for Storage, so an offline capture can close promptly
+        // without ever uploading orphaned bytes.
         try await uploadQueue.enqueue(draft)
-
-        do {
-            try await postRepository.createPost(draft)
-        } catch RepositoryError.alreadyPostedToday {
-            // Unlike a transient failure, this is a *permanent* rejection — Firestore's
-            // create-only rule means no retry of this draft will ever succeed. Roll
-            // back the outbox row so it doesn't upload bytes no post document will
-            // ever reference (the accepted capture already owns this queue slot).
-            try? await uploadQueue.cancel(
-                queueID: PendingUpload.queueID(ownerUid: draft.ownerUid, localDateID: draft.localDate.docID),
-                imageID: draft.imageID.uuidString
-            )
-            throw RepositoryError.alreadyPostedToday
-        } catch {
-            // Keep the locally durable outbox and its Application Support files.
-            // A transient Firestore/App Check failure must never destroy a morning
-            // capture. The queue will resume its Storage half once the dependency
-            // recovers, while Firestore's own offline persistence retains its write.
-            throw error
-        }
     }
 }

@@ -4,16 +4,47 @@ import Observation
 @MainActor
 @Observable
 final class TodayViewModel {
+    enum PostState: Equatable {
+        case checking
+        case available
+        case unavailable
+    }
+
+    /// What the viewer is actually entitled to know about a buddy's morning.
+    ///
+    /// `firestore.rules` gates a buddy's post read on `hasPostedFor(localDate)` —
+    /// i.e. **before you have posted, every buddy post read is denied by the
+    /// server.** The previous `hasPostedToday: Bool` could not represent that, so a
+    /// denied read collapsed into `false` and the UI would have told you "Mira ·
+    /// not yet" every morning even when Mira had posted at 5am. That is a claim the
+    /// client cannot make, so the unknown case is now explicit.
+    enum BuddyRevealState: Sendable, Equatable {
+        /// The viewer hasn't posted yet (or the read failed). Nothing is known —
+        /// present this as sealed suspense, never as "they haven't posted".
+        case sealed
+        /// The viewer has posted, the read succeeded, and there is a sky to show.
+        case posted(SkyPost)
+        /// The viewer has posted, the read succeeded, and it genuinely returned
+        /// nothing. Only in this case may the UI say "not yet".
+        case notYet
+    }
+
     struct BuddyStatus: Identifiable, Sendable {
         let uid: String
         let displayName: String
-        let hasPostedToday: Bool
-        let post: SkyPost?
+        let revealState: BuddyRevealState
         var id: String { uid }
+
+        var post: SkyPost? {
+            if case .posted(let post) = revealState { return post }
+            return nil
+        }
     }
 
     private(set) var todayPost: SkyPost?
+    private(set) var postState: PostState = .checking
     private(set) var weekRhythm = WeekRhythm(days: [])
+    private(set) var streak = StreakSummary(currentStreak: 0, hasPostedToday: false)
     private(set) var buddies: [BuddyStatus] = []
     private(set) var pendingSummary: [PendingUploadSummary] = []
     private(set) var todayIntegrity: TodayPostIntegrity = .undetermined
@@ -27,9 +58,22 @@ final class TodayViewModel {
     private let uploadQueue: UploadQueue
     private let orphanedPostRecovery: any OrphanedPostRecovering
     private let clock: Clock
+    /// Where the computed streak is republished for `RootView`'s post-capture moment
+    /// arbitration. Optional so the UI-audit harness and tests can build a view model
+    /// without one; nothing here reads it back.
+    private let streakSignal: StreakSignal?
 
     private var observationTasks: [Task<Void, Never>] = []
     private var integrityTask: Task<Void, Never>?
+    private var observedDate: LocalDate?
+    /// Grows via `StreakWindow.widened(forStreak:)` so a long streak is never
+    /// truncated by the observation window it was computed from.
+    private var streakWindowDays = StreakWindow.observedDays
+    /// The accepted friendships from the most recent friendship snapshot, retained
+    /// so buddies can be re-resolved when the viewer's own post appears (which is
+    /// the moment the server starts permitting buddy post reads) without waiting
+    /// for the friendship listener to fire again.
+    private var acceptedFriendships: [Friendship] = []
 
     init(
         uid: String,
@@ -38,7 +82,8 @@ final class TodayViewModel {
         friendRepository: any FriendRepository,
         uploadQueue: UploadQueue,
         orphanedPostRecovery: any OrphanedPostRecovering,
-        clock: Clock
+        clock: Clock,
+        streakSignal: StreakSignal? = nil
     ) {
         self.uid = uid
         self.postRepository = postRepository
@@ -47,20 +92,54 @@ final class TodayViewModel {
         self.uploadQueue = uploadQueue
         self.orphanedPostRecovery = orphanedPostRecovery
         self.clock = clock
+        self.streakSignal = streakSignal
     }
 
-    func start() {
-        let today = clock.today()
+    /// Creates exactly one listener set for an explicit local day. The view passes
+    /// a freshly calculated day after midnight, a time-zone change, and foreground
+    /// return, so a post from yesterday can never keep masquerading as today's.
+    func start(for today: LocalDate) {
+        guard observedDate != today || observationTasks.isEmpty else { return }
+        stop()
+        observedDate = today
+        todayPost = nil
+        postState = .checking
+        weekRhythm = WeekRhythm(days: [])
+        streak = StreakSummary(currentStreak: 0, hasPostedToday: false)
+        streakWindowDays = StreakWindow.observedDays
+        buddies = []
+        acceptedFriendships = []
+        pendingSummary = []
+        todayIntegrity = .undetermined
+        orphanedPostRecoveryError = nil
 
         observationTasks.append(Task { [weak self] in
             guard let self else { return }
-            for await post in self.postRepository.observePost(uid: self.uid, localDate: today) {
-                self.todayPost = post
+            for await observation in self.postRepository.observePost(uid: self.uid, localDate: today) {
+                guard self.observedDate == today else { return }
+                let hadPostedBefore = self.todayPost != nil
+                switch observation {
+                case .value(let post):
+                    self.todayPost = post
+                    self.postState = .available
+                case .unavailable:
+                    self.postState = .unavailable
+                }
+                // The transition to "posted" is exactly when the server begins
+                // permitting buddy post reads (`hasPostedFor` in firestore.rules),
+                // so re-resolve buddies here rather than waiting for the friendship
+                // listener — which may not fire again all morning.
+                if !hadPostedBefore, self.todayPost != nil, !self.acceptedFriendships.isEmpty {
+                    let friendships = self.acceptedFriendships
+                    Task { [weak self] in
+                        await self?.refreshBuddies(friendships: friendships, today: today)
+                    }
+                }
                 self.integrityTask?.cancel()
                 self.integrityTask = nil
                 self.todayIntegrity = .undetermined
                 self.orphanedPostRecoveryError = nil
-                if let post {
+                if case .value(let post?) = observation {
                     self.integrityTask = Task { [weak self] in
                         await self?.trackIntegrity(of: post)
                     }
@@ -68,26 +147,74 @@ final class TodayViewModel {
             }
         })
 
-        let weekStart = today.adding(days: -6)
-        observationTasks.append(Task { [weak self] in
-            guard let self else { return }
-            for await posts in self.postRepository.observePosts(uid: self.uid, from: weekStart, through: today) {
-                self.weekRhythm = WeekRhythmCalculator.summarize(postedDays: posts.map(\.localDate), today: today)
-            }
-        })
+        observeHistory(today: today, windowDays: streakWindowDays)
 
         observationTasks.append(Task { [weak self] in
             guard let self else { return }
-            for await friendships in self.friendRepository.observeFriendships(uid: self.uid) {
-                await self.refreshBuddies(friendships: friendships.filter { $0.status == .accepted })
+            for await observation in self.friendRepository.observeFriendships(uid: self.uid) {
+                guard case .value(let friendships) = observation else { continue }
+                let accepted = friendships.filter { $0.status == .accepted }
+                self.acceptedFriendships = accepted
+                await self.refreshBuddies(friendships: accepted, today: today)
             }
         })
 
         observationTasks.append(Task { [weak self] in
             guard let self else { return }
             while !Task.isCancelled {
-                self.pendingSummary = (try? await self.uploadQueue.pendingSummary()) ?? []
+                guard self.observedDate == today else { return }
+                self.pendingSummary = ((try? await self.uploadQueue.pendingSummary()) ?? [])
+                    .filter { $0.ownerUid == self.uid }
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
+            }
+        })
+    }
+
+    /// One listener feeds both the week rhythm and the streak — they are two
+    /// summaries of the same posts, so observing them separately would double the
+    /// read cost for no benefit. Split out from `start(for:)` because a growing
+    /// streak has to be able to re-attach this stream over a wider window.
+    private func observeHistory(today: LocalDate, windowDays: Int) {
+        let windowStart = today.adding(days: -(windowDays - 1))
+        observationTasks.append(Task { [weak self] in
+            guard let self else { return }
+            for await observation in self.postRepository.observePosts(uid: self.uid, from: windowStart, through: today) {
+                guard self.observedDate == today else { return }
+                guard case .value(let posts) = observation else {
+                    // Published rather than silently skipped: a consumer must be able
+                    // to tell "the streak is not known" apart from "no streak", so a
+                    // failed read can never be mistaken for grounds to celebrate.
+                    // The last good `weekRhythm`/`streak` are intentionally kept.
+                    self.streakSignal?.record(.unavailable(localDate: today))
+                    continue
+                }
+                let postedDays = posts.map(\.localDate)
+                self.weekRhythm = WeekRhythmCalculator.summarize(postedDays: postedDays, today: today)
+                // `exemptDays` is empty on purpose: `RestDayPolicy` has no
+                // persistence and `TimeZonePolicy` has no change-log producer, so
+                // there is currently no honest source of exempt days. See the
+                // dev-note — enabling them is a product decision, not a UI one.
+                self.streak = StreakCalculator.summarize(postedDays: postedDays, today: today)
+
+                if StreakWindow.needsWidening(streak: self.streak.currentStreak, windowDays: windowDays) {
+                    let widened = StreakWindow.widened(forStreak: self.streak.currentStreak)
+                    if widened > windowDays {
+                        self.streakWindowDays = widened
+                        self.observeHistory(today: today, windowDays: widened)
+                        return
+                    }
+                }
+
+                // Republished only once the window is known not to be truncating the
+                // streak, so a milestone can never be celebrated on a number that the
+                // very next (wider) snapshot would revise upward.
+                self.streakSignal?.record(
+                    .observed(
+                        localDate: today,
+                        summary: self.streak,
+                        post: posts.first { $0.localDate == today }
+                    )
+                )
             }
         })
     }
@@ -97,13 +224,25 @@ final class TodayViewModel {
         observationTasks.removeAll()
         integrityTask?.cancel()
         integrityTask = nil
+        observedDate = nil
+        acceptedFriendships = []
+    }
+
+    /// Firestore listeners normally recover themselves, but a visible retry gives
+    /// someone a deterministic way out after a prolonged offline/App Check error.
+    /// This only reconnects read observers; it never creates or deletes a post.
+    func retryPostObservation() {
+        guard let date = observedDate else { return }
+        stop()
+        start(for: date)
     }
 
     func retryFailedUploads() async {
-        for upload in pendingSummary where upload.state == .failed {
+        for upload in pendingSummary where upload.state == .failed || upload.state == .postFailed {
             try? await uploadQueue.retryFailed(queueID: upload.queueID)
         }
-        pendingSummary = (try? await uploadQueue.pendingSummary()) ?? []
+        pendingSummary = ((try? await uploadQueue.pendingSummary()) ?? [])
+            .filter { $0.ownerUid == uid }
     }
 
     /// Deletes an orphaned "today" post (see `TodayPostIntegrity.orphaned`) so the
@@ -123,7 +262,8 @@ final class TodayViewModel {
             integrityTask?.cancel()
             integrityTask = nil
             todayIntegrity = .undetermined
-            pendingSummary = (try? await uploadQueue.pendingSummary()) ?? []
+            pendingSummary = ((try? await uploadQueue.pendingSummary()) ?? [])
+                .filter { $0.ownerUid == uid }
         } catch {
             orphanedPostRecoveryError = "Couldn't clear this record. Please try again."
         }
@@ -146,17 +286,41 @@ final class TodayViewModel {
         }
     }
 
-    private func refreshBuddies(friendships: [Friendship]) async {
-        let today = clock.today()
+    /// Resolves the buddy strip. The viewer's own post is the gate: until it exists,
+    /// `firestore.rules` denies every buddy post read (`hasPostedFor`), so issuing
+    /// them would be a guaranteed-failing round-trip per buddy, per session, whose
+    /// only possible result is the `.sealed` state we can already infer. Skipping
+    /// them removes that waste and — more importantly — removes the temptation to
+    /// render a denied read as "hasn't posted".
+    private func refreshBuddies(friendships: [Friendship], today: LocalDate) async {
+        let isRevealed = BuddyRevealGate.isRevealed(viewerHasPostedToday: todayPost != nil)
         var statuses: [BuddyStatus] = []
         for friendship in friendships {
             guard let otherUid = friendship.otherMember(than: uid) else { continue }
             let profileResult = await firstValue(from: userRepository.observeProfile(uid: otherUid))
-            guard let profile = profileResult.flatMap({ $0 }) else { continue }
-            let postResult = await firstValue(from: postRepository.observePost(uid: otherUid, localDate: today))
-            let post = postResult.flatMap { $0 }
-            statuses.append(BuddyStatus(uid: otherUid, displayName: profile.displayName, hasPostedToday: post != nil, post: post))
+            guard case .value(let profile?)? = profileResult else { continue }
+            guard observedDate == today else { return }
+
+            let revealState: BuddyRevealState
+            if !isRevealed {
+                revealState = .sealed
+            } else {
+                let postResult = await firstValue(from: postRepository.observePost(uid: otherUid, localDate: today))
+                guard observedDate == today else { return }
+                switch postResult {
+                case .value(let post?):
+                    revealState = .posted(post)
+                case .value(nil):
+                    revealState = .notYet
+                case .unavailable, .none:
+                    // A failed read is not evidence of absence. Fall back to sealed
+                    // rather than claiming they haven't posted.
+                    revealState = .sealed
+                }
+            }
+            statuses.append(BuddyStatus(uid: otherUid, displayName: profile.displayName, revealState: revealState))
         }
+        guard observedDate == today else { return }
         buddies = statuses
     }
 

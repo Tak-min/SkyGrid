@@ -40,21 +40,59 @@ struct AddBuddyView: View {
                 .padding(.horizontal, SGSpacing.md)
                 .frame(minHeight: 52)
                 .quietCard()
+                .submitLabel(.send)
+                .onSubmit { submit() }
+                .onTapGesture { viewModel.clearRequestFeedback() }
 
-            Button("Send request") {
-                Task { await viewModel.sendRequest(toHandleRaw: handleInput) }
+            Button(action: submit) {
+                HStack(spacing: SGSpacing.sm) {
+                    if viewModel.isSendingRequest {
+                        ProgressView()
+                            .tint(SGT.background)
+                    }
+                    Text(viewModel.isSendingRequest ? "Sending…" : "Send request")
+                }
+                .frame(maxWidth: .infinity)
             }
             .frame(maxWidth: .infinity)
             .buttonStyle(SkyPrimaryButtonStyle())
-            .disabled(handleInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(handleInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSendingRequest)
 
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .font(SGFont.caption())
-                    .foregroundStyle(.red)
+            if let feedback = viewModel.requestFeedback {
+                feedbackView(feedback)
             }
         }
         .padding(SGSpacing.lg)
         .quietCard()
+    }
+
+    private func submit() {
+        guard !viewModel.isSendingRequest,
+              !handleInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
+        Task {
+            if await viewModel.sendRequest(toHandleRaw: handleInput) {
+                handleInput = ""
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func feedbackView(_ feedback: FriendsViewModel.RequestFeedback) -> some View {
+        switch feedback {
+        case .success(let message):
+            Label(message, systemImage: "checkmark.circle.fill")
+                .font(SGFont.caption())
+                .foregroundStyle(SGT.ink2)
+                .accessibilityIdentifier("buddy-request-success")
+        case .information(let message):
+            Label(message, systemImage: "info.circle")
+                .font(SGFont.caption())
+                .foregroundStyle(SGT.ink2)
+        case .failure(let message):
+            Label(message, systemImage: "exclamationmark.circle")
+                .font(SGFont.caption())
+                .foregroundStyle(.red)
+        }
     }
 }

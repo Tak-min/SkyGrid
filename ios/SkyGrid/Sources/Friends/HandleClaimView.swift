@@ -5,6 +5,7 @@ import SwiftUI
 struct HandleClaimView: View {
     @State private var handleInput = ""
     @State private var errorMessage: String?
+    @State private var isSubmitting = false
     let uid: String
     let userRepository: any UserRepository
     let onClaimed: (Handle) -> Void
@@ -27,10 +28,23 @@ struct HandleClaimView: View {
                 .padding(.horizontal, SGSpacing.md)
                 .frame(minHeight: 52)
                 .quietCard()
+                .submitLabel(.done)
+                .onSubmit { submit() }
+                .onChange(of: handleInput) { _, _ in errorMessage = nil }
 
-            Button("Save handle") { Task { await claim() } }
+            Button(action: submit) {
+                HStack(spacing: SGSpacing.sm) {
+                    if isSubmitting {
+                        ProgressView()
+                            .tint(SGT.background)
+                    }
+                    Text(isSubmitting ? "Saving…" : "Save handle")
+                }
+                .frame(maxWidth: .infinity)
+            }
                 .frame(maxWidth: .infinity)
                 .buttonStyle(SkyPrimaryButtonStyle())
+                .disabled(handleInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
 
             if let errorMessage {
                 Text(errorMessage)
@@ -42,11 +56,21 @@ struct HandleClaimView: View {
         .quietCard()
     }
 
+    private func submit() {
+        guard !isSubmitting,
+              !handleInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
+        Task { await claim() }
+    }
+
     private func claim() async {
         guard let handle = Handle(raw: handleInput) else {
             errorMessage = "Use 3–20 letters, numbers, or underscores."
             return
         }
+        isSubmitting = true
+        errorMessage = nil
+        defer { isSubmitting = false }
         do {
             try await userRepository.claimHandle(handle, for: uid)
             onClaimed(handle)

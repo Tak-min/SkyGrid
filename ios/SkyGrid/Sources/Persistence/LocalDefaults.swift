@@ -86,6 +86,32 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "automaticPaywallSnoozedUntil", defaultValue: nil)
     static var automaticPaywallSnoozedUntil: Date?
 
+    /// Set the first time `AppReviewPromptPolicy` decides a completed capture is
+    /// a good moment to call SwiftUI's `requestReview` environment action. Not
+    /// reset by `resetAutomaticPaywallState()` — an unrelated paywall-state reset
+    /// must not re-arm a review ask that already fired this install.
+    @UserDefaultBacked(key: "hasRequestedAppReview", defaultValue: false)
+    static var hasRequestedAppReview: Bool
+
+    /// The highest streak milestone already celebrated on this install — a monotonic
+    /// high-water mark, so each threshold fires at most once. Deliberately **not**
+    /// cleared by `resetAutomaticPaywallState()`, for the same reason as
+    /// `hasRequestedAppReview`: an unrelated paywall-state reset must never re-arm a
+    /// moment that already fired.
+    @UserDefaultBacked(key: "lastCelebratedStreakMilestone", defaultValue: 0)
+    static var lastCelebratedStreakMilestone: Int
+
+    /// Scopes the high-water mark to an account, so signing in as someone else does
+    /// not inherit their celebrated milestones. Mirrors `automaticPaywallAccountID`
+    /// but is kept separate so nothing milestone-related can perturb paywall state.
+    @UserDefaultBacked(key: "milestoneAccountID", defaultValue: nil)
+    static var milestoneAccountID: String?
+
+    static func resetMilestoneState() {
+        lastCelebratedStreakMilestone = 0
+        milestoneAccountID = nil
+    }
+
     static func resetAutomaticPaywallState() {
         automaticPaywallAccountID = nil
         completedCaptureCount = 0
@@ -128,6 +154,7 @@ enum LocalDefaults {
         onboardingDone = false
         personalizationProfileData = nil
         resetAutomaticPaywallState()
+        resetMilestoneState()
         morningAlarmEnabled = false
         morningAlarmBackend = "automatic"
         openCameraAfterMorningAlarm = false

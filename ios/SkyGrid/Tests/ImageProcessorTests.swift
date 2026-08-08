@@ -1,4 +1,5 @@
 import ImageIO
+import CoreImage
 import Testing
 import UIKit
 @testable import SkyGrid
@@ -96,5 +97,87 @@ struct ImageProcessorTests {
         let thumbnail = try #require(ImageProcessor.displayThumbnail(from: data, maxPixelSize: 72))
 
         #expect(max(thumbnail.size.width, thumbnail.size.height) <= 72)
+    }
+}
+
+@MainActor
+private final class RecoverableCameraSource: CameraSource {
+    let previewFrames: AsyncStream<CIImage> = AsyncStream { continuation in
+        continuation.finish()
+    }
+
+    private var startupFailures: [CameraSourceError]
+    var shouldFailCapture = false
+    private(set) var startCount = 0
+
+    init(startupFailures: [CameraSourceError] = []) {
+        self.startupFailures = startupFailures
+    }
+
+    func start() async throws {
+        startCount += 1
+        if !startupFailures.isEmpty {
+            throw startupFailures.removeFirst()
+        }
+    }
+
+    func stop() {}
+
+    func capturePhoto() async throws -> UIImage {
+        if shouldFailCapture {
+            throw CameraSourceError.configurationFailed
+        }
+        return syntheticImage(width: 80, height: 80)
+    }
+}
+
+@Suite("Camera recovery")
+@MainActor
+struct CameraRecoveryTests {
+    private func makeViewModel(source: RecoverableCameraSource) -> CameraViewModel {
+        CameraViewModel(
+            ownerUid: "camera-recovery-test",
+            cameraSource: source,
+            clock: FixedClock(now: Date(timeIntervalSince1970: 1_700_000_000)),
+            wakeGoal: WakeGoal(minutesAfterMidnight: 360)
+        )
+    }
+
+    @Test("a failed startup retries the camera source instead of only changing the screen")
+    func startupFailureRetriesSource() async {
+        let source = RecoverableCameraSource(startupFailures: [.configurationFailed])
+        let viewModel = makeViewModel(source: source)
+
+        await viewModel.start()
+        #expect(viewModel.phase == .failed(.startup))
+
+        await viewModel.retry()
+        #expect(source.startCount == 2)
+        #expect(viewModel.phase == .live)
+    }
+
+    @Test("permission denial is preserved so the UI can route to Settings")
+    func permissionDenialIsActionable() async {
+        let source = RecoverableCameraSource(startupFailures: [.permissionDenied])
+        let viewModel = makeViewModel(source: source)
+
+        await viewModel.start()
+
+        #expect(viewModel.phase == .failed(.permissionDenied))
+    }
+
+    @Test("a capture failure returns to the existing live session without restarting it")
+    func captureFailureKeepsSession() async {
+        let source = RecoverableCameraSource()
+        source.shouldFailCapture = true
+        let viewModel = makeViewModel(source: source)
+
+        await viewModel.start()
+        await viewModel.capture()
+        #expect(viewModel.phase == .failed(.capture))
+
+        await viewModel.retry()
+        #expect(viewModel.phase == .live)
+        #expect(source.startCount == 1)
     }
 }

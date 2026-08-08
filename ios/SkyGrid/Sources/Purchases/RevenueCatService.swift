@@ -32,10 +32,25 @@ struct RevenueCatService: PurchasesServicing {
     }
 
     func fetchPaywall() async throws -> PaywallContent {
-        let offerings = try await Purchases.shared.offerings()
-        guard let offering = offerings.current else { throw PurchaseError.noOfferingAvailable }
+        let offerings: Offerings
+        do {
+            offerings = try await Purchases.shared.offerings()
+        } catch {
+            // Do not present an empty or invented local price list when the
+            // storefront cannot be reached. RevenueCat/StoreKit remain the
+            // price authority.
+            Self.logger.error("RevenueCat offerings request failed")
+            throw PurchaseError.underlying("Plans could not be reached. Check your connection and try again.")
+        }
+        guard let offering = offerings.current else {
+            Self.logger.error("RevenueCat returned no current offering")
+            throw PurchaseError.noOfferingAvailable
+        }
         let products = offering.availablePackages.compactMap { pkg -> PurchaseProduct? in
-            let period = Self.period(for: pkg.packageType)
+            let period = Self.period(
+                for: pkg.packageType,
+                productID: pkg.storeProduct.productIdentifier
+            )
             // The catalog is deliberately restricted to the three paid variants
             // that correspond to Sky Grid's four-state model (plus Free).
             guard [.monthly, .annual, .lifetime].contains(period) else { return nil }
@@ -47,7 +62,7 @@ struct RevenueCatService: PurchasesServicing {
                 id: pkg.identifier,
                 title: pkg.storeProduct.localizedTitle,
                 priceLabel: pkg.storeProduct.localizedPriceString,
-                periodLabel: Self.periodLabel(for: pkg.packageType),
+                periodLabel: Self.periodLabel(for: period),
                 offeringID: offering.identifier,
                 storeProductID: pkg.storeProduct.productIdentifier,
                 period: period,
@@ -60,7 +75,15 @@ struct RevenueCatService: PurchasesServicing {
                 )
             )
         }
-        guard !products.isEmpty else { throw PurchaseError.noOfferingAvailable }
+        guard !products.isEmpty else {
+            // A non-empty Offering can still be unusable if the dashboard uses
+            // a custom package type. The product-ID fallback above recognises
+            // only our approved catalog; this log distinguishes a catalog
+            // mismatch from a missing current Offering without recording a
+            // person or product identifier.
+            Self.logger.error("RevenueCat current offering had \(offering.availablePackages.count, privacy: .public) packages but no recognised Sky Grid products")
+            throw PurchaseError.noOfferingAvailable
+        }
         return PaywallContent(offeringID: offering.identifier, products: products)
     }
 
@@ -121,31 +144,41 @@ struct RevenueCatService: PurchasesServicing {
            let package = offerings.all.values
             .flatMap(\.availablePackages)
             .first(where: { $0.storeProduct.productIdentifier == productID }) {
-            return period(for: package.packageType)
+            return period(for: package.packageType, productID: productID)
         }
 
-        switch productID {
-        case "com.takmin.skygrid.pro.monthly": return .monthly
-        case "com.takmin.skygrid.pro.annual": return .annual
-        case "com.takmin.skygrid.pro.lifetime": return .lifetime
-        default: return .unknown
-        }
+        return canonicalProductPeriod(for: productID)
     }
 
-    private static func periodLabel(for type: PackageType) -> String? {
-        switch type {
+    private static func periodLabel(for period: PurchasePeriod) -> String? {
+        switch period {
         case .annual: return "Annual"
         case .monthly: return "Monthly"
         case .lifetime: return "Lifetime"
-        default: return nil
+        case .unknown: return nil
         }
     }
 
-    private static func period(for type: PackageType) -> PurchasePeriod {
+    /// RevenueCat's standard package types remain the primary source. A custom
+    /// package is also valid when — and only when — it wraps one of Sky Grid's
+    /// approved App Store products. This prevents a dashboard naming change from
+    /// turning a real product list into an empty paywall, while keeping unknown
+    /// products out of the purchase UI.
+    static func period(for type: PackageType, productID: String) -> PurchasePeriod {
         switch type {
         case .annual: return .annual
         case .monthly: return .monthly
         case .lifetime: return .lifetime
+        case .custom, .unknown: return canonicalProductPeriod(for: productID)
+        default: return .unknown
+        }
+    }
+
+    private static func canonicalProductPeriod(for productID: String) -> PurchasePeriod {
+        switch productID {
+        case "com.takmin.skygrid.pro.monthly": return .monthly
+        case "com.takmin.skygrid.pro.annual": return .annual
+        case "com.takmin.skygrid.pro.lifetime": return .lifetime
         default: return .unknown
         }
     }

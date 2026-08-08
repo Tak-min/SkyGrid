@@ -7,10 +7,12 @@ import UIKit
 final class MorningAlarmSettingsViewModel {
     var minutes = LocalDefaults.wakeGoalMinutes
     private(set) var state = MorningAlarmState.off(MorningAlarmScheduler.preferredKind)
+    private(set) var liveActivitiesEnabled = MorningRitualActivity.areActivitiesEnabled
     private(set) var isWorking = false
 
     func refresh() async {
         state = await MorningAlarmScheduler.currentState()
+        liveActivitiesEnabled = MorningRitualActivity.areActivitiesEnabled
     }
 
     func enableSystemAlarm() async {
@@ -106,9 +108,29 @@ struct MorningAlarmSettingsView: View {
     private var stateSection: some View {
         switch viewModel.state {
         case .scheduled:
-            Label("Set for every day at this time", systemImage: "checkmark.circle.fill")
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
+            VStack(alignment: .leading, spacing: SGSpacing.sm) {
+                Label("Set for every day at this time", systemImage: "checkmark.circle.fill")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+                if viewModel.state.kind == .systemAlarm {
+                    if viewModel.liveActivitiesEnabled {
+                        Text("After you stop the alarm, a quiet Sky Grid card remains on the Lock Screen and Dynamic Island. Tap it to open the camera.")
+                            .font(SGFont.caption())
+                            .foregroundStyle(SGT.ink3)
+                    } else {
+                        Label("Live Activities are off", systemImage: "rectangle.badge.xmark")
+                            .font(SGFont.body(14))
+                            .foregroundStyle(SGT.ink2)
+                        Text("Your alarm still works, but the Lock Screen and Dynamic Island camera shortcut cannot appear.")
+                            .font(SGFont.caption())
+                            .foregroundStyle(SGT.ink3)
+                        Button("Open Settings", action: openSystemSettings)
+                            .font(SGFont.body(14))
+                            .foregroundStyle(SGT.ink)
+                            .frame(minHeight: 44)
+                    }
+                }
+            }
         case .needsAuthorization:
             Label("Permission is needed to turn this on", systemImage: "bell.badge")
                 .font(SGFont.body(15))
@@ -170,8 +192,7 @@ struct MorningAlarmSettingsView: View {
 
             if case .denied(.systemAlarm) = viewModel.state {
                 Button("Open Settings") {
-                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                    UIApplication.shared.open(url)
+                    openSystemSettings()
                 }
                 .buttonStyle(SkySecondaryButtonStyle())
 
@@ -195,5 +216,10 @@ struct MorningAlarmSettingsView: View {
 
     private func timeString(_ minutes: Int) -> String {
         String(format: "%02d:%02d", minutes / 60, minutes % 60)
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }

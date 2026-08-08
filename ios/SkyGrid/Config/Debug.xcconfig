@@ -1,4 +1,7 @@
 #include? "Secrets.xcconfig"
 
-REVENUECAT_API_KEY = $(REVENUECAT_API_KEY_TEST)
+// Device debug builds use the same RevenueCat project as release. StoreKit's
+// sandbox account still makes purchases test-only; a test-project key must never
+// be selected by an app build.
+REVENUECAT_API_KEY = $(REVENUECAT_API_KEY_PROD)
 APS_ENVIRONMENT = development

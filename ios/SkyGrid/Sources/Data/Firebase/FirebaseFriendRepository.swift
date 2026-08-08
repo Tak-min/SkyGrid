@@ -11,7 +11,7 @@ final class FirebaseFriendRepository: FriendRepository {
         self.firestore = firestore
     }
 
-    func observeFriendships(uid: String) -> AsyncStream<[Friendship]> {
+    func observeFriendships(uid: String) -> AsyncStream<FriendshipCollectionObservation> {
         let query = firestore.collection("friendships").whereField("members", arrayContains: uid)
         return AsyncStream { continuation in
             let listener = query.addSnapshotListener { snapshot, error in
@@ -20,20 +20,20 @@ final class FirebaseFriendRepository: FriendRepository {
                     // the first error would freeze buddy state forever instead of
                     // letting the SDK's automatic retry recover it.
                     Self.logger.error("observeFriendships(\(uid, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
-                    continuation.yield([])
+                    continuation.yield(.unavailable)
                     return
                 }
                 let friendships = (snapshot?.documents ?? [])
                     .filter { (($0.data()["blockedBy"] as? [String]) ?? []).isEmpty }
                     .compactMap(FirebaseDocumentCodec.friendship(from:))
                     .sorted { $0.createdAt > $1.createdAt }
-                continuation.yield(friendships)
+                continuation.yield(.value(friendships))
             }
             continuation.onTermination = { _ in listener.remove() }
         }
     }
 
-    func observeBlockedFriendships(uid: String) -> AsyncStream<[Friendship]> {
+    func observeBlockedFriendships(uid: String) -> AsyncStream<BlockedFriendshipCollectionObservation> {
         // Same query as `observeFriendships` (Firestore only allows one
         // array-contains clause per query, and Security Rules can only prove a
         // `list` query safe when it is constrained by the exact field the rule
@@ -44,43 +44,71 @@ final class FirebaseFriendRepository: FriendRepository {
             let listener = query.addSnapshotListener { snapshot, error in
                 if let error {
                     Self.logger.error("observeBlockedFriendships(\(uid, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
-                    continuation.yield([])
+                    continuation.yield(.unavailable)
                     return
                 }
                 let blocked = (snapshot?.documents ?? [])
                     .compactMap(FirebaseDocumentCodec.friendship(from:))
                     .filter { $0.blockedBy.contains(uid) }
                     .sorted { $0.createdAt > $1.createdAt }
-                continuation.yield(blocked)
+                continuation.yield(.value(blocked))
             }
             continuation.onTermination = { _ in listener.remove() }
         }
     }
 
-    func sendRequest(from: String, to: String) async throws {
+    func sendRequest(
+        from: String,
+        to: String,
+        requesterHandle: Handle,
+        recipientHandle: Handle
+    ) async throws -> FriendRequestResult {
         guard from != to else { throw RepositoryError.unknown(underlying: "You cannot add yourself as a buddy.") }
         let pairID = PairID.make(from, to)
         let document = firestore.collection("friendships").document(pairID)
         do {
-            _ = try await firestore.runTransaction { transaction, errorPointer in
-                do {
-                    let current = try transaction.getDocument(document)
-                    guard !current.exists else { return nil }
-                    transaction.setData([
-                        "members": [from, to].sorted(),
-                        "status": FriendshipStatus.pending.rawValue,
-                        "requestedBy": from,
-                        "createdAt": FieldValue.serverTimestamp(),
-                        "blockedBy": [],
-                    ], forDocument: document)
-                    return nil
-                } catch {
-                    errorPointer?.pointee = error as NSError
-                    return nil
+            // Do not transaction-read an absent pair before creating it. Rules
+            // intentionally permit reads only to existing members, so that shape
+            // is denied before the transaction can ever reach its create. A direct
+            // set is create-only in practice: if the deterministic document exists,
+            // the strict update rule rejects replacing its immutable fields.
+            try await document.setDataAsync([
+                "members": [from, to].sorted(),
+                "status": FriendshipStatus.pending.rawValue,
+                "requestedBy": from,
+                "requestedByHandle": requesterHandle.value,
+                "recipientHandle": recipientHandle.value,
+                "createdAt": FieldValue.serverTimestamp(),
+                "blockedBy": [],
+            ])
+            return .sent
+        } catch {
+            let originalError = FirebaseRepositoryError.map(error)
+
+            // Duplicate taps, reciprocal requests, accepted connections, and
+            // blocks all arrive here because overwriting an existing pair is
+            // forbidden. Once it exists, this member may read it and turn that
+            // rejection into truthful, actionable UI. If the read also fails
+            // (App Check, auth, network, or a genuinely absent target), preserve
+            // the original infrastructure error instead of calling it a duplicate.
+            if let snapshot = try? await document.getDocumentAsync(),
+               snapshot.exists,
+               let friendship = FirebaseDocumentCodec.friendship(from: snapshot),
+               friendship.members.contains(from), friendship.members.contains(to) {
+                if !friendship.blockedBy.isEmpty {
+                    return .blocked
+                }
+                switch friendship.status {
+                case .accepted:
+                    return .alreadyBuddies
+                case .pending where friendship.requestedBy == from:
+                    return .alreadyPending
+                case .pending:
+                    return .incomingRequestExists
                 }
             }
-        } catch {
-            throw FirebaseRepositoryError.map(error)
+            Self.logger.error("sendRequest(\(pairID, privacy: .public)) failed: \(String(describing: error), privacy: .public)")
+            throw originalError
         }
     }
 

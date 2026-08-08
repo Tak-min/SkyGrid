@@ -7,7 +7,7 @@ import RevenueCat
 @MainActor
 enum RevenueCatConfig {
     /// Must match the entitlement identifier configured in the RevenueCat dashboard.
-    static let entitlementID = "premium"
+    nonisolated static let entitlementID = "premium"
 
     static var isConfigured: Bool {
         guard let key = rawAPIKey else { return false }
@@ -16,14 +16,18 @@ enum RevenueCatConfig {
 
     private static var configuredUserID: String?
 
-    static func configureOrIdentify(appUserID: String) async {
+    static func configureOrIdentify(appUserID: String) async throws {
         guard let key = rawAPIKey, isConfigured else { return }
         guard !appUserID.isEmpty else { return }
 
         if let configuredUserID {
             guard configuredUserID != appUserID else { return }
-            _ = try? await Purchases.shared.logIn(appUserID)
-            self.configuredUserID = appUserID
+            do {
+                _ = try await Purchases.shared.logIn(appUserID)
+                self.configuredUserID = appUserID
+            } catch {
+                throw RevenueCatConfigurationError.identitySwitchFailed
+            }
             return
         }
 
@@ -36,5 +40,19 @@ enum RevenueCatConfig {
 
     private static var rawAPIKey: String? {
         Bundle.main.object(forInfoDictionaryKey: "RevenueCatAPIKey") as? String
+    }
+}
+
+enum RevenueCatConfigurationError: LocalizedError {
+    /// Continuing with the prior RevenueCat App User ID could surface or attach a
+    /// purchase to the wrong Sky Grid account. The app must stay fail-closed until
+    /// RevenueCat confirms the identity switch.
+    case identitySwitchFailed
+
+    var errorDescription: String? {
+        switch self {
+        case .identitySwitchFailed:
+            "Purchase access could not be verified for this account. Please try again."
+        }
     }
 }

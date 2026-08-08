@@ -22,6 +22,8 @@ enum OrphanedPostRecoveryError: Error, Equatable {
     case postChanged
     /// A recovery attempt for this day is already in flight.
     case alreadyRecovering
+    /// The post could not be authoritatively re-read before a destructive action.
+    case postUnavailable
 }
 
 @MainActor
@@ -93,7 +95,10 @@ final class OrphanedPostRecovery: OrphanedPostRecovering {
         // narrows rather than eliminates the race against a second device capturing
         // for the same account at the same moment.
         let current = await firstValue(from: postRepository.observePost(uid: post.ownerUid, localDate: post.localDate))
-        guard let current = current ?? nil, current.imagePath == post.imagePath else {
+        guard case .value(let current?)? = current else {
+            throw OrphanedPostRecoveryError.postUnavailable
+        }
+        guard current.imagePath == post.imagePath else {
             throw OrphanedPostRecoveryError.postChanged
         }
 

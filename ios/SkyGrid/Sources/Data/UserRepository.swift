@@ -1,8 +1,16 @@
 import Foundation
 
+/// A missing profile is a valid server value; a listener failure is not. Keeping
+/// those outcomes separate prevents invite and safety screens from treating an
+/// offline read as a profile that has no handle or display name.
+enum UserProfileObservation: Sendable {
+    case value(UserProfile?)
+    case unavailable
+}
+
 @MainActor
 protocol UserRepository: Sendable {
-    func observeProfile(uid: String) -> AsyncStream<UserProfile?>
+    func observeProfile(uid: String) -> AsyncStream<UserProfileObservation>
     func createOrUpdateProfile(_ profile: UserProfile) async throws
 
     /// Attempts to atomically claim `handle` for `uid` via `handles/{handle}`.

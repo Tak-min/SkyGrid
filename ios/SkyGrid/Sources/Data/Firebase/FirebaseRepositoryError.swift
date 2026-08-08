@@ -14,6 +14,8 @@ enum FirebaseRepositoryError {
             switch nsError.code {
             case 7: // permission-denied
                 return .permissionDenied(underlying: nsError.localizedDescription)
+            case 16: // unauthenticated
+                return .notAuthenticated
             case 14: // unavailable
                 return .network(underlying: nsError.localizedDescription)
             default:

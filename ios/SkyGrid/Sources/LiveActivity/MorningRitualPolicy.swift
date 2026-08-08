@@ -7,7 +7,7 @@ import Foundation
 enum MorningRitualPolicy {
     /// How long after the wake time the nudge stays relevant. Past this, a
     /// lingering Lock Screen card would be noise, not a nudge.
-    static let morningWindowMinutes = 4 * 60
+    static let morningWindowMinutes = Int(MorningRitualAttributes.captureWindow / 60)
     /// The single soft follow-up notification, per the chosen design.
     static let followUpDelayMinutes = 20
     /// How many days of one-shot follow-ups stay armed at a time.
@@ -15,8 +15,20 @@ enum MorningRitualPolicy {
 
     enum Decision: Equatable {
         case start(localDateID: String, wokeAt: Date)
+        case replace(localDateID: String, wokeAt: Date)
         case end
         case leaveAlone
+    }
+
+    /// A committed local capture is authoritative while the Firestore observer
+    /// catches up. Without this, a transient server-side `nil` can recreate the
+    /// Dynamic Island card immediately after the person has completed the ritual.
+    static func effectiveHasPostToday(
+        hasPostToday: Bool,
+        lastCapturedLocalDateID: String?,
+        today: LocalDate
+    ) -> Bool {
+        hasPostToday || lastCapturedLocalDateID == today.docID
     }
 
     static func decide(
@@ -35,12 +47,19 @@ enum MorningRitualPolicy {
         }
 
         let today = LocalDate(date: now, timeZone: timeZone)
+        let wakeInstant = wakeInstant(wakeGoalMinutes: wakeGoalMinutes, on: today, timeZone: timeZone)
+        let windowEnd = wakeInstant.addingTimeInterval(TimeInterval(morningWindowMinutes * 60))
+
+        // A stale activity must not consume today's only reconciliation. If the
+        // app first wakes inside today's window, replace yesterday's card in one
+        // pass instead of ending it and waiting for another foreground event.
         if let runningActivityLocalDateID, runningActivityLocalDateID != today.docID {
+            if now >= wakeInstant, now <= windowEnd {
+                return .replace(localDateID: today.docID, wokeAt: wakeInstant)
+            }
             return .end
         }
 
-        let wakeInstant = wakeInstant(wakeGoalMinutes: wakeGoalMinutes, on: today, timeZone: timeZone)
-        let windowEnd = wakeInstant.addingTimeInterval(TimeInterval(morningWindowMinutes * 60))
         guard now >= wakeInstant, now <= windowEnd else {
             return runningActivityLocalDateID != nil ? .end : .leaveAlone
         }

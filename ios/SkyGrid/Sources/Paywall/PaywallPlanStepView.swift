@@ -5,6 +5,7 @@ import SwiftUI
 /// 3.1.2; see the doc comment on `PaywallView`). All three plans are shown as one
 /// list rather than a "selected + other plans" split.
 struct PaywallPlanStepView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let flow: PaywallFlow
     let entryPoint: PaywallEntryPoint
     let viewModel: PaywallViewModel
@@ -76,6 +77,11 @@ struct PaywallPlanStepView: View {
                         .font(SGFont.caption(13))
                         .foregroundStyle(.red)
                 }
+
+                if dynamicTypeSize.isAccessibilitySize {
+                    restoreAndLegal(includeFreePath: false)
+                        .padding(.top, SGSpacing.sm)
+                }
             }
         }
     }
@@ -95,10 +101,18 @@ struct PaywallPlanStepView: View {
             .disabled(viewModel.isPurchasing)
         }
 
-        restoreAndLegal
+        if dynamicTypeSize.isAccessibilitySize {
+            Button("Continue with Free", action: onContinueWithFree)
+                .font(SGFont.body(15))
+                .foregroundStyle(SGT.ink2)
+                .frame(minHeight: 44)
+                .disabled(viewModel.isPurchasing)
+        } else {
+            restoreAndLegal(includeFreePath: true)
+        }
     }
 
-    private var restoreAndLegal: some View {
+    private func restoreAndLegal(includeFreePath: Bool) -> some View {
         VStack(spacing: SGSpacing.md) {
             Button("Restore purchases", action: onRestore)
                 .font(SGFont.body(15))
@@ -115,10 +129,12 @@ struct PaywallPlanStepView: View {
             .font(SGFont.caption(12))
             .foregroundStyle(SGT.ink3)
 
-            Button("Continue with Free", action: onContinueWithFree)
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
-                .disabled(viewModel.isPurchasing)
+            if includeFreePath {
+                Button("Continue with Free", action: onContinueWithFree)
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+                    .disabled(viewModel.isPurchasing)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -164,6 +180,7 @@ struct PaywallPlanStepView: View {
 }
 
 private struct PlanOptionRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let product: PurchaseProduct
     let isSelected: Bool
     let isRecommended: Bool
@@ -179,18 +196,18 @@ private struct PlanOptionRow: View {
                     .padding(.top, 3)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(product.periodLabel ?? product.title)
-                            .font(SGFont.body(16))
-                            .foregroundStyle(SGT.ink)
-                        if isRecommended {
-                            Text("BEST VALUE")
-                                .font(SGFont.caption(10))
-                                .tracking(0.8)
-                                .foregroundStyle(SGT.background)
-                                .padding(.horizontal, 7)
-                                .padding(.vertical, 4)
-                                .background(SGT.ink, in: Capsule())
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .firstTextBaseline) {
+                            planName
+                                .fixedSize(horizontal: true, vertical: false)
+                            Spacer(minLength: SGSpacing.sm)
+                            price
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+
+                        VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                            planName
+                            price
                         }
                     }
                     if let equivalent = product.pricePerMonthLabel, product.period == .annual {
@@ -204,15 +221,7 @@ private struct PlanOptionRow: View {
                             .foregroundStyle(SGT.ink2)
                     }
                 }
-
-                Spacer(minLength: 4)
-                VStack(alignment: .trailing, spacing: 2) {
-                    // The total recurring price is always prominent and never
-                    // presented as a struck-through former price.
-                    Text(product.priceLabel)
-                        .font(SGFont.numeric(20, weight: .medium))
-                        .foregroundStyle(SGT.ink)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(SGSpacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -225,5 +234,47 @@ private struct PlanOptionRow: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var planName: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                    planPeriod
+                    if isRecommended {
+                        Text("Best value")
+                            .font(SGFont.caption(10))
+                            .foregroundStyle(SGT.ink2)
+                    }
+                }
+            } else {
+                HStack(spacing: SGSpacing.xs) {
+                    planPeriod
+                    if isRecommended {
+                        Text("BEST VALUE")
+                            .font(SGFont.caption(10))
+                            .tracking(0.8)
+                            .foregroundStyle(SGT.background)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 4)
+                            .background(SGT.ink, in: Capsule())
+                    }
+                }
+            }
+        }
+    }
+
+    private var planPeriod: some View {
+        Text(product.periodLabel ?? product.title)
+            .font(SGFont.body(16))
+            .foregroundStyle(SGT.ink)
+    }
+
+    private var price: some View {
+        // The total recurring price is always prominent and never presented as
+        // a struck-through former price.
+        Text(product.priceLabel)
+            .font(SGFont.numeric(20, weight: .medium))
+            .foregroundStyle(SGT.ink)
     }
 }

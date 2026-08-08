@@ -18,6 +18,10 @@ final class PendingUpload {
     var thumbImagePath: String
     var localFullImageURL: URL
     var localThumbImageURL: URL
+    /// JSON payload required to reconstruct a `PostDraft` after process death. It
+    /// is optional solely for rows created by older builds, which were already
+    /// ready to upload and therefore never need a Firestore retry.
+    var postPayloadData: Data?
     var stateRaw: String
     var attemptCount: Int
     var nextAttemptAt: Date
@@ -38,7 +42,8 @@ final class PendingUpload {
         self.thumbImagePath = draft.thumbPath
         self.localFullImageURL = draft.localFullImageURL
         self.localThumbImageURL = draft.localThumbImageURL
-        self.stateRaw = UploadState.pendingLocal.rawValue
+        self.postPayloadData = try? JSONEncoder().encode(PostPayload(draft: draft))
+        self.stateRaw = UploadState.stagedPost.rawValue
         self.attemptCount = 0
         self.nextAttemptAt = createdAt
         self.lastError = nil
@@ -47,6 +52,49 @@ final class PendingUpload {
 
     static func queueID(ownerUid: String, localDateID: String) -> String {
         "\(ownerUid):\(localDateID)"
+    }
+
+    func postDraft() -> PostDraft? {
+        guard let postPayloadData,
+              let payload = try? JSONDecoder().decode(PostPayload.self, from: postPayloadData),
+              payload.ownerUid == ownerUid,
+              payload.localDateID == localDateID,
+              payload.imageID == imageID,
+              let localDate = LocalDate(docID: payload.localDateID),
+              let imageID = UUID(uuidString: payload.imageID),
+              let skyColor = SkyColor(hex: payload.skyColorHex)
+        else { return nil }
+
+        return PostDraft(
+            ownerUid: payload.ownerUid,
+            localDate: localDate,
+            capturedAt: payload.capturedAt,
+            skyColor: skyColor,
+            minutesFromGoal: payload.minutesFromGoal,
+            imageID: imageID,
+            localFullImageURL: ImageFileStore.pendingImageURL(filename: localFullImageURL.lastPathComponent),
+            localThumbImageURL: ImageFileStore.pendingImageURL(filename: localThumbImageURL.lastPathComponent)
+        )
+    }
+}
+
+/// Codable rather than a SwiftData relationship so one outbox row and one payload
+/// remain portable through a lightweight schema migration.
+private struct PostPayload: Codable {
+    let ownerUid: String
+    let localDateID: String
+    let capturedAt: Date
+    let skyColorHex: String
+    let minutesFromGoal: Int
+    let imageID: String
+
+    init(draft: PostDraft) {
+        ownerUid = draft.ownerUid
+        localDateID = draft.localDate.docID
+        capturedAt = draft.capturedAt
+        skyColorHex = draft.skyColor.hex
+        minutesFromGoal = draft.minutesFromGoal
+        imageID = draft.imageID.uuidString
     }
 }
 

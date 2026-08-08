@@ -6,21 +6,29 @@ import SwiftUI
 struct TodayView: View {
     @State private var viewModel: TodayViewModel
     let imageFetching: any ImageFetching
+    let observedDate: LocalDate
     let onOpenCamera: () -> Void
     let subscriptionPlan: SubscriptionPlan
     let onOpenPaywall: () -> Void
+    /// Switches to the Buddies tab. Owned by the parent because the tab selection
+    /// lives there; Today only knows that it wants to send someone to invite.
+    let onOpenBuddies: () -> Void
     init(
         viewModel: TodayViewModel,
         imageFetching: any ImageFetching,
+        observedDate: LocalDate,
         onOpenCamera: @escaping () -> Void,
         subscriptionPlan: SubscriptionPlan,
-        onOpenPaywall: @escaping () -> Void
+        onOpenPaywall: @escaping () -> Void,
+        onOpenBuddies: @escaping () -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.imageFetching = imageFetching
+        self.observedDate = observedDate
         self.onOpenCamera = onOpenCamera
         self.subscriptionPlan = subscriptionPlan
         self.onOpenPaywall = onOpenPaywall
+        self.onOpenBuddies = onOpenBuddies
     }
 
     var body: some View {
@@ -33,6 +41,7 @@ struct TodayView: View {
                     heading
                     morningRecord
                         .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
+                    buddySection
                     rhythmSection
                     PostStatusBanner(pending: viewModel.pendingSummary) {
                         Task { await viewModel.retryFailedUploads() }
@@ -47,7 +56,7 @@ struct TodayView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .task { viewModel.start() }
+        .task(id: observedDate) { viewModel.start(for: observedDate) }
         .onDisappear { viewModel.stop() }
     }
 
@@ -61,33 +70,51 @@ struct TodayView: View {
     }
 
     private var heading: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                Text(todayHeading)
-                    .font(SGFont.caption(12))
-                    .foregroundStyle(SGT.ink3)
-                Text("Sky Grid")
-                    .font(SGFont.serifTitle(32))
-                    .foregroundStyle(SGT.ink)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline) {
+                headingTitle
+                    .fixedSize(horizontal: true, vertical: false)
+                Spacer(minLength: SGSpacing.md)
+                headingStatus(alignment: .trailing)
+                    .fixedSize(horizontal: true, vertical: false)
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: SGSpacing.xs) {
-                if subscriptionPlan.canOpenPaywall {
-                    Button(action: onOpenPaywall) {
-                        planStatusBadge
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel). Open plans")
-                } else {
-                    planStatusBadge
-                        .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel)")
-                }
 
-                Text(viewModel.todayPost == nil ? "Not yet" : "Recorded")
-                    .font(SGFont.caption(11))
-                    .foregroundStyle(SGT.ink3)
+            VStack(alignment: .leading, spacing: SGSpacing.md) {
+                headingTitle
+                headingStatus(alignment: .leading)
             }
         }
+    }
+
+    private var headingTitle: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.xs) {
+            Text(todayHeading)
+                .font(SGFont.caption(12))
+                .foregroundStyle(SGT.ink3)
+            Text("Sky Grid")
+                .font(SGFont.serifTitle(32))
+                .foregroundStyle(SGT.ink)
+        }
+    }
+
+    private func headingStatus(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: SGSpacing.xs) {
+            if subscriptionPlan.canOpenPaywall {
+                Button(action: onOpenPaywall) {
+                    planStatusBadge
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel). Open plans")
+            } else {
+                planStatusBadge
+                    .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel)")
+            }
+
+            Text(recordingStatus)
+                .font(SGFont.caption(11))
+                .foregroundStyle(SGT.ink3)
+        }
+        .frame(maxWidth: alignment == .leading ? .infinity : nil, alignment: alignment == .leading ? .leading : .trailing)
     }
 
     private var planStatusBadge: some View {
@@ -109,6 +136,13 @@ struct TodayView: View {
                     LinearGradient(colors: [.clear, .black.opacity(0.62)], startPoint: .center, endPoint: .bottom)
                         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                        if viewModel.streak.currentStreak > 0 {
+                            Text("\(viewModel.streak.currentStreak) day streak")
+                                .font(SGFont.display(34))
+                                .foregroundStyle(.white)
+                                .contentTransition(.numericText())
+                                .skyAnimation(SGMotion.exchange, value: viewModel.streak.currentStreak)
+                        }
                         Text("CAPTURED")
                             .font(SGFont.caption(12))
                             .foregroundStyle(.white.opacity(0.78))
@@ -130,9 +164,11 @@ struct TodayView: View {
                 }
             }
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        } else {
+        } else if viewModel.postState == .available {
             emptyMorningRecord
                 .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        } else {
+            recordAvailabilityCard
         }
     }
 
@@ -156,15 +192,53 @@ struct TodayView: View {
                             .strokeBorder(.white.opacity(0.32), lineWidth: 1)
                     }
 
+                // `readableInk` picks its ink from the accent colour alone, but this
+                // card is a *gradient* that ends in a warm cream — so ink chosen for
+                // the blue top was landing on the pale bottom-right corner, exactly
+                // where the streak caption sits. The recorded card already solves
+                // this with a bottom scrim; mirror it rather than inventing a second
+                // approach.
+                    .overlay {
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.42)],
+                            startPoint: .center,
+                            endPoint: .bottom
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                        .allowsHitTesting(false)
+                    }
+
+                // The hero of the pre-capture screen is the streak, not a
+                // placeholder clock. The previous "—:—" at ultraLight 74pt rendered
+                // as detached hairlines and floating dots — it read as a font-loading
+                // failure rather than an empty state. It is also the wrong thing to
+                // show: the number that gets someone out of bed is what they stand
+                // to lose, not an unknown time.
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
                     Text("THIS MORNING")
                         .font(SGFont.caption(12))
-                        .foregroundStyle(accentColor.readableInk.opacity(0.72))
-                    Text("—:—")
-                        .font(SGFont.bigTime(74))
-                        .foregroundStyle(accentColor.readableInk)
+                        .foregroundStyle(.white.opacity(0.82))
+                    if viewModel.streak.currentStreak > 0 {
+                        Text("\(viewModel.streak.currentStreak)")
+                            .font(SGFont.display(76))
+                            .foregroundStyle(.white)
+                            .contentTransition(.numericText())
+                            .skyAnimation(SGMotion.exchange, value: viewModel.streak.currentStreak)
+                        Text("day streak · capture to keep it")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(.white.opacity(0.88))
+                    } else {
+                        Text("Day one")
+                            .font(SGFont.serifTitle(34))
+                            .foregroundStyle(.white)
+                        Text("your first sky is today")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(.white.opacity(0.88))
+                    }
                 }
                 .padding(SGSpacing.xl)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(emptyStateAccessibilityLabel)
             }
 
             Button(action: onOpenCamera) {
@@ -173,6 +247,82 @@ struct TodayView: View {
             }
             .buttonStyle(SkyPrimaryButtonStyle())
         }
+    }
+
+    private var recordAvailabilityCard: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.sm) {
+            if viewModel.postState == .checking {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(SGT.ink2)
+                    .accessibilityHidden(true)
+            }
+            Text(viewModel.postState == .unavailable ? "We couldn't check today's record." : "Checking today's record…")
+                .font(SGFont.body(16))
+                .foregroundStyle(SGT.ink)
+            Text(viewModel.postState == .unavailable ? "Your archive is unchanged. Check your connection and try again." : "Capture will be available once your existing record is confirmed.")
+                .font(SGFont.caption(13))
+                .foregroundStyle(SGT.ink2)
+            if viewModel.postState == .unavailable {
+                Button("Check again") {
+                    viewModel.retryPostObservation()
+                }
+                .font(SGFont.body(15))
+                .foregroundStyle(SGT.ink)
+                .frame(minHeight: 44)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
+        .padding(SGSpacing.xl)
+        .quietCard()
+    }
+
+    /// The buddy strip sits between the morning record and the week rhythm: below
+    /// the one thing that matters before capture, above the secondary detail. It is
+    /// one object with no decisions attached, so it does not turn the pre-capture
+    /// screen into a feed — before you post it is a row of sealed discs, and it only
+    /// becomes colour after your own capture is done.
+    @ViewBuilder
+    private var buddySection: some View {
+        if viewModel.buddies.isEmpty {
+            Button(action: onOpenBuddies) {
+                HStack(spacing: SGSpacing.md) {
+                    Image(systemName: "person.2")
+                        .font(.system(size: 15, weight: .medium))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Invite one person")
+                            .font(SGFont.body(15))
+                        Text("your skies unlock each other")
+                            .font(SGFont.caption(12))
+                            .foregroundStyle(SGT.ink3)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundStyle(SGT.ink2)
+                .padding(.horizontal, SGSpacing.lg)
+                .frame(minHeight: 62)
+                .quietCard()
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Invite a buddy. Your skies unlock each other.")
+        } else {
+            VStack(alignment: .leading, spacing: SGSpacing.md) {
+                sectionLabel(viewModel.streak.hasPostedToday ? "THIS MORNING, TOGETHER" : "SEALED UNTIL YOU POST")
+                BuddyRow(buddies: viewModel.buddies)
+            }
+            .skyAnimation(SGMotion.settle, value: viewModel.streak.hasPostedToday)
+        }
+    }
+
+    private var emptyStateAccessibilityLabel: String {
+        viewModel.streak.currentStreak > 0
+            ? "This morning. \(viewModel.streak.currentStreak) day streak. Capture to keep it."
+            : "This morning. Day one — your first sky is today."
     }
 
     private var rhythmSection: some View {
@@ -231,6 +381,14 @@ struct TodayView: View {
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: .now)
+    }
+
+    private var recordingStatus: String {
+        switch viewModel.postState {
+        case .checking: return "Checking…"
+        case .available: return viewModel.todayPost == nil ? "Not yet" : "Recorded"
+        case .unavailable: return "Unavailable"
+        }
     }
 
     private func sectionLabel(_ title: String) -> some View {

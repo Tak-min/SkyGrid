@@ -4,6 +4,7 @@ import SwiftUI
 /// than being buried behind a profile avatar. The production URLs are injected from
 /// Info.plist so the app never invents a support address it cannot receive.
 struct SettingsView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let uid: String
     let accountDeletionService: any AccountDeleting
     let friendRepository: any FriendRepository
@@ -14,14 +15,25 @@ struct SettingsView: View {
     @State private var showPaywall = false
     @State private var isRestoring = false
     @State private var restoreError = false
+    @State private var isLinkingApple = false
+    @State private var appleLinkError: String?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: SGSpacing.xxl) {
                 settingsHeader
+                settingsSection("ARCHIVE PROTECTION") {
+                    archiveProtectionRow
+                }
+
                 settingsSection("SKY GRID PRO") {
                     if entitlements.isPro {
-                        settingRow("Sky Grid Pro is active", symbol: "checkmark.seal", detail: "Every month in your photo archive is available.")
+                        settingRow(
+                            "Sky Grid Pro is active",
+                            symbol: "checkmark.seal",
+                            detail: "Every month in your photo archive is available.",
+                            accessory: .none
+                        )
                     } else {
                         Button { showPaywall = true } label: {
                             settingRow("Unlock the full archive", symbol: "square.grid.3x3", detail: "Keep more than your latest 30 days.")
@@ -32,7 +44,12 @@ struct SettingsView: View {
                         // deeper than before — this keeps a reinstalled purchaser's
                         // path just as short as it was on the single-screen paywall.
                         Button { Task { await restore() } } label: {
-                            settingRow("Restore purchases", symbol: "arrow.clockwise", detail: isRestoring ? "Checking…" : "Already purchased Pro on this account?")
+                            settingRow(
+                                "Restore purchases",
+                                symbol: "arrow.clockwise",
+                                detail: isRestoring ? "Checking…" : "Already purchased Pro on this account?",
+                                accessory: isRestoring ? .progress : .none
+                            )
                         }
                         .buttonStyle(.plain)
                         .disabled(isRestoring)
@@ -56,18 +73,14 @@ struct SettingsView: View {
                 }
 
                 settingsSection("SUPPORT") {
-                    if let supportURL = AppContact.supportURL {
-                        Link(destination: supportURL) {
-                            settingRow("Contact us", symbol: "envelope", detail: "Get help with Sky Grid.")
-                        }
-                    } else {
-                        settingRow("Contact link required before release", symbol: "envelope")
-                            .foregroundStyle(SGT.ink3)
+                    Link(destination: SkyGridWeb.supportURL) {
+                        settingRow("Contact us", symbol: "envelope", detail: "Get help with Sky Grid.", accessory: .external)
                     }
-                    if let privacyURL = AppContact.privacyURL {
-                        Link(destination: privacyURL) {
-                            settingRow("Privacy Policy", symbol: "lock", detail: "How your photos and data are handled.")
-                        }
+                    Link(destination: SkyGridWeb.privacyURL) {
+                        settingRow("Privacy Policy", symbol: "lock", detail: "How your photos and data are handled.", accessory: .external)
+                    }
+                    Link(destination: SkyGridWeb.termsURL) {
+                        settingRow("Terms of Use", symbol: "doc.text", detail: "The terms for using Sky Grid.", accessory: .external)
                     }
                 }
 
@@ -101,6 +114,34 @@ struct SettingsView: View {
         } message: {
             Text("Please try again in a moment.")
         }
+        .alert("Could not connect Apple", isPresented: appleLinkAlert) {
+            Button("Close", role: .cancel) { appleLinkError = nil }
+        } message: {
+            Text(appleLinkError ?? "Please try again in a moment.")
+        }
+    }
+
+    @ViewBuilder
+    private var archiveProtectionRow: some View {
+        if FirebaseAuthSession.isAnonymous {
+            Button { Task { await linkApple() } } label: {
+                settingRow(
+                    "Back up with Apple",
+                    symbol: "person.badge.key",
+                    detail: isLinkingApple ? "Connecting…" : "Keep this archive when you reinstall or change devices.",
+                    accessory: isLinkingApple ? .progress : .none
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isLinkingApple)
+        } else {
+            settingRow(
+                "Account backed up",
+                symbol: "checkmark.shield",
+                detail: "Your Sky Grid archive is connected to Apple.",
+                accessory: .none
+            )
+        }
     }
 
     private func restore() async {
@@ -113,18 +154,50 @@ struct SettingsView: View {
         }
     }
 
+    private var appleLinkAlert: Binding<Bool> {
+        Binding(
+            get: { appleLinkError?.isEmpty == false },
+            set: { if !$0 { appleLinkError = nil } }
+        )
+    }
+
+    private func linkApple() async {
+        guard FirebaseAuthSession.isAnonymous, !isLinkingApple else { return }
+        isLinkingApple = true
+        defer { isLinkingApple = false }
+        do {
+            let linkedUID = try await FirebaseAuthSession.linkCurrentAnonymousUserWithApple()
+            guard linkedUID == uid else {
+                appleLinkError = "Your account could not be connected safely. Your photos were not changed."
+                return
+            }
+            await entitlements.refresh()
+        } catch let error as AppleAccountLinkError {
+            guard error != .cancelled else { return }
+            appleLinkError = error.localizedDescription
+        } catch {
+            appleLinkError = "We couldn't finish connecting Apple. Please try again."
+        }
+    }
+
     private var settingsHeader: some View {
         VStack(alignment: .leading, spacing: SGSpacing.sm) {
             Text("YOUR RITUAL")
                 .font(SGFont.caption(11))
                 .tracking(1.4)
                 .foregroundStyle(SGT.ink3)
-            Text("A calmer morning,\nmanaged your way.")
-                .font(SGFont.serifTitle(32))
-                .foregroundStyle(SGT.ink)
-            Text("Alarm, archive, privacy, and support all stay easy to find here.")
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
+            if dynamicTypeSize.isAccessibilitySize {
+                Text("Manage your alarm, archive, privacy, and account.")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+            } else {
+                Text("A calmer morning,\nmanaged your way.")
+                    .font(SGFont.serifTitle(32))
+                    .foregroundStyle(SGT.ink)
+                Text("Alarm, archive, privacy, and support all stay easy to find here.")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+            }
         }
         .padding(.top, SGSpacing.lg)
     }
@@ -150,7 +223,19 @@ struct SettingsView: View {
         }
     }
 
-    private func settingRow(_ title: String, symbol: String, detail: String? = nil) -> some View {
+    private enum SettingAccessory {
+        case disclosure
+        case external
+        case progress
+        case none
+    }
+
+    private func settingRow(
+        _ title: String,
+        symbol: String,
+        detail: String? = nil,
+        accessory: SettingAccessory = .disclosure
+    ) -> some View {
         HStack(spacing: SGSpacing.md) {
             Image(systemName: symbol)
                 .font(.system(size: 15, weight: .medium))
@@ -162,37 +247,73 @@ struct SettingsView: View {
                     Text(detail)
                         .font(SGFont.caption(12))
                         .foregroundStyle(SGT.ink3)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(SGT.ink3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            switch accessory {
+            case .disclosure:
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SGT.ink3)
+            case .external:
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(SGT.ink3)
+                    .accessibilityHidden(true)
+            case .progress:
+                ProgressView()
+                    .controlSize(.small)
+                    .accessibilityHidden(true)
+            case .none:
+                EmptyView()
+            }
         }
         .foregroundStyle(SGT.ink)
         .frame(minHeight: 56)
     }
 }
 
-private enum AppContact {
-    static var supportURL: URL? { url(for: "SkyGridSupportURL") }
-    static var privacyURL: URL? { url(for: "SkyGridPrivacyPolicyURL") }
+/// Public web destinations use an explicit host allowlist. The Info.plist values
+/// allow build-time configuration, but a malformed xcconfig must never hand Safari
+/// a scheme-only URL such as `https:` and leave the person on a blank page.
+enum SkyGridWeb {
+    static let supportURL = configuredURL(
+        for: "SkyGridSupportURL",
+        fallback: URL(string: "https://skygrid.my/support")!
+    )
+    static let privacyURL = configuredURL(
+        for: "SkyGridPrivacyPolicyURL",
+        fallback: URL(string: "https://skygrid.my/privacy")!
+    )
+    static let termsURL = URL(string: "https://skygrid.my/terms")!
 
-    private static func url(for key: String) -> URL? {
+    private static func configuredURL(for key: String, fallback: URL) -> URL {
         guard let rawValue = Bundle.main.object(forInfoDictionaryKey: key) as? String,
               let url = URL(string: rawValue),
-              ["https", "mailto"].contains(url.scheme?.lowercased() ?? "")
-        else { return nil }
+              url.scheme?.lowercased() == "https",
+              url.host?.lowercased() == "skygrid.my"
+        else { return fallback }
         return url
     }
 }
 
 private struct CommunitySafetyView: View {
+    private enum BlockedState: Equatable {
+        case checking
+        case available
+        case unavailable
+    }
+
     let uid: String
     let friendRepository: any FriendRepository
     let userRepository: any UserRepository
 
     @State private var blocked: [Friendship] = []
+    @State private var blockedState: BlockedState = .checking
+    @State private var observationID = UUID()
     @State private var unblockError = false
 
     var body: some View {
@@ -201,11 +322,53 @@ private struct CommunitySafetyView: View {
                 Text("You can flag a post you are concerned about from each buddy's safety menu.")
                 Text("Blocking hides your connection and each other's posts.")
             }
+            .listRowBackground(SGT.fill)
 
             // Blocking a buddy has no other visible trace anywhere in the app once
             // done, so this list is the only place a block can ever be reviewed or
             // undone — without it, `unblock` would be reachable in name only.
-            if !blocked.isEmpty {
+            if blockedState == .unavailable {
+                Section {
+                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                        Text("We couldn't refresh your blocked list.")
+                            .font(SGFont.body(16))
+                            .foregroundStyle(SGT.ink)
+                        Text(blocked.isEmpty ? "No block settings have been changed. Check your connection and try again." : "Showing the last confirmed block settings on this device.")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(SGT.ink2)
+                        Button("Check again") {
+                            blockedState = .checking
+                            observationID = UUID()
+                        }
+                        .font(SGFont.body(15))
+                        .foregroundStyle(SGT.ink)
+                        .frame(minHeight: 44)
+                    }
+                }
+                .listRowBackground(SGT.fill)
+                .listRowSeparator(.hidden)
+            }
+
+            if blockedState == .checking, blocked.isEmpty {
+                Section {
+                    HStack(spacing: SGSpacing.sm) {
+                        ProgressView()
+                        Text("Checking blocked buddies…")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(SGT.ink2)
+                    }
+                }
+                .listRowBackground(SGT.fill)
+                .listRowSeparator(.hidden)
+            } else if blockedState == .available, blocked.isEmpty {
+                Section("BLOCKED") {
+                    Text("No blocked buddies")
+                        .font(SGFont.body(16))
+                        .foregroundStyle(SGT.ink3)
+                }
+                .listRowBackground(SGT.fill)
+                .listRowSeparator(.hidden)
+            } else if !blocked.isEmpty {
                 Section("BLOCKED") {
                     ForEach(blocked, id: \.pairId) { friendship in
                         if let otherUid = friendship.otherMember(than: uid) {
@@ -217,13 +380,20 @@ private struct CommunitySafetyView: View {
                         }
                     }
                 }
+                .listRowBackground(SGT.fill)
+                .listRowSeparator(.hidden)
             }
         }
         .scrollContentBackground(.hidden)
         .background(SGT.background)
         .navigationTitle("Community & Safety")
-        .task {
-            for await friendships in friendRepository.observeBlockedFriendships(uid: uid) {
+        .task(id: observationID) {
+            for await observation in friendRepository.observeBlockedFriendships(uid: uid) {
+                guard case .value(let friendships) = observation else {
+                    blockedState = .unavailable
+                    continue
+                }
+                blockedState = .available
                 blocked = friendships
             }
         }
@@ -258,9 +428,11 @@ private struct BlockedBuddyRow: View {
             Button("Unblock") { Task { await onUnblock() } }
         }
         .task {
-            for await profile in userRepository.observeProfile(uid: uid) {
-                displayName = profile?.displayName
-                break
+            for await observation in userRepository.observeProfile(uid: uid) {
+                if case .value(let profile) = observation {
+                    displayName = profile?.displayName
+                    break
+                }
             }
         }
     }
@@ -273,31 +445,59 @@ private struct AccountDeletionView: View {
 
     @State private var showingConfirmation = false
     @State private var deletionError = false
+    @State private var isDeleting = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            Text("Deleting your account removes your photos, Sky Grid, and buddy connections.")
+        ZStack {
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Deleting your account removes your photos, Sky Grid, and buddy connections. Active App Store subscriptions continue until you cancel them in Apple subscription settings.")
+                    .font(SGFont.body())
+                    .foregroundStyle(SGT.ink)
+
+                Button("Delete account", role: .destructive) {
+                    showingConfirmation = true
+                }
                 .font(SGFont.body())
-                .foregroundStyle(SGT.ink)
+                .disabled(isDeleting)
 
-            Button("Delete account", role: .destructive) {
-                showingConfirmation = true
+                Spacer()
             }
-            .font(SGFont.body())
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(SGT.background)
 
-            Spacer()
+            if isDeleting {
+                Color.black.opacity(0.16)
+                    .ignoresSafeArea()
+                VStack(spacing: SGSpacing.md) {
+                    ProgressView()
+                        .controlSize(.large)
+                    Text("Deleting your account…")
+                        .font(SGFont.body(16))
+                        .foregroundStyle(SGT.ink)
+                    Text("Your photos and connections are being removed securely.")
+                        .font(SGFont.caption(13))
+                        .foregroundStyle(SGT.ink2)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(SGSpacing.xl)
+                .frame(maxWidth: 300)
+                .background(SGT.background, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Deleting your account")
+            }
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SGT.background)
         .navigationTitle("Delete account")
+        .interactiveDismissDisabled(isDeleting)
         .alert("Delete your account?", isPresented: $showingConfirmation) {
             Button("Delete", role: .destructive) {
+                isDeleting = true
                 Task {
                     do {
                         try await accountDeletionService.deleteAccount(uid: uid)
                         onDeleted()
                     } catch {
+                        isDeleting = false
                         deletionError = true
                     }
                 }

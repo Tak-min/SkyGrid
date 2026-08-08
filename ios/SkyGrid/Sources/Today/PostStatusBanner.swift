@@ -8,9 +8,13 @@ struct PostStatusBanner: View {
     let onRetry: () -> Void
 
     var body: some View {
-        if pending.contains(where: { $0.state == .failed }) {
+        if pending.contains(where: { $0.state == .postConflict }) {
+            Text("A saved photo needs review before it can send.")
+                .font(SGFont.caption())
+                .foregroundStyle(SGT.ink2)
+        } else if pending.contains(where: { $0.state == .failed || $0.state == .postFailed }) {
             HStack(spacing: SGSpacing.md) {
-                Text("Photo is waiting to send")
+                Text("Photo is saved on this device")
                     .font(SGFont.caption())
                     .foregroundStyle(SGT.ink2)
                 Spacer()
@@ -21,6 +25,10 @@ struct PostStatusBanner: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .quietCard()
+        } else if pending.contains(where: { $0.state == .stagedPost }) {
+            Text("Saving your post…")
+                .font(SGFont.caption())
+                .foregroundStyle(SGT.ink3)
         } else if pending.contains(where: { $0.state == .pendingLocal || $0.state == .uploading }) {
             Text("Sending…")
                 .font(SGFont.caption())

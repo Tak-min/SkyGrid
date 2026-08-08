@@ -47,6 +47,17 @@ enum ImageFileStore {
         try? FileManager.default.removeItem(at: url)
     }
 
+    /// There is one active Sky Grid account per app container. Account deletion
+    /// runs after its durable outbox rows have been removed by `UploadQueue`, so it
+    /// is safe to remove the photo directory as a whole without touching SwiftData
+    ///'s independently managed `default.store` beside it.
+    static func eraseAllAccountImages() {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let directory = appSupport.appendingPathComponent("SkyGrid", isDirectory: true)
+        guard FileManager.default.fileExists(atPath: directory.path) else { return }
+        try? FileManager.default.removeItem(at: directory)
+    }
+
     /// Resolves a pending image's current on-disk location from its filename alone,
     /// rather than trusting a previously-persisted absolute `URL`. A container's UUID
     /// segment can change across an app container reassignment (e.g. an OS/App Store
@@ -98,6 +109,20 @@ enum ImageFileStore {
 
     static func cacheImage(_ data: Data, forRemotePath remotePath: String) {
         cache(data, in: imageCacheDirectory, forRemotePath: remotePath, limit: imageCacheLimit)
+    }
+
+    /// Transfers a capture across the local hand-off boundary once Storage has
+    /// acknowledged its immutable object. Keeping the bytes in the regular cache
+    /// before removing the outbox file prevents Today from briefly showing a
+    /// remote-download spinner after an upload succeeds.
+    static func promotePendingImage(at pendingURL: URL, forRemotePath remotePath: String) {
+        guard let data = try? Data(contentsOf: pendingURL) else { return }
+        cacheImage(data, forRemotePath: remotePath)
+    }
+
+    static func promotePendingThumbnail(at pendingURL: URL, forRemotePath remotePath: String) {
+        guard let data = try? Data(contentsOf: pendingURL) else { return }
+        cacheThumbnail(data, forRemotePath: remotePath)
     }
 
     private static func cachedData(in directory: URL, forRemotePath remotePath: String) -> Data? {

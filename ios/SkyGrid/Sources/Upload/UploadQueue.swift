@@ -18,52 +18,57 @@ actor UploadQueue {
     private let modelContainer: ModelContainer
     private var modelContext: ModelContext?
     private let uploader: any ImageUploading
+    /// Production injects the Firestore repository so a staged row can resume its
+    /// document create after a process death. `nil` preserves the old upload-only
+    /// behavior for isolated legacy tests and UI audit data.
+    private let postRepository: (any PostRepository)?
     private var drainTask: Task<Void, Never>?
     private var retryWakeTask: Task<Void, Never>?
+    /// Account deletion temporarily fences a UID before the server-side callable
+    /// runs. A queued retry must not recreate Storage bytes while that callable is
+    /// deleting the same account.
+    private var suspendedOwnerUIDs: Set<String> = []
 
-    init(modelContainer: ModelContainer, uploader: any ImageUploading) {
+    init(
+        modelContainer: ModelContainer,
+        uploader: any ImageUploading,
+        postRepository: (any PostRepository)? = nil
+    ) {
         self.modelContainer = modelContainer
         self.uploader = uploader
+        self.postRepository = postRepository
     }
 
-    func enqueue(_ draft: PostDraft) throws {
+    /// Persists the full post payload before beginning network work. It returns as
+    /// soon as the device owns a recoverable copy; Firestore/Storage then progress
+    /// through the durable state machine without keeping the camera open offline.
+    func enqueue(_ draft: PostDraft) async throws {
+        guard !suspendedOwnerUIDs.contains(draft.ownerUid) else {
+            throw RepositoryError.notAuthenticated
+        }
         let modelContext = databaseContext()
         let queueID = PendingUpload.queueID(ownerUid: draft.ownerUid, localDateID: draft.localDate.docID)
         if let existing = try modelContext.fetch(FetchDescriptor<PendingUpload>()).first(where: { $0.queueID == queueID }) {
             guard existing.imageID != draft.imageID.uuidString else {
                 // The exact same capture was handed to us again (e.g. a relaunch
-                // replays an in-flight publish) — idempotent no-op.
+                // replays an in-flight publish) — resume rather than duplicate it.
                 kick()
                 return
             }
-            // A *different* photo for the same day. `PostPublisher.publish` always
-            // calls `enqueue` before `createPost`, so whichever capture reaches here
-            // last is also the one Firestore's create-only rule will accept — this
-            // row must track that same capture regardless of what the previous one's
-            // state was (previously this only reactivated a `.failed` row, silently
-            // dropping a same-day recapture whenever the prior row was still
-            // `.pendingLocal`/`.uploading`/`.done`, which let a post document and its
-            // queued upload point at two different images).
-            ImageFileStore.deletePendingImage(at: existing.localFullImageURL)
-            ImageFileStore.deletePendingImage(at: existing.localThumbImageURL)
-            existing.imageID = draft.imageID.uuidString
-            existing.fullImagePath = draft.imagePath
-            existing.thumbImagePath = draft.thumbPath
-            existing.localFullImageURL = draft.localFullImageURL
-            existing.localThumbImageURL = draft.localThumbImageURL
-            existing.stateRaw = UploadState.pendingLocal.rawValue
-            existing.attemptCount = 0
-            existing.nextAttemptAt = Date()
-            existing.lastError = nil
-            try modelContext.save()
-            kick()
-            return
+            // Replacing a durable row while its Firestore create or Storage upload
+            // is in flight can make the eventual document point at a different
+            // image. Preserve the original capture and let the UI explain that it
+            // is still being resolved instead of silently discarding either photo.
+            throw RepositoryError.captureAlreadyPending
         }
 
         let pending = PendingUpload(draft: draft)
         modelContext.insert(pending)
         try modelContext.save()
         kick()
+        Task { @MainActor in
+            BackgroundUploadScheduler.schedule()
+        }
     }
 
     /// Rolls back a row when its matching Firestore write is *known* to have been
@@ -116,6 +121,16 @@ actor UploadQueue {
         }
     }
 
+    /// Used by iOS's finite `BGProcessingTask` window. Unlike `kick()`, this
+    /// waits for the current drain so the system receives a truthful completion
+    /// signal when the background execution window ends.
+    func processScheduledWork() async {
+        kick()
+        if let drainTask {
+            await drainTask.value
+        }
+    }
+
     private func finishDrain() {
         drainTask = nil
         scheduleNextRetryIfNeeded()
@@ -126,7 +141,14 @@ actor UploadQueue {
         guard let pending = try modelContext.fetch(FetchDescriptor<PendingUpload>()).first(where: { $0.queueID == queueID }) else {
             return
         }
-        pending.stateRaw = UploadState.pendingLocal.rawValue
+        switch pending.state {
+        case .stagedPost, .postFailed:
+            pending.stateRaw = UploadState.stagedPost.rawValue
+        case .pendingLocal, .failed:
+            pending.stateRaw = UploadState.pendingLocal.rawValue
+        case .uploading, .done, .postConflict:
+            return
+        }
         pending.nextAttemptAt = Date()
         pending.attemptCount = 0
         pending.lastError = nil
@@ -139,17 +161,68 @@ actor UploadQueue {
         return try modelContext.fetch(FetchDescriptor<PendingUpload>()).map(PendingUploadSummary.init)
     }
 
+    /// Stops an account's in-flight retry cycle without discarding its only local
+    /// capture yet. If the deletion callable fails, `resumeAccount` makes the
+    /// exact durable row eligible to continue again.
+    func suspendAccount(_ ownerUid: String) {
+        suspendedOwnerUIDs.insert(ownerUid)
+        drainTask?.cancel()
+        retryWakeTask?.cancel()
+        retryWakeTask = nil
+    }
+
+    func resumeAccount(_ ownerUid: String) {
+        suspendedOwnerUIDs.remove(ownerUid)
+        kick()
+    }
+
+    /// Called only after the deletion callable confirms the account is gone. The
+    /// SwiftData container remains open; unlinking `default.store` while its
+    /// context is alive corrupts SQLite and can crash the app. Deleting rows
+    /// through the owning context clears the outbox safely instead.
+    func discardAccountData(_ ownerUid: String) {
+        suspendedOwnerUIDs.insert(ownerUid)
+        drainTask?.cancel()
+        retryWakeTask?.cancel()
+        retryWakeTask = nil
+
+        let modelContext = databaseContext()
+        let rows = (try? modelContext.fetch(FetchDescriptor<PendingUpload>())) ?? []
+        for row in rows where row.ownerUid == ownerUid {
+            ImageFileStore.deletePendingImage(at: row.localFullImageURL)
+            ImageFileStore.deletePendingImage(at: row.localThumbImageURL)
+            modelContext.delete(row)
+        }
+        try? modelContext.save()
+    }
+
     private func drain() async {
         purgeOrphanedPendingFiles()
         let modelContext = databaseContext()
-        let terminalStates: Set<String> = [UploadState.done.rawValue, UploadState.failed.rawValue]
+        let terminalStates: Set<String> = [
+            UploadState.done.rawValue,
+            UploadState.failed.rawValue,
+            UploadState.postFailed.rawValue,
+            UploadState.postConflict.rawValue,
+        ]
         while true {
             let now = Date()
             guard let next = try? modelContext.fetch(FetchDescriptor<PendingUpload>())
-                .filter({ !terminalStates.contains($0.stateRaw) && $0.nextAttemptAt <= now })
+                .filter({
+                    !terminalStates.contains($0.stateRaw)
+                        && !suspendedOwnerUIDs.contains($0.ownerUid)
+                        && $0.nextAttemptAt <= now
+                })
                 .min(by: { $0.nextAttemptAt < $1.nextAttemptAt })
             else { return }
-            await upload(next)
+            switch next.state {
+            case .stagedPost:
+                await commitPost(next)
+            case .pendingLocal, .uploading:
+                await upload(next)
+            case .done, .postFailed, .postConflict, .failed:
+                return
+            }
         }
     }
 
@@ -168,43 +241,143 @@ actor UploadQueue {
         ImageFileStore.purgeOrphanedPendingImages(keeping: keep)
     }
 
-    private func upload(_ pending: PendingUpload) async {
-        let modelContext = databaseContext()
-        pending.stateRaw = UploadState.uploading.rawValue
-        try? modelContext.save()
+    /// Performs the Firestore half before a row becomes eligible for Storage. A
+    /// crash at any await point leaves enough data in `PendingUpload` to resume the
+    /// same create, rather than uploading bytes that no post can reference.
+    private func commitPost(_ pending: PendingUpload) async {
+        let job = UploadJob(pending)
+        guard job.state == .stagedPost, !suspendedOwnerUIDs.contains(job.ownerUid) else { return }
 
-        // Re-resolve both paths from their filename under the *current* app
-        // container rather than trusting the persisted absolute `URL` — see
-        // `ImageFileStore.pendingImageURL`.
-        let fullImageURL = ImageFileStore.pendingImageURL(filename: pending.localFullImageURL.lastPathComponent)
-        let thumbImageURL = ImageFileStore.pendingImageURL(filename: pending.localThumbImageURL.lastPathComponent)
+        guard let postRepository else {
+            // Isolated legacy tests have no Firestore backend. Production always
+            // injects one; keeping this branch preserves those upload-only tests.
+            markUploadReady(job)
+            return
+        }
+        guard let draft = pending.postDraft() else {
+            markPostFailure(job, error: UploadQueueError.postPayloadMissing)
+            return
+        }
+
+        do {
+            try await postRepository.createPost(draft)
+            markUploadReady(job)
+        } catch RepositoryError.alreadyPostedToday {
+            await reconcileDuplicate(job, using: postRepository)
+        } catch {
+            markPostFailure(job, error: error)
+        }
+    }
+
+    /// A duplicate can be the same write whose server acknowledgement raced a
+    /// process termination. Compare both immutable paths before deciding whether to
+    /// activate the upload or retain it as a conflict for the person to resolve.
+    private func reconcileDuplicate(_ job: UploadJob, using repository: any PostRepository) async {
+        do {
+            guard let localDate = LocalDate(docID: job.localDateID) else {
+                markPostFailure(job, error: UploadQueueError.postPayloadMissing)
+                return
+            }
+            guard let existing = try await repository.fetchPost(uid: job.ownerUid, localDate: localDate) else {
+                markPostFailure(job, error: RepositoryError.network(underlying: "The post could not be verified."))
+                return
+            }
+            guard existing.imagePath == job.fullImagePath, existing.thumbPath == job.thumbImagePath else {
+                markPostConflict(job)
+                return
+            }
+            markUploadReady(job)
+        } catch {
+            markPostFailure(job, error: error)
+        }
+    }
+
+    private func markUploadReady(_ job: UploadJob) {
+        guard let pending = matching(job, expectedState: .stagedPost) else { return }
+        pending.stateRaw = UploadState.pendingLocal.rawValue
+        pending.attemptCount = 0
+        pending.nextAttemptAt = Date()
+        pending.lastError = nil
+        try? databaseContext().save()
+    }
+
+    private func markPostConflict(_ job: UploadJob) {
+        guard let pending = matching(job, expectedState: .stagedPost) else { return }
+        pending.stateRaw = UploadState.postConflict.rawValue
+        pending.lastError = "Another photo already owns this day."
+        try? databaseContext().save()
+    }
+
+    private func markPostFailure(_ job: UploadJob, error: Error) {
+        guard let pending = matching(job, expectedState: .stagedPost) else { return }
+        pending.attemptCount += 1
+        pending.lastError = String(describing: error)
+        Self.logger.error("Post commit attempt \(pending.attemptCount, privacy: .public) for \(pending.queueID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+        if Self.isTerminal(error) || pending.attemptCount >= RetryPolicy.maxAttempts {
+            pending.stateRaw = UploadState.postFailed.rawValue
+        } else {
+            pending.stateRaw = UploadState.stagedPost.rawValue
+            pending.nextAttemptAt = Date().addingTimeInterval(RetryPolicy.delay(forAttempt: pending.attemptCount))
+        }
+        try? databaseContext().save()
+    }
+
+    private func upload(_ pending: PendingUpload) async {
+        // SwiftData models are mutable reference objects. Take an immutable copy
+        // before any await, then conditionally apply the outcome to the same image
+        // only. This prevents an old task from completing over a newer capture.
+        let job = UploadJob(pending)
+        guard !suspendedOwnerUIDs.contains(job.ownerUid),
+              (job.state == .pendingLocal || job.state == .uploading),
+              let current = matching(job) else { return }
+        current.stateRaw = UploadState.uploading.rawValue
+        try? databaseContext().save()
+
+        let fullImageURL = ImageFileStore.pendingImageURL(filename: job.fullFilename)
+        let thumbImageURL = ImageFileStore.pendingImageURL(filename: job.thumbFilename)
 
         do {
             // Storage Rules permit a create but not an overwrite. Checking each
             // immutable path lets a restarted queue resume after full succeeded and
-            // thumb failed, without changing the persisted SwiftData schema.
-            try await uploadIfNeeded(remotePath: pending.fullImagePath, localURL: fullImageURL)
-            try await uploadIfNeeded(remotePath: pending.thumbImagePath, localURL: thumbImageURL)
-            pending.stateRaw = UploadState.done.rawValue
-            pending.lastError = nil
+            // thumb failed without changing the remote object name.
+            try await uploadIfNeeded(remotePath: job.fullImagePath, localURL: fullImageURL)
+            try await uploadIfNeeded(remotePath: job.thumbImagePath, localURL: thumbImageURL)
+            guard let current = matching(job, expectedState: .uploading) else { return }
+            // Both remote objects have acknowledged creation. Promote the exact
+            // bytes locally before removing the outbox files, so a new Today card
+            // reads the same capture immediately instead of downloading it again.
+            ImageFileStore.promotePendingImage(at: fullImageURL, forRemotePath: job.fullImagePath)
+            ImageFileStore.promotePendingThumbnail(at: thumbImageURL, forRemotePath: job.thumbImagePath)
+            current.stateRaw = UploadState.done.rawValue
+            current.lastError = nil
+            try? databaseContext().save()
             ImageFileStore.deletePendingImage(at: fullImageURL)
             ImageFileStore.deletePendingImage(at: thumbImageURL)
         } catch {
-            pending.attemptCount += 1
-            pending.lastError = String(describing: error)
-            Self.logger.error("Upload attempt \(pending.attemptCount, privacy: .public) for \(pending.queueID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+            guard let current = matching(job, expectedState: .uploading) else { return }
+            current.attemptCount += 1
+            current.lastError = String(describing: error)
+            Self.logger.error("Upload attempt \(current.attemptCount, privacy: .public) for \(current.queueID, privacy: .public) failed: \(String(describing: error), privacy: .public)")
             // Authentication, App Check and Storage Rules failures are not
             // transient. Keep the local JPEGs and expose Retry now immediately
             // instead of spending several exponential-backoff attempts on an
             // operation that cannot recover by itself.
-            if Self.isTerminal(error) || pending.attemptCount >= RetryPolicy.maxAttempts {
-                pending.stateRaw = UploadState.failed.rawValue
+            if Self.isTerminal(error) || current.attemptCount >= RetryPolicy.maxAttempts {
+                current.stateRaw = UploadState.failed.rawValue
             } else {
-                pending.stateRaw = UploadState.pendingLocal.rawValue
-                pending.nextAttemptAt = Date().addingTimeInterval(RetryPolicy.delay(forAttempt: pending.attemptCount))
+                current.stateRaw = UploadState.pendingLocal.rawValue
+                current.nextAttemptAt = Date().addingTimeInterval(RetryPolicy.delay(forAttempt: current.attemptCount))
             }
+            try? databaseContext().save()
         }
-        try? modelContext.save()
+    }
+
+    private func matching(_ job: UploadJob, expectedState: UploadState? = nil) -> PendingUpload? {
+        guard let pending = try? databaseContext().fetch(FetchDescriptor<PendingUpload>())
+            .first(where: { $0.queueID == job.queueID && $0.imageID == job.imageID })
+        else { return nil }
+        guard expectedState == nil || pending.state == expectedState else { return nil }
+        return pending
     }
 
     private func uploadIfNeeded(remotePath: String, localURL: URL) async throws {
@@ -231,14 +404,22 @@ actor UploadQueue {
     /// fires, `drain()` computes the next earliest due item again.
     private func scheduleNextRetryIfNeeded() {
         let modelContext = databaseContext()
-        let terminalStates: Set<String> = [UploadState.done.rawValue, UploadState.failed.rawValue]
+        let terminalStates: Set<String> = [
+            UploadState.done.rawValue,
+            UploadState.failed.rawValue,
+            UploadState.postFailed.rawValue,
+            UploadState.postConflict.rawValue,
+        ]
         guard let next = (try? modelContext.fetch(FetchDescriptor<PendingUpload>()))?
-            .filter({ !terminalStates.contains($0.stateRaw) })
+            .filter({ !terminalStates.contains($0.stateRaw) && !suspendedOwnerUIDs.contains($0.ownerUid) })
             .min(by: { $0.nextAttemptAt < $1.nextAttemptAt }),
               next.nextAttemptAt > Date()
         else { return }
 
         let wait = next.nextAttemptAt.timeIntervalSinceNow
+        Task { @MainActor in
+            BackgroundUploadScheduler.schedule(earliestBeginDate: next.nextAttemptAt)
+        }
         retryWakeTask = Task { [weak self] in
             guard wait > 0 else {
                 await self?.kick()
@@ -262,6 +443,34 @@ actor UploadQueue {
     }
 }
 
+/// An immutable projection of the SwiftData model, safe to retain across Firebase
+/// and Storage awaits. Applying any result requires `queueID + imageID` to still
+/// match the current row.
+private struct UploadJob: Sendable {
+    let queueID: String
+    let imageID: String
+    let ownerUid: String
+    let localDateID: String
+    let fullImagePath: String
+    let thumbImagePath: String
+    let fullFilename: String
+    let thumbFilename: String
+    let state: UploadState
+
+    init(_ pending: PendingUpload) {
+        queueID = pending.queueID
+        imageID = pending.imageID
+        ownerUid = pending.ownerUid
+        localDateID = pending.localDateID
+        fullImagePath = pending.fullImagePath
+        thumbImagePath = pending.thumbImagePath
+        fullFilename = pending.localFullImageURL.lastPathComponent
+        thumbFilename = pending.localThumbImageURL.lastPathComponent
+        state = pending.state
+    }
+}
+
 private enum UploadQueueError: Error {
     case localFileMissing
+    case postPayloadMissing
 }

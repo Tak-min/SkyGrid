@@ -98,14 +98,34 @@ enum MorningAlarmScheduler {
     }
 
     static func disable() async {
+        disableImmediately()
+        await finishDisabling()
+    }
+
+    /// Clears the state that controls the next morning immediately, without
+    /// waiting on the system-owned ActivityKit shutdown acknowledgement. This is
+    /// used while deleting an account: a stalled Dynamic Island teardown must
+    /// never keep the person on a destructive-action spinner after the server
+    /// has already confirmed deletion.
+    static func disableForAccountDeletion() {
+        disableImmediately()
+        Task {
+            await finishDisabling()
+        }
+    }
+
+    private static func disableImmediately() {
         if #available(iOS 26.0, *) {
             try? AlarmManager.shared.cancel(id: alarmIdentifier)
         }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
         LocalDefaults.morningAlarmEnabled = false
         LocalDefaults.morningAlarmBackend = "automatic"
+    }
+
+    private static func finishDisabling() async {
         await MorningFollowUpScheduler.cancelAll()
-        await MorningRitualActivity.end(status: .captured)
+        await MorningRitualActivity.end(status: .ended)
     }
 
     /// The follow-up nudge and the alarm share one wake time; this keeps them in
@@ -319,6 +339,11 @@ struct OpenMorningCameraIntent: LiveActivityIntent {
     static var supportedModes: IntentModes = .foreground(.immediate)
 
     func perform() async throws -> some IntentResult {
+        // This ends AlarmKit's own alerting UI (sound and Island presentation).
+        // It intentionally does not cancel the repeating schedule; that remains
+        // armed for tomorrow. The separate Live Activity is reconciled/ended once
+        // the capture is confirmed.
+        try? AlarmManager.shared.stop(id: MorningAlarmScheduler.alarmIdentifier)
         LocalDefaults.openCameraAfterMorningAlarm = true
         return .result()
     }

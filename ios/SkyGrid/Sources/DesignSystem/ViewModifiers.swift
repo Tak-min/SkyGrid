@@ -48,11 +48,23 @@ struct SkyPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SGFont.body(16))
-            .foregroundStyle(SGT.background)
-            .frame(minHeight: 54)
+            // A disabled primary action is styled as an *unfilled* control rather
+            // than a faded solid one. Fading the filled ink capsule to 42% produced
+            // mid-grey-on-warm-fill, which reads as "already tapped" or "broken"
+            // instead of "you haven't filled this in yet" (seen on Add Buddy's
+            // "Send request" before a handle is entered).
+            .foregroundStyle(isEnabled ? SGT.background : SGT.ink3)
+            .frame(maxWidth: .infinity, minHeight: 54)
             .padding(.horizontal, SGSpacing.lg)
-            .background(SGT.ink, in: Capsule())
-            .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
+            .background(isEnabled ? SGT.ink : SGT.fill, in: Capsule())
+            .overlay {
+                if !isEnabled {
+                    Capsule().strokeBorder(SGT.rule, lineWidth: 1)
+                }
+            }
+            .frame(maxWidth: 340)
+            .frame(maxWidth: .infinity)
+            .opacity(isEnabled && configuration.isPressed ? 0.72 : 1)
             .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
@@ -65,10 +77,12 @@ struct SkySecondaryButtonStyle: ButtonStyle {
         configuration.label
             .font(SGFont.body(16))
             .foregroundStyle(SGT.ink)
-            .frame(minHeight: 52)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .padding(.horizontal, SGSpacing.lg)
             .background(SGT.fill, in: Capsule())
             .overlay(Capsule().strokeBorder(SGT.rule, lineWidth: 1))
+            .frame(maxWidth: 340)
+            .frame(maxWidth: .infinity)
             .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
             .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)

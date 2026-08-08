@@ -14,18 +14,34 @@ enum MorningFollowUpScheduler {
         identifierPrefix + localDate.docID
     }
 
-    /// Pure and testable: the (wake day, fire-time components) pairs for the next
-    /// `dayCount` mornings. `fireComponents` carries explicit year/month/day
-    /// because — unlike the repeating fallback reminder — each day's request must
-    /// be independently cancellable.
+    /// A just-completed capture can race a foreground notification delivery.
+    /// Suppress only the exact same day's one-shot reminder; other app
+    /// notifications must continue to present normally.
+    static func shouldSuppressForegroundDelivery(
+        identifier: String,
+        lastCapturedLocalDateID: String?
+    ) -> Bool {
+        guard let lastCapturedLocalDateID else { return false }
+        return identifier == identifierPrefix + lastCapturedLocalDateID
+    }
+
+    /// Pure and testable: the (wake day, delivery day, fire-time components)
+    /// triples for the next `dayCount` mornings. `fireComponents` carries explicit
+    /// year/month/day because — unlike the repeating fallback reminder — each
+    /// request must be independently cancellable on the date it will be shown.
     static func plannedFollowUps(
         wakeGoalMinutes: Int,
         startingFrom today: LocalDate,
         dayCount: Int = MorningRitualPolicy.followUpWindowDays
-    ) -> [(wakeDay: LocalDate, fireComponents: DateComponents)] {
+    ) -> [(wakeDay: LocalDate, deliveryDay: LocalDate, fireComponents: DateComponents)] {
         (0..<dayCount).map { offset in
             let wakeDay = today.adding(days: offset)
-            return (wakeDay, fireComponents(wakeGoalMinutes: wakeGoalMinutes, wakeDay: wakeDay))
+            let components = fireComponents(wakeGoalMinutes: wakeGoalMinutes, wakeDay: wakeDay)
+            return (
+                wakeDay,
+                deliveryDay: deliveryDay(for: components),
+                fireComponents: components
+            )
         }
     }
 
@@ -43,14 +59,14 @@ enum MorningFollowUpScheduler {
         let authorized = [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus)
         guard authorized else { return }
 
-        for (wakeDay, components) in plannedFollowUps(wakeGoalMinutes: wakeGoalMinutes, startingFrom: today) {
-            guard wakeDay.docID != LocalDefaults.lastCapturedLocalDateID else { continue }
+        for (_, deliveryDay, components) in plannedFollowUps(wakeGoalMinutes: wakeGoalMinutes, startingFrom: today) {
+            guard deliveryDay.docID != LocalDefaults.lastCapturedLocalDateID else { continue }
             let content = UNMutableNotificationContent()
             content.title = "Today's sky"
             content.body = "Not captured yet."
             content.sound = .default
             let request = UNNotificationRequest(
-                identifier: identifier(for: wakeDay),
+                identifier: identifier(for: deliveryDay),
                 content: content,
                 trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             )
@@ -97,5 +113,11 @@ enum MorningFollowUpScheduler {
         components.hour = minutesOfDay / 60
         components.minute = minutesOfDay % 60
         return components
+    }
+
+    private static func deliveryDay(for components: DateComponents) -> LocalDate {
+        // `fireComponents` always supplies these fields; keeping the conversion
+        // beside it makes the notification identifier's date contract explicit.
+        LocalDate(year: components.year!, month: components.month!, day: components.day!)
     }
 }

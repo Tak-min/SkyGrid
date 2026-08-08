@@ -13,11 +13,20 @@ enum ServiceFactory {
         }
 
         let uid = try await FirebaseAuthSession.ensureCurrentUser()
-        await RevenueCatConfig.configureOrIdentify(appUserID: uid)
         let firestore = Firestore.firestore()
+        let userRepository = FirebaseUserRepository(firestore: firestore)
+        // Bootstrap the user document before RevenueCat uses this UID. Its
+        // webhook deliberately refuses to recreate deleted/missing accounts;
+        // ordering this first prevents a fast purchase from being discarded.
+        try await userRepository.ensureInitialProfile(uid: uid)
+        try await RevenueCatConfig.configureOrIdentify(appUserID: uid)
         let postRepository = FirebasePostRepository(firestore: firestore)
         let imageStore = FirebaseImageStore()
-        let uploadQueue = UploadQueue(modelContainer: LocalStoreContainer.make(), uploader: imageStore)
+        let uploadQueue = UploadQueue(
+            modelContainer: LocalStoreContainer.make(),
+            uploader: imageStore,
+            postRepository: postRepository
+        )
         let uploadTriggers = UploadTriggers(queue: uploadQueue)
         let purchases = makePurchasesService()
         let entitlements = EntitlementStore(purchases: purchases)
@@ -31,13 +40,13 @@ enum ServiceFactory {
             currentUid: uid,
             clock: SystemClock(),
             postRepository: postRepository,
-            userRepository: FirebaseUserRepository(firestore: firestore),
+            userRepository: userRepository,
             friendRepository: FirebaseFriendRepository(firestore: firestore),
             contentSafetyRepository: FirebaseContentSafetyRepository(firestore: firestore),
-            accountDeletionService: FirebaseAccountDeletionService(),
+            accountDeletionService: FirebaseAccountDeletionService(uploadQueue: uploadQueue),
             imageFetching: imageStore,
             uploadQueue: uploadQueue,
-            postPublisher: PostPublisher(postRepository: postRepository, uploadQueue: uploadQueue),
+            postPublisher: PostPublisher(uploadQueue: uploadQueue),
             orphanedPostRecovery: OrphanedPostRecovery(postRepository: postRepository, uploadQueue: uploadQueue, imageStore: imageStore),
             purchases: purchases,
             entitlements: entitlements,

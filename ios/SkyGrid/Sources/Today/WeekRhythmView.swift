@@ -5,14 +5,12 @@ import SwiftUI
 struct WeekRhythmView: View {
     let rhythm: WeekRhythm
     var accent: SkyColor = SkyColor(uncheckedHex: "#9DB7C5")
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     var body: some View {
         HStack(spacing: 7) {
             ForEach(rhythm.days, id: \.date) { day in
                 VStack(spacing: SGSpacing.sm) {
                     Text(weekdayLabel(for: day.date))
-                        .font(SGFont.caption(10))
+                        .font(SGFont.fixedCaption(10))
                         .foregroundStyle(day.isToday ? SGT.ink : SGT.ink3)
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(day.hasPosted ? accent.color : SGT.ghostFaint)
@@ -24,13 +22,15 @@ struct WeekRhythmView: View {
                                     .strokeBorder(SGT.ink.opacity(0.44), lineWidth: 1)
                             }
                         }
-                        .scaleEffect(day.hasPosted ? 1 : 0.9)
                 }
             }
         }
         .padding(SGSpacing.md)
         .quietCard()
-        .animation(reduceMotion ? nil : SGMotion.settle, value: rhythm.days.map(\.hasPosted))
+        // Firestore can deliver the week's initial values after this card first
+        // appears. Animating that listener update made the entire "THIS WEEK"
+        // row look like it was popping in from another tab; render the settled
+        // state directly instead.
     }
 
     private func weekdayLabel(for day: LocalDate) -> String {

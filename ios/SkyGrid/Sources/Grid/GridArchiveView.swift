@@ -5,9 +5,16 @@ import UIKit
 @MainActor
 @Observable
 final class GridArchiveViewModel {
+    enum LoadState: Equatable {
+        case checking
+        case available
+        case unavailable
+    }
+
     private(set) var posts: [LocalDate: SkyPost] = [:]
     private(set) var thumbnails: [LocalDate: UIImage] = [:]
     private(set) var isPreparingShare = false
+    private(set) var loadState: LoadState = .checking
 
     private let uid: String
     let year: Int
@@ -44,12 +51,24 @@ final class GridArchiveViewModel {
         let lastDay = LocalDate(year: year, month: 12, day: 31)
         observationTask = Task { [weak self] in
             guard let self else { return }
-            for await posts in self.postRepository.observePosts(uid: self.uid, from: firstDay, through: lastDay) {
+            for await observation in self.postRepository.observePosts(uid: self.uid, from: firstDay, through: lastDay) {
+                guard case .value(let posts) = observation else {
+                    self.loadState = .unavailable
+                    continue
+                }
+                self.loadState = .available
                 self.posts = Dictionary(posts.map { ($0.localDate, $0) }, uniquingKeysWith: { _, newest in newest })
                 self.thumbnails = self.thumbnails.filter { self.posts[$0.key] != nil }
                 self.loadVisibleThumbnails(from: posts)
             }
         }
+    }
+
+    func retryObservation() {
+        observationTask?.cancel()
+        observationTask = nil
+        loadState = .checking
+        start()
     }
 
     func stop() {
@@ -207,7 +226,10 @@ struct GridArchiveView: View {
             archiveNotice: isPro ? nil : "Free keeps your most recent 30 days visible.",
             onUpgrade: isPro ? nil : onUpgrade,
             onSelectPreviousYear: onSelectPreviousYear,
-            onSelectNextYear: onSelectNextYear
+            onSelectNextYear: onSelectNextYear,
+            isCheckingArchive: viewModel.loadState == .checking,
+            isArchiveUnavailable: viewModel.loadState == .unavailable,
+            onRetryArchive: viewModel.retryObservation
         )
             .navigationBarTitleDisplayMode(.inline)
             .sheet(item: $shareItem) { item in

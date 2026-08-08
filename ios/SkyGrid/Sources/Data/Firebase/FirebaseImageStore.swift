@@ -1,18 +1,28 @@
 @preconcurrency import FirebaseStorage
+@preconcurrency import FirebaseFunctions
 import Foundation
 
 struct FirebaseImageStore: ImageFetching, ImageUploading {
     private let storage: Storage
+    private let functions: Functions
 
-    init(storage: Storage = Storage.storage()) {
+    init(storage: Storage = Storage.storage(), functions: Functions = Functions.functions()) {
         self.storage = storage
+        self.functions = functions
     }
 
     func fetchImage(path: String) async throws -> Data {
         do {
-            // Captures are compressed to roughly 200–400 KB before entering the
-            // outbox. The cap rejects unexpectedly large or malformed payloads.
-            return try await storage.reference(withPath: path).data(maxSize: 5 * 1024 * 1024)
+            // Shared bytes are authorized and delivered by the callable's
+            // server-side friendship predicate. Direct Storage reads remain
+            // owner-only so a production Storage Rules cross-service lookup
+            // cannot turn a valid buddy photo into a false permission denial.
+            let result = try await functions.httpsCallable("imageDownloadURL").call(["path": path])
+            guard let payload = result.data as? [String: Any],
+                  let base64 = payload["base64"] as? String,
+                  let imageData = Data(base64Encoded: base64)
+            else { throw RepositoryError.unknown(underlying: "Image response was malformed.") }
+            return imageData
         } catch {
             throw FirebaseRepositoryError.map(error)
         }

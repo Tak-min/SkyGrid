@@ -17,6 +17,9 @@ struct SkyGridView: View {
     var onUpgrade: (() -> Void)?
     var onSelectPreviousYear: (() -> Void)?
     var onSelectNextYear: (() -> Void)?
+    var isCheckingArchive = false
+    var isArchiveUnavailable = false
+    var onRetryArchive: (() -> Void)?
 
     private static let topAnchorID = "sky-grid-header"
 
@@ -37,6 +40,9 @@ struct SkyGridView: View {
                     VStack(alignment: .leading, spacing: SGSpacing.xl) {
                         header
                             .id(Self.topAnchorID)
+                        if isCheckingArchive || isArchiveUnavailable {
+                            archiveStatusNotice
+                        }
                         gridField
                         monthlyArchive
                         if let archiveNotice, let onUpgrade {
@@ -53,10 +59,16 @@ struct SkyGridView: View {
                     }
                     .padding(.horizontal, SGSpacing.xl)
                     .padding(.top, SGSpacing.lg)
-                    // The system's floating tab bar can cover the final calendar week
-                    // while scrolling. Keep the archive's last row and upgrade notice
-                    // comfortably above it.
-                    .padding(.bottom, 128)
+                }
+                // A fixed `.padding(.bottom, 128)` on the *content* was not enough:
+                // it scrolls with the content, so the trailing archive notice and its
+                // "Unlock the full archive" button still came to rest underneath the
+                // floating tab bar. `safeAreaInset` reserves the space on the scroll
+                // container instead, so the resting position accounts for it — the
+                // same approach `BuddiesView` already uses without being reported
+                // clipped.
+                .safeAreaInset(edge: .bottom) {
+                    Color.clear.frame(height: 128)
                 }
                 // The TabView keeps this screen alive when a sibling NavigationLink
                 // (e.g. Buddies) covers it, so a scroll position from an earlier visit
@@ -68,66 +80,113 @@ struct SkyGridView: View {
         }
     }
 
-    private var header: some View {
-        HStack(alignment: .lastTextBaseline) {
+    private var archiveStatusNotice: some View {
+        HStack(alignment: .top, spacing: SGSpacing.md) {
+            if isCheckingArchive {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(SGT.ink2)
+                    .accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                Text("SKY GRID")
-                    .font(SGFont.caption(11))
-                    .tracking(1.5)
-                    .foregroundStyle(SGT.ink3)
-                HStack(spacing: SGSpacing.md) {
-                    if let onSelectPreviousYear {
-                        Button(action: onSelectPreviousYear) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 15, weight: .semibold))
-                                .frame(width: 36, height: 36)
-                                .background(SGT.fill, in: Circle())
-                        }
+                Text(isCheckingArchive ? "Checking your archive…" : "We couldn't refresh your archive.")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink)
+                if isArchiveUnavailable {
+                    Text(posts.isEmpty ? "Your photos haven't been changed. Check your connection and try again." : "Showing the last confirmed photos on this device.")
+                        .font(SGFont.caption(12))
                         .foregroundStyle(SGT.ink2)
-                        .accessibilityLabel("Show previous year")
-                    }
-                    Text(String(year))
-                        .font(SGFont.serifTitle(52))
-                        .foregroundStyle(SGT.ink)
-                    if let onSelectNextYear {
-                        Button(action: onSelectNextYear) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 15, weight: .semibold))
-                                .frame(width: 36, height: 36)
-                                .background(SGT.fill, in: Circle())
-                        }
-                        .foregroundStyle(SGT.ink2)
-                        .accessibilityLabel("Show next year")
+                    if let onRetryArchive {
+                        Button("Check again", action: onRetryArchive)
+                            .font(SGFont.body(15))
+                            .foregroundStyle(SGT.ink)
+                            .frame(minHeight: 44)
                     }
                 }
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: SGSpacing.md) {
-                Text("\(postedCount) / \(totalDays)")
-                    .font(SGFont.numeric(16, weight: .medium))
-                    .foregroundStyle(SGT.ink2)
-                    .contentTransition(.numericText())
-                    .skyAnimation(SGMotion.exchange, value: postedCount)
-                if canShare, let onShare {
-                    Button(action: onShare) {
-                        if isPreparingShare {
-                            HStack(spacing: SGSpacing.xs) {
-                                ProgressView().controlSize(.mini)
-                                Text("Preparing…")
-                            }
-                            .font(SGFont.caption(13))
-                        } else {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .font(SGFont.caption(13))
-                        }
-                    }
-                    .foregroundStyle(SGT.ink2)
-                    .disabled(isPreparingShare)
-                    .accessibilityLabel(isPreparingShare ? "Preparing Sky Grid to share" : "Share Sky Grid")
-                }
-            }
-            .padding(.bottom, SGSpacing.sm)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(SGSpacing.lg)
+        .quietCard()
+    }
+
+    private var header: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .lastTextBaseline) {
+                gridTitle
+                    .fixedSize(horizontal: true, vertical: false)
+                Spacer(minLength: SGSpacing.md)
+                gridActions
+            }
+
+            VStack(alignment: .leading, spacing: SGSpacing.md) {
+                gridTitle
+                gridActions
+            }
+        }
+    }
+
+    private var gridTitle: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.xs) {
+            Text("SKY GRID")
+                .font(SGFont.caption(11))
+                .tracking(1.5)
+                .foregroundStyle(SGT.ink3)
+            HStack(spacing: SGSpacing.md) {
+                if let onSelectPreviousYear {
+                    yearButton(symbol: "chevron.left", label: "Show previous year", action: onSelectPreviousYear)
+                }
+                Text(String(year))
+                    .font(SGFont.serifTitle(52))
+                    .foregroundStyle(SGT.ink)
+                if let onSelectNextYear {
+                    yearButton(symbol: "chevron.right", label: "Show next year", action: onSelectNextYear)
+                }
+            }
+        }
+    }
+
+    private var gridActions: some View {
+        VStack(alignment: .trailing, spacing: SGSpacing.md) {
+            Text(isArchiveUnavailable && posts.isEmpty ? "Not checked" : "\(postedCount) / \(totalDays)")
+                .font(SGFont.numeric(16, weight: .medium))
+                .foregroundStyle(SGT.ink2)
+                .contentTransition(.numericText())
+                .skyAnimation(SGMotion.exchange, value: postedCount)
+            if canShare, let onShare {
+                Button(action: onShare) {
+                    if isPreparingShare {
+                        HStack(spacing: SGSpacing.xs) {
+                            ProgressView().controlSize(.mini)
+                            Text("Preparing…")
+                        }
+                        .font(SGFont.caption(13))
+                    } else {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .font(SGFont.caption(13))
+                    }
+                }
+                .foregroundStyle(SGT.ink2)
+                .disabled(isPreparingShare)
+                .accessibilityLabel(isPreparingShare ? "Preparing Sky Grid to share" : "Share Sky Grid")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.bottom, SGSpacing.sm)
+    }
+
+    private func yearButton(symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 15, weight: .semibold))
+                .frame(width: 44, height: 44)
+                .background(SGT.fill, in: Circle())
+        }
+        .foregroundStyle(SGT.ink2)
+        .accessibilityLabel(label)
     }
 
     private var gridField: some View {
@@ -135,8 +194,22 @@ struct SkyGridView: View {
             dayLabels
             HStack(alignment: .center, spacing: 4) {
                 monthLabels
-                GridCanvas(year: year, postedDates: Set(posts.keys), thumbnails: thumbnails, spacing: 0)
-                    .aspectRatio(CGFloat(GridLayoutMath.columns) / CGFloat(GridLayoutMath.rows), contentMode: .fit)
+                // A *square* block, not the grid's natural 31:12 ratio. At 31:12 the
+                // year collapsed to roughly 10pt per cell — a flat grey band with a
+                // thin coloured stripe through it, which made the product's signature
+                // artifact look broken next to the perfectly legible month mosaic
+                // directly below it. Squaring the block keeps 31 columns but gives
+                // each cell ~29pt of height, so a day is a visible mark and the year
+                // reads as woven texture. Cells are deliberately not square; the grid
+                // is a field of days, not a chart.
+                GridCanvas(
+                    year: year,
+                    postedDates: Set(posts.keys),
+                    thumbnails: thumbnails,
+                    spacing: 1,
+                    monthBanding: true
+                )
+                .aspectRatio(1, contentMode: .fit)
             }
         }
         .accessibilityLabel("A calendar grid of your sky photos")
@@ -155,7 +228,7 @@ struct SkyGridView: View {
                         .foregroundStyle(SGT.ink)
                 }
                 Spacer()
-                Text("\(monthlyPosts.count) photos")
+                Text(isArchiveUnavailable && posts.isEmpty ? "Not checked" : "\(monthlyPosts.count) photos")
                     .font(SGFont.caption(12))
                     .foregroundStyle(SGT.ink3)
             }
@@ -181,7 +254,7 @@ struct SkyGridView: View {
                 )
                 .id(selectedMonth)
                 .transition(.opacity)
-                if monthlyPosts.isEmpty {
+                if monthlyPosts.isEmpty, !isCheckingArchive, !isArchiveUnavailable {
                     Text("No captures in \(monthName(for: selectedMonth)) yet.")
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink3)
@@ -252,7 +325,7 @@ struct SkyGridView: View {
         VStack(spacing: 0) {
             ForEach(1...12, id: \.self) { month in
                 Text("\(month)")
-                    .font(SGFont.caption(9))
+                    .font(SGFont.fixedCaption(9))
                     .foregroundStyle(SGT.ink3)
                     .frame(maxHeight: .infinity)
             }
@@ -263,7 +336,7 @@ struct SkyGridView: View {
     private var dayLabels: some View {
         HStack {
             Text("DAY")
-                .font(SGFont.caption(9))
+                .font(SGFont.fixedCaption(9))
                 .foregroundStyle(SGT.ink3)
                 .frame(width: 22, alignment: .leading)
             HStack {
@@ -275,7 +348,7 @@ struct SkyGridView: View {
                 Spacer()
                 Text("31")
             }
-            .font(SGFont.caption(9))
+            .font(SGFont.fixedCaption(9))
             .foregroundStyle(SGT.ink3)
         }
     }
@@ -344,7 +417,7 @@ private struct ArchivePhotoTile: View {
             .clipped()
             .overlay(alignment: .bottomLeading) {
                 Text(String(day))
-                    .font(SGFont.numeric(10, weight: .semibold))
+                    .font(SGFont.fixedNumeric(10, weight: .semibold))
                     .foregroundStyle(hasPhoto ? .white : SGT.ink3)
                     .shadow(radius: hasPhoto ? 2 : 0)
                     .padding(4)

@@ -11,12 +11,23 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
     @ViewBuilder var cta: () -> CTA
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: SGSpacing.xl) {
-                content()
+        GeometryReader { proxy in
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: SGSpacing.xl) {
+                    content()
+                }
+                // Value and feature steps are intentionally shorter than the
+                // pricing step. Center their content in the usable page instead
+                // of pinning it to the top and leaving a conspicuous empty lower
+                // half above the persistent CTA area.
+                .frame(
+                    maxWidth: .infinity,
+                    minHeight: step == .plan ? 0 : proxy.size.height,
+                    alignment: step == .plan ? .topLeading : .center
+                )
+                .padding(SGSpacing.xl)
+                .padding(.bottom, 24)
             }
-            .padding(SGSpacing.xl)
-            .padding(.bottom, 24)
         }
         .background(PaywallStepScaffold.background.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) {
@@ -112,13 +123,6 @@ struct PaywallBenefit: View {
 }
 
 enum PaywallLegal {
-    static let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-
-    static var privacyURL: URL? {
-        guard let rawValue = Bundle.main.object(forInfoDictionaryKey: "SkyGridPrivacyPolicyURL") as? String,
-              let url = URL(string: rawValue),
-              url.scheme?.lowercased() == "https"
-        else { return nil }
-        return url
-    }
+    static let termsURL = SkyGridWeb.termsURL
+    static let privacyURL: URL? = SkyGridWeb.privacyURL
 }

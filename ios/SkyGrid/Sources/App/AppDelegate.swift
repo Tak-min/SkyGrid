@@ -17,6 +17,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        // Must register during launch, before a background-processing launch has
+        // a chance to hand its finite execution window to SwiftUI.
+        BackgroundUploadScheduler.register()
         let router = NotificationRouter(appRouter: appRouter)
         notificationRouter = router
         UNUserNotificationCenter.current().delegate = router
@@ -26,22 +29,34 @@ final class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
         // UI audit runs use deterministic in-memory view data. They must never
         // create an anonymous Firebase account or contact RevenueCat.
         let isUIAudit = launchArguments.contains("-SkyGridUIAudit")
-        let forceUnconfigured = launchArguments.contains("-SkyGridForceFirebaseUnconfigured") || isUIAudit
+        // Unit-test hosts normally do not exercise Firebase; configuring it there
+        // creates a real anonymous account and an untrusted simulator App Check
+        // request. The few explicit physical-device integration tests opt in.
+        let isRunningTests = NSClassFromString("XCTestCase") != nil
+            || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+        let allowsFirebaseInTests = launchArguments.contains("-SkyGridAllowFirebaseInTests")
+        let forceUnconfigured = launchArguments.contains("-SkyGridForceFirebaseUnconfigured")
+            || isUIAudit
+            || (isRunningTests && !allowsFirebaseInTests)
         if hasFirebaseConfig && !forceUnconfigured {
-            #if DEBUG
-            // `AppCheckDebugProviderFactory` reads `FIRAAppCheckDebugToken` from the
-            // process environment. The Xcode scheme sets that for Xcode-driven runs,
-            // but `xcrun devicectl device process launch` (used for physical-device
-            // installs) starts the process without it, so a real device silently gets
-            // an unregistered random token and every Firestore/Storage request is
-            // rejected once App Check enforcement is ON. Force the same
-            // already-registered token here so it's independent of launch mechanism.
+            #if DEBUG && targetEnvironment(simulator)
+            // `AppCheckDebugProviderFactory` reads `AppCheckDebugToken` from the
+            // process environment. The value is for locally registered simulator
+            // test tokens only; physical devices use App Attest below.
             if let debugToken = Bundle.main.object(forInfoDictionaryKey: "SGDebugAppCheckToken") as? String,
                !debugToken.isEmpty {
-                setenv("FIRAAppCheckDebugToken", debugToken, 1)
+                // Firebase's current Apple SDK reads `AppCheckDebugToken` (not
+                // the obsolete `FIRAAppCheckDebugToken`). Using the old name made
+                // an enforced production Firestore silently fall back to an
+                // unregistered simulator token, so first-account bootstrap failed
+                // until someone retried on a different environment.
+                setenv("AppCheckDebugToken", debugToken, 1)
             }
             AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
             #else
+            // App Attest must also be the path exercised by a physical Debug
+            // build. Using the debug provider for every DEBUG build hid an
+            // invalid-token failure until Firestore/Storage enforcement was on.
             AppCheck.setAppCheckProviderFactory(AppAttestProviderFactory())
             #endif
             FirebaseApp.configure()
@@ -64,4 +79,5 @@ final class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
             userInfo: ["token": fcmToken]
         )
     }
+
 }

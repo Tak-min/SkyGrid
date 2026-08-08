@@ -73,14 +73,14 @@ enum PostIntegrityPolicy {
         }
 
         switch row.state {
-        case .pendingLocal, .uploading:
+        case .stagedPost, .pendingLocal, .uploading:
             return .uploadPending
-        case .failed:
+        case .postFailed, .failed:
             // If the local bytes still exist, `PostStatusBanner`'s existing
             // "Retry now" is the better (non-destructive) action — it preserves the
             // original photo instead of discarding the record.
             return row.hasLocalFullImage ? .uploadPending : .orphaned
-        case .done:
+        case .postConflict, .done:
             // Contradiction: the row claims success but Storage disagrees. This
             // should not happen; treat it as undetermined rather than acting on a
             // state the rest of the system doesn't understand.

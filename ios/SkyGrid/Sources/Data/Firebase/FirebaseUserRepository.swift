@@ -11,21 +11,53 @@ final class FirebaseUserRepository: UserRepository {
         self.firestore = firestore
     }
 
-    func observeProfile(uid: String) -> AsyncStream<UserProfile?> {
+    func observeProfile(uid: String) -> AsyncStream<UserProfileObservation> {
         let document = firestore.collection("users").document(uid)
         return AsyncStream { continuation in
             let listener = document.addSnapshotListener { snapshot, error in
                 if let error {
-                    // Keep the last known profile state while Firestore retries.
-                    // Yielding nil here would turn a failed read into "no handle",
-                    // incorrectly presenting the claim form while every save is
-                    // still being rejected by the backend.
                     Self.logger.error("observeProfile(\(uid, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
+                    continuation.yield(.unavailable)
                     return
                 }
-                continuation.yield(snapshot.flatMap(FirebaseDocumentCodec.profile(from:)))
+                continuation.yield(.value(snapshot.flatMap(FirebaseDocumentCodec.profile(from:))))
             }
             continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// Creates the durable server-side account record before RevenueCat is
+    /// identified. Without this, a purchase webhook that arrives during
+    /// onboarding is intentionally ignored by the backend because there is no
+    /// user document to attach it to yet.
+    ///
+    /// The transaction makes concurrent first launches idempotent: only the
+    /// first client writes the fixed, non-entitled defaults; every later client
+    /// observes the existing record and leaves it untouched.
+    func ensureInitialProfile(uid: String) async throws {
+        let document = firestore.collection("users").document(uid)
+        do {
+            _ = try await firestore.runTransaction { transaction, errorPointer in
+                do {
+                    guard !(try transaction.getDocument(document)).exists else { return nil }
+                    transaction.setData([
+                        "displayName": "Sky Grid member",
+                        "timezone": TimeZone.current.identifier,
+                        "wakeGoalMinutes": LocalDefaults.wakeGoalMinutes,
+                        "streakCurrent": 0,
+                        "streakLongest": 0,
+                        "isPro": false,
+                        "createdAt": FieldValue.serverTimestamp(),
+                    ], forDocument: document)
+                    return nil
+                } catch {
+                    errorPointer?.pointee = error as NSError
+                    return nil
+                }
+            }
+        } catch {
+            Self.logger.error("ensureInitialProfile failed: \(String(describing: error), privacy: .public)")
+            throw FirebaseRepositoryError.map(error)
         }
     }
 

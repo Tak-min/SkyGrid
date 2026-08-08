@@ -1,15 +1,25 @@
+import Combine
 import SwiftUI
 
 struct RootView: View {
     @Environment(\.appServices) private var appServices
     @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.requestReview) private var requestReview
     @State private var destination: LaunchDestination = .onboarding
     @State private var showCamera = false
     @State private var showPaywall = false
     @State private var paywallEntryPoint: PaywallEntryPoint = .home
     @State private var pendingAutomaticPaywall: PendingAutomaticPaywall?
     @State private var automaticPaywallPresentationLocalDate: LocalDate?
+    @State private var observedLocalDate: LocalDate?
+    /// Receives the streak from `TodayViewModel` — the only thing that computes it.
+    /// RootView owns post-capture arbitration but holds no reference to that view
+    /// model (`TodayView` captures it as `@State`), so the value is published up here
+    /// rather than recomputed, which would be a second source of truth.
+    @State private var streakSignal = StreakSignal()
+    @State private var postCaptureArming: PostCaptureArming?
+    @State private var milestoneMoment: MilestoneMoment?
     @State private var selectedTab: HomeTab = ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") ? .grid : .today
     let onAccountDeleted: () -> Void
 
@@ -18,16 +28,30 @@ struct RootView: View {
             if let services = appServices {
                 content(services: services)
                     .task(id: services.currentUid) {
+                        refreshObservedLocalDate(services: services)
                         await services.entitlements.refresh()
                         await refreshDestination(services: services)
                     }
                     .onAppear {
+                        refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
                         Task { await reconcileMorningRitual(services: services) }
                     }
                     .onChange(of: scenePhase) { _, phase in
                         guard phase == .active else { return }
+                        refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
+                        Task { await reconcileMorningRitual(services: services) }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
+                        refreshObservedLocalDate(services: services)
+                        // A prior day's card must not remain in the Island until
+                        // the next foreground transition. Reconcile immediately
+                        // when iOS rolls the local calendar over.
+                        Task { await reconcileMorningRitual(services: services) }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: .NSSystemTimeZoneDidChange)) { _ in
+                        refreshObservedLocalDate(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
                     .onChange(of: destination) { _, _ in
@@ -53,6 +77,7 @@ struct RootView: View {
 
     @ViewBuilder
     private func todayFlow(services: AppServices) -> some View {
+        let today = observedLocalDate ?? services.clock.today()
         NavigationStack {
             TabView(selection: $selectedTab) {
                 TodayView(
@@ -63,12 +88,15 @@ struct RootView: View {
                         friendRepository: services.friendRepository,
                         uploadQueue: services.uploadQueue,
                         orphanedPostRecovery: services.orphanedPostRecovery,
-                        clock: services.clock
+                        clock: services.clock,
+                        streakSignal: streakSignal
                     ),
                     imageFetching: services.imageFetching,
+                    observedDate: today,
                     onOpenCamera: { showCamera = true },
                     subscriptionPlan: services.entitlements.plan,
-                    onOpenPaywall: { presentPaywall(from: .home) }
+                    onOpenPaywall: { presentPaywall(from: .home) },
+                    onOpenBuddies: { selectedTab = .buddies }
                 )
                 .tag(HomeTab.today)
                 .tabItem { Label("Today", systemImage: "sun.horizon") }
@@ -114,10 +142,36 @@ struct RootView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showCamera, onDismiss: presentPendingAutomaticPaywallIfNeeded) {
+        .fullScreenCover(isPresented: $showCamera, onDismiss: {
+            // Source order *is* the priority order: the paywall gets first refusal on
+            // the capture, and only what it declined can become a milestone.
+            presentPendingAutomaticPaywallIfNeeded()
+            resolvePostCaptureMoment()
+        }) {
             cameraSheet(services: services)
         }
-        .sheet(isPresented: $showPaywall) {
+        .fullScreenCover(item: $milestoneMoment) { moment in
+            MilestoneView(moment: moment, onDone: { milestoneMoment = nil })
+        }
+        .onChange(of: streakSignal.reading) { _, _ in
+            // The other half of the resolution: the streak usually lands after the
+            // camera is gone, so whichever event is second finds the arming intact.
+            resolvePostCaptureMoment()
+        }
+        .sheet(isPresented: $showPaywall, onDismiss: {
+            // A capture can be armed and still unresolved when the user opens the
+            // paywall *manually* (plan badge, archive upgrade). While it is up,
+            // `resolvePostCaptureMoment` defers, and `StreakSignal.record` no-ops on
+            // an unchanged reading — so without this, nothing would ever ask again
+            // and an earned milestone would be silently dropped. Automatic paywalls
+            // are unaffected: they clear the arming when they claim the capture.
+            //
+            // This recovers the quick-dismissal case only. A paywall session longer
+            // than `armingLifetime` still expires the arming, and that is the wanted
+            // outcome: a celebration arriving after a minute inside a purchase flow
+            // no longer reads as caused by the capture.
+            resolvePostCaptureMoment()
+        }) {
             PaywallView(
                 purchases: services.purchases,
                 entryPoint: paywallEntryPoint,
@@ -160,6 +214,12 @@ struct RootView: View {
         )
     }
 
+    private func refreshObservedLocalDate(services: AppServices) {
+        let current = services.clock.today()
+        guard observedLocalDate != current else { return }
+        observedLocalDate = current
+    }
+
     private func presentPaywall(from entryPoint: PaywallEntryPoint) {
         paywallEntryPoint = entryPoint
         showPaywall = true
@@ -185,7 +245,18 @@ struct RootView: View {
             captureLocalDate: draft.localDate,
             snoozedUntil: LocalDefaults.automaticPaywallSnoozedUntil,
             now: now
-        ) else { return }
+        ) else {
+            // The paywall isn't showing on this capture. Hand the moment to the
+            // lower-priority queue (milestone, then review) rather than deciding it
+            // here — the streak that answers "is this a milestone?" is computed by
+            // Today's history listener and has not necessarily arrived yet.
+            armPostCaptureMoment(
+                localDate: draft.localDate,
+                completedCaptureCount: count,
+                uid: draft.ownerUid
+            )
+            return
+        }
 
         // fullScreenCover(onDismiss:) presents this only after the camera is
         // actually gone; unlike a timed delay it cannot race iOS modal dismissal.
@@ -193,6 +264,91 @@ struct RootView: View {
             entryPoint: .ritualMilestone(captureCount: count),
             localDate: draft.localDate
         )
+        // The paywall took this capture. Nothing lower-priority may also claim it.
+        postCaptureArming = nil
+    }
+
+    /// Records that a capture completed without the paywall claiming it, so the
+    /// milestone/review question can be answered once the streak arrives.
+    private func armPostCaptureMoment(localDate: LocalDate, completedCaptureCount: Int, uid: String) {
+        prepareMilestoneState(for: uid)
+        postCaptureArming = PostCaptureArming(
+            localDate: localDate,
+            completedCaptureCount: completedCaptureCount,
+            didPresentPaywall: false,
+            armedAt: Date()
+        )
+        resolvePostCaptureMoment()
+    }
+
+    /// Re-asks `PostCaptureMomentPolicy` whenever something that could change its
+    /// answer happened. Safe to call repeatedly: the arming is consumed exactly once,
+    /// and an unanswerable question leaves it armed for the next event.
+    private func resolvePostCaptureMoment() {
+        guard let arming = postCaptureArming else { return }
+        // Never stack a celebration on top of another modal — and never resolve while
+        // the paywall is still pending, which would invert the priority order.
+        guard !showCamera, !showPaywall, pendingAutomaticPaywall == nil, milestoneMoment == nil else { return }
+
+        switch PostCaptureMomentPolicy.decide(
+            arming: arming,
+            reading: streakSignal.reading,
+            lastCelebratedMilestone: LocalDefaults.lastCelebratedStreakMilestone,
+            hasRequestedAppReview: LocalDefaults.hasRequestedAppReview,
+            now: Date()
+        ) {
+        case .awaitingStreak:
+            return
+        case .paywall, .none:
+            postCaptureArming = nil
+        case .milestone(let milestone):
+            guard case .observed(_, _, let post?) = streakSignal.reading else {
+                // `decide` already proved this, but reading the post back out is what
+                // actually builds the card — never force-unwrap that proof.
+                return
+            }
+            // Persisted *before* presenting, so a re-entrant resolution or a crash
+            // mid-presentation can never produce the same celebration twice.
+            LocalDefaults.lastCelebratedStreakMilestone = milestone.streak
+            postCaptureArming = nil
+            milestoneMoment = MilestoneMoment(
+                milestone: milestone,
+                post: post,
+                photo: localPhoto(for: post),
+                handle: LocalDefaults.handle.flatMap(Handle.init(raw:))
+            )
+        case .reviewPrompt:
+            postCaptureArming = nil
+            LocalDefaults.hasRequestedAppReview = true
+            requestReview()
+        }
+    }
+
+    /// Reads the morning's image from local disk only. Immediately after a capture the
+    /// pending-upload file is guaranteed present (`PostPublisher.publish` writes the
+    /// JPEG to the outbox before Firestore), so the moment works offline and never
+    /// waits on a download. `nil` is fine — the card degrades to the sky colour.
+    ///
+    /// Synchronous on the main actor, for simplicity rather than for correctness:
+    /// `resolvePostCaptureMoment` has no suspension points today, and by the time this
+    /// is called the double-fire guards above it — the `lastCelebratedStreakMilestone`
+    /// write and `postCaptureArming = nil` — have already run, so a concurrent
+    /// resolution would bail at this function's first `guard`. Making this `async`
+    /// would therefore be safe; it simply is not worth it for one small local JPEG
+    /// read that happens a handful of times per install. Do not copy the blocking read
+    /// into anything that runs per frame or per row.
+    private func localPhoto(for post: SkyPost) -> UIImage? {
+        let data = ImageFileStore.pendingImageData(forRemotePath: post.imagePath)
+            ?? ImageFileStore.cachedImageData(forRemotePath: post.imagePath)
+        return data.flatMap(UIImage.init(data:))
+    }
+
+    /// Mirrors `prepareAutomaticPaywallState` but is deliberately a separate function
+    /// with separate storage, so milestone bookkeeping can never perturb paywall state.
+    private func prepareMilestoneState(for uid: String) {
+        guard LocalDefaults.milestoneAccountID != uid else { return }
+        LocalDefaults.resetMilestoneState()
+        LocalDefaults.milestoneAccountID = uid
     }
 
     private func presentPendingAutomaticPaywallIfNeeded() {
@@ -253,14 +409,24 @@ struct RootView: View {
             // `PostPublisher.publish` at all, which is what let a post document and
             // its queued upload point at two different images (see `UploadQueue`).
             let today = services.clock.today()
-            let existingPost = await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)).flatMap { $0 }
-
-            if wantsCameraFromNotification { router.pendingRoute = nil }
-            if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
-            guard existingPost == nil else { return }
-
-            selectedTab = .today
-            showCamera = true
+            switch await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)) {
+            case .value(nil):
+                if wantsCameraFromNotification { router.pendingRoute = nil }
+                if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
+                selectedTab = .today
+                showCamera = true
+            case .value(.some):
+                // This is a stale notification/Island tap after a completed
+                // capture. Consume it rather than preserving a route that can
+                // never become valid again, and clear both notification systems.
+                if wantsCameraFromNotification { router.pendingRoute = nil }
+                if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
+                await MorningRitualCoordinator.captureCompleted(localDate: today)
+            case .unavailable, .none:
+                // Preserve the pending route only for a later foreground retry.
+                // A failed read must never be used as permission to capture again.
+                return
+            }
         }
     }
 
@@ -276,7 +442,10 @@ struct RootView: View {
     /// safe — see `MorningRitualPolicy`.
     private func reconcileMorningRitual(services: AppServices) async {
         let today = services.clock.today()
-        let hasPostToday = await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)).flatMap { $0 } != nil
+        guard case .value(let post)? = await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)) else {
+            return
+        }
+        let hasPostToday = post != nil
         await MorningRitualCoordinator.reconcile(
             today: today,
             hasPostToday: hasPostToday,

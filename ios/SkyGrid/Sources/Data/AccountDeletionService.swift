@@ -13,9 +13,14 @@ protocol AccountDeleting: Sendable {
 @MainActor
 final class FirebaseAccountDeletionService: AccountDeleting {
     private let functions: Functions
+    private let uploadQueue: UploadQueue?
 
-    init(functions: Functions = Functions.functions()) {
+    init(
+        functions: Functions = Functions.functions(),
+        uploadQueue: UploadQueue? = nil
+    ) {
         self.functions = functions
+        self.uploadQueue = uploadQueue
     }
 
     func deleteAccount(uid: String) async throws {
@@ -23,6 +28,7 @@ final class FirebaseAccountDeletionService: AccountDeleting {
             throw RepositoryError.notAuthenticated
         }
 
+        await uploadQueue?.suspendAccount(uid)
         do {
             // The callable derives the target UID exclusively from the verified
             // Firebase Auth context. No client-supplied UID is sent or trusted.
@@ -38,36 +44,29 @@ final class FirebaseAccountDeletionService: AccountDeleting {
             // idempotent and scoped only to the verified caller's own uid.
             _ = try await functions.httpsCallable("deleteAccount").call()
         } catch {
+            await uploadQueue?.resumeAccount(uid)
             throw FirebaseRepositoryError.map(error)
         }
 
         try? Auth.auth().signOut()
-        await DeviceAccountDataWiper.erase()
+        await uploadQueue?.discardAccountData(uid)
+        DeviceAccountDataWiper.erase()
     }
 }
 
 @MainActor
 private enum DeviceAccountDataWiper {
-    static func erase() async {
+    static func erase() {
         // A system alarm outlives our JSON/SwiftData files, so remove it before
         // deleting the account. Otherwise a deleted account could still ring.
-        await MorningAlarmScheduler.disable()
+        // The server deletion has already succeeded when this runs. Clearing the
+        // alarm flag and the system alarm is synchronous; the remaining
+        // ActivityKit cleanup is intentionally best-effort so a system service
+        // that never acknowledges its Live Activity teardown cannot trap the
+        // person on the deletion progress screen.
+        MorningAlarmScheduler.disableForAccountDeletion()
 
-        let fileManager = FileManager.default
-        let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let skyGridDirectory = appSupport.appendingPathComponent("SkyGrid", isDirectory: true)
-        if fileManager.fileExists(atPath: skyGridDirectory.path) {
-            try? fileManager.removeItem(at: skyGridDirectory)
-        }
-
-        // The default SwiftData store lives beside Application Support. Remove only
-        // its documented basename and sidecars, never the entire shared directory.
-        for filename in ["default.store", "default.store-shm", "default.store-wal"] {
-            let url = appSupport.appendingPathComponent(filename)
-            if fileManager.fileExists(atPath: url.path) {
-                try? fileManager.removeItem(at: url)
-            }
-        }
+        ImageFileStore.eraseAllAccountImages()
 
         LocalDefaults.resetAccountScopedValues()
     }

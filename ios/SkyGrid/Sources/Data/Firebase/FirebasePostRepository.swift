@@ -11,28 +11,26 @@ final class FirebasePostRepository: PostRepository {
         self.firestore = firestore
     }
 
-    func observePost(uid: String, localDate: LocalDate) -> AsyncStream<SkyPost?> {
+    func observePost(uid: String, localDate: LocalDate) -> AsyncStream<PostObservation> {
         let document = postDocument(uid: uid, localDate: localDate)
         return AsyncStream { continuation in
             let listener = document.addSnapshotListener { snapshot, error in
                 if let error {
-                    // The SDK retries and re-invokes this closure once it recovers —
-                    // ending the stream on the first error freezes the last yielded
-                    // value (which may be an optimistic local write that never
-                    // actually reached the server) forever, with no way to notice
-                    // the write silently never synced. Yield `nil` instead so a
-                    // stale "posted" state can't outlive an unconfirmed write.
+                    // The SDK retries and re-invokes this closure once it recovers.
+                    // A failed read must not be represented as an empty day: that
+                    // would enable capture after an App Check failure and make the
+                    // subsequent rejection look like a duplicate post.
                     Self.logger.error("observePost(\(localDate.docID, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
-                    continuation.yield(nil)
+                    continuation.yield(.unavailable)
                     return
                 }
-                continuation.yield(snapshot.flatMap(FirebaseDocumentCodec.post(from:)))
+                continuation.yield(.value(snapshot.flatMap(FirebaseDocumentCodec.post(from:))))
             }
             continuation.onTermination = { _ in listener.remove() }
         }
     }
 
-    func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<[SkyPost]> {
+    func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<PostCollectionObservation> {
         let query = firestore.collection("users")
             .document(uid)
             .collection("posts")
@@ -44,13 +42,22 @@ final class FirebasePostRepository: PostRepository {
             let listener = query.addSnapshotListener { snapshot, error in
                 if let error {
                     Self.logger.error("observePosts(\(uid, privacy: .public)) listener error: \(String(describing: error), privacy: .public)")
-                    continuation.yield([])
+                    continuation.yield(.unavailable)
                     return
                 }
                 let posts = snapshot?.documents.compactMap(FirebaseDocumentCodec.post(from:)) ?? []
-                continuation.yield(posts)
+                continuation.yield(.value(posts))
             }
             continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    func fetchPost(uid: String, localDate: LocalDate) async throws -> SkyPost? {
+        do {
+            let snapshot = try await postDocument(uid: uid, localDate: localDate).getDocument(source: .server)
+            return FirebaseDocumentCodec.post(from: snapshot)
+        } catch {
+            throw FirebaseRepositoryError.map(error)
         }
     }
 
@@ -62,28 +69,18 @@ final class FirebasePostRepository: PostRepository {
             // the `YYYY-MM-DD` document ID remains the one-post-per-day boundary.
             try await document.setDataAsync(FirebaseDocumentCodec.postData(from: draft))
         } catch {
-            let nsError = error as NSError
             Self.logger.error("createPost(\(draft.localDate.docID, privacy: .public)) failed: \(String(describing: error), privacy: .public)")
-            // `.setData` (a plain, non-merge set — not a transaction with an
-            // `exists: false` precondition) never gets a distinct ALREADY_EXISTS
-            // status from Firestore: when the document already exists, the rules
-            // engine evaluates the write as an `update`, and this doc's rules
-            // deny every update unconditionally, so the SDK surfaces a plain
-            // `permission-denied` (code 7) — not code 6, and not a message
-            // containing "already exists". The two checks below existed but
-            // could never match this repository's actual failure mode, which
-            // let a same-day recapture fall through to a generic `.unknown`/
-            // `.permissionDenied` error: `PostPublisher` never rolled back the
-            // matching `UploadQueue` row (it only does that for
-            // `.alreadyPostedToday`), leaving an orphaned image endlessly
-            // retrying a Storage upload no post document would ever reference.
-            // `create`/`validPostKeys()`/the field-shape checks in
-            // firestore.rules are all satisfied by data this app itself
-            // constructs, so in practice the only way this document's create
-            // gets rules-rejected is that it already exists.
-            if nsError.code == 6
-                || nsError.localizedDescription.localizedCaseInsensitiveContains("already exists")
-                || (nsError.domain == "FIRFirestoreErrorDomain" && nsError.code == 7) {
+            if FirebasePostWriteFailure.isExplicitDuplicate(error) {
+                throw RepositoryError.alreadyPostedToday
+            }
+
+            // A create-only Firestore rule reports both a genuine duplicate and
+            // App Check/auth/clock failures as `permission-denied`. Only call it
+            // a duplicate when a fresh server read confirms the document exists;
+            // otherwise preserve the actual failure for a truthful recovery path.
+            if FirebasePostWriteFailure.isPermissionDenied(error),
+               let existing = try? await document.getDocument(source: .server),
+               existing.exists {
                 throw RepositoryError.alreadyPostedToday
             }
             throw FirebaseRepositoryError.map(error)
@@ -100,5 +97,20 @@ final class FirebasePostRepository: PostRepository {
 
     private func postDocument(uid: String, localDate: LocalDate) -> DocumentReference {
         firestore.collection("users").document(uid).collection("posts").document(localDate.docID)
+    }
+}
+
+/// Pure error predicates used by `createPost`, kept testable without a Firebase
+/// project or App Check token.
+enum FirebasePostWriteFailure {
+    static func isExplicitDuplicate(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return (nsError.domain == "FIRFirestoreErrorDomain" && nsError.code == 6)
+            || nsError.localizedDescription.localizedCaseInsensitiveContains("already exists")
+    }
+
+    static func isPermissionDenied(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == "FIRFirestoreErrorDomain" && nsError.code == 7
     }
 }

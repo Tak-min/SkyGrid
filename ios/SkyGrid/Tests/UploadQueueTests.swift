@@ -1,11 +1,90 @@
 import Testing
 import Foundation
+import SwiftData
 @testable import SkyGrid
 
 @Suite("UploadQueue")
 struct UploadQueueTests {
+    private actor OperationRecorder {
+        private(set) var operations: [String] = []
+
+        func record(_ operation: String) { operations.append(operation) }
+        func recordedOperations() -> [String] { operations }
+    }
+
+    @MainActor
+    private final class SucceedingPostRepository: PostRepository {
+        let recorder: OperationRecorder
+
+        init(recorder: OperationRecorder) {
+            self.recorder = recorder
+        }
+
+        func observePost(uid: String, localDate: LocalDate) -> AsyncStream<PostObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value(nil))
+                continuation.finish()
+            }
+        }
+
+        func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<PostCollectionObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value([]))
+                continuation.finish()
+            }
+        }
+
+        func fetchPost(uid: String, localDate: LocalDate) async throws -> SkyPost? { nil }
+
+        func createPost(_ draft: PostDraft) async throws {
+            await recorder.record("post:\(draft.imagePath)")
+        }
+
+        func deletePost(uid: String, localDate: LocalDate) async throws {}
+    }
+
+    @MainActor
+    private final class RejectingPostRepository: PostRepository {
+        let recorder: OperationRecorder
+
+        init(recorder: OperationRecorder) {
+            self.recorder = recorder
+        }
+
+        func observePost(uid: String, localDate: LocalDate) -> AsyncStream<PostObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value(nil))
+                continuation.finish()
+            }
+        }
+
+        func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<PostCollectionObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value([]))
+                continuation.finish()
+            }
+        }
+
+        func fetchPost(uid: String, localDate: LocalDate) async throws -> SkyPost? { nil }
+
+        func createPost(_ draft: PostDraft) async throws {
+            await recorder.record("post:\(draft.imagePath)")
+            throw RepositoryError.permissionDenied(underlying: "App Check rejected the request.")
+        }
+
+        func deletePost(uid: String, localDate: LocalDate) async throws {}
+    }
+
     private struct SucceedingImageUploader: ImageUploading {
         func upload(fileURL: URL, to path: String, contentType: String) async throws {}
+    }
+
+    private struct OrderedImageUploader: ImageUploading {
+        let recorder: OperationRecorder
+
+        func upload(fileURL: URL, to path: String, contentType: String) async throws {
+            await recorder.record("upload:\(path)")
+        }
     }
 
     private struct AlwaysFailingImageUploader: ImageUploading {
@@ -82,13 +161,100 @@ struct UploadQueueTests {
         let container = LocalStoreContainer.make(inMemory: true)
         let queue = UploadQueue(modelContainer: container, uploader: SucceedingImageUploader())
         try await queue.enqueue(makeDraft())
-
-        // kick() spawns a detached drain task inside the actor; give it a moment.
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await queue.processScheduledWork()
 
         let summary = try await queue.pendingSummary()
         #expect(summary.count == 1)
         #expect(summary.first?.state == .done)
+    }
+
+    @Test("a Storage acknowledgement promotes the local capture before removing its outbox file")
+    func completedUploadHandsLocalBytesToTodayCache() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let queue = UploadQueue(modelContainer: container, uploader: SucceedingImageUploader())
+        let draft = try makeDraft()
+        let fullBytes = try Data(contentsOf: draft.localFullImageURL)
+        let thumbBytes = try Data(contentsOf: draft.localThumbImageURL)
+
+        try await queue.enqueue(draft)
+        await queue.processScheduledWork()
+
+        #expect(try await queue.pendingSummary().first?.state == .done)
+        #expect(ImageFileStore.cachedImageData(forRemotePath: draft.imagePath) == fullBytes)
+        #expect(ImageFileStore.cachedThumbnailData(forRemotePath: draft.thumbPath) == thumbBytes)
+        #expect(!FileManager.default.fileExists(atPath: draft.localFullImageURL.path))
+        #expect(!FileManager.default.fileExists(atPath: draft.localThumbImageURL.path))
+    }
+
+    @Test("Firestore is committed before either image can reach Storage")
+    func commitsPostBeforeUploadingBytes() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let recorder = OperationRecorder()
+        let repository = await MainActor.run { SucceedingPostRepository(recorder: recorder) }
+        let queue = UploadQueue(
+            modelContainer: container,
+            uploader: OrderedImageUploader(recorder: recorder),
+            postRepository: repository
+        )
+        let draft = try makeDraft()
+
+        try await queue.enqueue(draft)
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        let operations = await recorder.recordedOperations()
+        let postIndex = try #require(operations.firstIndex(of: "post:\(draft.imagePath)"))
+        let firstUpload = try #require(operations.firstIndex(where: { $0.hasPrefix("upload:") }))
+        #expect(postIndex < firstUpload)
+        #expect(try await queue.pendingSummary().first?.state == .done)
+    }
+
+    @Test("a rejected Firestore post retains bytes and never starts Storage")
+    func rejectsPostWithoutUploadingBytes() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let recorder = OperationRecorder()
+        let repository = await MainActor.run { RejectingPostRepository(recorder: recorder) }
+        let queue = UploadQueue(
+            modelContainer: container,
+            uploader: OrderedImageUploader(recorder: recorder),
+            postRepository: repository
+        )
+        let draft = try makeDraft()
+
+        try await queue.enqueue(draft)
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        let summary = try await queue.pendingSummary()
+        #expect(summary.first?.state == .postFailed)
+        #expect(FileManager.default.fileExists(atPath: draft.localFullImageURL.path))
+        let operations = await recorder.recordedOperations()
+        #expect(operations == ["post:\(draft.imagePath)"])
+    }
+
+    @Test("a staged row survives a restart and resumes its post before its image")
+    func restartResumesStagedPost() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let draft = try makeDraft()
+        // Simulate termination after the atomic SwiftData insert, before the queue
+        // receives a chance to call Firestore.
+        let context = ModelContext(container)
+        context.insert(PendingUpload(draft: draft))
+        try context.save()
+
+        let recorder = OperationRecorder()
+        let repository = await MainActor.run { SucceedingPostRepository(recorder: recorder) }
+        let restartedQueue = UploadQueue(
+            modelContainer: container,
+            uploader: OrderedImageUploader(recorder: recorder),
+            postRepository: repository
+        )
+        await restartedQueue.kick()
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        let operations = await recorder.recordedOperations()
+        let postIndex = try #require(operations.firstIndex(of: "post:\(draft.imagePath)"))
+        let firstUpload = try #require(operations.firstIndex(where: { $0.hasPrefix("upload:") }))
+        #expect(postIndex < firstUpload)
+        #expect(try await restartedQueue.pendingSummary().first?.state == .done)
     }
 
     @Test("a failing uploader retries with an incremented attempt count, never silently drops the record")
@@ -154,8 +320,8 @@ struct UploadQueueTests {
         }
     }
 
-    @Test("a same-day recapture replaces the queued upload instead of being silently dropped")
-    func recaptureReplacesQueuedUpload() async throws {
+    @Test("a same-day recapture never replaces a durable upload row")
+    func recaptureDoesNotReplaceQueuedUpload() async throws {
         let container = LocalStoreContainer.make(inMemory: true)
         let recorder = UploadRecorder()
         let queue = UploadQueue(modelContainer: container, uploader: RecordingImageUploader(recorder: recorder))
@@ -165,9 +331,9 @@ struct UploadQueueTests {
         try await Task.sleep(nanoseconds: 300_000_000)
         #expect(try await queue.pendingSummary().first?.state == .done)
 
-        // A second capture the same account/day: same queueID, different imageID —
-        // exactly the case `enqueue`'s old dedup guard silently dropped once the
-        // first row was anything but `.failed`.
+        // A second capture on the same account/day must not overwrite the durable
+        // row. Doing so while a Firestore create or Storage upload is in flight can
+        // make the eventual post reference different image bytes.
         let second = try makeDraft()
         let secondDraft = PostDraft(
             ownerUid: first.ownerUid,
@@ -179,16 +345,22 @@ struct UploadQueueTests {
             localFullImageURL: second.localFullImageURL,
             localThumbImageURL: second.localThumbImageURL
         )
-        try await queue.enqueue(secondDraft)
+        do {
+            try await queue.enqueue(secondDraft)
+            Issue.record("A second image must not replace the pending capture")
+        } catch RepositoryError.captureAlreadyPending {
+            // Expected: retain the first capture until its outcome is known.
+        }
         try await Task.sleep(nanoseconds: 300_000_000)
 
         let afterSecond = try await queue.pendingSummary()
         #expect(afterSecond.count == 1, "the day keeps exactly one queue row, not two")
         #expect(afterSecond.first?.state == .done)
+        #expect(afterSecond.first?.fullImagePath == first.imagePath)
 
         let uploaded = await recorder.uploadedPaths
         #expect(uploaded.contains(first.imagePath), "the first capture should have uploaded")
-        #expect(uploaded.contains(secondDraft.imagePath), "the replacing capture must also be uploaded, not dropped")
+        #expect(!uploaded.contains(secondDraft.imagePath), "a conflicting capture must never upload bytes")
     }
 
     @Test("a missing local file fails immediately as terminal, without exhausting retries")

@@ -14,9 +14,48 @@ struct GridCanvas: View {
     let thumbnails: [LocalDate: UIImage]
     var spacing: CGFloat = 1.5
 
+    /// Injectable so the share-card export can render the same mosaic on its dark
+    /// ground. `SGT.ghost`/`SGT.fill` are tuned for the warm in-app background and
+    /// turn to mud on `SGExport.ground`.
+    var emptyFill: Color = SGT.ghost
+    var postedNoThumbFill: Color = SGT.fill
+
+    /// Alternating per-month wash behind the cells. Without it a year of mostly
+    /// empty days is one undifferentiated grey block: there is no way to tell which
+    /// row is which month, and the days that don't exist (Feb 30, Apr 31) read as
+    /// white rectangular glitches at the ragged right edge rather than as the end of
+    /// a month. Banding draws only across the days a month actually has, so that
+    /// edge becomes legible calendar shape.
+    var monthBanding: Bool = false
+    var bandFill: Color = SGT.ghostFaint
+
     var body: some View {
         Canvas { context, size in
             let cellSize = GridLayoutMath.cellSize(for: size, spacing: spacing)
+
+            if monthBanding {
+                for month in 1...GridLayoutMath.rows where month.isMultiple(of: 2) {
+                    let days = GridLayoutMath.daysInMonth(month: month, year: year)
+                    let first = GridLayoutMath.rect(
+                        for: LocalDate(year: year, month: month, day: 1),
+                        cellSize: cellSize,
+                        spacing: spacing
+                    )
+                    let last = GridLayoutMath.rect(
+                        for: LocalDate(year: year, month: month, day: days),
+                        cellSize: cellSize,
+                        spacing: spacing
+                    )
+                    let band = CGRect(
+                        x: first.minX,
+                        y: first.minY,
+                        width: last.maxX - first.minX,
+                        height: first.height
+                    )
+                    context.fill(Path(band), with: .color(bandFill))
+                }
+            }
+
             for date in GridLayoutMath.allDates(forYear: year) {
                 let rect = GridLayoutMath.rect(for: date, cellSize: cellSize, spacing: spacing)
                 let cornerRadius = spacing == 0 ? 0 : min(2, cellSize.width * 0.15)
@@ -27,9 +66,9 @@ struct GridCanvas: View {
                     let imageRect = GridLayoutMath.aspectFillRect(imageSize: thumbnail.size, in: rect)
                     clippedContext.draw(clippedContext.resolve(Image(uiImage: thumbnail)), in: imageRect)
                 } else if postedDates.contains(date) {
-                    context.fill(path, with: .color(SGT.fill))
+                    context.fill(path, with: .color(postedNoThumbFill))
                 } else {
-                    context.fill(path, with: .color(SGT.ghost))
+                    context.fill(path, with: .color(emptyFill))
                 }
             }
         }

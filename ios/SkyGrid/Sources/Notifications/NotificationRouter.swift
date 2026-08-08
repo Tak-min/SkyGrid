@@ -37,6 +37,15 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        if MorningFollowUpScheduler.shouldSuppressForegroundDelivery(
+            identifier: notification.request.identifier,
+            lastCapturedLocalDateID: LocalDefaults.lastCapturedLocalDateID
+        ) {
+            // A local post can complete while the one-shot follow-up is being
+            // delivered. Avoid a contradictory banner/sound in that narrow race.
+            completionHandler([])
+            return
+        }
         completionHandler([.banner, .sound])
     }
 }

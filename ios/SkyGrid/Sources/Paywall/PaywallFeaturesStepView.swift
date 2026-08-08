@@ -22,6 +22,9 @@ struct PaywallFeaturesStepView: View {
             }
             benefits
             freeChoice
+            RitualGridMark(side: 116)
+                .frame(maxWidth: .infinity)
+                .accessibilityHidden(true)
         } cta: {
             Button(action: onAdvance) {
                 Text("See plans and pricing")

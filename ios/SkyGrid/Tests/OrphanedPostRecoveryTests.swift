@@ -31,19 +31,23 @@ struct OrphanedPostRecoveryTests {
             self.currentPost = currentPost
         }
 
-        func observePost(uid: String, localDate: LocalDate) -> AsyncStream<SkyPost?> {
+        func observePost(uid: String, localDate: LocalDate) -> AsyncStream<PostObservation> {
             let value = currentPost
             return AsyncStream { continuation in
-                continuation.yield(value)
+                continuation.yield(.value(value))
                 continuation.finish()
             }
         }
 
-        func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<[SkyPost]> {
+        func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<PostCollectionObservation> {
             AsyncStream { continuation in
-                continuation.yield([])
+                continuation.yield(.value([]))
                 continuation.finish()
             }
+        }
+
+        func fetchPost(uid: String, localDate: LocalDate) async throws -> SkyPost? {
+            currentPost
         }
 
         func createPost(_ draft: PostDraft) async throws {}
@@ -175,5 +179,288 @@ struct OrphanedPostRecoveryTests {
         _ = try? await second
 
         #expect(repository.deleteCallCount == 1)
+    }
+}
+
+@Suite("Collection observation state")
+@MainActor
+struct CollectionObservationStateTests {
+    private final class ValueThenUnavailablePosts: PostRepository {
+        let post: SkyPost
+
+        init(post: SkyPost) { self.post = post }
+
+        func observePost(uid: String, localDate: LocalDate) -> AsyncStream<PostObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value(nil))
+                continuation.finish()
+            }
+        }
+
+        func observePosts(uid: String, from: LocalDate, through: LocalDate) -> AsyncStream<PostCollectionObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value([post]))
+                continuation.yield(.unavailable)
+                continuation.finish()
+            }
+        }
+
+        func fetchPost(uid: String, localDate: LocalDate) async throws -> SkyPost? { post }
+        func createPost(_ draft: PostDraft) async throws {}
+        func deletePost(uid: String, localDate: LocalDate) async throws {}
+    }
+
+    private final class ValueThenUnavailableFriends: FriendRepository {
+        let friendship: Friendship
+        var requestResult: FriendRequestResult = .sent
+        var acceptError: RepositoryError?
+        private(set) var lastRequest: (from: String, to: String, requester: Handle, recipient: Handle)?
+
+        init(friendship: Friendship) { self.friendship = friendship }
+
+        func observeFriendships(uid: String) -> AsyncStream<FriendshipCollectionObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value([friendship]))
+                continuation.yield(.unavailable)
+                continuation.finish()
+            }
+        }
+
+        func observeBlockedFriendships(uid: String) -> AsyncStream<BlockedFriendshipCollectionObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value([]))
+                continuation.finish()
+            }
+        }
+
+        func sendRequest(
+            from: String,
+            to: String,
+            requesterHandle: Handle,
+            recipientHandle: Handle
+        ) async throws -> FriendRequestResult {
+            lastRequest = (from, to, requesterHandle, recipientHandle)
+            return requestResult
+        }
+        func acceptRequest(pairId: String, acceptingUid: String) async throws {
+            if let acceptError { throw acceptError }
+        }
+        func removeFriendship(pairId: String) async throws {}
+        func block(ownerUid: String, blockedUid: String) async throws {}
+        func unblock(ownerUid: String, blockedUid: String) async throws {}
+        func isBlocked(ownerUid: String, otherUid: String) async throws -> Bool { false }
+    }
+
+    private final class FixedUserRepository: UserRepository {
+        func observeProfile(uid: String) -> AsyncStream<UserProfileObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value(UserProfile(
+                    uid: uid,
+                    handle: Handle(raw: "test_handle"),
+                    displayName: "Tester",
+                    timezone: "UTC",
+                    wakeGoalMinutes: 360,
+                    streakCurrent: 0,
+                    streakLongest: 0,
+                    lastPostLocalDate: nil,
+                    isPro: false
+                )))
+                continuation.finish()
+            }
+        }
+
+        func createOrUpdateProfile(_ profile: UserProfile) async throws {}
+        func claimHandle(_ handle: Handle, for uid: String) async throws {}
+        func findUid(forHandle handle: Handle) async throws -> String? { "friend" }
+    }
+
+    private final class ValueThenUnavailableUserRepository: UserRepository {
+        func observeProfile(uid: String) -> AsyncStream<UserProfileObservation> {
+            AsyncStream { continuation in
+                continuation.yield(.value(UserProfile(
+                    uid: uid,
+                    handle: Handle(raw: "last_confirmed"),
+                    displayName: "Last confirmed name",
+                    timezone: "UTC",
+                    wakeGoalMinutes: 360,
+                    streakCurrent: 0,
+                    streakLongest: 0,
+                    lastPostLocalDate: nil,
+                    isPro: false
+                )))
+                continuation.yield(.unavailable)
+                continuation.finish()
+            }
+        }
+
+        func createOrUpdateProfile(_ profile: UserProfile) async throws {}
+        func claimHandle(_ handle: Handle, for uid: String) async throws {}
+        func findUid(forHandle handle: Handle) async throws -> String? { nil }
+    }
+
+    private struct FailingImageFetcher: ImageFetching {
+        func fetchImage(path: String) async throws -> Data {
+            throw RepositoryError.network(underlying: "offline")
+        }
+    }
+
+    @Test("grid keeps its last confirmed posts when the listener becomes unavailable")
+    func gridPreservesLastConfirmedPosts() async {
+        let date = LocalDate(year: 2026, month: 8, day: 8)
+        let post = SkyPost(
+            ownerUid: "uid",
+            localDate: date,
+            capturedAt: Date(timeIntervalSince1970: 1_786_147_200),
+            uploadedAt: Date(timeIntervalSince1970: 1_786_147_260),
+            imagePath: "images/full.jpg",
+            thumbPath: "images/thumb.jpg",
+            skyColor: SkyColor(uncheckedHex: "#91B6C8"),
+            minutesFromGoal: 0,
+            reactions: [:]
+        )
+        let viewModel = GridArchiveViewModel(
+            uid: "uid",
+            year: 2026,
+            postRepository: ValueThenUnavailablePosts(post: post),
+            imageFetching: FailingImageFetcher(),
+            isPro: true,
+            today: date,
+            selectedMonth: 8
+        )
+
+        viewModel.start()
+        for _ in 0..<8 { await Task.yield() }
+
+        #expect(viewModel.posts[date] == post)
+        #expect(viewModel.loadState == .unavailable)
+    }
+
+    @Test("buddies keep their last confirmed connections when refresh fails")
+    func buddiesPreserveLastConfirmedConnections() async {
+        let friendship = Friendship(
+            pairId: PairID.make("uid", "friend"),
+            members: ["uid", "friend"],
+            status: .accepted,
+            requestedBy: "uid",
+            createdAt: Date(timeIntervalSince1970: 1_786_147_200),
+            blockedBy: []
+        )
+        let viewModel = FriendsViewModel(
+            uid: "uid",
+            friendRepository: ValueThenUnavailableFriends(friendship: friendship),
+            userRepository: FixedUserRepository()
+        )
+
+        viewModel.start()
+        for _ in 0..<8 { await Task.yield() }
+
+        #expect(viewModel.accepted == [friendship])
+        #expect(viewModel.friendshipState == .unavailable)
+    }
+
+    @Test("buddy settings keep the last confirmed handle when profile refresh fails")
+    func buddySettingsPreserveLastConfirmedHandle() async {
+        let friendship = Friendship(
+            pairId: PairID.make("uid", "friend"),
+            members: ["uid", "friend"],
+            status: .accepted,
+            requestedBy: "uid",
+            createdAt: Date(timeIntervalSince1970: 1_786_147_200),
+            blockedBy: []
+        )
+        let viewModel = FriendsViewModel(
+            uid: "uid",
+            friendRepository: ValueThenUnavailableFriends(friendship: friendship),
+            userRepository: ValueThenUnavailableUserRepository()
+        )
+
+        viewModel.start()
+        for _ in 0..<8 { await Task.yield() }
+
+        #expect(viewModel.handle == Handle(raw: "last_confirmed"))
+        #expect(viewModel.hasHandle == true)
+        #expect(viewModel.profileState == .unavailable)
+    }
+
+    @Test("sending a buddy request carries both verified handles and confirms success")
+    func buddyRequestCarriesHandles() async {
+        let friendship = Friendship(
+            pairId: PairID.make("uid", "friend"),
+            members: ["uid", "friend"],
+            status: .accepted,
+            requestedBy: "uid",
+            createdAt: Date(timeIntervalSince1970: 1_786_147_200),
+            blockedBy: []
+        )
+        let repository = ValueThenUnavailableFriends(friendship: friendship)
+        let viewModel = FriendsViewModel(
+            uid: "uid",
+            friendRepository: repository,
+            userRepository: FixedUserRepository()
+        )
+        viewModel.start()
+        for _ in 0..<8 { await Task.yield() }
+
+        let sent = await viewModel.sendRequest(toHandleRaw: "buddy_handle")
+
+        #expect(sent)
+        #expect(repository.lastRequest?.from == "uid")
+        #expect(repository.lastRequest?.to == "friend")
+        #expect(repository.lastRequest?.requester == Handle(raw: "test_handle"))
+        #expect(repository.lastRequest?.recipient == Handle(raw: "buddy_handle"))
+        #expect(viewModel.requestFeedback == .success("Request sent to @buddy_handle."))
+        #expect(!viewModel.isSendingRequest)
+    }
+
+    @Test("an existing outgoing request is explained instead of silently succeeding")
+    func duplicateBuddyRequestIsExplained() async {
+        let friendship = Friendship(
+            pairId: PairID.make("uid", "friend"),
+            members: ["uid", "friend"],
+            status: .pending,
+            requestedBy: "uid",
+            createdAt: Date(timeIntervalSince1970: 1_786_147_200),
+            blockedBy: []
+        )
+        let repository = ValueThenUnavailableFriends(friendship: friendship)
+        repository.requestResult = .alreadyPending
+        let viewModel = FriendsViewModel(
+            uid: "uid",
+            friendRepository: repository,
+            userRepository: FixedUserRepository()
+        )
+        viewModel.start()
+        for _ in 0..<8 { await Task.yield() }
+
+        let sent = await viewModel.sendRequest(toHandleRaw: "buddy_handle")
+
+        #expect(!sent)
+        #expect(viewModel.requestFeedback == .information("Your request to @buddy_handle is already waiting."))
+    }
+
+    @Test("accept failures remain visible and retryable")
+    func buddyAcceptFailureIsVisible() async {
+        let friendship = Friendship(
+            pairId: PairID.make("uid", "friend"),
+            members: ["uid", "friend"],
+            status: .pending,
+            requestedBy: "friend",
+            requestedByHandle: Handle(raw: "buddy_handle"),
+            recipientHandle: Handle(raw: "test_handle"),
+            createdAt: Date(timeIntervalSince1970: 1_786_147_200),
+            blockedBy: []
+        )
+        let repository = ValueThenUnavailableFriends(friendship: friendship)
+        repository.acceptError = .network(underlying: "offline")
+        let viewModel = FriendsViewModel(
+            uid: "uid",
+            friendRepository: repository,
+            userRepository: FixedUserRepository()
+        )
+
+        await viewModel.accept(friendship)
+
+        #expect(viewModel.acceptErrorMessage == "No connection. The request is still waiting; try again.")
+        #expect(viewModel.acceptingPairIDs.isEmpty)
     }
 }

@@ -13,7 +13,12 @@ struct WakeGoalPickerView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
-                    Button("Back", action: onBack)
+                    Button(action: onBack) {
+                        Label("Back", systemImage: "chevron.left")
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityHint("Returns to the previous setup step")
                     Spacer()
                 }
                 .font(SGFont.caption(14))

@@ -15,7 +15,12 @@ struct PersonalizedPlanView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
-                    Button("Edit answers", action: onEditAnswers)
+                    Button(action: onEditAnswers) {
+                        Label("Edit answers", systemImage: "chevron.left")
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityHint("Returns to your wake-time answer")
                     Spacer()
                 }
                 .font(SGFont.caption(14))

@@ -11,10 +11,17 @@ import UIKit
 @MainActor
 @Observable
 final class CameraViewModel {
+    enum Failure: Equatable {
+        case permissionDenied
+        case startup
+        case capture
+        case colorDetection
+    }
+
     enum Phase: Equatable {
         case live
         case reviewing(capturedImage: UIImage, skyColor: SkyColor)
-        case failed(String)
+        case failed(Failure)
 
         static func == (lhs: Phase, rhs: Phase) -> Bool {
             switch (lhs, rhs) {
@@ -49,6 +56,7 @@ final class CameraViewModel {
     func start() async {
         do {
             try await cameraSource.start()
+            phase = .live
             sampleLoopTask = Task { [weak self] in
                 guard let self else { return }
                 for await frame in self.cameraSource.previewFrames {
@@ -57,8 +65,10 @@ final class CameraViewModel {
                     self.latestPreviewImage = UIImage(ciImage: frame)
                 }
             }
+        } catch CameraSourceError.permissionDenied {
+            phase = .failed(.permissionDenied)
         } catch {
-            phase = .failed("The camera could not start.")
+            phase = .failed(.startup)
         }
     }
 
@@ -71,17 +81,31 @@ final class CameraViewModel {
         do {
             let image = try await cameraSource.capturePhoto()
             guard let skyColor = SkyColorExtractor.extract(from: image) else {
-                phase = .failed("The sky color could not be detected.")
+                phase = .failed(.colorDetection)
                 return
             }
             phase = .reviewing(capturedImage: image, skyColor: skyColor)
         } catch {
-            phase = .failed("The photo could not be captured.")
+            phase = .failed(.capture)
         }
     }
 
     func retake() {
         phase = .live
+    }
+
+    /// Recovers from the exact failed operation. A failed camera start must run
+    /// `start()` again; merely changing the visible phase would return to a black,
+    /// unconfigured preview. Capture/color failures keep the active session and can
+    /// return directly to the live viewfinder.
+    func retry() async {
+        guard case .failed(let failure) = phase else { return }
+        switch failure {
+        case .permissionDenied, .startup:
+            await start()
+        case .capture, .colorDetection:
+            retake()
+        }
     }
 
     /// Finalizes the reviewed photo: compresses it, persists pending bytes to

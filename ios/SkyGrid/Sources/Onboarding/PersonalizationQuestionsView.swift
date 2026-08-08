@@ -35,23 +35,21 @@ struct PersonalizationQuestionsView: View {
                         }
                     }
                 }
-
-                Spacer(minLength: SGSpacing.sm)
-
-                Button("Continue", action: onNext)
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(SkyPrimaryButtonStyle())
             }
             .padding(SGSpacing.xl)
-            .padding(.bottom, 32)
+            .padding(.bottom, SGSpacing.md)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            onboardingContinueButton(action: onNext)
         }
     }
 
     private var onboardingNavigation: some View {
         HStack {
-            Button("Back", action: onBack)
+            onboardingBackButton(action: onBack)
             Spacer()
             Button("Skip setup", action: onSkip)
+                .frame(minHeight: 44)
         }
         .font(SGFont.caption(14))
         .foregroundStyle(SGT.ink2)
@@ -102,21 +100,21 @@ private struct SingleQuestionPage<Content: View>: View {
                 }
 
                 VStack(spacing: 8, content: { content })
-
-                Button("Continue", action: onNext)
-                    .frame(maxWidth: .infinity)
-                    .buttonStyle(SkyPrimaryButtonStyle())
             }
             .padding(SGSpacing.xl)
-            .padding(.bottom, 32)
+            .padding(.bottom, SGSpacing.md)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            onboardingContinueButton(action: onNext)
         }
     }
 
     private var navigation: some View {
         HStack {
-            Button("Back", action: onBack)
+            onboardingBackButton(action: onBack)
             Spacer()
             Button("Skip setup", action: onSkip)
+                .frame(minHeight: 44)
         }
         .font(SGFont.caption(14))
         .foregroundStyle(SGT.ink2)
@@ -217,6 +215,26 @@ struct ReminderQuestionView: View {
             }
         }
     }
+}
+
+private func onboardingBackButton(action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        Label("Back", systemImage: "chevron.left")
+            .labelStyle(.titleAndIcon)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+    }
+    .accessibilityHint("Returns to the previous setup step")
+}
+
+private func onboardingContinueButton(action: @escaping () -> Void) -> some View {
+    Button("Continue", action: action)
+        .frame(maxWidth: .infinity)
+        .buttonStyle(SkyPrimaryButtonStyle())
+        .padding(.horizontal, SGSpacing.xl)
+        .padding(.top, SGSpacing.sm)
+        .padding(.bottom, SGSpacing.md)
+        .background(SGT.background)
 }
 
 private struct ChoiceRow: View {
