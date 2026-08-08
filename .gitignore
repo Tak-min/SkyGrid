@@ -44,3 +44,6 @@ ios/legal/node_modules/
 waitlist/.wrangler/
 waitlist/site/.wrangler/
 waitlist/node_modules/
+
+# Xcode build products at repo root (XcodeBuildMCP workspace output)
+/build/
