@@ -79,3 +79,54 @@ App Store直リンクのQRコード(白背景の quiet zone 付き)+テキスト
 現時点で両セッションの変更が衝突している形跡はない**。ただし`project.pbxproj`は
 両セッションが触れる可能性のある共有ファイルなので、次回コミット前に
 `git diff`で内容の整合性を必ず確認すること。
+
+---
+
+## 追記(2026-08-08 夕方、別セッションによる): pbxproj 直編集のバージョンは xcodegen で消える
+
+**Symptom.** 審査提出の準備でバージョンを確認したところ、
+`MARKETING_VERSION = 0.1.0` / `CURRENT_PROJECT_VERSION = 2` に戻っていた。
+上の記録では 1.0.1 / 3 に上げたはずだった。
+
+**Cause.** このプロジェクトは **xcodegen 管理**で、`project.pbxproj` は
+`project.yml` から**生成される**。上の作業は `project.pbxproj` を直接編集して
+バージョンを上げたが、`project.yml` 側は `0.1.0` / `2` のままだった。
+その後のセッションで新規 .swift ファイルを追加するために `xcodegen generate` を
+実行した時点で、pbxproj が再生成され**バージョンの手編集が消えた**。
+
+同じ理由で、上の記録にある「新規Swiftファイル3つを `project.pbxproj` に手動登録」も
+不要だった(xcodegen が `SkyGrid/Sources` 配下を丸ごと拾う)。手動登録は消えたが、
+再生成で同じファイルが登録されるので実害はなかった。**バージョンだけが実害だった。**
+
+**Fix.** `project.yml` を真の生成元として直した(`MARKETING_VERSION: "1.0.1"`,
+`CURRENT_PROJECT_VERSION: "4"`)。以後、**バージョンを上げるときは `project.yml` を編集し、
+`xcodegen generate` を実行して pbxproj に反映されたことを確認する**こと。
+
+**教訓.** 生成物(pbxproj)を直接編集して得た状態は、次の生成で黙って消える。
+xcodegen/CocoaPods 等の生成系プロジェクトでは「どのファイルが生成物か」を先に確認する。
+
+## 追記: ASC API キーの Issuer ID が判明した
+
+上の記録では「`AuthKey_8NP27G4GSX.p8` の Issuer ID が不明だったため使わず、Xcode の
+アカウントセッションで通した」とあるが、**そのセッション経路は今回失敗した**
+(`error: exportArchive No Accounts with App Store Connect Access`。同時に出る
+"The iTunes Store is not currently accepting content due to the holiday. Please try
+again after December 29th." は8月に出ており、**認証失敗を覆い隠す Apple 側の
+誤解を招くメッセージ**。日付を真に受けないこと)。
+
+**Issuer ID は `58c05121-f8df-456e-bff8-00455e0fbc79`。**
+`apple-signin-and-revenuecat-setup_2026-07-30.md` に In-App Purchase キー用として
+記録されていた値だが、**Team API キー `8NP27G4GSX` でもそのまま通る**
+(Issuer ID はアカウント単位のため)。`altool --validate-app` / `--upload-app` の
+両方で成功を確認済み。
+
+動く手順(Xcode のアカウントに依存しない):
+
+    xcodebuild -exportArchive -archivePath X.xcarchive \
+      -exportOptionsPlist EO.plist -exportPath out   # EO.plist は destination: export
+    xcrun altool --upload-app -f out/SkyGrid.ipa -t ios \
+      --apiKey 8NP27G4GSX --apiIssuer 58c05121-f8df-456e-bff8-00455e0fbc79
+
+注: `altool --list-providers` は APIKey 認証に非対応
+(`AuthenticationFailure("list-providers does not support APIKey authentication.")`)。
+疎通確認は `--validate-app` で行う。

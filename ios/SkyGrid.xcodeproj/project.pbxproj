@@ -1415,7 +1415,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1426,7 +1426,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridWidgets;
 				PRODUCT_MODULE_NAME = SkyGridWidgets;
 				SDKROOT = iphoneos;
@@ -1445,7 +1445,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -1458,7 +1458,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
 				PRODUCT_MODULE_NAME = SkyGrid;
 				SDKROOT = iphoneos;
@@ -1472,7 +1472,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1483,7 +1483,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridWidgets;
 				PRODUCT_MODULE_NAME = SkyGridWidgets;
 				SDKROOT = iphoneos;
@@ -1502,7 +1502,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -1516,7 +1516,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
 				PRODUCT_MODULE_NAME = SkyGrid;
 				SDKROOT = iphoneos;
