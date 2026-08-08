@@ -15,7 +15,7 @@ struct PostCaptureMomentPolicyTests {
         PostCaptureArming(
             localDate: localDate ?? today,
             completedCaptureCount: count,
-            didPresentPaywall: paywall,
+            isPaywallEligible: paywall,
             armedAt: armedAt
         )
     }
@@ -58,24 +58,33 @@ struct PostCaptureMomentPolicyTests {
         )
     }
 
-    // MARK: - Paywall precedence (the invariant that must never regress)
+    // MARK: - Milestone outranks the paywall (owner's decision, 2026-08-08)
 
-    @Test("the paywall wins before anything else is even considered")
-    func paywallWinsWithNoReading() {
-        #expect(decide(arming(paywall: true), nil) == .paywall)
+    /// The core of the reversal: a milestone day takes the capture, and the paywall
+    /// is expected to reappear on the next one via its own "N captures or N days"
+    /// gate — which works precisely because nothing is recorded as presented here.
+    @Test("a milestone day takes the capture even when the paywall is eligible")
+    func milestoneOutranksEligiblePaywall() {
+        let moment = decide(arming(paywall: true, count: 7), observed(streak: 7))
+        #expect(moment == .milestone(StreakMilestone(streak: 7)))
     }
 
-    @Test("the paywall still wins against a perfect milestone reading")
-    func paywallOutranksMilestone() {
-        let moment = decide(arming(paywall: true, count: 7), observed(streak: 7))
-        #expect(moment == .paywall)
+    @Test("an eligible paywall still fires on an ordinary morning")
+    func paywallFiresWithoutAMilestone() {
+        #expect(decide(arming(paywall: true, count: 8), observed(streak: 8)) == .paywall)
+    }
+
+    /// An eligible paywall must not jump ahead while the milestone question is still
+    /// unanswerable — that would reinstate the behaviour this change removed.
+    @Test("an eligible paywall waits for the streak rather than pre-empting a milestone")
+    func eligiblePaywallWaitsForTheStreak() {
+        #expect(decide(arming(paywall: true, count: 7), nil) == .awaitingStreak)
     }
 
     // MARK: - Ordering: the review may not jump ahead of an undecided milestone
 
-    /// The regression test for the ordering change. Before this policy existed the
-    /// review fired the instant the paywall declined; now it must wait until the
-    /// milestone question is actually answerable.
+    /// Before this policy existed the review fired the instant the paywall declined;
+    /// now it must wait until the milestone question is actually answerable.
     @Test("a declined paywall with no streak reading yet holds, it does not ask for a review")
     func awaitsStreakBeforeReview() {
         #expect(decide(arming(paywall: false, count: 7), nil) == .awaitingStreak)
@@ -119,6 +128,13 @@ struct PostCaptureMomentPolicyTests {
         #expect(decide(arming(paywall: false, count: 1), .unavailable(localDate: today), lastCelebrated: 0) == PostCaptureMoment.none)
     }
 
+    /// A read that failed cannot prove a milestone, so the paywall keeps its turn
+    /// rather than being deferred on a day nobody can show was special.
+    @Test("a failed history read does not defer an eligible paywall")
+    func unavailableDoesNotDeferThePaywall() {
+        #expect(decide(arming(paywall: true, count: 7), .unavailable(localDate: today)) == .paywall)
+    }
+
     /// `StreakCalculator` keeps yesterday's count alive until the day is over, so a
     /// reading taken before today's post lands reports a streak that is not about
     /// today. Celebrating it would print a number the user has not yet earned.
@@ -134,10 +150,25 @@ struct PostCaptureMomentPolicyTests {
 
     // MARK: - Staleness
 
-    @Test("an arming that outlived its window resolves to nothing, milestone or not")
-    func staleArmingExpires() {
+    @Test("an arming that outlived its window no longer celebrates, milestone or not")
+    func staleArmingNeverCelebrates() {
         let elapsed = PostCaptureMomentPolicy.armingLifetime + 1
-        #expect(decide(arming(paywall: false, count: 7), observed(streak: 7), elapsed: elapsed) == PostCaptureMoment.none)
+        #expect(decide(arming(paywall: false, count: 1), observed(streak: 7), elapsed: elapsed) == PostCaptureMoment.none)
+    }
+
+    /// The backstop that keeps a missing streak from silently costing the paywall its
+    /// turn. Without this, an unattached history listener would strand the arming.
+    @Test("an expired arming still lets an eligible paywall through")
+    func staleArmingStillPresentsThePaywall() {
+        let elapsed = PostCaptureMomentPolicy.armingLifetime + 1
+        #expect(decide(arming(paywall: true, count: 7), nil, elapsed: elapsed) == .paywall)
+        #expect(decide(arming(paywall: true, count: 7), observed(streak: 7), elapsed: elapsed) == .paywall)
+    }
+
+    @Test("an expired arming with no paywall due falls back to the review gate")
+    func staleArmingFallsBackToReview() {
+        let elapsed = PostCaptureMomentPolicy.armingLifetime + 1
+        #expect(decide(arming(paywall: false, count: 7), nil, elapsed: elapsed) == .reviewPrompt)
     }
 
     // MARK: - Review gating is delegated, not duplicated

@@ -5,45 +5,54 @@ import Foundation
 struct PostCaptureArming: Equatable, Sendable {
     let localDate: LocalDate
     let completedCaptureCount: Int
-    /// The verdict `AutomaticPaywallPresentationPolicy` **already** returned. Carried
-    /// as a plain `Bool` on purpose: this policy must be structurally incapable of
-    /// re-deciding the paywall, so it is never given the inputs to do so.
-    ///
-    /// In production this is always `false`, because `RootView` clears the arming
-    /// outright when the paywall claims a capture — precedence is enforced by the
-    /// arming not existing, which is stronger than a flag. The field and its branch
-    /// are kept so that "the paywall outranks everything" is stated and *tested*
-    /// here rather than living only as an invisible property of the call site.
-    let didPresentPaywall: Bool
+    /// The verdict `AutomaticPaywallPresentationPolicy` **already** returned at
+    /// capture-confirm time. Carried as a plain `Bool` on purpose: this policy must be
+    /// structurally incapable of re-deciding *whether* the paywall is due, so it is
+    /// never given the inputs to do so. It only decides whether today is the day.
+    let isPaywallEligible: Bool
     let armedAt: Date
 }
 
 enum PostCaptureMoment: Equatable {
-    /// Owned entirely by the existing `pendingAutomaticPaywall` path — this policy
-    /// only reports that the paywall took the capture.
-    case paywall
     /// The streak that would answer the milestone question has not arrived yet. The
-    /// caller must stay armed and re-ask, and must **not** fall through to the review.
+    /// caller must stay armed and re-ask, and must **not** fall through to anything
+    /// lower — that is what lets a milestone outrank an eligible paywall.
     case awaitingStreak
     case milestone(StreakMilestone)
+    /// Present the automatic paywall now. Eligibility was decided at capture-confirm
+    /// time by `AutomaticPaywallPresentationPolicy`; this only says today is the day.
+    case paywall
     case reviewPrompt
     case none
 }
 
-/// Arbitrates what — if anything — a completed capture earns, in the fixed order
-/// **paywall > milestone > review prompt**.
+/// Arbitrates what — if anything — a completed capture earns, in the order
+/// **milestone > paywall > review prompt**.
 ///
 /// A pure function so the whole ordering guarantee is testable without a simulator,
 /// which matters because Firebase is unreachable from the simulator in this project
 /// (App Check) and the real path can't be exercised there.
 ///
-/// The paywall's own predicate is deliberately absent: `AutomaticPaywallPresentationPolicy`
-/// runs at capture-confirm time and its result is passed in. Nothing here can change
-/// when the paywall fires.
+/// **The milestone outranking the paywall is a deliberate reversal** (2026-08-08,
+/// product owner's decision). It replaces the earlier rule, under which a milestone
+/// landing on a paywall capture was dropped forever. The paywall is now *deferred*
+/// instead: it is simply not presented and, crucially, **not recorded as presented**,
+/// so `AutomaticPaywallPresentationPolicy`'s own "N captures or N days since the last
+/// prompt" gate re-offers it on the next capture. Deferral therefore needs no new
+/// stored state and cannot permanently suppress the paywall — there is nothing
+/// persisted that could get stuck.
+///
+/// The paywall's own predicate stays where it was: `AutomaticPaywallPresentationPolicy`
+/// runs at capture-confirm time and only its result is passed in. Nothing here decides
+/// *whether* the paywall is due, only whether today is the day it appears.
 enum PostCaptureMomentPolicy {
-    /// A celebration has to feel caused by the capture that earned it. Past this,
-    /// the user has moved on and a full-screen takeover would read as a glitch, so a
-    /// late-arriving streak is dropped rather than presented.
+    /// How long to wait for the streak before giving up on the milestone question.
+    ///
+    /// Normally irrelevant: Firestore's local write echo means the history listener
+    /// republishes within moments of the capture, and an offline listener publishes
+    /// `.unavailable` just as promptly. This only covers the pathological case where
+    /// no reading arrives at all (e.g. the listener was never attached), and it exists
+    /// so a missing streak cannot silently swallow an eligible paywall.
     static let armingLifetime: TimeInterval = 10
 
     static func decide(
@@ -53,16 +62,18 @@ enum PostCaptureMomentPolicy {
         hasRequestedAppReview: Bool,
         now: Date
     ) -> PostCaptureMoment {
-        // 1. Paywall precedence, unconditional and first.
-        if arming.didPresentPaywall { return .paywall }
+        // 1. Gave up waiting for the streak. Never celebrate on no evidence, but do
+        //    not let a missing reading cost the paywall its turn.
+        if now.timeIntervalSince(arming.armedAt) > armingLifetime {
+            return arming.isPaywallEligible ? .paywall : reviewOrNothing(arming, hasRequestedAppReview)
+        }
 
-        // 2. Too late to read as a consequence of the capture.
-        if now.timeIntervalSince(arming.armedAt) > armingLifetime { return .none }
-
-        // 3-4. Nothing to judge yet, or a snapshot about a different day.
+        // 2. Nothing to judge yet, or a snapshot about a different day. Hold —
+        //    including when the paywall is eligible, since that is precisely the
+        //    case where a milestone would outrank it.
         guard let reading, reading.localDate == arming.localDate else { return .awaitingStreak }
 
-        // 5-7. Only a reading that actually establishes today's streak may celebrate.
+        // 3. Only a reading that actually establishes today's streak may celebrate.
         if case .observed(_, let summary, let post) = reading {
             // `StreakCalculator` keeps yesterday's count alive until the day is over,
             // so a pre-post reading describes yesterday, not the capture just made.
@@ -71,16 +82,24 @@ enum PostCaptureMomentPolicy {
                 streak: summary.currentStreak,
                 lastCelebrated: lastCelebratedMilestone
             ) {
+                // The paywall defers to the next capture by simply not happening here.
                 return .milestone(milestone)
             }
         }
 
-        // 8. `.unavailable` lands here too: no milestone may ever be asserted from a
-        // failed read, but the review ask does not depend on the streak at all.
-        guard AppReviewPromptPolicy.shouldRequest(
+        // 4. No milestone. `.unavailable` also lands here — a failed read may never
+        //    assert a milestone, but it says nothing about the paywall or the review.
+        if arming.isPaywallEligible { return .paywall }
+        return reviewOrNothing(arming, hasRequestedAppReview)
+    }
+
+    private static func reviewOrNothing(
+        _ arming: PostCaptureArming,
+        _ hasRequestedAppReview: Bool
+    ) -> PostCaptureMoment {
+        AppReviewPromptPolicy.shouldRequest(
             completedCaptureCount: arming.completedCaptureCount,
             hasRequestedBefore: hasRequestedAppReview
-        ) else { return .none }
-        return .reviewPrompt
+        ) ? .reviewPrompt : .none
     }
 }

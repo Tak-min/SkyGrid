@@ -341,6 +341,67 @@ arm された状態でユーザーが自分でペイウォールを開くと、`
 **LOW — 日付跨ぎで arm が宙に浮く**件は、10秒で自然に期限切れになり誤った祝祭は
 起きないため許容。
 
+---
+
+## 方針転換: ペイウォールより節目を優先し、ペイウォールは翌日に回す(2026-08-08、依頼者決定)
+
+**それまでの掟「ペイウォールの発火条件を1ビットも変えない」は依頼者の判断で撤回された。**
+節目とペイウォールが同じ撮影に当たった場合、**その日は節目を出し、ペイウォールは
+次の撮影に回す。**
+
+### 難所は前回と同じ構造だった
+
+ペイウォールの適格判定は**撮影確定時＝streak が判る前**に走る。だから「節目なら
+ペイウォールを遅らせる」を判定時点では決められない。
+
+**採用: 判定を遅らせるのではなく、判定結果を arm に載せて解決時に選ぶ。**
+`AutomaticPaywallPresentationPolicy.shouldPresent` の**述語も引数も一切変えず**、
+その真偽を `PostCaptureArming.isPaywallEligible` として持ち回る。実際に出すかどうかは
+streak 到着後に `PostCaptureMomentPolicy.decide` が決める。
+`decide` は「ペイウォールが妥当か」を判断する入力を**構造的に持たない**まま、
+「今日出すか」だけを決める。
+
+### 「翌日に回す」に新しい永続状態は要らなかった(重要)
+
+`AutomaticPaywallPresentationPolicy` は既に
+「前回提示から N 撮影 or N 日」で門番をしている。したがって**繰り延べ = 出さない、
+かつ提示として記録しない**だけでよい。記録しなければ次の撮影で同じ条件が再び真になる。
+
+- 新しい `LocalDefaults` キーはゼロ。
+- 永続状態が無い＝**繰り延べが詰まってペイウォールが永久に出なくなる状態が作れない**。
+- 提示の記録(`recordAutomaticPaywallPresentationIfNeeded`)は実際に出した経路でのみ走る。
+
+### 潰した穴: 読み取りが来ないとペイウォールが永久に出ない
+
+解決のきっかけはカメラ dismiss と streak 到着の2つしかない。履歴リスナーが
+そもそも張られていない場合、**どちらも来ない**ので arm が宙に浮き、
+本来出るはずのペイウォールが黙って消える(収益上のリグレッション)。
+→ `armPostCaptureMoment` で **1発限りのバックストップ Task** を張り、
+`armingLifetime + 0.5秒` 後にもう一度 `resolvePostCaptureMoment()` を呼ぶ。
+期限切れ後の `decide` は streak を待つのをやめ、適格なら `.paywall` を返す。
+これは「提示を遅らせるタイマー」ではない(その頃カメラはとうに閉じており、
+`resolvePostCaptureMoment` は他モーダルが出ていないことを引き続きガードする)。
+arm を消費する全経路を `consumePostCaptureArming()` に集約し、そこで Task も破棄する。
+
+なお**オフラインはタイムアウト経路に落ちない** — リスナーは `.unavailable` を即座に
+publish するので、`decide` はそれを読んで「節目は主張できないがペイウォールは妥当」と
+判断して即座に出す。タイムアウトは「リスナー未接続」という病的ケース専用。
+
+### 併せて削除できたもの
+
+`pendingAutomaticPaywall` と `presentPendingAutomaticPaywallIfNeeded` は不要になった。
+提示経路が `resolvePostCaptureMoment` の1本に統合されたため。
+
+### 反転させたテスト
+
+`paywallWinsWithNoReading` / `paywallOutranksMilestone` は**新方針と正面から矛盾する**
+ので削除し、以下に置換した:
+`milestoneOutranksEligiblePaywall`(節目が勝つ) /
+`paywallFiresWithoutAMilestone`(平常日は従来通り出る) /
+`eligiblePaywallWaitsForTheStreak`(判断前に先回りしない) /
+`staleArmingStillPresentsThePaywall`(バックストップ) /
+`unavailableDoesNotDeferThePaywall`(証明できない日に繰り延べない)。
+
 ## テストのベースライン(重要)
 本作業**開始前**の測定値: **144 passed / 4 failed / 5 skipped**(272.9s)。
 4件の失敗は変更前から存在する。3件は `signal kill`(長時間UITest実行時の
