@@ -46,6 +46,15 @@ enum FirebaseRepositoryError {
                 return .permissionDenied(underlying: nsError.localizedDescription)
             case 14: // unavailable
                 return .network(underlying: nsError.localizedDescription)
+            // The invite callables are the first callers to return these two: 9
+            // (failed-precondition) for a caller with no handle or a deleting
+            // account, 8 (resource-exhausted) for their rate limiter. Both used to
+            // collapse into `.unknown`, which read as "something went wrong on
+            // our side" for a condition the person can actually do something about.
+            case 9: // failed-precondition
+                return .actionNotReady(underlying: nsError.localizedDescription)
+            case 8: // resource-exhausted
+                return .rateLimited(underlying: nsError.localizedDescription)
             default:
                 break
             }

@@ -101,6 +101,7 @@
 		833F269B76A024546360D8D3 /* SkyGridApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B877BE3CFC484D9D98406261 /* SkyGridApp.swift */; };
 		83CF699A774D52C1BE8E651A /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64724AE9311BCBE64D785927 /* AppServices.swift */; };
 		8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */; };
+		857B4BB61A10FD7277F2CC75 /* FirebaseInviteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A718743EB429B93FE69755C /* FirebaseInviteRepository.swift */; };
 		8B79845CB51E4DBBA87D2170 /* StreakWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2736F19C390C6A1B75861584 /* StreakWindow.swift */; };
 		8BA5BF3FB14D4B28A78DEC9B /* ImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1512D261F73427D29CF1ECB /* ImageStore.swift */; };
 		8C2B0F91213705756BE521EC /* ContactSheetLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC3AF4F93BC6DE3214FC33B /* ContactSheetLayout.swift */; };
@@ -164,6 +165,7 @@
 		D7BD4846070557242842767F /* StreakMilestone.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF60E656FE9ADB4E620BA632 /* StreakMilestone.swift */; };
 		D848441A064793701D30C9BE /* ContactSheetLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B5FAA8F9224A150B4F07DC /* ContactSheetLayoutTests.swift */; };
 		D937E23EBDAF4F5E8D495669 /* MorningRitualLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D5E4D6A1F3A08B61CCED03 /* MorningRitualLiveActivity.swift */; };
+		DA444663163912398FAD644A /* InviteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90A91166C9D084E17F084FC2 /* InviteRepository.swift */; };
 		DA7F362CB6B55F49E23DF687 /* RevenueCatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D9ED01CECCEFC13BBAD319C /* RevenueCatService.swift */; };
 		DB73F085B9551FE23C4F6816 /* PostIntegrityPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165570757A55F9BFB6931185 /* PostIntegrityPolicyTests.swift */; };
 		DC69B9AC25AF58733BA32103 /* PaywallEntryPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C2A1E4935C2F01342AFEC2E /* PaywallEntryPoint.swift */; };
@@ -337,6 +339,7 @@
 		8945AFCB6B9F61F9F5436235 /* LaunchGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchGate.swift; sourceTree = "<group>"; };
 		896D44D44B9A318AC1D6831F /* ShareCardRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCardRenderer.swift; sourceTree = "<group>"; };
 		89F4037069763E5DB4A76F50 /* MilestoneMoment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneMoment.swift; sourceTree = "<group>"; };
+		8A718743EB429B93FE69755C /* FirebaseInviteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseInviteRepository.swift; sourceTree = "<group>"; };
 		8A72AC4FD203CEA83150C460 /* PurchasesServicing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesServicing.swift; sourceTree = "<group>"; };
 		8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPolicyTests.swift; sourceTree = "<group>"; };
 		8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProGate.swift; sourceTree = "<group>"; };
@@ -345,6 +348,7 @@
 		8C064C2501016587055152C8 /* TodayPhotoCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayPhotoCard.swift; sourceTree = "<group>"; };
 		8E9E89B3BC61DAD003FF5FB7 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		8F40477A5D361698E46D76F2 /* NotificationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouter.swift; sourceTree = "<group>"; };
+		90A91166C9D084E17F084FC2 /* InviteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteRepository.swift; sourceTree = "<group>"; };
 		90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseContentSafetyRepository.swift; sourceTree = "<group>"; };
 		92090403C33C793F6B63D46B /* InviteCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteCode.swift; sourceTree = "<group>"; };
 		92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyRevealGate.swift; sourceTree = "<group>"; };
@@ -470,6 +474,7 @@
 				84BE272CCACA06B1E3005D3E /* FirebaseDocumentCodec.swift */,
 				693330AB30D1C5DE9A429663 /* FirebaseFriendRepository.swift */,
 				DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */,
+				8A718743EB429B93FE69755C /* FirebaseInviteRepository.swift */,
 				C856196405B33988CBE21663 /* FirebasePostRepository.swift */,
 				1AA8996478709BCDADA1C141 /* FirebaseRepositoryError.swift */,
 				9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */,
@@ -639,6 +644,7 @@
 				7DC4667AB0112EDBEF166F43 /* ContentSafetyRepository.swift */,
 				7D0AF054E16234EFB09A2468 /* FriendRepository.swift */,
 				B1512D261F73427D29CF1ECB /* ImageStore.swift */,
+				90A91166C9D084E17F084FC2 /* InviteRepository.swift */,
 				AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */,
 				AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */,
 				03121E39C84779B0B43F9764 /* UserRepository.swift */,
@@ -1095,6 +1101,7 @@
 				C0BCC8302A7E6A3B7BB2D2C2 /* FirebaseDocumentCodec.swift in Sources */,
 				0D08CA1587327FC4F7CA31B8 /* FirebaseFriendRepository.swift in Sources */,
 				AA8BC5A9E132FEA6EA1F344D /* FirebaseImageStore.swift in Sources */,
+				857B4BB61A10FD7277F2CC75 /* FirebaseInviteRepository.swift in Sources */,
 				9CA29FF725BF91173ED29EA9 /* FirebasePostRepository.swift in Sources */,
 				7BD7DDA744B97999595E92B2 /* FirebaseRepositoryError.swift in Sources */,
 				AB2B0E119BF9C3478B4B03E8 /* FirebaseUserRepository.swift in Sources */,
@@ -1116,6 +1123,7 @@
 				00240275C869CE04748F0DC2 /* InviteCode.swift in Sources */,
 				96AAAA3A3CCE3D7C97EC1186 /* InviteLinkParser.swift in Sources */,
 				02F0F9BCA12B7F1E853EB43B /* InviteModels.swift in Sources */,
+				DA444663163912398FAD644A /* InviteRepository.swift in Sources */,
 				A73532A7336134B3C0372AD9 /* LaunchGate.swift in Sources */,
 				D3135E7486A44D558AF157C0 /* Layout.swift in Sources */,
 				5B9541BE9E3BB595469F3CC6 /* LivePreviewSampler.swift in Sources */,

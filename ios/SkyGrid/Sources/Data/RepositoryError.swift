@@ -22,6 +22,17 @@ enum RepositoryError: Error, Sendable, LocalizedError {
     case captureAlreadyPending
     case network(underlying: String)
     case permissionDenied(underlying: String)
+    /// A server-side precondition wasn't met — e.g. an invite callable's
+    /// `failed-precondition` (Cloud Functions error code 9) for a caller with no
+    /// handle, or whose account is being deleted. The client-side callers of these
+    /// callables are expected to check the same precondition before calling, so
+    /// reaching this case is an edge case (a race, or a check that was bypassed),
+    /// not the primary way a person learns they need a handle first.
+    case actionNotReady(underlying: String)
+    /// A rate limit was hit (Cloud Functions error code 8, `resource-exhausted`) —
+    /// currently only the invite callables enforce one. Never auto-retry on this;
+    /// the caller must wait for a person to try again.
+    case rateLimited(underlying: String)
     case unknown(underlying: String)
 
     var errorDescription: String? {
@@ -40,6 +51,10 @@ enum RepositoryError: Error, Sendable, LocalizedError {
             "Sky Grid couldn't reach the network."
         case .permissionDenied:
             "Sky Grid doesn't have permission to do that right now."
+        case .actionNotReady:
+            "That's not possible right now."
+        case .rateLimited:
+            "Too many tries."
         case .unknown:
             "Something went wrong on Sky Grid's side."
         }
@@ -59,6 +74,10 @@ enum RepositoryError: Error, Sendable, LocalizedError {
             "It will finish on its own — you don't need to retake it."
         case .network:
             "Check your connection and try again. Nothing in your archive has changed."
+        case .actionNotReady:
+            "Nothing has changed — try again in a moment."
+        case .rateLimited:
+            "Give it a few minutes and try again."
         case .permissionDenied, .unknown:
             "Nothing in your archive has changed. Try again in a moment."
         }
@@ -67,7 +86,8 @@ enum RepositoryError: Error, Sendable, LocalizedError {
     /// Internal detail for logs and dev-notes only — never shown to a person.
     var diagnosticDetail: String? {
         switch self {
-        case .network(let underlying), .permissionDenied(let underlying), .unknown(let underlying):
+        case .network(let underlying), .permissionDenied(let underlying), .unknown(let underlying),
+             .actionNotReady(let underlying), .rateLimited(let underlying):
             underlying
         case .notFound, .notAuthenticated, .handleAlreadyTaken, .alreadyPostedToday, .captureAlreadyPending:
             nil

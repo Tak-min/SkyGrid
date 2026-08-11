@@ -9,6 +9,7 @@ struct AppServices {
     let postRepository: any PostRepository
     let userRepository: any UserRepository
     let friendRepository: any FriendRepository
+    let inviteRepository: any InviteRepository
     let contentSafetyRepository: any ContentSafetyRepository
     let accountDeletionService: any AccountDeleting
     let imageFetching: any ImageFetching

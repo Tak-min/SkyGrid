@@ -42,6 +42,7 @@ enum ServiceFactory {
             postRepository: postRepository,
             userRepository: userRepository,
             friendRepository: FirebaseFriendRepository(firestore: firestore),
+            inviteRepository: FirebaseInviteRepository(),
             contentSafetyRepository: FirebaseContentSafetyRepository(firestore: firestore),
             accountDeletionService: FirebaseAccountDeletionService(uploadQueue: uploadQueue),
             imageFetching: imageStore,
