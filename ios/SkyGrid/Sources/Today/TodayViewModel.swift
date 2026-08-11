@@ -62,6 +62,9 @@ final class TodayViewModel {
     /// arbitration. Optional so the UI-audit harness and tests can build a view model
     /// without one; nothing here reads it back.
     private let streakSignal: StreakSignal?
+    /// Where the buddy strip's mutual-unlock count is republished for `RootView`'s
+    /// first-unlock paywall. Optional for the same reason as `streakSignal`.
+    private let revealSignal: RevealSignal?
 
     private var observationTasks: [Task<Void, Never>] = []
     private var integrityTask: Task<Void, Never>?
@@ -74,6 +77,11 @@ final class TodayViewModel {
     /// the moment the server starts permitting buddy post reads) without waiting
     /// for the friendship listener to fire again.
     private var acceptedFriendships: [Friendship] = []
+    /// Cancelled and replaced on every `refreshBuddies` call so a slower, earlier
+    /// resolution (e.g. from the friendship listener) can never overwrite `buddies`
+    /// with stale data after a faster, later one (e.g. the viewer's own post
+    /// arriving) has already published the current answer.
+    private var refreshBuddiesTask: Task<Void, Never>?
 
     init(
         uid: String,
@@ -83,7 +91,8 @@ final class TodayViewModel {
         uploadQueue: UploadQueue,
         orphanedPostRecovery: any OrphanedPostRecovering,
         clock: Clock,
-        streakSignal: StreakSignal? = nil
+        streakSignal: StreakSignal? = nil,
+        revealSignal: RevealSignal? = nil
     ) {
         self.uid = uid
         self.postRepository = postRepository
@@ -93,6 +102,7 @@ final class TodayViewModel {
         self.orphanedPostRecovery = orphanedPostRecovery
         self.clock = clock
         self.streakSignal = streakSignal
+        self.revealSignal = revealSignal
     }
 
     /// Creates exactly one listener set for an explicit local day. The view passes
@@ -224,8 +234,28 @@ final class TodayViewModel {
         observationTasks.removeAll()
         integrityTask?.cancel()
         integrityTask = nil
+        refreshBuddiesTask?.cancel()
+        refreshBuddiesTask = nil
         observedDate = nil
         acceptedFriendships = []
+    }
+
+    /// Re-checks the buddy strip without waiting for a listener to re-emit.
+    /// `refreshBuddies` only ever runs from two triggers today — the viewer's own
+    /// post appearing, and the friendship listener re-emitting — neither of which
+    /// fires when a buddy posts while this app is simply sitting in the background.
+    /// A Firestore snapshot listener would normally catch that on its own, but
+    /// `refreshBuddies` deliberately takes one snapshot per buddy and lets its
+    /// stream terminate (see its doc comment) rather than holding a live listener
+    /// open per buddy. Call this on scene-phase-active to cover the dominant case —
+    /// "the app was backgrounded when a buddy posted and is only now being
+    /// reopened." It does not cover a buddy posting while this app is already
+    /// foregrounded; that would need either a live per-buddy listener or a
+    /// foreground poll, and `dev-notes/invite-link-ios-blueprint_2026-08-11.md` §7
+    /// records that tradeoff as deliberately deferred rather than solved here.
+    func refreshBuddiesNow() {
+        guard let today = observedDate, !acceptedFriendships.isEmpty else { return }
+        Task { await refreshBuddies(friendships: acceptedFriendships, today: today) }
     }
 
     /// Firestore listeners normally recover themselves, but a visible retry gives
@@ -286,27 +316,41 @@ final class TodayViewModel {
         }
     }
 
+    /// Serializes every call through one cancel-and-replace task, so two triggers
+    /// landing close together (the friendship listener re-emitting right as the
+    /// viewer's own post arrives, say) can never interleave and let the one that
+    /// happens to *complete* later win regardless of which one *started* later.
+    private func refreshBuddies(friendships: [Friendship], today: LocalDate) async {
+        refreshBuddiesTask?.cancel()
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performRefreshBuddies(friendships: friendships, today: today)
+        }
+        refreshBuddiesTask = task
+        await task.value
+    }
+
     /// Resolves the buddy strip. The viewer's own post is the gate: until it exists,
     /// `firestore.rules` denies every buddy post read (`hasPostedFor`), so issuing
     /// them would be a guaranteed-failing round-trip per buddy, per session, whose
     /// only possible result is the `.sealed` state we can already infer. Skipping
     /// them removes that waste and — more importantly — removes the temptation to
     /// render a denied read as "hasn't posted".
-    private func refreshBuddies(friendships: [Friendship], today: LocalDate) async {
+    private func performRefreshBuddies(friendships: [Friendship], today: LocalDate) async {
         let isRevealed = BuddyRevealGate.isRevealed(viewerHasPostedToday: todayPost != nil)
         var statuses: [BuddyStatus] = []
         for friendship in friendships {
             guard let otherUid = friendship.otherMember(than: uid) else { continue }
             let profileResult = await firstValue(from: userRepository.observeProfile(uid: otherUid))
             guard case .value(let profile?)? = profileResult else { continue }
-            guard observedDate == today else { return }
+            guard !Task.isCancelled, observedDate == today else { return }
 
             let revealState: BuddyRevealState
             if !isRevealed {
                 revealState = .sealed
             } else {
                 let postResult = await firstValue(from: postRepository.observePost(uid: otherUid, localDate: today))
-                guard observedDate == today else { return }
+                guard !Task.isCancelled, observedDate == today else { return }
                 switch postResult {
                 case .value(let post?):
                     revealState = .posted(post)
@@ -320,8 +364,13 @@ final class TodayViewModel {
             }
             statuses.append(BuddyStatus(uid: otherUid, displayName: profile.displayName, revealState: revealState))
         }
-        guard observedDate == today else { return }
+        guard !Task.isCancelled, observedDate == today else { return }
         buddies = statuses
+        // `.posted` only appears once `firestore.rules`' `activeBuddy(uid) &&
+        // hasPostedFor(localDate)` has actually permitted the read, so this count is
+        // server-verified proof of mutual unlock, not a client inference.
+        let unlockedCount = statuses.filter { if case .posted = $0.revealState { true } else { false } }.count
+        revealSignal?.record(RevealReading(localDate: today, mutuallyUnlockedBuddyCount: unlockedCount))
     }
 
     private func firstValue<T: Sendable>(from stream: AsyncStream<T>) async -> T? {

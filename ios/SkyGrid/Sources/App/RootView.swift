@@ -18,6 +18,13 @@ struct RootView: View {
     /// model (`TodayView` captures it as `@State`), so the value is published up here
     /// rather than recomputed, which would be a second source of truth.
     @State private var streakSignal = StreakSignal()
+    /// Receives the buddy strip's mutual-unlock count from `TodayViewModel` — the
+    /// only thing that computes it. Mirrors `streakSignal` exactly: `TodayViewModel`
+    /// is reconstructed on every `RootView` body evaluation and only survives via
+    /// `TodayView`'s own `@State`, so this must be injected from here rather than
+    /// left for the view model to create, or a freshly-made signal would silently
+    /// drop every reading.
+    @State private var revealSignal = RevealSignal()
     @State private var postCaptureArming: PostCaptureArming?
     @State private var milestoneMoment: MilestoneMoment?
     @State private var inviteMoment: InviteCode?
@@ -93,7 +100,8 @@ struct RootView: View {
                         uploadQueue: services.uploadQueue,
                         orphanedPostRecovery: services.orphanedPostRecovery,
                         clock: services.clock,
-                        streakSignal: streakSignal
+                        streakSignal: streakSignal,
+                        revealSignal: revealSignal
                     ),
                     imageFetching: services.imageFetching,
                     observedDate: today,

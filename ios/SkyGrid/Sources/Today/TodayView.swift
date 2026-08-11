@@ -5,6 +5,7 @@ import SwiftUI
 /// resemble a social feed or a dashboard.
 struct TodayView: View {
     @State private var viewModel: TodayViewModel
+    @Environment(\.scenePhase) private var scenePhase
     let imageFetching: any ImageFetching
     let observedDate: LocalDate
     let onOpenCamera: () -> Void
@@ -58,6 +59,10 @@ struct TodayView: View {
         }
         .task(id: observedDate) { viewModel.start(for: observedDate) }
         .onDisappear { viewModel.stop() }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            viewModel.refreshBuddiesNow()
+        }
     }
 
     private var ambientBackground: some View {
