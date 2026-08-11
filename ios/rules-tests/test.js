@@ -494,3 +494,75 @@ describe("firestore.rules handle claims", () => {
     await assertFails(batch.commit());
   });
 });
+
+// The invite feature (Cloud Functions, 2026-08-11) keeps `invites/{code}` reachable
+// only through the Admin SDK. A rule permissive enough for a recipient to read their
+// own code is permissive enough for anyone signed in to read *any* code — a Firestore-
+// native enumeration oracle sitting in front of no rate limiter at all. Every callable
+// depends on that being impossible, so it is asserted rather than assumed.
+//
+// These pass today via the catch-all deny at the bottom of firestore.rules; the
+// explicit `invites` rule that follows in the build order must keep them green.
+describe("firestore.rules invite collections are server-only", () => {
+  const CODE = "ABCDE12345";
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection("invites").doc(CODE).set({
+        code: CODE,
+        creatorUid: OWNER,
+        creatorHandle: "owner_handle",
+        status: "open",
+        createdAtMs: 1786000000000,
+        expiresAtMs: 1786604800000,
+        claimedByUid: null,
+        generation: 0,
+      });
+    });
+  });
+
+  it("does not let the creator read back their own invite", async () => {
+    const firestore = testEnv.authenticatedContext(OWNER).firestore();
+    await assertFails(firestore.collection("invites").doc(CODE).get());
+  });
+
+  it("does not let a recipient read the code they were sent", async () => {
+    const firestore = testEnv.authenticatedContext(BUDDY).firestore();
+    await assertFails(firestore.collection("invites").doc(CODE).get());
+  });
+
+  it("does not let anyone list the collection, which would hand over every live code", async () => {
+    const firestore = testEnv.authenticatedContext(STRANGER).firestore();
+    await assertFails(firestore.collection("invites").get());
+  });
+
+  it("does not let a client spend, revoke, or mint a code directly", async () => {
+    const firestore = testEnv.authenticatedContext(BUDDY).firestore();
+    await assertFails(
+      firestore.collection("invites").doc(CODE).update({ status: "claimed", claimedByUid: BUDDY })
+    );
+    await assertFails(firestore.collection("invites").doc(CODE).delete());
+    await assertFails(
+      firestore.collection("invites").doc("ZZZZZZZZZZ").set({
+        code: "ZZZZZZZZZZ",
+        creatorUid: BUDDY,
+        creatorHandle: "buddy_handle",
+        status: "open",
+        createdAtMs: 1786000000000,
+        expiresAtMs: 1786604800000,
+        claimedByUid: null,
+        generation: 0,
+      })
+    );
+  });
+
+  it("does not let a caller read or rewrite their own rate-limit counters", async () => {
+    // A client that can write this document can reset its own budget, which would
+    // make the limiter decorative.
+    const firestore = testEnv.authenticatedContext(OWNER).firestore();
+    await assertFails(firestore.collection("inviteRateLimits").doc(OWNER).get());
+    await assertFails(
+      firestore.collection("inviteRateLimits").doc(OWNER).set({ previewCount: 0 })
+    );
+  });
+});

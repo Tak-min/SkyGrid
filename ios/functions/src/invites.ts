@@ -28,6 +28,26 @@ export const INVITE_CODE_LENGTH = 10;
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
+ * How long a *spent or lapsed* invite document is kept before a Firestore TTL policy
+ * deletes it. This is deliberately not the same instant as `expiresAtMs`.
+ *
+ * If the TTL fired at expiry, two things would break. A recipient opening a stale link
+ * on day 8 would be told the code never existed (`unknown`) instead of that it expired,
+ * which is the difference between "ask them to send a new one" and "you typed it
+ * wrong". And `resolveClaim`'s repeat-claim branch — the one that answers `paired`
+ * rather than `claimed` when the same person opens their own claimed link again —
+ * needs the claimed document to still be there to recognise them.
+ */
+export const INVITE_RETENTION_AFTER_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Built on the server so that changing the domain is a functions deploy rather than an
+ * App Store release. Must stay in step with the Worker route added in step 6 of the
+ * build order and with the `applinks` components in the AASA file.
+ */
+export const INVITE_LINK_BASE = "https://skygrid.my/i/";
+
+/**
  * A link that is out in the world is a link that can be forwarded, so the number
  * a single person can have live at once is capped. Creating an 4th revokes the
  * oldest rather than failing: the cap is there to bound the leaked surface, not
@@ -56,6 +76,26 @@ export interface InviteRecord {
 
 /** What a caller is allowed to learn about a code without consuming it. */
 export type InviteState = "open" | "expired" | "claimed" | "revoked";
+
+/**
+ * What `previewInvite` may tell a caller. A superset of `InviteState` by two cases
+ * that are computed against the *caller's own* uid, so only that one caller can ever
+ * observe them and neither leaks anything to anybody else.
+ */
+export type InvitePreviewState =
+  | "open"
+  | "ownInvite"
+  | "claimedByYou"
+  | "expired"
+  | "claimed"
+  | "revoked"
+  | "unknown";
+
+/** The fields of a friendship that decide whether an invite can pair two people. */
+export interface FriendshipSummary {
+  status: string;
+  blockedBy: readonly string[];
+}
 
 export type ClaimOutcome =
   | "paired"
@@ -204,4 +244,175 @@ export function invitesToRevokeBeforeCreating(
     .sort((first, second) => first.createdAtMs - second.createdAtMs);
   const excess = live.length - (limit - 1);
   return excess > 0 ? live.slice(0, excess) : [];
+}
+
+/**
+ * What `previewInvite` answers. Branch order mirrors `resolveClaim` exactly, so the
+ * two can never disagree about the same code — a preview that says "open" followed by
+ * a claim that says "expired" would be a bug the user experiences as the app lying.
+ * `test/invites.test.js` asserts that agreement as a property rather than trusting
+ * this comment.
+ *
+ * `claimedByYou` exists for the same reason `resolveClaim` answers `paired` on a
+ * repeat claim: someone who taps their own link twice must not be told their pairing
+ * was taken by a stranger.
+ */
+export function previewState(
+  invite: InviteRecord | null,
+  nowMs: number,
+  callerUid: string
+): InvitePreviewState {
+  if (!invite) return "unknown";
+
+  const state = inviteState(invite, nowMs);
+  if (state === "revoked") return "revoked";
+  if (state === "expired") return "expired";
+  if (state === "claimed") {
+    return invite.claimedByUid === callerUid ? "claimedByYou" : "claimed";
+  }
+  return invite.creatorUid === callerUid ? "ownInvite" : "open";
+}
+
+/**
+ * The most recently created still-open invite, or `null`.
+ *
+ * `createInvite` hands this back instead of minting a new code every time the invite
+ * screen is opened. Minting unconditionally would combine with
+ * `invitesToRevokeBeforeCreating` to silently revoke a link the user had already sent
+ * someone — the fourth screen-open would kill the first link. Reuse makes opening the
+ * screen idempotent and free; an explicit "get a new link" still mints.
+ */
+export function newestLiveInvite(
+  openInvites: readonly InviteRecord[],
+  nowMs: number
+): InviteRecord | null {
+  const live = openInvites.filter((invite) => inviteState(invite, nowMs) === "open");
+  if (live.length === 0) return null;
+  return live.reduce((newest, invite) => (invite.createdAtMs > newest.createdAtMs ? invite : newest));
+}
+
+/**
+ * Whether the creator already had a real buddy when they made this link — 0 or 1,
+ * stamped at creation because the recipient's device has no way to know it.
+ *
+ * "Real" is the same predicate as `activeBuddy()` in `firestore.rules` and
+ * `isActiveBuddy` in `index.ts`: accepted, and blocked by neither side. This is its
+ * third occurrence, which is exactly why it is a named function with tests rather
+ * than a fourth inline `&&` chain.
+ */
+export function inviteGeneration(friendships: readonly FriendshipSummary[]): 0 | 1 {
+  const hasActiveBuddy = friendships.some(
+    (friendship) => friendship.status === "accepted" && friendship.blockedBy.length === 0
+  );
+  return hasActiveBuddy ? 1 : 0;
+}
+
+export function inviteLinkURL(code: string, base: string = INVITE_LINK_BASE): string {
+  return `${base}${code}`;
+}
+
+export function inviteTTLPurgeAtMs(expiresAtMs: number): number {
+  return expiresAtMs + INVITE_RETENTION_AFTER_EXPIRY_MS;
+}
+
+/**
+ * The complete stored form of a new invite, so that the document written and the
+ * `InviteRecord` read back are defined in one place and cannot drift.
+ *
+ * `expireAt` is not here: it is a Firestore `Timestamp`, which this module stays free
+ * of on purpose. The caller derives it from `inviteTTLPurgeAtMs`.
+ */
+export function inviteDocumentFields(input: {
+  code: string;
+  creatorUid: string;
+  creatorHandle: string;
+  createdAtMs: number;
+  generation: 0 | 1;
+}): InviteRecord & { claimedAtMs: number | null } {
+  return {
+    code: input.code,
+    creatorUid: input.creatorUid,
+    creatorHandle: input.creatorHandle,
+    status: "open",
+    createdAtMs: input.createdAtMs,
+    expiresAtMs: inviteExpiresAt(input.createdAtMs),
+    claimedByUid: null,
+    generation: input.generation,
+    claimedAtMs: null,
+  };
+}
+
+/**
+ * Validates raw Firestore data at the boundary. Returns `null` rather than throwing,
+ * because a malformed invite must read as "no such code" and not as a 500 that tells
+ * an enumerator they found something unusual.
+ *
+ * The timestamp fields are required to be numbers and are never coerced. A `Timestamp`
+ * object arriving here would coerce to `NaN` in every comparison, and `NaN >= x` is
+ * `false` — so a coerced invite would read as permanently *unexpired*, which is the
+ * one failure mode this validator exists to make impossible.
+ */
+export function inviteFromDocument(
+  id: string,
+  data: Record<string, unknown> | undefined
+): InviteRecord | null {
+  if (!data) return null;
+  if (normalizeInviteCode(id) !== id) return null;
+
+  const status = data.status;
+  if (status !== "open" && status !== "claimed" && status !== "revoked") return null;
+
+  const generation = data.generation;
+  if (generation !== 0 && generation !== 1) return null;
+
+  const createdAtMs = data.createdAtMs;
+  const expiresAtMs = data.expiresAtMs;
+  if (!Number.isFinite(createdAtMs) || !Number.isFinite(expiresAtMs)) return null;
+
+  const creatorUid = data.creatorUid;
+  const creatorHandle = data.creatorHandle;
+  if (typeof creatorUid !== "string" || creatorUid.length === 0) return null;
+  if (typeof creatorHandle !== "string" || creatorHandle.length === 0) return null;
+
+  const claimedByUid = data.claimedByUid;
+  if (claimedByUid !== null && typeof claimedByUid !== "string") return null;
+
+  return {
+    code: id,
+    creatorUid,
+    creatorHandle,
+    status,
+    createdAtMs: createdAtMs as number,
+    expiresAtMs: expiresAtMs as number,
+    claimedByUid: (claimedByUid as string | null) ?? null,
+    generation,
+  };
+}
+
+/**
+ * The caller's side of an existing pair, as `resolveClaim` wants it. `null` when there
+ * is no friendship, or when the document does not describe *this* pair — a mismatch
+ * means the caller computed the wrong pair ID, and treating that as "no friendship"
+ * would create a second one.
+ */
+export function existingFriendshipFrom(
+  data: Record<string, unknown> | undefined,
+  callerUid: string,
+  creatorUid: string
+): ExistingFriendship | null {
+  if (!data) return null;
+
+  const members = data.members;
+  if (!Array.isArray(members) || members.length !== 2) return null;
+  if (!members.includes(callerUid) || !members.includes(creatorUid)) return null;
+
+  const status = data.status;
+  if (status !== "pending" && status !== "accepted") return null;
+
+  const blockedBy = data.blockedBy;
+  // Either side blocking is a block: the invite must not resurrect a pair that one of
+  // them deliberately severed, regardless of which one did it.
+  const isBlocked = Array.isArray(blockedBy) && blockedBy.length > 0;
+
+  return { status, isBlocked };
 }

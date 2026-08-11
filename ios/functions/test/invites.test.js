@@ -4,13 +4,23 @@ const assert = require("node:assert/strict");
 const {
   INVITE_ALPHABET,
   INVITE_CODE_LENGTH,
+  INVITE_LINK_BASE,
+  INVITE_RETENTION_AFTER_EXPIRY_MS,
   INVITE_TTL_MS,
+  existingFriendshipFrom,
   formatInviteCode,
   generateInviteCode,
+  inviteDocumentFields,
   inviteExpiresAt,
+  inviteFromDocument,
+  inviteGeneration,
+  inviteLinkURL,
   inviteState,
+  inviteTTLPurgeAtMs,
   invitesToRevokeBeforeCreating,
+  newestLiveInvite,
   normalizeInviteCode,
+  previewState,
   resolveClaim,
 } = require("../lib/invites.js");
 
@@ -211,4 +221,238 @@ test("does not spend writes revoking links that are already expired", () => {
     invite({ code: "LIVE000000", createdAtMs: NOW - 1000 }),
   ];
   assert.deepEqual(invitesToRevokeBeforeCreating(stale, NOW), []);
+});
+
+// --- previewInvite -----------------------------------------------------------
+
+test("preview never contradicts claim about the same code", () => {
+  // The highest-value test in this module. `previewInvite` and `claimInvite` answer
+  // the same question through two different functions, and a user meets the
+  // disagreement as the app lying to them: "@mira invited you" followed by "this link
+  // has expired". Reordering a branch in either function fails this.
+  const cases = [
+    { name: "live code, stranger", invite: invite(), caller: "friend", friendship: null },
+    { name: "live code, creator", invite: invite(), caller: "creator", friendship: null },
+    {
+      name: "expired code",
+      invite: invite({ createdAtMs: NOW - INVITE_TTL_MS - 1 }),
+      caller: "friend",
+      friendship: null,
+    },
+    { name: "revoked code", invite: invite({ status: "revoked" }), caller: "friend", friendship: null },
+    {
+      name: "claimed by someone else",
+      invite: invite({ status: "claimed", claimedByUid: "other" }),
+      caller: "friend",
+      friendship: null,
+    },
+    {
+      name: "claimed by the caller",
+      invite: invite({ status: "claimed", claimedByUid: "friend" }),
+      caller: "friend",
+      friendship: null,
+    },
+    { name: "no such code", invite: null, caller: "friend", friendship: null },
+    {
+      name: "live code, already buddies",
+      invite: invite(),
+      caller: "friend",
+      friendship: { status: "accepted", isBlocked: false },
+    },
+    {
+      name: "live code, blocked",
+      invite: invite(),
+      caller: "friend",
+      friendship: { status: "accepted", isBlocked: true },
+    },
+  ];
+
+  // What claim is allowed to answer, given what preview already said out loud.
+  const permitted = {
+    open: ["paired", "blocked", "alreadyBuddies"],
+    claimedByYou: ["paired"],
+    ownInvite: ["ownInvite"],
+    expired: ["expired"],
+    revoked: ["revoked"],
+    claimed: ["claimed"],
+    unknown: ["unknown"],
+  };
+
+  for (const each of cases) {
+    const preview = previewState(each.invite, NOW, each.caller);
+    const claim = resolveClaim({
+      invite: each.invite,
+      nowMs: NOW,
+      callerUid: each.caller,
+      existingFriendship: each.friendship,
+    });
+    assert.ok(
+      permitted[preview].includes(claim.outcome),
+      `${each.name}: preview said "${preview}" but claim answered "${claim.outcome}"`
+    );
+  }
+});
+
+test("preview weighs expiry ahead of who is asking, exactly as the claim does", () => {
+  const lapsed = invite({ createdAtMs: NOW - INVITE_TTL_MS - 1 });
+  assert.equal(previewState(lapsed, NOW, "creator"), "expired");
+});
+
+test("preview tells the person who already claimed a code that it is theirs", () => {
+  const claimed = invite({ status: "claimed", claimedByUid: "friend" });
+  assert.equal(previewState(claimed, NOW, "friend"), "claimedByYou");
+  assert.equal(previewState(claimed, NOW, "stranger"), "claimed");
+});
+
+// --- createInvite helpers ----------------------------------------------------
+
+test("reuses the newest live link so opening the invite screen never kills an old one", () => {
+  const links = [
+    invite({ code: "OLDEST0000", createdAtMs: NOW - 3000 }),
+    invite({ code: "NEWEST0000", createdAtMs: NOW - 1000 }),
+    invite({ code: "MIDDLE0000", createdAtMs: NOW - 2000 }),
+  ];
+  assert.equal(newestLiveInvite(links, NOW).code, "NEWEST0000");
+});
+
+test("a spent or lapsed link is never handed back as reusable", () => {
+  const unusable = [
+    invite({ code: "EXPIRED000", createdAtMs: NOW - INVITE_TTL_MS - 1 }),
+    invite({ code: "CLAIMED000", status: "claimed", claimedByUid: "friend" }),
+    invite({ code: "REVOKED000", status: "revoked" }),
+  ];
+  assert.equal(newestLiveInvite(unusable, NOW), null);
+  assert.equal(newestLiveInvite([], NOW), null);
+});
+
+test("generation records a real buddy, matching the rules' definition of one", () => {
+  // Same predicate as `activeBuddy()` in firestore.rules: accepted, blocked by neither.
+  assert.equal(inviteGeneration([{ status: "accepted", blockedBy: [] }]), 1);
+  assert.equal(inviteGeneration([{ status: "accepted", blockedBy: ["someone"] }]), 0);
+  assert.equal(inviteGeneration([{ status: "pending", blockedBy: [] }]), 0);
+  assert.equal(inviteGeneration([]), 0);
+  assert.equal(
+    inviteGeneration([
+      { status: "pending", blockedBy: [] },
+      { status: "accepted", blockedBy: [] },
+    ]),
+    1
+  );
+});
+
+test("the purge instant is well after expiry, so a lapsed link can still say so", () => {
+  const expiresAtMs = inviteExpiresAt(NOW);
+  assert.equal(inviteTTLPurgeAtMs(expiresAtMs), expiresAtMs + INVITE_RETENTION_AFTER_EXPIRY_MS);
+  assert.ok(inviteTTLPurgeAtMs(expiresAtMs) > expiresAtMs);
+});
+
+test("the share URL is built from the code alone", () => {
+  assert.equal(inviteLinkURL("ABCDE12345"), `${INVITE_LINK_BASE}ABCDE12345`);
+});
+
+// --- the Firestore boundary --------------------------------------------------
+
+test("a written invite reads back as the same record", () => {
+  // Pins the write and read halves of the schema against each other. If a field is
+  // renamed on one side only, this fails instead of production returning `unknown`
+  // for every code ever issued.
+  const fields = inviteDocumentFields({
+    code: "ABCDE12345",
+    creatorUid: "creator",
+    creatorHandle: "mira_sky",
+    createdAtMs: NOW,
+    generation: 1,
+  });
+
+  assert.deepEqual(inviteFromDocument("ABCDE12345", fields), {
+    code: "ABCDE12345",
+    creatorUid: "creator",
+    creatorHandle: "mira_sky",
+    status: "open",
+    createdAtMs: NOW,
+    expiresAtMs: inviteExpiresAt(NOW),
+    claimedByUid: null,
+    generation: 1,
+  });
+});
+
+test("a timestamp where a number belongs is rejected, not coerced", () => {
+  // A coerced Timestamp becomes NaN, and `NaN >= expiresAtMs` is false — so the
+  // invite would read as permanently unexpired. Silent immortality is the one
+  // outcome this validator exists to prevent.
+  const withTimestamp = {
+    ...inviteDocumentFields({
+      code: "ABCDE12345",
+      creatorUid: "creator",
+      creatorHandle: "mira_sky",
+      createdAtMs: NOW,
+      generation: 0,
+    }),
+    expiresAtMs: { _seconds: 1786000000, _nanoseconds: 0 },
+  };
+  assert.equal(inviteFromDocument("ABCDE12345", withTimestamp), null);
+});
+
+test("a malformed invite reads as no such code rather than as an error", () => {
+  const valid = inviteDocumentFields({
+    code: "ABCDE12345",
+    creatorUid: "creator",
+    creatorHandle: "mira_sky",
+    createdAtMs: NOW,
+    generation: 0,
+  });
+
+  assert.equal(inviteFromDocument("ABCDE12345", undefined), null);
+  for (const field of ["creatorUid", "creatorHandle", "status", "createdAtMs", "expiresAtMs", "generation"]) {
+    const missing = { ...valid };
+    delete missing[field];
+    assert.equal(inviteFromDocument("ABCDE12345", missing), null, `missing ${field} must not parse`);
+  }
+  assert.equal(inviteFromDocument("ABCDE12345", { ...valid, status: "pending" }), null);
+  assert.equal(inviteFromDocument("ABCDE12345", { ...valid, generation: 2 }), null);
+  assert.equal(inviteFromDocument("ABCDE12345", { ...valid, claimedByUid: 7 }), null);
+  assert.equal(inviteFromDocument("ABCDE12345", { ...valid, creatorUid: "" }), null);
+});
+
+test("a document whose ID is not already canonical is refused", () => {
+  // Lookup normalizes before reading, so a stored non-canonical ID is unreachable by
+  // any legitimate caller and indicates the document was written by something else.
+  const valid = inviteDocumentFields({
+    code: "ABCDE12345",
+    creatorUid: "creator",
+    creatorHandle: "mira_sky",
+    createdAtMs: NOW,
+    generation: 0,
+  });
+  assert.equal(inviteFromDocument("abcde12345", valid), null);
+  assert.equal(inviteFromDocument("ABCDE-12345", valid), null);
+});
+
+test("an existing pair is read only when the document really describes that pair", () => {
+  const pair = { members: ["creator", "friend"], status: "pending", blockedBy: [] };
+
+  assert.deepEqual(existingFriendshipFrom(pair, "friend", "creator"), {
+    status: "pending",
+    isBlocked: false,
+  });
+  // A document for a different pair means the pair ID was computed wrongly. Reading
+  // it as "no friendship" would create a duplicate.
+  assert.equal(existingFriendshipFrom(pair, "friend", "stranger"), null);
+  assert.equal(existingFriendshipFrom(undefined, "friend", "creator"), null);
+  assert.equal(
+    existingFriendshipFrom({ ...pair, members: ["creator"] }, "friend", "creator"),
+    null
+  );
+});
+
+test("a block counts no matter which side made it", () => {
+  const pair = { members: ["creator", "friend"], status: "accepted" };
+
+  for (const blocker of ["creator", "friend"]) {
+    assert.equal(
+      existingFriendshipFrom({ ...pair, blockedBy: [blocker] }, "friend", "creator").isBlocked,
+      true,
+      `a block by ${blocker} must stop the claim`
+    );
+  }
 });

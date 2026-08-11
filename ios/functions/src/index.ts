@@ -11,6 +11,21 @@ import {
   type RevenueCatSubscriptionEvent,
   type SubscriptionSnapshot,
 } from "./subscriptionState.js";
+import { formatInviteCode } from "./invites.js";
+import {
+  CodeExhaustionError,
+  INVITE_COLLECTION,
+  INVITE_RATE_LIMIT_COLLECTION,
+  MissingHandleError,
+  canonicalCode,
+  claimInvite,
+  codeForLog,
+  consumeRateLimit,
+  createInviteForUser,
+  previewInviteCode,
+  revokeInviteDocument,
+} from "./inviteStore.js";
+import type { RateLimitedAction } from "./rateLimit.js";
 
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 2 });
@@ -50,11 +65,20 @@ export const deleteAccount = onCall(
 
     await bucket.deleteFiles({ prefix: `posts/${uid}/` });
 
-    const [friendships, reportsByReporter, reportsBySubject, handles] = await Promise.all([
+    const [
+      friendships,
+      reportsByReporter,
+      reportsBySubject,
+      handles,
+      createdInvites,
+      claimedInvites,
+    ] = await Promise.all([
       db.collection("friendships").where("members", "array-contains", uid).get(),
       db.collection("reports").where("reporterUid", "==", uid).get(),
       db.collection("reports").where("subjectUid", "==", uid).get(),
       db.collection("handles").where("uid", "==", uid).get(),
+      db.collection(INVITE_COLLECTION).where("creatorUid", "==", uid).get(),
+      db.collection(INVITE_COLLECTION).where("claimedByUid", "==", uid).get(),
     ]);
 
     const writer = db.bulkWriter();
@@ -62,6 +86,37 @@ export const deleteAccount = onCall(
     for (const document of reportsByReporter.docs) writer.delete(document.ref);
     for (const document of reportsBySubject.docs) writer.delete(document.ref);
     for (const document of handles.docs) writer.delete(document.ref);
+
+    // Links this account issued are its own data, and are already dead — a claim
+    // against them resolves `unknown` once this profile is gone. Deleting them is
+    // what stops orphaned invites accumulating.
+    const deletedInviteIDs = new Set(createdInvites.docs.map((document) => document.id));
+    for (const document of createdInvites.docs) writer.delete(document.ref);
+
+    // Links this account *claimed* belong to somebody else. Deleting one would
+    // destroy that person's record and, worse, make the code read as `unknown`
+    // again — i.e. spendable-looking. Redacting the foreign key instead leaves it
+    // `claimed` by nobody, which `resolveClaim` already treats as unusable.
+    for (const document of claimedInvites.docs) {
+      // A document in both sets would be deleted and updated in the same flush, and
+      // the update would fail NOT_FOUND. `ownInvite` should make this impossible;
+      // do not depend on that.
+      if (deletedInviteIDs.has(document.id)) continue;
+      // The first write in this function that can genuinely fail — every other one is
+      // an idempotent delete. NOT_FOUND is not retryable, and an unhandled rejection
+      // here would break the retry-safety this callable documents above. The only
+      // realistic cause is the invite's creator deleting their account concurrently,
+      // whose outcome is the one we wanted anyway.
+      writer.update(document.ref, { claimedByUid: null }).catch((error: unknown) => {
+        logger.warn("Could not redact a claimed invite during account deletion.", {
+          uid,
+          code: codeForLog(document.id),
+          error,
+        });
+      });
+    }
+
+    writer.delete(db.collection(INVITE_RATE_LIMIT_COLLECTION).doc(uid));
     writer.delete(entitlementRef);
     await writer.close();
 
@@ -84,6 +139,135 @@ export const deleteAccount = onCall(
     return { deleted: true };
   }
 );
+
+/**
+ * Buddy invite links.
+ *
+ * Four callables rather than Security Rules, for three reasons that are recorded here
+ * because the rules-only design keeps looking attractive until each one is stated:
+ *
+ * 1. `friendships/{pairId}` is keyed by `sorted(uidA, uidB)`, so at the moment a link
+ *    is created the second UID does not exist and the document cannot be pre-written.
+ * 2. A rule permissive enough for a recipient to read `invites/{code}` is a rule
+ *    permissive enough for anyone signed in to read any code — a Firestore-native
+ *    enumeration oracle with no rate limit in front of it.
+ * 3. Creating the pair and spending the code have to be one atomic act. Split them and
+ *    a client can take the pair without spending the code, or spend it without pairing.
+ *
+ * That third point is the same call `imageDownloadURL` below already made: a predicate
+ * spanning several documents belongs on the server.
+ *
+ * **No callable here ever answers `not-found` or `permission-denied`.** Every outcome
+ * that depends on whether a code exists is a 200 carrying a `state`/`outcome` field,
+ * and every thrown error depends only on caller state that is decided *before* the
+ * code is read. That ordering is what makes "the error path leaks nothing" checkable
+ * by reading the code rather than by auditing message strings.
+ */
+
+/** One budget unit, spent before the code is read so the charge cannot depend on it. */
+async function enforceRateLimit(uid: string, action: RateLimitedAction, nowMs: number): Promise<void> {
+  const allowed = await consumeRateLimit(admin.firestore(), uid, action, nowMs);
+  if (!allowed) {
+    throw new HttpsError("resource-exhausted", "Too many requests. Try again in a little while.");
+  }
+}
+
+function requireCaller(uid: string | undefined): string {
+  if (!uid) throw new HttpsError("unauthenticated", "Sign in first.");
+  return uid;
+}
+
+/**
+ * Issues, or re-issues, the caller's buddy link.
+ *
+ * Returns an existing live link unless `fresh` is true. See `createInviteForUser` for
+ * why minting on every call would silently revoke links users had already sent.
+ */
+export const createInvite = onCall({ enforceAppCheck: true }, async (request) => {
+  const uid = requireCaller(request.auth?.uid);
+  const nowMs = Date.now();
+  await enforceRateLimit(uid, "create", nowMs);
+
+  try {
+    const result = await createInviteForUser(admin.firestore(), uid, nowMs, {
+      fresh: request.data?.fresh === true,
+    });
+    // `formattedCode` is served alongside the raw code so the UI can show a typeable
+    // form without parsing the URL, and so the grouping can change server-side.
+    return { ...result, formattedCode: formatInviteCode(result.code) };
+  } catch (error: unknown) {
+    if (error instanceof MissingHandleError) {
+      throw new HttpsError("failed-precondition", "Choose a handle before inviting a buddy.");
+    }
+    if (error instanceof CodeExhaustionError) {
+      logger.error("Exhausted invite code attempts.", { uid });
+      throw new HttpsError("internal", "Could not create an invite link.");
+    }
+    throw error;
+  }
+});
+
+/**
+ * Reports what a code is, without spending it, so the app can say who invited you
+ * before it acts. Never throws for a code-dependent reason — an unrecognised code is a
+ * 200 with `state: "unknown"`, identical in shape to every other dead-end.
+ */
+export const previewInvite = onCall({ enforceAppCheck: true }, async (request) => {
+  const uid = requireCaller(request.auth?.uid);
+  const nowMs = Date.now();
+  await enforceRateLimit(uid, "preview", nowMs);
+
+  if (typeof request.data?.code !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid request.");
+  }
+  // A string that cannot be a code takes the same path as one that simply is not in
+  // the collection. `normalizeInviteCode` is deterministic and runnable by anyone, so
+  // this leaks nothing either way — it just keeps every code-shaped input on one path.
+  const code = canonicalCode(request.data.code);
+  if (!code) return { state: "unknown" };
+
+  return previewInviteCode(admin.firestore(), code, uid, nowMs);
+});
+
+/** Spends a code and pairs the two people, atomically. See `claimInvite` in the store. */
+export const claimInviteCode = onCall({ enforceAppCheck: true }, async (request) => {
+  const uid = requireCaller(request.auth?.uid);
+  const nowMs = Date.now();
+  await enforceRateLimit(uid, "claim", nowMs);
+
+  if (typeof request.data?.code !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid request.");
+  }
+  const code = canonicalCode(request.data.code);
+  if (!code) return { outcome: "unknown" };
+
+  try {
+    return await claimInvite(admin.firestore(), { code, callerUid: uid, nowMs });
+  } catch (error: unknown) {
+    if (error instanceof MissingHandleError) {
+      throw new HttpsError("failed-precondition", "Choose a handle before joining a buddy.");
+    }
+    logger.error("Invite claim failed.", { uid, code: codeForLog(code), error });
+    throw new HttpsError("internal", "Could not complete the invite.");
+  }
+});
+
+/**
+ * Takes one of the caller's own links out of circulation. Not rate limited: its
+ * response is identical for "no such code" and "not your code", so there is nothing
+ * to enumerate through it.
+ */
+export const revokeInvite = onCall({ enforceAppCheck: true }, async (request) => {
+  const uid = requireCaller(request.auth?.uid);
+
+  if (typeof request.data?.code !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid request.");
+  }
+  const code = canonicalCode(request.data.code);
+  if (!code) return { revoked: false };
+
+  return revokeInviteDocument(admin.firestore(), { code, callerUid: uid });
+});
 
 /**
  * Gives an eligible buddy the bytes for one exact photo.
