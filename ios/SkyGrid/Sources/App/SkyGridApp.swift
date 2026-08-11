@@ -22,6 +22,13 @@ struct SkyGridApp: App {
             .onOpenURL { url in
                 appDelegate.appRouter.handle(url: url)
             }
+            // Universal Links (https://skygrid.my/i/{code}) can arrive as a
+            // `NSUserActivityTypeBrowsingWeb` continuation rather than `onOpenURL` in a
+            // `@UIApplicationDelegateAdaptor` app. `AppRouter.handle(url:)`'s idempotence
+            // guard makes it safe to also register `onOpenURL` above for the same link.
+            .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { userActivity in
+                appDelegate.appRouter.handle(userActivity: userActivity)
+            }
         }
     }
 }

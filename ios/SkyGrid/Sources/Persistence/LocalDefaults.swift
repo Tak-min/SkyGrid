@@ -147,6 +147,15 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "lastCapturedLocalDateID", defaultValue: nil)
     static var lastCapturedLocalDateID: String?
 
+    /// The canonical `InviteCode.value` of a link tapped before `RootView` could act
+    /// on it — cold launch (auth screen, onboarding) can outlive the in-memory
+    /// `AppRouter.pendingInviteCode`, so this is what survives to the next
+    /// `resolvePendingPresentations()` pass. Deliberately not cleared by
+    /// `resetAccountScopedValues()`: which account eventually consumes a tapped link
+    /// is unrelated to which account was previously signed in.
+    @UserDefaultBacked(key: "pendingInviteCode", defaultValue: nil)
+    static var pendingInviteCode: String?
+
     static func resetAccountScopedValues() {
         lastKnownTimeZoneIdentifier = nil
         handle = nil
