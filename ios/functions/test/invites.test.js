@@ -429,7 +429,13 @@ test("a document whose ID is not already canonical is refused", () => {
 });
 
 test("an existing pair is read only when the document really describes that pair", () => {
-  const pair = { members: ["creator", "friend"], status: "pending", blockedBy: [] };
+  const pair = {
+    members: ["creator", "friend"],
+    status: "pending",
+    requestedBy: "creator",
+    createdAt: NOW,
+    blockedBy: [],
+  };
 
   assert.deepEqual(existingFriendshipFrom(pair, "friend", "creator"), {
     status: "pending",
@@ -443,10 +449,39 @@ test("an existing pair is read only when the document really describes that pair
     existingFriendshipFrom({ ...pair, members: ["creator"] }, "friend", "creator"),
     null
   );
+  assert.equal(
+    existingFriendshipFrom({ ...pair, members: ["friend", "creator"] }, "friend", "creator"),
+    null,
+    "members must stay in the order required by the rules"
+  );
+  assert.equal(
+    existingFriendshipFrom({ ...pair, blockedBy: undefined }, "friend", "creator"),
+    null,
+    "activeBuddy() errors when blockedBy is not an array"
+  );
+  assert.equal(
+    existingFriendshipFrom({ ...pair, unexpected: true }, "friend", "creator"),
+    null,
+    "a server promotion must not preserve keys the rules forbid"
+  );
+  assert.equal(
+    existingFriendshipFrom({ ...pair, requestedBy: "stranger" }, "friend", "creator"),
+    null
+  );
+  assert.equal(
+    existingFriendshipFrom({ ...pair, requestedByHandle: "mira_sky" }, "friend", "creator"),
+    null,
+    "the two optional handle fields are an all-or-nothing pair"
+  );
 });
 
 test("a block counts no matter which side made it", () => {
-  const pair = { members: ["creator", "friend"], status: "accepted" };
+  const pair = {
+    members: ["creator", "friend"],
+    status: "accepted",
+    requestedBy: "creator",
+    createdAt: NOW,
+  };
 
   for (const blocker of ["creator", "friend"]) {
     assert.equal(

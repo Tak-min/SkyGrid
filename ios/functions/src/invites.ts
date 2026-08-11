@@ -402,17 +402,54 @@ export function existingFriendshipFrom(
 ): ExistingFriendship | null {
   if (!data) return null;
 
+  const allowedKeys = new Set([
+    "members",
+    "status",
+    "requestedBy",
+    "requestedByHandle",
+    "recipientHandle",
+    "createdAt",
+    "blockedBy",
+  ]);
+  const requiredKeys = ["members", "status", "requestedBy", "createdAt", "blockedBy"];
+  const keys = Object.keys(data);
+  if (keys.some((key) => !allowedKeys.has(key))) return null;
+  if (requiredKeys.some((key) => !Object.hasOwn(data, key))) return null;
+
   const members = data.members;
   if (!Array.isArray(members) || members.length !== 2) return null;
-  if (!members.includes(callerUid) || !members.includes(creatorUid)) return null;
+  const expectedMembers = [callerUid, creatorUid].sort();
+  if (members[0] !== expectedMembers[0] || members[1] !== expectedMembers[1]) return null;
 
   const status = data.status;
   if (status !== "pending" && status !== "accepted") return null;
 
+  const requestedBy = data.requestedBy;
+  if (typeof requestedBy !== "string" || !expectedMembers.includes(requestedBy)) return null;
+
   const blockedBy = data.blockedBy;
+  if (!Array.isArray(blockedBy)) return null;
+  if (blockedBy.some((uid) => typeof uid !== "string" || !expectedMembers.includes(uid))) return null;
+  if (new Set(blockedBy).size !== blockedBy.length) return null;
+
+  const hasRequestedByHandle = Object.hasOwn(data, "requestedByHandle");
+  const hasRecipientHandle = Object.hasOwn(data, "recipientHandle");
+  if (hasRequestedByHandle !== hasRecipientHandle) return null;
+  if (hasRequestedByHandle) {
+    const handlePattern = /^[a-z0-9_]{3,20}$/;
+    if (
+      typeof data.requestedByHandle !== "string"
+      || !handlePattern.test(data.requestedByHandle)
+      || typeof data.recipientHandle !== "string"
+      || !handlePattern.test(data.recipientHandle)
+    ) {
+      return null;
+    }
+  }
+
   // Either side blocking is a block: the invite must not resurrect a pair that one of
   // them deliberately severed, regardless of which one did it.
-  const isBlocked = Array.isArray(blockedBy) && blockedBy.length > 0;
+  const isBlocked = blockedBy.length > 0;
 
   return { status, isBlocked };
 }

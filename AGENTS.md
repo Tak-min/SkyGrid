@@ -56,9 +56,13 @@ export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 - **Never log a whole invite code.** Document IDs are the secrets. Use `codeForLog()`.
 - **Avoid compound Firestore queries** unless you also add the composite index. A missing
   index is invisible in the emulator and fails 100% of the time in production.
+- `ios/firestore.indexes.json` is the source of truth for composite indexes and TTL.
+  The invite `createInvite` query depends on its `invites` composite index; deploy
+  `firestore:indexes` and wait for ACTIVE before deploying the invite callables.
 - **Deploy order is functions → rules → client**, per
   `dev-notes/backend-deploy-sequencing_2026-08-08.md`. A deployed function must be
-  harmless to the already-shipped App Store client.
+  harmless to the already-shipped App Store client. Data/index prerequisites for a
+  function are an explicit pre-step; never infer that an emulator created them.
 - **Export/share-card colours must be non-adaptive literals.** `ImageRenderer` resolves
   trait-adaptive colours against an unpinned trait environment, so an adaptive token makes
   the exported image depend on the exporting device's appearance. See

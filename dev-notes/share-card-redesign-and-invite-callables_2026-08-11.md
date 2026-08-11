@@ -161,8 +161,9 @@ rules はこのコレクションの唯一の書かれたスキーマ。
 - **`writer.update()` はこの関数で初めて「本当に失敗しうる書き込み」。** 既存の書き込みは
   全て冪等な delete。`NOT_FOUND` はリトライ不可なので、未処理だと
   「部分的に完了した削除のリトライは成功しなければならない（500にしない）」という
-  この callable の文書化された性質を破る。`.catch()` + `logger.warn` を付けた。
-  握りつぶしではない: 現実的な原因は作成者の同時アカウント削除だけで、結果は望んだものと同一。
+  この callable の文書化された性質を破る。**握りつぶすのは `NOT_FOUND` だけ**（作成者の
+  同時削除で、結果は既に望んだものと同一）。timeout 等は Auth を残したまま再試行できるよう
+  BulkWriter の drain 後に再throwする。
 
 ### 2-4. Gotcha（実際に踏んだもの）
 
@@ -177,10 +178,11 @@ rules はこのコレクションの唯一の書かれたスキーマ。
   次のエージェントは、この export を先に打つこと。**
 - **`test/emulator/` をサブディレクトリにしたのは意図的。** `npm test` のグロブは
   `test/*.test.js` なので、この階層なら**通常のテスト実行がエミュレータを要求しない**。
-- **複合クエリ（`creatorUid ==` かつ `status ==`）を避けた。** 設計書は使う想定だったが、
-  **複合インデックス欠如はエミュレータでは検出できず、本番でのみ 100% 失敗する**
-  （`FAILED_PRECONDITION`）。`creatorUid` だけで引いてメモリ側で絞る形にした。
-  上限3本なので結果は数件。この判断で本番専用の失敗モードが1つ消えた。
+- **当初の `creatorUid` 単独＋無順序 `limit(50)` は撤回した。** TTLまで37日保持するため、
+  `fresh` を多用すれば50件を超え、任意の50件に生きた3本が含まれないことがある。現在は
+  `creatorUid == uid && status == open && expiresAtMs > now` だけを取得する。必要な複合インデックスと
+  TTL 2本は `firestore.indexes.json` に正本化した。**インデックスが ACTIVE になる前に Functions を
+  出してはいけない。**
 - **`batch.create` を使う（`set` ではない）。** 50bit の衝突は約10億分の1だが、`set` だと
   **他人の生きた招待を上書きして2人に同じコードを渡す**。`create` なら `ALREADY_EXISTS`
   （gRPC status 6）でリトライできる。3回で打ち切り（RNG が壊れている場合の無限ループ回避）。
@@ -201,7 +203,7 @@ rules はこのコレクションの唯一の書かれたスキーマ。
 
 ```
 functions:   45 passed / 0 failed   (npm test — Firebase 不要)
-emulator:    14 passed / 0 failed   (npm run test:emulator — 要 Java PATH)
+emulator:    18 passed / 0 failed   (npm run test:emulator — 要 Java PATH)
 rules-tests: 32 passed / 0 failed   (npm run test:emulator — 要 Java PATH)
 iOS:         ContactSheetLayoutTests 10 passed / 0 failed
 ```
@@ -214,22 +216,45 @@ pending の昇格が重複を作らない／ブロック時にコードが焼か
 作成者削除後の claim が中途半端なペアを作らない／再利用と `fresh` の挙動／
 revoke の応答同一性／レート制限の実挙動／`generation` の記録。
 
+### 2-7. Step 3 直前監査で追加修正（2026-08-11）
+
+本番状態とコードを再照合した結果、デプロイ前に次を追加修正した。
+
+- `claimInviteCode` は caller の handle を**招待コードより先に**読む。旧順序は handle 未設定UIDに
+  「実在コードだけ failed-precondition、未知コードは unknown」という存在オラクルを作っていた。
+- 既存 friendship は members順序・キー集合・`blockedBy`・requestedBy・handleペアを fail-closed
+  検証する。壊れた文書は上書きもコード消費もせず、公開応答は `unknown`、ログはコードも pairId も
+  含まない診断だけにした。
+- preview と claim は creator profile の存在・handle一致・`deletionRequestedAt` 不在を共通条件に
+  した。削除中/孤児 invite が `preview=open → claim=unknown` になる不一致を塞いだ。
+- raw Firestore error は document path に完全コードを含み得るためログへ渡さず、status codeだけを
+  記録する。
+- 新規4 callableだけ `asia-northeast1`（Firestore と同居）に固定。既存3 Function は
+  `us-central1` のまま変更しない。公開 callable 名は最新実装の **`claimInviteCode`** を正本とする。
+- `firestore.indexes.json` に live-invite query の複合indexと、`invites.expireAt` /
+  `inviteRateLimits.expireAt` のTTLを正本化した。
+
+最新の再検証: functions 45/45、Firestore emulator **18/18**、rules 32/32、TypeScript 0 error、
+JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が `us-central1`。
+
 ---
 
 ## 3. 未実施・次にやること
 
-**Step 2 は完了。次は Step 3（functions デプロイ）だが、これは破壊的操作なので依頼者確認待ち。**
+**Step 2 とデプロイ前hardeningは完了。次は本番書き込みなので依頼者確認待ち。**
 
-デプロイ順序は `backend-deploy-sequencing_2026-08-08.md` の functions → rules → client。
-Step 3 の functions デプロイは**純粋追加なので出荷済み 1.0.1 クライアントに無害**
-（1.0.1 はこれらの callable を一切呼ばない）。
+大枠の functions → rules → client は維持するが、Step 3 は次の個別ゲートに分ける。
+
+1. `firestore:indexes`（複合index＋TTL 2本）をdeployし、全て ACTIVE を確認
+2. 新規4本だけを名前指定でdeploy（既存3本、rules、Workerは触らない）
+3. `deleteAccount` だけを別targetでdeploy（invite client公開前には必須）
+
+新規4本は出荷済み 1.0.1 が呼ばないので後方互換だが、`firebase deploy --only functions` は
+既存3本まで新revisionにするため**使わない**。`--force` も使わない。
 
 デプロイ後すぐに確認すべきこと:
-1. **本番で `createInvite` を1回呼ぶ。** インデックス関連の失敗は本番でしか出ない。
-2. **`expireAt` の TTL ポリシーは `firebase deploy` では作られない。**
-   `firebase.json` に TTL/インデックス設定が無いので、コンソールか
-   `gcloud firestore fields ttls update` で手動作成が必要。忘れると `invites` と
-   `inviteRateLimits` が無限に増える（静かに、やがて課金と `deleteAccount` の遅延として）。
+1. `firebase functions:list` で新規4本だけ ACTIVE、region/runtime/maxInstancesを確認。
+2. App Check付き実機で `createInvite` を呼ぶ。シミュレータは403になるため判定に使わない。
 3. **課金アラート。** 匿名認証なので UID は使い捨て可能＝レート制限は「身元の上限」ではなく
    「コストの上限」。実際のバックストップは Cloud Billing の予算アラート。
 

@@ -13,9 +13,11 @@ import {
 } from "./subscriptionState.js";
 import { formatInviteCode } from "./invites.js";
 import {
+  AccountUnavailableError,
   CodeExhaustionError,
   INVITE_COLLECTION,
   INVITE_RATE_LIMIT_COLLECTION,
+  MalformedFriendshipError,
   MissingHandleError,
   canonicalCode,
   claimInvite,
@@ -30,6 +32,7 @@ import type { RateLimitedAction } from "./rateLimit.js";
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 2 });
 const revenueCatWebhookAuthorization = defineSecret("REVENUECAT_WEBHOOK_AUTHORIZATION");
+const inviteCallableOptions = { enforceAppCheck: true, region: "asia-northeast1" } as const;
 
 /**
  * Deletes one authenticated account. The callable deliberately accepts no UID:
@@ -82,6 +85,7 @@ export const deleteAccount = onCall(
     ]);
 
     const writer = db.bulkWriter();
+    const inviteRedactionFailures: unknown[] = [];
     for (const document of friendships.docs) writer.delete(document.ref);
     for (const document of reportsByReporter.docs) writer.delete(document.ref);
     for (const document of reportsBySubject.docs) writer.delete(document.ref);
@@ -103,22 +107,32 @@ export const deleteAccount = onCall(
       // do not depend on that.
       if (deletedInviteIDs.has(document.id)) continue;
       // The first write in this function that can genuinely fail — every other one is
-      // an idempotent delete. NOT_FOUND is not retryable, and an unhandled rejection
-      // here would break the retry-safety this callable documents above. The only
-      // realistic cause is the invite's creator deleting their account concurrently,
-      // whose outcome is the one we wanted anyway.
+      // an idempotent delete. NOT_FOUND means the invite's creator deleted it
+      // concurrently, which is already the desired result. Any other failure is kept
+      // and rethrown after BulkWriter drains so Auth remains available for a retry.
       writer.update(document.ref, { claimedByUid: null }).catch((error: unknown) => {
-        logger.warn("Could not redact a claimed invite during account deletion.", {
-          uid,
-          code: codeForLog(document.id),
-          error,
-        });
+        if (isNotFoundError(error)) {
+          logger.warn("Claimed invite disappeared during account deletion.", {
+            uid,
+            code: codeForLog(document.id),
+          });
+          return;
+        }
+        inviteRedactionFailures.push(error);
       });
     }
 
     writer.delete(db.collection(INVITE_RATE_LIMIT_COLLECTION).doc(uid));
     writer.delete(entitlementRef);
     await writer.close();
+    if (inviteRedactionFailures.length > 0) {
+      const error = inviteRedactionFailures[0];
+      logger.error("Could not redact claimed invites during account deletion.", {
+        uid,
+        errorCode: errorCodeForLog(error),
+      });
+      throw error;
+    }
 
     // recursiveDelete removes nested post/device documents; deleting only the parent
     // would leave those subcollections intact.
@@ -178,12 +192,26 @@ function requireCaller(uid: string | undefined): string {
 }
 
 /**
+ * Firestore error messages can embed a full document path, which for `invites` would
+ * put the secret code into Cloud Logging. Keep only the machine-readable status.
+ */
+function errorCodeForLog(error: unknown): string | number {
+  const code = (error as { code?: unknown })?.code;
+  return typeof code === "string" || typeof code === "number" ? code : "unknown";
+}
+
+function isNotFoundError(error: unknown): boolean {
+  const code = (error as { code?: unknown })?.code;
+  return code === 5 || code === "not-found";
+}
+
+/**
  * Issues, or re-issues, the caller's buddy link.
  *
  * Returns an existing live link unless `fresh` is true. See `createInviteForUser` for
  * why minting on every call would silently revoke links users had already sent.
  */
-export const createInvite = onCall({ enforceAppCheck: true }, async (request) => {
+export const createInvite = onCall(inviteCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
   const nowMs = Date.now();
   await enforceRateLimit(uid, "create", nowMs);
@@ -196,6 +224,9 @@ export const createInvite = onCall({ enforceAppCheck: true }, async (request) =>
     // form without parsing the URL, and so the grouping can change server-side.
     return { ...result, formattedCode: formatInviteCode(result.code) };
   } catch (error: unknown) {
+    if (error instanceof AccountUnavailableError) {
+      throw new HttpsError("failed-precondition", "This account is being deleted.");
+    }
     if (error instanceof MissingHandleError) {
       throw new HttpsError("failed-precondition", "Choose a handle before inviting a buddy.");
     }
@@ -212,7 +243,7 @@ export const createInvite = onCall({ enforceAppCheck: true }, async (request) =>
  * before it acts. Never throws for a code-dependent reason — an unrecognised code is a
  * 200 with `state: "unknown"`, identical in shape to every other dead-end.
  */
-export const previewInvite = onCall({ enforceAppCheck: true }, async (request) => {
+export const previewInvite = onCall(inviteCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
   const nowMs = Date.now();
   await enforceRateLimit(uid, "preview", nowMs);
@@ -230,7 +261,7 @@ export const previewInvite = onCall({ enforceAppCheck: true }, async (request) =
 });
 
 /** Spends a code and pairs the two people, atomically. See `claimInvite` in the store. */
-export const claimInviteCode = onCall({ enforceAppCheck: true }, async (request) => {
+export const claimInviteCode = onCall(inviteCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
   const nowMs = Date.now();
   await enforceRateLimit(uid, "claim", nowMs);
@@ -244,10 +275,24 @@ export const claimInviteCode = onCall({ enforceAppCheck: true }, async (request)
   try {
     return await claimInvite(admin.firestore(), { code, callerUid: uid, nowMs });
   } catch (error: unknown) {
+    if (error instanceof AccountUnavailableError) {
+      throw new HttpsError("failed-precondition", "This account is being deleted.");
+    }
     if (error instanceof MissingHandleError) {
       throw new HttpsError("failed-precondition", "Choose a handle before joining a buddy.");
     }
-    logger.error("Invite claim failed.", { uid, code: codeForLog(code), error });
+    if (error instanceof MalformedFriendshipError) {
+      logger.error("Malformed friendship blocked an invite claim.", {
+        uid,
+        category: "malformed_friendship",
+      });
+      return { outcome: "unknown" as const };
+    }
+    logger.error("Invite claim failed.", {
+      uid,
+      code: codeForLog(code),
+      errorCode: errorCodeForLog(error),
+    });
     throw new HttpsError("internal", "Could not complete the invite.");
   }
 });
@@ -257,7 +302,7 @@ export const claimInviteCode = onCall({ enforceAppCheck: true }, async (request)
  * response is identical for "no such code" and "not your code", so there is nothing
  * to enumerate through it.
  */
-export const revokeInvite = onCall({ enforceAppCheck: true }, async (request) => {
+export const revokeInvite = onCall(inviteCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
 
   if (typeof request.data?.code !== "string") {

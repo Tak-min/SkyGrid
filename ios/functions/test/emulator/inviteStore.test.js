@@ -3,9 +3,13 @@ const assert = require("node:assert/strict");
 const admin = require("firebase-admin");
 
 const {
+  AccountUnavailableError,
+  MalformedFriendshipError,
+  MissingHandleError,
   claimInvite,
   consumeRateLimit,
   createInviteForUser,
+  previewInviteCode,
   revokeInviteDocument,
 } = require("../../lib/inviteStore.js");
 const { INVITE_TTL_MS } = require("../../lib/invites.js");
@@ -161,10 +165,91 @@ test("a claim against a deleted creator is a dead link, not a half-written pair"
   const created = await createInviteForUser(db, "creator", NOW);
   await db.collection("users").doc("creator").delete();
 
+  const preview = await previewInviteCode(db, created.code, "claimer", NOW);
   const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
 
+  assert.deepEqual(preview, { state: "unknown" });
   assert.equal(result.outcome, "unknown");
   assert.equal((await db.collection("friendships").get()).size, 0);
+});
+
+test("account deletion markers stop create and claim without exposing code existence", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  const created = await createInviteForUser(db, "creator", NOW);
+
+  await db.collection("users").doc("creator").update({
+    deletionRequestedAt: admin.firestore.Timestamp.fromMillis(NOW),
+  });
+  assert.deepEqual(await previewInviteCode(db, created.code, "claimer", NOW), {
+    state: "unknown",
+  });
+  assert.deepEqual(
+    await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW }),
+    { outcome: "unknown" }
+  );
+  await assert.rejects(
+    () => createInviteForUser(db, "creator", NOW),
+    AccountUnavailableError
+  );
+
+  await db.collection("users").doc("claimer").update({
+    deletionRequestedAt: admin.firestore.Timestamp.fromMillis(NOW),
+  });
+  for (const code of [created.code, "ZZZZZZZZZZ"]) {
+    await assert.rejects(
+      () => claimInvite(db, { code, callerUid: "claimer", nowMs: NOW }),
+      AccountUnavailableError
+    );
+  }
+});
+
+test("claim validates caller state before looking up either a real or unknown code", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await db.collection("users").doc("nameless").set({ displayName: "Sky Grid member" });
+
+  const created = await createInviteForUser(db, "creator", NOW);
+
+  // These must take the same caller-state error path. If the unknown code returns an
+  // outcome instead, a caller with no handle can use the difference to enumerate
+  // which codes exist despite the callable's no-code-dependent-errors contract.
+  await assert.rejects(
+    () => claimInvite(db, { code: created.code, callerUid: "nameless", nowMs: NOW }),
+    MissingHandleError
+  );
+  await assert.rejects(
+    () => claimInvite(db, { code: "ZZZZZZZZZZ", callerUid: "nameless", nowMs: NOW }),
+    MissingHandleError
+  );
+});
+
+test("a malformed existing pair is diagnosed and never overwritten", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  const malformedPair = {
+    members: ["creator", "somebody_else"],
+    status: "accepted",
+    requestedBy: "creator",
+    createdAt: admin.firestore.Timestamp.fromMillis(NOW - 1000),
+    blockedBy: [],
+  };
+  await db.collection("friendships").doc("claimer_creator").set(malformedPair);
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  // The callable shell catches this typed failure, emits a diagnostic containing no
+  // invite code, and returns `{ outcome: "unknown" }` instead of exposing a 500.
+  await assert.rejects(
+    () => claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW }),
+    MalformedFriendshipError
+  );
+  assert.deepEqual(
+    (await db.collection("friendships").doc("claimer_creator").get()).data(),
+    malformedPair
+  );
+  assert.equal((await db.collection("invites").doc(created.code).get()).data().status, "open");
 });
 
 test("opening the invite screen again hands back the same link instead of killing it", async () => {
@@ -194,6 +279,36 @@ test("asking for a fresh link mints one and keeps the cap by revoking the oldest
   );
   // MAX_OPEN_INVITES_PER_USER is 3: the fourth mint retires the first.
   assert.deepEqual(statuses, ["revoked", "open", "open", "open"]);
+});
+
+test("more than fifty retained records cannot hide live links from the cap", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+
+  const batch = db.batch();
+  for (let index = 0; index < 60; index += 1) {
+    const code = String(index).padStart(10, "0");
+    batch.set(db.collection("invites").doc(code), {
+      code,
+      creatorUid: "creator",
+      creatorHandle: "mira_sky",
+      status: "open",
+      createdAtMs: NOW - (60 - index) * 1000,
+      expiresAtMs: NOW + INVITE_TTL_MS,
+      expireAt: admin.firestore.Timestamp.fromMillis(NOW + 31 * 24 * 60 * 60 * 1000),
+      claimedByUid: null,
+      claimedAtMs: null,
+      generation: 0,
+    });
+  }
+  await batch.commit();
+
+  const created = await createInviteForUser(db, "creator", NOW, { fresh: true });
+  const all = await db.collection("invites").where("creatorUid", "==", "creator").get();
+  const live = all.docs.filter((document) => document.data().status === "open");
+
+  assert.equal(live.length, 3);
+  assert.equal(live.some((document) => document.id === created.code), true);
 });
 
 test("an expired link is not handed back as reusable", async () => {

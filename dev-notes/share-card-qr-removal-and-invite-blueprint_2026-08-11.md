@@ -103,7 +103,7 @@ iOS ならスクショ → 写真アプリ → Live Text で一応たどれる�
 ### 4-3. ビルド順序（`backend-deploy-sequencing_2026-08-08.md` の functions → rules → client に従う）
 
 1. `functions/src/invites.ts` + `test/invites.test.js`（純粋関数、Firebase不要で `npm test`）
-2. `functions/src/index.ts` に4 callable（`createInvite`/`previewInvite`/`claimInvite`/`revokeInvite`）＋ `deleteAccount` に invites 掃除を追加（**現状これが無いと孤児招待が残る**）
+2. `functions/src/index.ts` に4 callable（`createInvite`/`previewInvite`/`claimInviteCode`/`revokeInvite`）＋ `deleteAccount` に invites 掃除を追加（**現状これが無いと孤児招待が残る**）
 3. functions デプロイ（純粋追加＝旧クライアントに無害）
 4. `firestore.rules` に invites deny ＋ `rules-tests/test.js`
 5. rules デプロイ

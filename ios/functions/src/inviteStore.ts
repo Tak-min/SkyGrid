@@ -139,8 +139,22 @@ export async function previewInviteCode(
 ): Promise<PreviewResult> {
   const invite = await readInvite(db, code);
   const state = previewState(invite, nowMs, callerUid);
+  if (!invite) return { state };
 
-  if (!invite || state === "expired" || state === "claimed" || state === "revoked") {
+  // A cached handle in an invite is not proof that its creator still has an account.
+  // Claim validates the live profile before pairing, so preview must do the same or
+  // an orphan can say "open" and immediately claim as "unknown".
+  const creator = await db.collection(USERS).doc(invite.creatorUid).get();
+  const creatorData = creator.data();
+  if (
+    !creator.exists
+    || Object.hasOwn(creatorData ?? {}, "deletionRequestedAt")
+    || creatorData?.handle !== invite.creatorHandle
+  ) {
+    return { state: "unknown" };
+  }
+
+  if (state === "expired" || state === "claimed" || state === "revoked") {
     return { state };
   }
   return { state, creatorHandle: invite.creatorHandle, expiresAtMs: invite.expiresAtMs };
@@ -161,8 +175,12 @@ export interface CreateInviteResult {
 
 /** The creator has no profile or no handle — `previewInvite` would have nothing to show. */
 export class MissingHandleError extends Error {}
+/** The authenticated profile has begun deletion and must not create more durable state. */
+export class AccountUnavailableError extends Error {}
 /** The RNG produced `MAX_CODE_ATTEMPTS` colliding codes. Infrastructure, not user state. */
 export class CodeExhaustionError extends Error {}
+/** Existing data at the deterministic pair ID does not satisfy the friendship schema. */
+export class MalformedFriendshipError extends Error {}
 
 /**
  * Returns the caller's live invite link, minting one only when needed.
@@ -181,14 +199,22 @@ export async function createInviteForUser(
   const [user, friendships, ownInvites] = await Promise.all([
     db.collection(USERS).doc(uid).get(),
     db.collection(FRIENDSHIPS).where("members", "array-contains", uid).get(),
-    // Deliberately filtered on `creatorUid` alone and narrowed in memory. Adding
-    // `status == "open"` would make this a compound query, and a missing composite
-    // index is invisible in the emulator and fails 100% of the time in production.
-    // The cap keeps the result to a handful of documents either way.
-    db.collection(INVITES).where("creatorUid", "==", uid).limit(50).get(),
+    // Fetch exactly the still-live candidates. The previous un-ordered limit(50)
+    // could omit all three live links once retained claimed/revoked documents pushed
+    // a creator over 50 records. This query's index is source-controlled in
+    // firestore.indexes.json and must be ACTIVE before these functions are deployed.
+    db.collection(INVITES)
+      .where("creatorUid", "==", uid)
+      .where("status", "==", "open")
+      .where("expiresAtMs", ">", nowMs)
+      .get(),
   ]);
 
-  const handle = user.data()?.handle;
+  const userData = user.data();
+  if (Object.hasOwn(userData ?? {}, "deletionRequestedAt")) {
+    throw new AccountUnavailableError("The caller is deleting their account.");
+  }
+  const handle = userData?.handle;
   if (!user.exists || typeof handle !== "string" || handle.length === 0) {
     throw new MissingHandleError("The caller has no handle.");
   }
@@ -299,6 +325,19 @@ export async function claimInvite(
   const { code, callerUid, nowMs } = input;
 
   return db.runTransaction(async (transaction) => {
+    // Caller-state failures must be decided before the invite is read. Reversing
+    // these reads would let a caller with no handle distinguish a real code
+    // (`MissingHandleError`) from an unknown one (`outcome: "unknown"`).
+    const callerSnapshot = await transaction.get(db.collection(USERS).doc(callerUid));
+    const callerData = callerSnapshot.data();
+    if (Object.hasOwn(callerData ?? {}, "deletionRequestedAt")) {
+      throw new AccountUnavailableError("The caller is deleting their account.");
+    }
+    const callerHandle = callerData?.handle;
+    if (!callerSnapshot.exists || typeof callerHandle !== "string" || callerHandle.length === 0) {
+      throw new MissingHandleError("The caller has no handle.");
+    }
+
     const inviteReference = db.collection(INVITES).doc(code);
     const inviteSnapshot = await transaction.get(inviteReference);
     const invite = inviteFromDocument(inviteSnapshot.id, inviteSnapshot.data());
@@ -308,33 +347,32 @@ export async function claimInvite(
     if (!invite) return { outcome: "unknown" as const };
 
     const pairId = pairID(invite.creatorUid, callerUid);
-    const [friendshipSnapshot, callerSnapshot, creatorSnapshot] = await transaction.getAll(
+    const [friendshipSnapshot, creatorSnapshot] = await transaction.getAll(
       db.collection(FRIENDSHIPS).doc(pairId),
-      db.collection(USERS).doc(callerUid),
       db.collection(USERS).doc(invite.creatorUid)
     );
-
-    const callerHandle = callerSnapshot.data()?.handle;
-    if (!callerSnapshot.exists || typeof callerHandle !== "string" || callerHandle.length === 0) {
-      throw new MissingHandleError("The caller has no handle.");
-    }
 
     // The creator deleted their account, so the link is genuinely dead. Reported as
     // `unknown` rather than a distinct state: it is indistinguishable from a bad code
     // from the claimer's side, and it keeps the rules' `exists(users/{other})`
     // constraint satisfied.
     const creatorHandle = creatorSnapshot.data()?.handle;
-    if (!creatorSnapshot.exists || typeof creatorHandle !== "string" || creatorHandle.length === 0) {
+    if (
+      !creatorSnapshot.exists
+      || Object.hasOwn(creatorSnapshot.data() ?? {}, "deletionRequestedAt")
+      || creatorHandle !== invite.creatorHandle
+    ) {
       return { outcome: "unknown" as const };
     }
 
     const existingFriendship = friendshipSnapshot.exists
       ? existingFriendshipFrom(friendshipSnapshot.data(), callerUid, invite.creatorUid)
       : null;
-    // An existing document that does not parse is a bug, not a user state. Failing
-    // loudly beats writing a second pair on top of it.
+    // An existing document that does not parse is a bug, not a user state. Never
+    // write a second pair on top of it. The callable boundary maps this typed error
+    // to the same public `unknown` shape while recording a code-free diagnostic.
     if (friendshipSnapshot.exists && !existingFriendship) {
-      throw new Error(`friendships/${pairId} exists but does not describe this pair`);
+      throw new MalformedFriendshipError("Existing friendship data is malformed.");
     }
 
     const decision = resolveClaim({ invite, nowMs, callerUid, existingFriendship });
