@@ -203,7 +203,7 @@ rules はこのコレクションの唯一の書かれたスキーマ。
 
 ```
 functions:   45 passed / 0 failed   (npm test — Firebase 不要)
-emulator:    18 passed / 0 failed   (npm run test:emulator — 要 Java PATH)
+emulator:    19 passed / 0 failed   (npm run test:emulator — 要 Java PATH)
 rules-tests: 32 passed / 0 failed   (npm run test:emulator — 要 Java PATH)
 iOS:         ContactSheetLayoutTests 10 passed / 0 failed
 ```
@@ -227,6 +227,8 @@ revoke の応答同一性／レート制限の実挙動／`generation` の記録
   含まない診断だけにした。
 - preview と claim は creator profile の存在・handle一致・`deletionRequestedAt` 不在を共通条件に
   した。削除中/孤児 invite が `preview=open → claim=unknown` になる不一致を塞いだ。
+- create のprofile検査・live一覧・revoke・createを同一transactionへ移した。これにより
+  account削除後の孤児作成と、同時claim済みコードをfresh発行側がrevokedへ戻す競合を塞いだ。
 - raw Firestore error は document path に完全コードを含み得るためログへ渡さず、status codeだけを
   記録する。
 - 新規4 callableだけ `asia-northeast1`（Firestore と同居）に固定。既存3 Function は
@@ -234,7 +236,7 @@ revoke の応答同一性／レート制限の実挙動／`generation` の記録
 - `firestore.indexes.json` に live-invite query の複合indexと、`invites.expireAt` /
   `inviteRateLimits.expireAt` のTTLを正本化した。
 
-最新の再検証: functions 45/45、Firestore emulator **18/18**、rules 32/32、TypeScript 0 error、
+最新の再検証: functions 45/45、Firestore emulator **19/19**、rules 32/32、TypeScript 0 error、
 JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が `us-central1`。
 
 ---

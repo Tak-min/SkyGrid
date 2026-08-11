@@ -281,6 +281,36 @@ test("asking for a fresh link mints one and keeps the cap by revoking the oldest
   assert.deepEqual(statuses, ["revoked", "open", "open", "open"]);
 });
 
+test("fresh creation cannot downgrade a simultaneously claimed invite", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+
+  const links = [];
+  for (let index = 0; index < 3; index += 1) {
+    links.push(await createInviteForUser(db, "creator", NOW + index, { fresh: true }));
+  }
+
+  const [claimResult] = await Promise.all([
+    claimInvite(db, { code: links[0].code, callerUid: "claimer", nowMs: NOW + 1000 }),
+    createInviteForUser(db, "creator", NOW + 1000, { fresh: true }),
+  ]);
+
+  const oldest = (await db.collection("invites").doc(links[0].code).get()).data();
+  const friendships = await db.collection("friendships").get();
+  if (claimResult.outcome === "paired") {
+    assert.equal(oldest.status, "claimed", "a successful claim must never be downgraded");
+    assert.equal(friendships.size, 1);
+  } else {
+    assert.equal(claimResult.outcome, "revoked");
+    assert.equal(oldest.status, "revoked");
+    assert.equal(friendships.size, 0);
+  }
+
+  const all = await db.collection("invites").where("creatorUid", "==", "creator").get();
+  assert.equal(all.docs.filter((document) => document.data().status === "open").length, 3);
+});
+
 test("more than fifty retained records cannot hide live links from the cap", async () => {
   await reset();
   await makeUser("creator", "mira_sky");

@@ -196,86 +196,87 @@ export async function createInviteForUser(
   nowMs: number,
   options: { fresh?: boolean } = {}
 ): Promise<CreateInviteResult> {
-  const [user, friendships, ownInvites] = await Promise.all([
-    db.collection(USERS).doc(uid).get(),
-    db.collection(FRIENDSHIPS).where("members", "array-contains", uid).get(),
-    // Fetch exactly the still-live candidates. The previous un-ordered limit(50)
-    // could omit all three live links once retained claimed/revoked documents pushed
-    // a creator over 50 records. This query's index is source-controlled in
-    // firestore.indexes.json and must be ACTIVE before these functions are deployed.
-    db.collection(INVITES)
-      .where("creatorUid", "==", uid)
-      .where("status", "==", "open")
-      .where("expiresAtMs", ">", nowMs)
-      .get(),
-  ]);
-
-  const userData = user.data();
-  if (Object.hasOwn(userData ?? {}, "deletionRequestedAt")) {
-    throw new AccountUnavailableError("The caller is deleting their account.");
-  }
-  const handle = userData?.handle;
-  if (!user.exists || typeof handle !== "string" || handle.length === 0) {
-    throw new MissingHandleError("The caller has no handle.");
-  }
-
-  const own = ownInvites.docs
-    .map((document) => inviteFromDocument(document.id, document.data()))
-    .filter((invite): invite is InviteRecord => invite !== null);
-
-  if (options.fresh !== true) {
-    const live = newestLiveInvite(own, nowMs);
-    if (live) {
-      return {
-        code: live.code,
-        expiresAtMs: live.expiresAtMs,
-        url: inviteLinkURL(live.code, INVITE_LINK_BASE),
-        reused: true,
-      };
-    }
-  }
-
-  const summaries: FriendshipSummary[] = friendships.docs.map((document) => {
-    const data = document.data();
-    return {
-      status: typeof data.status === "string" ? data.status : "",
-      blockedBy: Array.isArray(data.blockedBy) ? data.blockedBy : [],
-    };
-  });
-  const generation = inviteGeneration(summaries);
-  const toRevoke = invitesToRevokeBeforeCreating(own, nowMs);
-
   for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt += 1) {
     const code = generateInviteCode((byteCount) => randomBytes(byteCount));
-    const fields = inviteDocumentFields({
-      code,
-      creatorUid: uid,
-      creatorHandle: handle,
-      createdAtMs: nowMs,
-      generation,
-    });
-
-    const batch = db.batch();
-    // Re-applied on every attempt, which is safe because `revoked` is a constant
-    // rather than an increment.
-    for (const stale of toRevoke) {
-      batch.update(db.collection(INVITES).doc(stale.code), { status: "revoked" });
-    }
-    // `create`, never `set`: on the ~1-in-a-billion collision, `set` would hand two
-    // people the same code and overwrite a stranger's live invite.
-    batch.create(db.collection(INVITES).doc(code), {
-      ...fields,
-      expireAt: Timestamp.fromMillis(inviteTTLPurgeAtMs(fields.expiresAtMs)),
-    });
-
     try {
-      await batch.commit();
-      return {
-        code,
-        expiresAtMs: fields.expiresAtMs,
-        url: inviteLinkURL(code, INVITE_LINK_BASE),
-        reused: false,
-      };
+      return await db.runTransaction(async (transaction) => {
+        // Lock the profile before reading invite state. If account deletion wins,
+        // this retry sees its marker; if creation wins, deleteAccount's later query
+        // sees and removes the invite. No invite can land after cleanup unnoticed.
+        const user = await transaction.get(db.collection(USERS).doc(uid));
+        const userData = user.data();
+        if (Object.hasOwn(userData ?? {}, "deletionRequestedAt")) {
+          throw new AccountUnavailableError("The caller is deleting their account.");
+        }
+        const handle = userData?.handle;
+        if (!user.exists || typeof handle !== "string" || handle.length === 0) {
+          throw new MissingHandleError("The caller has no handle.");
+        }
+
+        const [friendships, ownInvites] = await Promise.all([
+          transaction.get(db.collection(FRIENDSHIPS).where("members", "array-contains", uid)),
+          // Fetch exactly the still-live candidates. The previous un-ordered limit(50)
+          // could omit all three live links once retained claimed/revoked documents
+          // pushed a creator over 50 records. This query's index is source-controlled
+          // in firestore.indexes.json and must be ACTIVE before deployment.
+          transaction.get(
+            db.collection(INVITES)
+              .where("creatorUid", "==", uid)
+              .where("status", "==", "open")
+              .where("expiresAtMs", ">", nowMs)
+          ),
+        ]);
+
+        const own = ownInvites.docs
+          .map((document) => inviteFromDocument(document.id, document.data()))
+          .filter((invite): invite is InviteRecord => invite !== null);
+
+        if (options.fresh !== true) {
+          const live = newestLiveInvite(own, nowMs);
+          if (live) {
+            return {
+              code: live.code,
+              expiresAtMs: live.expiresAtMs,
+              url: inviteLinkURL(live.code, INVITE_LINK_BASE),
+              reused: true,
+            };
+          }
+        }
+
+        const summaries: FriendshipSummary[] = friendships.docs.map((document) => {
+          const data = document.data();
+          return {
+            status: typeof data.status === "string" ? data.status : "",
+            blockedBy: Array.isArray(data.blockedBy) ? data.blockedBy : [],
+          };
+        });
+        const fields = inviteDocumentFields({
+          code,
+          creatorUid: uid,
+          creatorHandle: handle,
+          createdAtMs: nowMs,
+          generation: inviteGeneration(summaries),
+        });
+
+        // Reading and revoking in this transaction prevents a simultaneous claim
+        // from being downgraded from `claimed` to `revoked` by a stale batch update.
+        for (const stale of invitesToRevokeBeforeCreating(own, nowMs)) {
+          transaction.update(db.collection(INVITES).doc(stale.code), { status: "revoked" });
+        }
+        // `create`, never `set`: on the ~1-in-a-billion collision, `set` would hand
+        // two people the same code and overwrite a stranger's live invite.
+        transaction.create(db.collection(INVITES).doc(code), {
+          ...fields,
+          expireAt: Timestamp.fromMillis(inviteTTLPurgeAtMs(fields.expiresAtMs)),
+        });
+
+        return {
+          code,
+          expiresAtMs: fields.expiresAtMs,
+          url: inviteLinkURL(code, INVITE_LINK_BASE),
+          reused: false,
+        };
+      });
     } catch (error: unknown) {
       if (!isAlreadyExists(error)) throw error;
     }
