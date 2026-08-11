@@ -2,7 +2,7 @@
 
 日付: 2026-08-11（同日2セッション目）
 前セッション: `share-card-qr-removal-and-invite-blueprint_2026-08-11.md`
-状態: **両方とも完了・テスト通過。Step 3a（index/TTL）と3b（新規Functions 4本）は本番反映済み。deleteAccountは依頼者確認待ち**
+状態: **両方とも完了・テスト通過。Step 3a〜3c（index/TTL・招待Functions・deleteAccount）は本番反映済み**
 
 ---
 
@@ -244,7 +244,7 @@ JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が
 
 ## 3. 未実施・次にやること
 
-**Step 2 とデプロイ前hardeningは完了。Step 3a/3b は依頼者承認のもと本番反映済み。次は `deleteAccount` の承認待ち。**
+**Step 2 とデプロイ前hardeningは完了。Step 3a〜3c は依頼者承認のもと本番反映済み。**
 
 大枠の functions → rules → client は維持するが、Step 3 は次の個別ゲートに分ける。
 
@@ -256,7 +256,10 @@ JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が
    — **2026-08-11 完了**。`createInvite` / `previewInvite` / `claimInviteCode` /
    `revokeInvite` は全て `asia-northeast1`、Node.js 22 Gen 2、`maxInstances=2`、`ACTIVE`。
    既存3本のリージョンとデプロイhashは不変。
-3. `deleteAccount` だけを別targetでdeploy（invite client公開前には必須）
+3. ~~`deleteAccount` だけを別targetでdeploy（invite client公開前には必須）~~
+   — **2026-08-11 完了**。`us-central1`、Node.js 22 Gen 2、`maxInstances=2`、`ACTIVE`を維持し、
+   `deleteAccount` だけが新しいdeploy hashへ更新。他6 Functionsは不変。App Check無しのPOSTは
+   HTTP 401で、データ変更前に期待どおり拒否された。
 
 新規4本は出荷済み 1.0.1 が呼ばないので後方互換だが、`firebase deploy --only functions` は
 既存3本まで新revisionにするため**使わない**。`--force` も使わない。
