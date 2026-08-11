@@ -1,3 +1,6 @@
+import { APPLE_APP_SITE_ASSOCIATION } from "./aasa";
+import { parseInviteCode, renderInvitePage } from "./invitePage";
+
 export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
@@ -43,6 +46,21 @@ async function handleWaitlistSignup(request: Request, env: Env): Promise<Respons
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (
+      url.pathname === "/.well-known/apple-app-site-association" ||
+      url.pathname === "/apple-app-site-association"
+    ) {
+      return new Response(JSON.stringify(APPLE_APP_SITE_ASSOCIATION), {
+        headers: { "content-type": "application/json" }
+      });
+    }
+
+    if (url.pathname === "/i" || url.pathname.startsWith("/i/")) {
+      return new Response(renderInvitePage(parseInviteCode(url.pathname)), {
+        headers: { "content-type": "text/html; charset=utf-8" }
+      });
+    }
 
     if (url.pathname === "/api/waitlist") {
       if (request.method !== "POST") {
