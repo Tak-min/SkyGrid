@@ -48,6 +48,7 @@ final class InviteClaimViewModel {
         step = .loadingPreview
         do {
             let preview = try await inviteRepository.previewInvite(code: code)
+            InviteAnalytics.record(.previewViewed, previewState: preview.state)
             step = .preview(preview)
         } catch {
             step = .failed(Self.message(for: error))
@@ -75,8 +76,10 @@ final class InviteClaimViewModel {
 
     private func claim() async {
         step = .claiming
+        InviteAnalytics.record(.claimStarted)
         do {
             let result = try await inviteRepository.claimInvite(code: code)
+            InviteAnalytics.record(.claimResolved, claimOutcome: result.outcome)
             step = .result(result.outcome)
         } catch {
             step = .failed(Self.message(for: error))

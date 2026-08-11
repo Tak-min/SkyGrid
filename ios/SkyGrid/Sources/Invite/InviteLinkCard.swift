@@ -85,10 +85,16 @@ struct InviteLinkCard: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(SGT.ink)
+            .simultaneousGesture(TapGesture().onEnded {
+                // ShareLink has no completion callback, only this tap — recorded on
+                // the intent to share, not confirmed delivery.
+                InviteAnalytics.record(.linkShared)
+            })
 
             Button {
                 UIPasteboard.general.string = link.code.formatted
                 showCopiedConfirmation = true
+                InviteAnalytics.record(.codeCopied)
             } label: {
                 Label(showCopiedConfirmation ? "Copied" : "Copy code", systemImage: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
                     .font(SGFont.body(15))

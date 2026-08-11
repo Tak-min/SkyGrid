@@ -30,6 +30,13 @@ final class InviteLinkViewModel {
         linkState = .loading
         do {
             let link = try await inviteRepository.createInvite(fresh: false)
+            // Only a genuinely new mint, not every reuse of an existing link — this
+            // screen calls load() on every appearance, and counting each reopen as a
+            // "created" event would drown out the signal of how often someone
+            // actually mints a fresh invite.
+            if !link.isReused {
+                InviteAnalytics.record(.linkCreated)
+            }
             linkState = .ready(link)
         } catch {
             linkState = .failed(Self.message(for: error))
@@ -46,6 +53,7 @@ final class InviteLinkViewModel {
         do {
             let revocation = try await inviteRepository.revokeInvite(code: link.code)
             if revocation.isRevoked {
+                InviteAnalytics.record(.linkRevoked)
                 linkState = .revoked
             }
             // `wasAlreadyClaimed` (revoked == false, claimed == true): the link
