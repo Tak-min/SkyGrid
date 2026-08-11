@@ -32,20 +32,42 @@ enum SGExport {
     /// Pre-dawn near-black. Blue-tinted rather than pure black, matching the rule
     /// that a dark surface should read as a chosen colour, not an absent one.
     static let ground = Color(fixedHex: "#0B0E14")
+    /// The lighter end of the card's ground gradient. A flat fill made the 1080×1920
+    /// canvas read as an empty rectangle that content had been placed on; a shallow
+    /// top-leading-to-bottom-trailing ramp gives it a light direction, which is the
+    /// cheapest way to make a dark card look composed rather than unfinished.
+    static let groundTop = Color(fixedHex: "#111A28")
     static let ink = Color.white
     static let ink2 = Color.white.opacity(0.62)
-    static let ink3 = Color.white.opacity(0.34)
 
-    /// Grid cells inside an export. `SGT.ghost`/`SGT.fill` are tuned for the warm
-    /// in-app background and turn to mud on the dark ground.
-    ///
-    /// Raised 0.06 → 0.09 on 2026-08-08: at 0.06 the un-posted cells all but vanished
-    /// once the card was scaled to a story-tray thumbnail, so the mosaic lost the
-    /// grid it is supposed to read as and became a few floating colour marks. The
-    /// empty cells have to stay legible enough to be the *shape* the posted days sit
-    /// in, while still clearly receding behind them.
-    static let cellEmpty = Color.white.opacity(0.09)
-    static let cellPostedNoThumb = Color.white.opacity(0.14)
+    /// Secondary text on the export cards. A fixed blue-grey rather than translucent
+    /// white (`ink2`), because these now sit on `surface`/`surfaceRaised` panels as
+    /// well as on the ground, and a translucent ink changes value with whatever is
+    /// behind it — the panels made the same label render as two different greys.
+    static let inkMuted = Color(fixedHex: "#A7B0BC")
+
+    /// Panels. `surface` is the recessed field the photo mosaic sits in; the mosaic
+    /// needs a bounded edge or a sparse year reads as tiles scattered on nothing.
+    /// `surfaceRaised` is the footer ticket, which has to sit *above* the ground.
+    static let surface = Color(fixedHex: "#111823")
+    static let surfaceRaised = Color(fixedHex: "#182231")
+
+    /// The 2px edge on every panel and photo tile. At story-tray scale this is what
+    /// keeps adjacent sky photos from bleeding into one another.
+    static let hairline = Color(fixedHex: "#2A3748")
+
+    /// Un-captured days in the year map. Dim enough to read as an unfilled slot, lit
+    /// enough that the 31×12 calendar shape survives as a field of dots.
+    static let guide = Color(fixedHex: "#39485B")
+
+    /// The ground both cards are drawn on. Shared rather than declared per card, so
+    /// the year card and the morning card cannot drift apart — a viewer who sees one
+    /// of each from two different people has to recognise them as the same app.
+    static let groundGradient = LinearGradient(
+        colors: [groundTop, ground],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 
     /// The canonical listing link. Points straight at the App Store rather than the
     /// marketing site — a share card's job is a one-hop install, not a second
