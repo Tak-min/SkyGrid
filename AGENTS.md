@@ -59,6 +59,10 @@ export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 - `ios/firestore.indexes.json` is the source of truth for composite indexes and TTL.
   The invite `createInvite` query depends on its `invites` composite index; deploy
   `firestore:indexes` and wait for ACTIVE before deploying the invite callables.
+- The four invite callables run in `asia-northeast1` beside Firestore; the three
+  existing functions remain in `us-central1`. The future iOS invite client must use a
+  region-specific `Functions.functions(region: "asia-northeast1")` instance rather
+  than the default instance used by account deletion and image download.
 - **Deploy order is functions → rules → client**, per
   `dev-notes/backend-deploy-sequencing_2026-08-08.md`. A deployed function must be
   harmless to the already-shipped App Store client. Data/index prerequisites for a
