@@ -47,3 +47,11 @@ waitlist/node_modules/
 
 # Xcode build products at repo root (XcodeBuildMCP workspace output)
 /build/
+
+# Promo pipeline intermediates: 73MB of Wikimedia source photographs. Reproducible with
+# `branding/promo/fetch_skies.py` from skies_manifest.json, which IS tracked, so the
+# render can be regenerated without carrying the originals in git history.
+branding/promo/skies/
+branding/promo/__pycache__/
+branding/promo/video-v1/build/
+branding/promo/out/contact-sheet.png
