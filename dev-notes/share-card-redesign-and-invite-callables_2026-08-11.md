@@ -2,7 +2,7 @@
 
 日付: 2026-08-11（同日2セッション目）
 前セッション: `share-card-qr-removal-and-invite-blueprint_2026-08-11.md`
-状態: **両方とも完了・テスト通過。デプロイは未実施（破壊的操作のため依頼者確認待ち）**
+状態: **両方とも完了・テスト通過。Step 3a（複合index＋TTL 2本）は本番反映済み。新規Functionsは依頼者確認待ち**
 
 ---
 
@@ -244,11 +244,14 @@ JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が
 
 ## 3. 未実施・次にやること
 
-**Step 2 とデプロイ前hardeningは完了。次は本番書き込みなので依頼者確認待ち。**
+**Step 2 とデプロイ前hardeningは完了。Step 3a は依頼者承認のもと本番反映済み。次は新規Functions 4本の承認待ち。**
 
 大枠の functions → rules → client は維持するが、Step 3 は次の個別ゲートに分ける。
 
-1. `firestore:indexes`（複合index＋TTL 2本）をdeployし、全て ACTIVE を確認
+1. ~~`firestore:indexes`（複合index＋TTL 2本）をdeployし、全て ACTIVE を確認~~
+   — **2026-08-11 完了**。`invites` の複合indexは `READY`、`invites.expireAt` と
+   `inviteRateLimits.expireAt` はともに `ACTIVE`。既存Functions 3本が引き続き
+   `us-central1` / `ACTIVE` であることも確認した。
 2. 新規4本だけを名前指定でdeploy（既存3本、rules、Workerは触らない）
 3. `deleteAccount` だけを別targetでdeploy（invite client公開前には必須）
 
