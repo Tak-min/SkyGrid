@@ -207,7 +207,8 @@ private struct UIAuditRoot: View {
                         uid: UIAuditData.currentUID,
                         friendRepository: auditFriendRepository,
                         userRepository: auditUserRepository,
-                        contentSafetyRepository: UIAuditSafetyRepository()
+                        contentSafetyRepository: UIAuditSafetyRepository(),
+                        inviteRepository: UIAuditInviteRepository()
                     )
                     .tag(UIAuditTab.buddies)
                     .tabItem { Label("Buddies", systemImage: "person.2.fill") }
@@ -614,6 +615,33 @@ private struct UIAuditOrphanedPostRecovery: OrphanedPostRecovering {
 @MainActor
 private struct UIAuditSafetyRepository: ContentSafetyRepository {
     func submitConcern(reporterUid: String, subjectUid: String) async throws {}
+}
+
+/// Never a real `FirebaseInviteRepository` here: that type's default `Functions`
+/// instance calls `Functions.functions(region:)`, which traps without a configured
+/// `FirebaseApp` — and the UI-audit host deliberately never configures one.
+@MainActor
+private struct UIAuditInviteRepository: InviteRepository {
+    func createInvite(fresh: Bool) async throws -> InviteLink {
+        InviteLink(
+            code: InviteCode(raw: "ABCDEFGH12")!,
+            url: URL(string: "https://skygrid.my/i/ABCDEFGH12")!,
+            expiresAt: Date().addingTimeInterval(7 * 24 * 60 * 60),
+            isReused: false
+        )
+    }
+
+    func previewInvite(code: InviteCode) async throws -> InvitePreview {
+        InvitePreview(state: .open, creatorHandle: Handle(raw: "morning_owl"), expiresAt: Date().addingTimeInterval(7 * 24 * 60 * 60))
+    }
+
+    func claimInvite(code: InviteCode) async throws -> InviteClaim {
+        InviteClaim(outcome: .paired, buddyUid: "ui-audit-buddy", buddyHandle: Handle(raw: "morning_owl"), generation: 0)
+    }
+
+    func revokeInvite(code: InviteCode) async throws -> InviteRevocation {
+        InviteRevocation(isRevoked: true, wasAlreadyClaimed: false)
+    }
 }
 
 private struct UIAuditAccountDeletionService: AccountDeleting {

@@ -6,12 +6,14 @@ import SwiftUI
 struct BuddiesView: View {
     @State private var viewModel: FriendsViewModel
     private let contentSafetyRepository: any ContentSafetyRepository
+    private let inviteRepository: any InviteRepository
 
     init(
         uid: String,
         friendRepository: any FriendRepository,
         userRepository: any UserRepository,
-        contentSafetyRepository: any ContentSafetyRepository
+        contentSafetyRepository: any ContentSafetyRepository,
+        inviteRepository: any InviteRepository
     ) {
         _viewModel = State(initialValue: FriendsViewModel(
             uid: uid,
@@ -19,6 +21,7 @@ struct BuddiesView: View {
             userRepository: userRepository
         ))
         self.contentSafetyRepository = contentSafetyRepository
+        self.inviteRepository = inviteRepository
     }
 
     var body: some View {
@@ -90,6 +93,11 @@ struct BuddiesView: View {
                 } else {
                     Section {
                         AddBuddyView(viewModel: viewModel)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets())
+                    }
+                    Section {
+                        InviteLinkCard(inviteRepository: inviteRepository)
                             .listRowBackground(Color.clear)
                             .listRowInsets(EdgeInsets())
                     }

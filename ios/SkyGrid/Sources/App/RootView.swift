@@ -117,7 +117,8 @@ struct RootView: View {
                     uid: services.currentUid,
                     friendRepository: services.friendRepository,
                     userRepository: services.userRepository,
-                    contentSafetyRepository: services.contentSafetyRepository
+                    contentSafetyRepository: services.contentSafetyRepository,
+                    inviteRepository: services.inviteRepository
                 )
                 .tag(HomeTab.buddies)
                 .tabItem { Label("Buddies", systemImage: "person.2.fill") }
