@@ -2,7 +2,7 @@
 
 日付: 2026-08-11（同日2セッション目）
 前セッション: `share-card-qr-removal-and-invite-blueprint_2026-08-11.md`
-状態: **両方とも完了・テスト通過。Step 3a（複合index＋TTL 2本）は本番反映済み。新規Functionsは依頼者確認待ち**
+状態: **両方とも完了・テスト通過。Step 3a（index/TTL）と3b（新規Functions 4本）は本番反映済み。deleteAccountは依頼者確認待ち**
 
 ---
 
@@ -244,7 +244,7 @@ JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が
 
 ## 3. 未実施・次にやること
 
-**Step 2 とデプロイ前hardeningは完了。Step 3a は依頼者承認のもと本番反映済み。次は新規Functions 4本の承認待ち。**
+**Step 2 とデプロイ前hardeningは完了。Step 3a/3b は依頼者承認のもと本番反映済み。次は `deleteAccount` の承認待ち。**
 
 大枠の functions → rules → client は維持するが、Step 3 は次の個別ゲートに分ける。
 
@@ -252,11 +252,22 @@ JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が
    — **2026-08-11 完了**。`invites` の複合indexは `READY`、`invites.expireAt` と
    `inviteRateLimits.expireAt` はともに `ACTIVE`。既存Functions 3本が引き続き
    `us-central1` / `ACTIVE` であることも確認した。
-2. 新規4本だけを名前指定でdeploy（既存3本、rules、Workerは触らない）
+2. ~~新規4本だけを名前指定でdeploy（既存3本、rules、Workerは触らない）~~
+   — **2026-08-11 完了**。`createInvite` / `previewInvite` / `claimInviteCode` /
+   `revokeInvite` は全て `asia-northeast1`、Node.js 22 Gen 2、`maxInstances=2`、`ACTIVE`。
+   既存3本のリージョンとデプロイhashは不変。
 3. `deleteAccount` だけを別targetでdeploy（invite client公開前には必須）
 
 新規4本は出荷済み 1.0.1 が呼ばないので後方互換だが、`firebase deploy --only functions` は
 既存3本まで新revisionにするため**使わない**。`--force` も使わない。
+
+Step 3b のCLIは4本の作成成功後、東京の `gcf-artifacts` にcleanup policyが無いことを検出して
+終了コード1になった。Functions自体は上記の通り全て `ACTIVE`。Artifact Registryは約103.6MB、
+policyは空。本番既存Functionsが使う `us-central1` はFirebase既定の「1日超を削除」policyなので、
+東京にも同じ1日保持を設定するのが最小。Functionsとは別の承認対象として設定する。
+
+App Checkトークン無しで `createInvite` にPOSTしたpost-deploy smoke testはHTTP 401となり、
+ハンドラーのデータ書き込み前に期待どおり拒否された。App Check付き実機E2Eは引き続き未実施。
 
 デプロイ後すぐに確認すべきこと:
 1. `firebase functions:list` で新規4本だけ ACTIVE、region/runtime/maxInstancesを確認。
