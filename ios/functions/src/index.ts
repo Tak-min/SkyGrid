@@ -171,11 +171,11 @@ export const deleteAccount = onCall(
  * That third point is the same call `imageDownloadURL` below already made: a predicate
  * spanning several documents belongs on the server.
  *
- * **No callable here ever answers `not-found` or `permission-denied`.** Every outcome
- * that depends on whether a code exists is a 200 carrying a `state`/`outcome` field,
- * and every thrown error depends only on caller state that is decided *before* the
- * code is read. That ordering is what makes "the error path leaks nothing" checkable
- * by reading the code rather than by auditing message strings.
+ * **No domain branch here ever answers `not-found` or `permission-denied`.** Every
+ * normal outcome that depends on whether a code exists is a 200 carrying a
+ * `state`/`outcome` field. Caller-state errors are decided before the code is read;
+ * infrastructure failures surface only as a generic `internal` response whose logs
+ * contain neither the raw Firestore error nor the full code.
  */
 
 /** One budget unit, spent before the code is read so the charge cannot depend on it. */
