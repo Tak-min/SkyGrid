@@ -264,6 +264,18 @@ test("opening the invite screen again hands back the same link instead of killin
   assert.equal((await db.collection("invites").get()).size, 1);
 });
 
+test("concurrent invite-screen opens converge on one reusable link", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+
+  const results = await Promise.all(
+    Array.from({ length: 4 }, () => createInviteForUser(db, "creator", NOW))
+  );
+
+  assert.equal(new Set(results.map((result) => result.code)).size, 1);
+  assert.equal((await db.collection("invites").get()).size, 1);
+});
+
 test("asking for a fresh link mints one and keeps the cap by revoking the oldest", async () => {
   await reset();
   await makeUser("creator", "mira_sky");
