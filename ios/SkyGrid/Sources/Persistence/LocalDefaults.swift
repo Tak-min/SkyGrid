@@ -74,18 +74,6 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "lastCompletedCaptureLocalDate", defaultValue: nil)
     static var lastCompletedCaptureLocalDate: String?
 
-    @UserDefaultBacked(key: "lastAutomaticPaywallPromptCaptureCount", defaultValue: nil)
-    static var lastAutomaticPaywallPromptCaptureCount: Int?
-
-    @UserDefaultBacked(key: "lastAutomaticPaywallPromptLocalDate", defaultValue: nil)
-    static var lastAutomaticPaywallPromptLocalDate: String?
-
-    @UserDefaultBacked(key: "consecutiveAutomaticPaywallDismissals", defaultValue: 0)
-    static var consecutiveAutomaticPaywallDismissals: Int
-
-    @UserDefaultBacked(key: "automaticPaywallSnoozedUntil", defaultValue: nil)
-    static var automaticPaywallSnoozedUntil: Date?
-
     /// Set the first time `AppReviewPromptPolicy` decides a completed capture is
     /// a good moment to call SwiftUI's `requestReview` environment action. Not
     /// reset by `resetAutomaticPaywallState()` — an unrelated paywall-state reset
@@ -116,10 +104,26 @@ enum LocalDefaults {
         automaticPaywallAccountID = nil
         completedCaptureCount = 0
         lastCompletedCaptureLocalDate = nil
-        lastAutomaticPaywallPromptCaptureCount = nil
-        lastAutomaticPaywallPromptLocalDate = nil
-        consecutiveAutomaticPaywallDismissals = 0
-        automaticPaywallSnoozedUntil = nil
+    }
+
+    /// Scopes the one-shot first-unlock paywall to an account, kept separate from
+    /// `automaticPaywallAccountID` for the same reason `milestoneAccountID` is
+    /// separate from it — nothing unlock-paywall-related may perturb the capture
+    /// count `AppReviewPromptPolicy` reads.
+    @UserDefaultBacked(key: "unlockPaywallAccountID", defaultValue: nil)
+    static var unlockPaywallAccountID: String?
+
+    /// Set only by the path that actually presented the first-unlock paywall
+    /// (`RootView.recordAutomaticPaywallPresentationIfNeeded`), never at the decision
+    /// site — a milestone that outranks the paywall this time must leave this `nil`
+    /// so the very next re-ask can still offer it. `nil` forever after that means
+    /// "never shown"; non-`nil` means "shown exactly once, permanently."
+    @UserDefaultBacked(key: "unlockPaywallPresentedAt", defaultValue: nil)
+    static var unlockPaywallPresentedAt: Date?
+
+    static func resetUnlockPaywallState() {
+        unlockPaywallAccountID = nil
+        unlockPaywallPresentedAt = nil
     }
 
     /// The user has explicitly turned on their morning wake flow. This is a user
@@ -163,6 +167,7 @@ enum LocalDefaults {
         onboardingDone = false
         personalizationProfileData = nil
         resetAutomaticPaywallState()
+        resetUnlockPaywallState()
         resetMilestoneState()
         morningAlarmEnabled = false
         morningAlarmBackend = "automatic"

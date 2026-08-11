@@ -11,7 +11,6 @@ struct RootView: View {
     @State private var showPaywall = false
     @State private var paywallEntryPoint: PaywallEntryPoint = .home
     @State private var postCaptureBackstop: Task<Void, Never>?
-    @State private var automaticPaywallPresentationLocalDate: LocalDate?
     @State private var observedLocalDate: LocalDate?
     /// Receives the streak from `TodayViewModel` — the only thing that computes it.
     /// RootView owns post-capture arbitration but holds no reference to that view
@@ -43,14 +42,14 @@ struct RootView: View {
                     .onAppear {
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
-                        resolvePendingInvite()
+                        resolvePendingPresentations(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
                     .onChange(of: scenePhase) { _, phase in
                         guard phase == .active else { return }
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
-                        resolvePendingInvite()
+                        resolvePendingPresentations(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
@@ -66,7 +65,7 @@ struct RootView: View {
                     }
                     .onChange(of: destination) { _, _ in
                         consumePendingCameraRequestIfNeeded()
-                        resolvePendingInvite()
+                        resolvePendingPresentations(services: services)
                     }
             } else {
                 ProgressView()
@@ -159,47 +158,49 @@ struct RootView: View {
             // The camera is actually gone by the time this runs, so anything the
             // capture earned can be presented from here without racing iOS's own
             // dismissal animation — the reason this is a callback and not a timer.
-            resolvePostCaptureMoment()
-            resolvePendingInvite()
+            resolvePendingPresentations(services: services)
         }) {
             cameraSheet(services: services)
         }
         .fullScreenCover(item: $milestoneMoment) { moment in
             MilestoneView(moment: moment, onDone: {
                 milestoneMoment = nil
-                resolvePendingInvite()
+                // A milestone that outranked an eligible first-unlock paywall
+                // deferred it without recording anything — this is what lets the
+                // paywall claim its turn the moment the arbiter is free again.
+                resolvePendingPresentations(services: services)
             })
         }
         .onChange(of: streakSignal.reading) { _, _ in
             // The other half of the resolution: the streak usually lands after the
             // camera is gone, so whichever event is second finds the arming intact.
-            resolvePostCaptureMoment()
+            resolvePostCaptureMoment(services: services)
+        }
+        .onChange(of: revealSignal.reading) { _, _ in
+            resolvePendingPresentations(services: services)
         }
         .sheet(isPresented: $showPaywall, onDismiss: {
             // A capture can be armed and still unresolved when the user opens the
             // paywall *manually* (plan badge, archive upgrade). While it is up,
-            // `resolvePostCaptureMoment` defers, and `StreakSignal.record` no-ops on
-            // an unchanged reading — so without this, nothing would ever ask again
-            // and an earned milestone would be silently dropped. Automatic paywalls
-            // are unaffected: they clear the arming when they claim the capture.
+            // `resolvePostCaptureMoment` defers, and `StreakSignal.record`/
+            // `RevealSignal.record` no-op on an unchanged reading — so without this,
+            // nothing would ever ask again and an earned milestone or first-unlock
+            // paywall would be silently dropped. Automatic paywalls are unaffected:
+            // they clear the arming when they claim the capture.
             //
             // This recovers the quick-dismissal case only. A paywall session longer
             // than `armingLifetime` still expires the arming, and that is the wanted
             // outcome: a celebration arriving after a minute inside a purchase flow
             // no longer reads as caused by the capture.
-            resolvePostCaptureMoment()
-            resolvePendingInvite()
+            resolvePendingPresentations(services: services)
         }) {
             PaywallView(
                 purchases: services.purchases,
                 entryPoint: paywallEntryPoint,
                 onEntitlementGranted: {
                     await services.entitlements.refresh()
-                    LocalDefaults.consecutiveAutomaticPaywallDismissals = 0
-                    LocalDefaults.automaticPaywallSnoozedUntil = nil
                 },
-                onPresented: recordAutomaticPaywallPresentationIfNeeded,
-                onDismissed: recordAutomaticPaywallDismissalIfNeeded
+                onPresented: recordAutomaticPaywallPresentationIfNeeded
             )
         }
         .sheet(item: $inviteMoment, onDismiss: {
@@ -217,7 +218,7 @@ struct RootView: View {
             )
         }
         .task { consumePendingCameraRequestIfNeeded() }
-        .task { resolvePendingInvite() }
+        .task { resolvePendingPresentations(services: services) }
     }
 
     private func cameraSheet(services: AppServices) -> some View {
@@ -234,7 +235,7 @@ struct RootView: View {
             onConfirmed: { draft in
                 try await services.postPublisher.publish(draft)
                 await MorningRitualCoordinator.captureCompleted(localDate: draft.localDate)
-                await considerAutomaticPaywall(afterCompletedCapture: draft, services: services)
+                await recordCompletedCapture(draft, services: services)
                 showCamera = false
             }
         )
@@ -260,8 +261,14 @@ struct RootView: View {
 
     /// A successful capture means the Firestore record and durable local upload
     /// outbox were both written. The remote image upload can finish later, so this
-    /// deliberately measures completed captures rather than uploaded photos.
-    private func considerAutomaticPaywall(afterCompletedCapture draft: PostDraft, services: AppServices) async {
+    /// deliberately measures completed captures rather than uploaded photos — that
+    /// count still feeds `AppReviewPromptPolicy` and `FirstUnlockPaywallPolicy`'s
+    /// `minimumCompletedCaptures` floor. Eligibility for the first-unlock paywall
+    /// itself is no longer decided here: unlike the retired capture-count reminder,
+    /// it can become true asynchronously (a buddy posting hours later), so
+    /// `resolvePostCaptureMoment`/`resolveFirstUnlockPaywall` compute it fresh at
+    /// every re-ask instead of freezing it into the arming.
+    private func recordCompletedCapture(_ draft: PostDraft, services: AppServices) async {
         prepareAutomaticPaywallState(for: draft.ownerUid)
         guard LocalDefaults.lastCompletedCaptureLocalDate != draft.localDate.docID else { return }
 
@@ -269,27 +276,12 @@ struct RootView: View {
         LocalDefaults.completedCaptureCount += 1
         let count = LocalDefaults.completedCaptureCount
         await services.entitlements.refresh()
-        let now = Date()
-        // The eligibility predicate and every argument to it are unchanged. What
-        // changed (2026-08-08, owner's decision) is that a `true` here no longer
-        // presents immediately — it is carried into the arming so that a milestone,
-        // once the streak arrives, can take this capture and push the paywall to the
-        // next one. See `PostCaptureMomentPolicy` for why deferral needs no state.
-        let isPaywallEligible = AutomaticPaywallPresentationPolicy.shouldPresent(
-            entitlementStatus: services.entitlements.status,
-            completedCaptureCount: count,
-            lastPromptedCaptureCount: LocalDefaults.lastAutomaticPaywallPromptCaptureCount,
-            lastPromptedLocalDate: LocalDefaults.lastAutomaticPaywallPromptLocalDate.flatMap(LocalDate.init(docID:)),
-            captureLocalDate: draft.localDate,
-            snoozedUntil: LocalDefaults.automaticPaywallSnoozedUntil,
-            now: now
-        )
 
         armPostCaptureMoment(
             localDate: draft.localDate,
             completedCaptureCount: count,
             uid: draft.ownerUid,
-            isPaywallEligible: isPaywallEligible
+            services: services
         )
     }
 
@@ -299,13 +291,12 @@ struct RootView: View {
         localDate: LocalDate,
         completedCaptureCount: Int,
         uid: String,
-        isPaywallEligible: Bool
+        services: AppServices
     ) {
         prepareMilestoneState(for: uid)
         postCaptureArming = PostCaptureArming(
             localDate: localDate,
             completedCaptureCount: completedCaptureCount,
-            isPaywallEligible: isPaywallEligible,
             armedAt: Date()
         )
 
@@ -322,10 +313,10 @@ struct RootView: View {
             let nanoseconds = UInt64((PostCaptureMomentPolicy.armingLifetime + 0.5) * 1_000_000_000)
             try? await Task.sleep(nanoseconds: nanoseconds)
             guard !Task.isCancelled else { return }
-            resolvePostCaptureMoment()
+            resolvePostCaptureMoment(services: services)
         }
 
-        resolvePostCaptureMoment()
+        resolvePostCaptureMoment(services: services)
     }
 
     /// Retires the capture's claim to a moment and stops the backstop that would
@@ -340,14 +331,23 @@ struct RootView: View {
     /// Re-asks `PostCaptureMomentPolicy` whenever something that could change its
     /// answer happened. Safe to call repeatedly: the arming is consumed exactly once,
     /// and an unanswerable question leaves it armed for the next event.
-    private func resolvePostCaptureMoment() {
+    private func resolvePostCaptureMoment(services: AppServices) {
         guard let arming = postCaptureArming else { return }
         // Never stack one of these on top of another modal. The camera in particular:
         // presenting while it is dismissing races iOS's own animation.
         guard !showCamera, !showPaywall, milestoneMoment == nil else { return }
 
+        prepareUnlockPaywallState(for: services.currentUid)
+        let isPaywallEligible = FirstUnlockPaywallPolicy.shouldPresent(
+            entitlementStatus: services.entitlements.status,
+            reading: revealSignal.reading,
+            completedCaptureCount: LocalDefaults.completedCaptureCount,
+            hasPresentedUnlockPaywall: LocalDefaults.unlockPaywallPresentedAt != nil
+        )
+
         switch PostCaptureMomentPolicy.decide(
             arming: arming,
+            isPaywallEligible: isPaywallEligible,
             reading: streakSignal.reading,
             lastCelebratedMilestone: LocalDefaults.lastCelebratedStreakMilestone,
             hasRequestedAppReview: LocalDefaults.hasRequestedAppReview,
@@ -360,10 +360,10 @@ struct RootView: View {
         case .paywall:
             consumePostCaptureArming()
             // Recorded as a presentation only here, on the path that actually shows
-            // it. A deferred paywall records nothing, which is exactly what lets
-            // `AutomaticPaywallPresentationPolicy` re-offer it on the next capture.
-            automaticPaywallPresentationLocalDate = arming.localDate
-            presentPaywall(from: .ritualMilestone(captureCount: arming.completedCaptureCount))
+            // it (`recordAutomaticPaywallPresentationIfNeeded`). A deferred paywall
+            // (the milestone branch below wins instead) records nothing, which is
+            // exactly what lets the very next re-ask offer it again.
+            presentPaywall(from: .firstUnlock)
         case .milestone(let milestone):
             guard case .observed(_, _, let post?) = streakSignal.reading else {
                 // `decide` already proved this, but reading the post back out is what
@@ -406,6 +406,30 @@ struct RootView: View {
         return data.flatMap(UIImage.init(data:))
     }
 
+    /// The first-unlock paywall's other trigger, for when a buddy is mutually
+    /// revealed with no capture in flight (they post hours after the viewer did, or
+    /// the viewer simply reopens the app on a later morning). `resolvePostCaptureMoment`
+    /// computes this same eligibility inline when an arming *is* in flight, because
+    /// that path also has to weigh a milestone against it — this one has nothing to
+    /// arbitrate against, so it can act the moment eligibility is true.
+    private func resolveFirstUnlockPaywall(services: AppServices) {
+        guard !showCamera, !showPaywall, milestoneMoment == nil, inviteMoment == nil else { return }
+        // A capture is currently being arbitrated — that path owns this decision so
+        // a milestone can still outrank the paywall; this resolver only ever handles
+        // the case where there is nothing else in flight to arbitrate against.
+        guard postCaptureArming == nil else { return }
+
+        prepareUnlockPaywallState(for: services.currentUid)
+        guard FirstUnlockPaywallPolicy.shouldPresent(
+            entitlementStatus: services.entitlements.status,
+            reading: revealSignal.reading,
+            completedCaptureCount: LocalDefaults.completedCaptureCount,
+            hasPresentedUnlockPaywall: LocalDefaults.unlockPaywallPresentedAt != nil
+        ) else { return }
+
+        presentPaywall(from: .firstUnlock)
+    }
+
     /// Mirrors `prepareAutomaticPaywallState` but is deliberately a separate function
     /// with separate storage, so milestone bookkeeping can never perturb paywall state.
     private func prepareMilestoneState(for uid: String) {
@@ -414,28 +438,29 @@ struct RootView: View {
         LocalDefaults.milestoneAccountID = uid
     }
 
+    /// The one-shot write, and the only one — every other path that decides the
+    /// paywall is due but doesn't present it yet (the milestone branch of
+    /// `PostCaptureMomentPolicy.decide`) must leave `unlockPaywallPresentedAt` `nil`,
+    /// which is exactly what lets the very next re-ask offer it again.
     private func recordAutomaticPaywallPresentationIfNeeded() {
-        guard paywallEntryPoint.isAutomaticReminder,
-              let localDate = automaticPaywallPresentationLocalDate
-        else { return }
-        LocalDefaults.lastAutomaticPaywallPromptCaptureCount = LocalDefaults.completedCaptureCount
-        LocalDefaults.lastAutomaticPaywallPromptLocalDate = localDate.docID
-        automaticPaywallPresentationLocalDate = nil
-    }
-
-    private func recordAutomaticPaywallDismissalIfNeeded(_ reason: PaywallDismissalReason) {
-        guard paywallEntryPoint.isAutomaticReminder else { return }
-        LocalDefaults.consecutiveAutomaticPaywallDismissals += 1
-        LocalDefaults.automaticPaywallSnoozedUntil = AutomaticPaywallPresentationPolicy.snoozeUntil(
-            afterConsecutiveDismissals: LocalDefaults.consecutiveAutomaticPaywallDismissals,
-            now: Date()
-        )
+        guard case .firstUnlock = paywallEntryPoint else { return }
+        LocalDefaults.unlockPaywallPresentedAt = Date()
     }
 
     private func prepareAutomaticPaywallState(for uid: String) {
         guard LocalDefaults.automaticPaywallAccountID != uid else { return }
         LocalDefaults.resetAutomaticPaywallState()
         LocalDefaults.automaticPaywallAccountID = uid
+    }
+
+    /// Mirrors `prepareMilestoneState`/`prepareAutomaticPaywallState`: scopes the
+    /// one-shot presented-flag to an account, kept in its own storage so nothing
+    /// unlock-paywall-related can perturb `completedCaptureCount`
+    /// (`AppReviewPromptPolicy`) or milestone bookkeeping, and vice versa.
+    private func prepareUnlockPaywallState(for uid: String) {
+        guard LocalDefaults.unlockPaywallAccountID != uid else { return }
+        LocalDefaults.resetUnlockPaywallState()
+        LocalDefaults.unlockPaywallAccountID = uid
     }
 
     /// Two independent sources can request "open straight to the camera": the
@@ -486,13 +511,24 @@ struct RootView: View {
         }
     }
 
+    /// The single entry point every lifecycle hook and modal-dismissal callback calls
+    /// to re-ask all three pending-presentation questions. A pending invite tap
+    /// outranks a derived celebration — it's a deliberate user action — so it
+    /// resolves first; the other two are independently guarded and safe to call in
+    /// either order. Each resolver no-ops immediately if its own preconditions
+    /// aren't met, so calling all three from every site is cheap and never stacks
+    /// two presentations at once.
+    private func resolvePendingPresentations(services: AppServices) {
+        resolvePendingInvite()
+        resolvePostCaptureMoment(services: services)
+        resolveFirstUnlockPaywall(services: services)
+    }
+
     /// Surfaces a Universal-Link-tapped invite once nothing else is claiming the
-    /// screen. Called from every lifecycle hook that could make the guards newly
-    /// pass — cold launch, foreground, `destination` finally reaching `.today`, and
-    /// every point another modal closes — the same repeated-re-ask shape as
-    /// `resolvePostCaptureMoment`, kept as a separate function because an invite tap
-    /// is a deliberate user action, not a derived celebration, and must never be
-    /// silently dropped by `PostCaptureMomentPolicy`'s arming/backstop machinery.
+    /// screen. Called only via `resolvePendingPresentations` — kept as a separate
+    /// function because an invite tap is a deliberate user action, not a derived
+    /// celebration, and must never be silently dropped by `PostCaptureMomentPolicy`'s
+    /// arming/backstop machinery.
     private func resolvePendingInvite() {
         guard destination == .today,
               inviteMoment == nil,

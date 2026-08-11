@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// Step 2 (or step 1 for `.ritualMilestone`, via `showsHeadline`): the archive
-/// benefits, still with no price shown.
+/// Step 2 (or step 1 for the automatic reminders, via `showsHeadline`): the
+/// archive benefits, still with no price shown.
 struct PaywallFeaturesStepView: View {
     let flow: PaywallFlow
     let entryPoint: PaywallEntryPoint
-    /// True only when this step is the flow's first (`.ritualMilestone`), since
-    /// that entry point never reaches `PaywallValueStepView` and would otherwise
-    /// never show `entryPoint.headline` at all.
+    /// True only when this step is the flow's first (`.ritualMilestone` or
+    /// `.firstUnlock`), since those entry points never reach
+    /// `PaywallValueStepView` and would otherwise never show
+    /// `entryPoint.headline` at all.
     let showsHeadline: Bool
     let onAdvance: () -> Void
     let onContinueWithFree: () -> Void

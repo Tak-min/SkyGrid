@@ -14,12 +14,15 @@ enum PaywallStep: String, CaseIterable, Equatable {
 struct PaywallFlow: Equatable {
     let steps: [PaywallStep]
 
-    /// Only `.ritualMilestone` skips the value step — every other entry point is
-    /// already an intentional, active visit and gets the full three-step flow.
-    /// See `session-handoff-paywall-alarm_2026-08-01.md` §5 for the reasoning.
+    /// Only the automatic capture-driven reminders (`.ritualMilestone`,
+    /// `.firstUnlock`) skip the value step — every other entry point is already an
+    /// intentional, active visit and gets the full three-step flow. See
+    /// `session-handoff-paywall-alarm_2026-08-01.md` §5 for the reasoning. The same
+    /// logic extends to `.firstUnlock`: a mutual reveal has already demonstrated the
+    /// product's value more directly than the value step could restate it.
     static func make(for entryPoint: PaywallEntryPoint) -> PaywallFlow {
         switch entryPoint {
-        case .ritualMilestone:
+        case .ritualMilestone, .firstUnlock:
             PaywallFlow(steps: [.features, .plan])
         default:
             PaywallFlow(steps: [.value, .features, .plan])

@@ -5,7 +5,7 @@ import Testing
 @Suite("PaywallFlow")
 struct PaywallFlowTests {
     @Test(
-        "every entry point except ritualMilestone gets the full three-step flow",
+        "every entry point except the automatic reminders gets the full three-step flow",
         arguments: [
             PaywallEntryPoint.onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: 360),
             .home,
@@ -18,9 +18,12 @@ struct PaywallFlowTests {
         #expect(flow.steps == [.value, .features, .plan])
     }
 
-    @Test("ritualMilestone skips the value step")
-    func shortenedFlowForAutomaticReminder() {
-        let flow = PaywallFlow.make(for: .ritualMilestone(captureCount: 10))
+    @Test(
+        "the automatic capture-driven reminders skip the value step",
+        arguments: [PaywallEntryPoint.ritualMilestone(captureCount: 10), .firstUnlock]
+    )
+    func shortenedFlowForAutomaticReminder(entryPoint: PaywallEntryPoint) {
+        let flow = PaywallFlow.make(for: entryPoint)
         #expect(flow.steps == [.features, .plan])
     }
 

@@ -3,7 +3,7 @@ import Foundation
 /// Every "should the morning-ritual nudge be visible right now" decision lives
 /// here, as a pure function — `MorningRitualActivity`/`MorningRitualCoordinator`
 /// are thin, untested shims around it, matching the rest of this codebase's
-/// policy/shim split (see `AutomaticPaywallPresentationPolicy`, `RestDayPolicy`).
+/// policy/shim split (see `FirstUnlockPaywallPolicy`, `RestDayPolicy`).
 enum MorningRitualPolicy {
     /// How long after the wake time the nudge stays relevant. Past this, a
     /// lingering Lock Screen card would be noise, not a nudge.

@@ -31,7 +31,6 @@
 		17B78EFE784768727DE3AA0A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B4AE5E7BA49A92C1C962AD /* Theme.swift */; };
 		182A0D8FCDD0CF028DEB4A12 /* PaywallAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CDF3D68ADDC45D125CDDA4D /* PaywallAnalytics.swift */; };
 		1C0CC5CB69F8226DCB9C6083 /* MorningRitualAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 358A4E440FA9500DE9D9708E /* MorningRitualAttributes.swift */; };
-		22E196A552BB8EE03B4ECDFB /* PaywallPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */; };
 		26540071FB4476467A5F1568 /* GridLayoutMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */; };
 		29BC0765DB83D109C7A6F1BD /* StartupFailureMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB33195EF4E65FEBAB084D7 /* StartupFailureMessage.swift */; };
 		29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */; };
@@ -348,7 +347,6 @@
 		89F4037069763E5DB4A76F50 /* MilestoneMoment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneMoment.swift; sourceTree = "<group>"; };
 		8A718743EB429B93FE69755C /* FirebaseInviteRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseInviteRepository.swift; sourceTree = "<group>"; };
 		8A72AC4FD203CEA83150C460 /* PurchasesServicing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasesServicing.swift; sourceTree = "<group>"; };
-		8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPolicyTests.swift; sourceTree = "<group>"; };
 		8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProGate.swift; sourceTree = "<group>"; };
 		8B78DA2B9C566EEC3F52CF9D /* MilestoneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneView.swift; sourceTree = "<group>"; };
 		8BEA7377DC53C02D20468F45 /* real_sunset_sky.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = real_sunset_sky.jpg; sourceTree = "<group>"; };
@@ -863,7 +861,6 @@
 				AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */,
 				C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */,
 				FE2A2882ADF140C0BD62770C /* PaywallFlowTests.swift */,
-				8AF32412DB58EAF396664E31 /* PaywallPolicyTests.swift */,
 				BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */,
 				C0A3E28C33210B0166319703 /* PostCaptureMomentPolicyTests.swift */,
 				165570757A55F9BFB6931185 /* PostIntegrityPolicyTests.swift */,
@@ -1263,7 +1260,6 @@
 				E2FBCBB5FE138027E0A9D949 /* MorningRitualPolicyTests.swift in Sources */,
 				529EC867219879D7D0B8146A /* OrphanedPostRecoveryTests.swift in Sources */,
 				5B1ADCD16515E93BF000C3EE /* PaywallFlowTests.swift in Sources */,
-				22E196A552BB8EE03B4ECDFB /* PaywallPolicyTests.swift in Sources */,
 				8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */,
 				BCABB8A620F0C9DDC2BD07E8 /* PostCaptureMomentPolicyTests.swift in Sources */,
 				DB73F085B9551FE23C4F6816 /* PostIntegrityPolicyTests.swift in Sources */,

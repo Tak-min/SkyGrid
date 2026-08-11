@@ -17,8 +17,9 @@ struct PaywallPlanStepView: View {
 
     var body: some View {
         PaywallStepScaffold(flow: flow, step: .plan) {
-            // The `.ritualMilestone` flow never shows PaywallValueStepView's hero,
-            // so this is the only place its funnel names the product at all. Keep
+            // The automatic-reminder flows (`.ritualMilestone`, `.firstUnlock`) never
+            // show PaywallValueStepView's hero, so this is the only place their
+            // funnel names the product at all. Keep
             // it here (not conditioned on entry point) so every flow shape shows
             // price and product identity together, ahead of purchase.
             Text("SKY GRID PRO")

@@ -20,7 +20,7 @@ enum TodayPostIntegrity: Sendable, Equatable {
 
 /// Pure decision table for `TodayPostIntegrity`, isolated from all I/O so every
 /// branch is a fast, deterministic unit test — matches `MorningRitualPolicy` /
-/// `AutomaticPaywallPresentationPolicy` in this codebase.
+/// `FirstUnlockPaywallPolicy` in this codebase.
 enum PostIntegrityPolicy {
     /// A `publish()` call writes the Firestore doc and enqueues the upload row as two
     /// separate, uncoordinated steps (`PostPublisher.publish`). This window gives

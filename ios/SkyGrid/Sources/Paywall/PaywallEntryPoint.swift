@@ -8,6 +8,11 @@ enum PaywallEntryPoint {
     /// A value-first reminder shown only after a person has built a real record.
     /// It is never used on launch or while the camera flow is active.
     case ritualMilestone(captureCount: Int)
+    /// The one automatic offer that replaced `ritualMilestone` as the sole
+    /// capture-driven reminder (2026-08-10, owner's decision — see
+    /// `FirstUnlockPaywallPolicy`): fires once, the moment a buddy is first
+    /// mutually revealed, never on a capture-count cadence.
+    case firstUnlock
 
     var headline: String {
         switch self {
@@ -21,12 +26,16 @@ enum PaywallEntryPoint {
             return "Keep the long view of your mornings."
         case .ritualMilestone(let captureCount):
             return "\(captureCount) mornings in. Keep the whole sky record."
+        case .firstUnlock:
+            return "Your first sky together is revealed. Keep the ritual going."
         }
     }
 
     var isAutomaticReminder: Bool {
-        if case .ritualMilestone = self { return true }
-        return false
+        switch self {
+        case .ritualMilestone, .firstUnlock: true
+        default: false
+        }
     }
 
     /// A small, fixed taxonomy for aggregate funnel measurement. It never
@@ -38,6 +47,7 @@ enum PaywallEntryPoint {
         case .archive: "archive"
         case .settings: "settings"
         case .ritualMilestone: "ritual_milestone"
+        case .firstUnlock: "first_unlock"
         }
     }
 
@@ -87,47 +97,5 @@ enum PaywallEntryPoint {
                 "Open every sky beyond the Free 30-day view as the year changes colour."
             )
         }
-    }
-}
-
-/// Controls the cadence of *automatic* upgrade reminders. Manual plan, Settings,
-/// and locked-archive entry points remain available whenever a person asks for
-/// them; this policy only protects the daily ritual from unrelated interruptions.
-enum AutomaticPaywallPresentationPolicy {
-    static let minimumCompletedCaptures = 3
-    static let completedCapturesBetweenPrompts = 3
-    static let calendarDaysBetweenPrompts = 3
-    static let snoozeInterval: TimeInterval = 14 * 24 * 60 * 60
-
-    static func shouldPresent(
-        entitlementStatus: EntitlementStatus,
-        completedCaptureCount: Int,
-        lastPromptedCaptureCount: Int?,
-        lastPromptedLocalDate: LocalDate?,
-        captureLocalDate: LocalDate,
-        snoozedUntil: Date?,
-        now: Date
-    ) -> Bool {
-        // A completed capture can create a meaningful moment to show value for
-        // both a confirmed Free user and a temporarily unresolved entitlement.
-        // PaywallView performs one fresh verification before it exposes purchase
-        // controls in the unresolved case.
-        guard entitlementStatus != .subscribed,
-              completedCaptureCount >= minimumCompletedCaptures,
-              snoozedUntil.map({ $0 <= now }) ?? true
-        else { return false }
-
-        guard let lastPromptedCaptureCount, let lastPromptedLocalDate else {
-            return true
-        }
-
-        let hasCapturedEnough = completedCaptureCount >= lastPromptedCaptureCount + completedCapturesBetweenPrompts
-        let hasWaitedLongEnough = lastPromptedLocalDate.daysUntil(captureLocalDate) >= calendarDaysBetweenPrompts
-        return hasCapturedEnough || hasWaitedLongEnough
-    }
-
-    static func snoozeUntil(afterConsecutiveDismissals count: Int, now: Date) -> Date? {
-        guard count >= 2 else { return nil }
-        return now.addingTimeInterval(snoozeInterval)
     }
 }

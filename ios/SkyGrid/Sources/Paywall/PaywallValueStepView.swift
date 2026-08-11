@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// Step 1: the same value framing the single-screen paywall used to open with,
-/// now with no price shown yet. Reached by every entry point except
-/// `.ritualMilestone`, which starts one step later (see `PaywallFlow.make`).
+/// now with no price shown yet. Reached by every entry point except the automatic
+/// reminders (`.ritualMilestone`, `.firstUnlock`), which start one step later
+/// (see `PaywallFlow.make`).
 struct PaywallValueStepView: View {
     let flow: PaywallFlow
     let entryPoint: PaywallEntryPoint

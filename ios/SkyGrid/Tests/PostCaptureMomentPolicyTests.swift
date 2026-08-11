@@ -8,14 +8,12 @@ struct PostCaptureMomentPolicyTests {
     private let armedAt = Date(timeIntervalSince1970: 1_000_000)
 
     private func arming(
-        paywall: Bool,
         count: Int = 1,
         localDate: LocalDate? = nil
     ) -> PostCaptureArming {
         PostCaptureArming(
             localDate: localDate ?? today,
             completedCaptureCount: count,
-            isPaywallEligible: paywall,
             armedAt: armedAt
         )
     }
@@ -42,8 +40,13 @@ struct PostCaptureMomentPolicyTests {
         )
     }
 
+    /// `paywall` is passed separately from `arming` — unlike the retired capture-count
+    /// reminder, `isPaywallEligible` is no longer frozen into the arming, because a
+    /// mutual unlock can make it become true asynchronously, after the capture that
+    /// armed this decision.
     private func decide(
         _ arming: PostCaptureArming,
+        paywall: Bool,
         _ reading: StreakReading?,
         lastCelebrated: Int = 0,
         hasRequestedAppReview: Bool = false,
@@ -51,6 +54,7 @@ struct PostCaptureMomentPolicyTests {
     ) -> PostCaptureMoment {
         PostCaptureMomentPolicy.decide(
             arming: arming,
+            isPaywallEligible: paywall,
             reading: reading,
             lastCelebratedMilestone: lastCelebrated,
             hasRequestedAppReview: hasRequestedAppReview,
@@ -61,24 +65,25 @@ struct PostCaptureMomentPolicyTests {
     // MARK: - Milestone outranks the paywall (owner's decision, 2026-08-08)
 
     /// The core of the reversal: a milestone day takes the capture, and the paywall
-    /// is expected to reappear on the next one via its own "N captures or N days"
-    /// gate — which works precisely because nothing is recorded as presented here.
+    /// is expected to reappear on the next re-ask via `FirstUnlockPaywallPolicy`'s own
+    /// one-shot gate — which works precisely because nothing is recorded as presented
+    /// here.
     @Test("a milestone day takes the capture even when the paywall is eligible")
     func milestoneOutranksEligiblePaywall() {
-        let moment = decide(arming(paywall: true, count: 7), observed(streak: 7))
+        let moment = decide(arming(count: 7), paywall: true, observed(streak: 7))
         #expect(moment == .milestone(StreakMilestone(streak: 7)))
     }
 
     @Test("an eligible paywall still fires on an ordinary morning")
     func paywallFiresWithoutAMilestone() {
-        #expect(decide(arming(paywall: true, count: 8), observed(streak: 8)) == .paywall)
+        #expect(decide(arming(count: 8), paywall: true, observed(streak: 8)) == .paywall)
     }
 
     /// An eligible paywall must not jump ahead while the milestone question is still
     /// unanswerable — that would reinstate the behaviour this change removed.
     @Test("an eligible paywall waits for the streak rather than pre-empting a milestone")
     func eligiblePaywallWaitsForTheStreak() {
-        #expect(decide(arming(paywall: true, count: 7), nil) == .awaitingStreak)
+        #expect(decide(arming(count: 7), paywall: true, nil) == .awaitingStreak)
     }
 
     // MARK: - Ordering: the review may not jump ahead of an undecided milestone
@@ -87,52 +92,52 @@ struct PostCaptureMomentPolicyTests {
     /// now it must wait until the milestone question is actually answerable.
     @Test("a declined paywall with no streak reading yet holds, it does not ask for a review")
     func awaitsStreakBeforeReview() {
-        #expect(decide(arming(paywall: false, count: 7), nil) == .awaitingStreak)
+        #expect(decide(arming(count: 7), paywall: false, nil) == .awaitingStreak)
     }
 
     @Test("a reading for a different day does not resolve this capture")
     func readingForAnotherDayHolds() {
         let other = today.adding(days: -1)
-        #expect(decide(arming(paywall: false), observed(streak: 7, on: other)) == .awaitingStreak)
+        #expect(decide(arming(), paywall: false, observed(streak: 7, on: other)) == .awaitingStreak)
     }
 
     // MARK: - Milestone
 
     @Test("an exact milestone on the armed day fires")
     func milestoneFires() {
-        #expect(decide(arming(paywall: false, count: 7), observed(streak: 7), lastCelebrated: 1) == .milestone(StreakMilestone(streak: 7)))
+        #expect(decide(arming(count: 7), paywall: false, observed(streak: 7), lastCelebrated: 1) == .milestone(StreakMilestone(streak: 7)))
     }
 
     @Test("day one fires the milestone and never the review")
     func dayOneFiresMilestone() {
-        #expect(decide(arming(paywall: false, count: 1), observed(streak: 1)) == .milestone(StreakMilestone(streak: 1)))
+        #expect(decide(arming(count: 1), paywall: false, observed(streak: 1)) == .milestone(StreakMilestone(streak: 1)))
     }
 
     @Test("an already-celebrated milestone falls through to the review")
     func celebratedMilestoneFallsThroughToReview() {
-        #expect(decide(arming(paywall: false, count: 7), observed(streak: 7), lastCelebrated: 7) == .reviewPrompt)
+        #expect(decide(arming(count: 7), paywall: false, observed(streak: 7), lastCelebrated: 7) == .reviewPrompt)
     }
 
     @Test("the same inputs cannot fire a second milestone once the guard advanced")
     func milestoneIsIdempotent() {
-        let armed = arming(paywall: false, count: 7)
-        #expect(decide(armed, observed(streak: 7), lastCelebrated: 0) == .milestone(StreakMilestone(streak: 7)))
-        #expect(decide(armed, observed(streak: 7), lastCelebrated: 7) == .reviewPrompt)
+        let armed = arming(count: 7)
+        #expect(decide(armed, paywall: false, observed(streak: 7), lastCelebrated: 0) == .milestone(StreakMilestone(streak: 7)))
+        #expect(decide(armed, paywall: false, observed(streak: 7), lastCelebrated: 7) == .reviewPrompt)
     }
 
     // MARK: - Never celebrate from an untrustworthy reading
 
     @Test("a failed history read never produces a milestone")
     func unavailableNeverCelebrates() {
-        #expect(decide(arming(paywall: false, count: 7), .unavailable(localDate: today), lastCelebrated: 0) == .reviewPrompt)
-        #expect(decide(arming(paywall: false, count: 1), .unavailable(localDate: today), lastCelebrated: 0) == PostCaptureMoment.none)
+        #expect(decide(arming(count: 7), paywall: false, .unavailable(localDate: today), lastCelebrated: 0) == .reviewPrompt)
+        #expect(decide(arming(count: 1), paywall: false, .unavailable(localDate: today), lastCelebrated: 0) == PostCaptureMoment.none)
     }
 
     /// A read that failed cannot prove a milestone, so the paywall keeps its turn
     /// rather than being deferred on a day nobody can show was special.
     @Test("a failed history read does not defer an eligible paywall")
     func unavailableDoesNotDeferThePaywall() {
-        #expect(decide(arming(paywall: true, count: 7), .unavailable(localDate: today)) == .paywall)
+        #expect(decide(arming(count: 7), paywall: true, .unavailable(localDate: today)) == .paywall)
     }
 
     /// `StreakCalculator` keeps yesterday's count alive until the day is over, so a
@@ -140,12 +145,12 @@ struct PostCaptureMomentPolicyTests {
     /// today. Celebrating it would print a number the user has not yet earned.
     @Test("a grace-mode reading taken before today's post lands is not a milestone")
     func graceModeReadingHolds() {
-        #expect(decide(arming(paywall: false), observed(streak: 7, postedToday: false)) == .awaitingStreak)
+        #expect(decide(arming(), paywall: false, observed(streak: 7, postedToday: false)) == .awaitingStreak)
     }
 
     @Test("a reading with no post for the day holds, because no truthful card exists")
     func missingPostHolds() {
-        #expect(decide(arming(paywall: false), observed(streak: 7, hasPost: false)) == .awaitingStreak)
+        #expect(decide(arming(), paywall: false, observed(streak: 7, hasPost: false)) == .awaitingStreak)
     }
 
     // MARK: - Staleness
@@ -153,7 +158,7 @@ struct PostCaptureMomentPolicyTests {
     @Test("an arming that outlived its window no longer celebrates, milestone or not")
     func staleArmingNeverCelebrates() {
         let elapsed = PostCaptureMomentPolicy.armingLifetime + 1
-        #expect(decide(arming(paywall: false, count: 1), observed(streak: 7), elapsed: elapsed) == PostCaptureMoment.none)
+        #expect(decide(arming(count: 1), paywall: false, observed(streak: 7), elapsed: elapsed) == PostCaptureMoment.none)
     }
 
     /// The backstop that keeps a missing streak from silently costing the paywall its
@@ -161,22 +166,22 @@ struct PostCaptureMomentPolicyTests {
     @Test("an expired arming still lets an eligible paywall through")
     func staleArmingStillPresentsThePaywall() {
         let elapsed = PostCaptureMomentPolicy.armingLifetime + 1
-        #expect(decide(arming(paywall: true, count: 7), nil, elapsed: elapsed) == .paywall)
-        #expect(decide(arming(paywall: true, count: 7), observed(streak: 7), elapsed: elapsed) == .paywall)
+        #expect(decide(arming(count: 7), paywall: true, nil, elapsed: elapsed) == .paywall)
+        #expect(decide(arming(count: 7), paywall: true, observed(streak: 7), elapsed: elapsed) == .paywall)
     }
 
     @Test("an expired arming with no paywall due falls back to the review gate")
     func staleArmingFallsBackToReview() {
         let elapsed = PostCaptureMomentPolicy.armingLifetime + 1
-        #expect(decide(arming(paywall: false, count: 7), nil, elapsed: elapsed) == .reviewPrompt)
+        #expect(decide(arming(count: 7), paywall: false, nil, elapsed: elapsed) == .reviewPrompt)
     }
 
     // MARK: - Review gating is delegated, not duplicated
 
     @Test("the review keeps AppReviewPromptPolicy's own gate")
     func reviewGateIsDelegated() {
-        #expect(decide(arming(paywall: false, count: 6), observed(streak: 6)) == PostCaptureMoment.none)
-        #expect(decide(arming(paywall: false, count: 7), observed(streak: 8)) == .reviewPrompt)
-        #expect(decide(arming(paywall: false, count: 7), observed(streak: 8), hasRequestedAppReview: true) == PostCaptureMoment.none)
+        #expect(decide(arming(count: 6), paywall: false, observed(streak: 6)) == PostCaptureMoment.none)
+        #expect(decide(arming(count: 7), paywall: false, observed(streak: 8)) == .reviewPrompt)
+        #expect(decide(arming(count: 7), paywall: false, observed(streak: 8), hasRequestedAppReview: true) == PostCaptureMoment.none)
     }
 }
