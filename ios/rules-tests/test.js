@@ -501,23 +501,30 @@ describe("firestore.rules handle claims", () => {
 // native enumeration oracle sitting in front of no rate limiter at all. Every callable
 // depends on that being impossible, so it is asserted rather than assumed.
 //
-// These pass today via the catch-all deny at the bottom of firestore.rules; the
-// explicit `invites` rule that follows in the build order must keep them green.
+// The explicit recursive matches near the bottom of firestore.rules document the
+// server-only contract for both top-level documents and any future descendants.
+// Firestore ORs overlapping matches, so these tests remain the real regression gate.
 describe("firestore.rules invite collections are server-only", () => {
   const CODE = "ABCDE12345";
 
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
-      await context.firestore().collection("invites").doc(CODE).set({
-        code: CODE,
-        creatorUid: OWNER,
-        creatorHandle: "owner_handle",
-        status: "open",
-        createdAtMs: 1786000000000,
-        expiresAtMs: 1786604800000,
-        claimedByUid: null,
-        generation: 0,
-      });
+      const firestore = context.firestore();
+      await Promise.all([
+        firestore.collection("invites").doc(CODE).set({
+          code: CODE,
+          creatorUid: OWNER,
+          creatorHandle: "owner_handle",
+          status: "open",
+          createdAtMs: 1786000000000,
+          expiresAtMs: 1786604800000,
+          claimedByUid: null,
+          generation: 0,
+        }),
+        firestore.collection("inviteRateLimits").doc(OWNER).set({ previewCount: 1 }),
+        firestore.collection("invites").doc(CODE).collection("audit").doc("event").set({ ok: true }),
+        firestore.collection("inviteRateLimits").doc(OWNER).collection("windows").doc("current").set({ count: 1 }),
+      ]);
     });
   });
 
@@ -556,13 +563,43 @@ describe("firestore.rules invite collections are server-only", () => {
     );
   });
 
-  it("does not let a caller read or rewrite their own rate-limit counters", async () => {
+  it("does not let a caller inspect or rewrite their own rate-limit counters", async () => {
     // A client that can write this document can reset its own budget, which would
     // make the limiter decorative.
     const firestore = testEnv.authenticatedContext(OWNER).firestore();
-    await assertFails(firestore.collection("inviteRateLimits").doc(OWNER).get());
-    await assertFails(
-      firestore.collection("inviteRateLimits").doc(OWNER).set({ previewCount: 0 })
-    );
+    const counters = firestore.collection("inviteRateLimits");
+    const counter = counters.doc(OWNER);
+    await assertFails(counter.get());
+    await assertFails(counters.get());
+    await assertFails(counter.update({ previewCount: 0 }));
+    await assertFails(counter.delete());
+    await assertFails(counters.doc(BUDDY).set({ previewCount: 0 }));
+  });
+
+  it("does not expose either server-only namespace to unauthenticated clients", async () => {
+    const firestore = testEnv.unauthenticatedContext().firestore();
+    for (const collectionName of ["invites", "inviteRateLimits"]) {
+      const collection = firestore.collection(collectionName);
+      await assertFails(collection.doc(collectionName === "invites" ? CODE : OWNER).get());
+      await assertFails(collection.get());
+      await assertFails(collection.doc("new-document").set({ reset: true }));
+    }
+  });
+
+  it("keeps future descendants of both server-only namespaces unreachable", async () => {
+    const firestore = testEnv.authenticatedContext(OWNER).firestore();
+    const descendants = [
+      firestore.collection("invites").doc(CODE).collection("audit"),
+      firestore.collection("inviteRateLimits").doc(OWNER).collection("windows"),
+    ];
+
+    for (const collection of descendants) {
+      const existing = collection.doc(collection.id === "audit" ? "event" : "current");
+      await assertFails(existing.get());
+      await assertFails(collection.get());
+      await assertFails(existing.update({ changed: true }));
+      await assertFails(existing.delete());
+      await assertFails(collection.doc("new-document").set({ created: true }));
+    }
   });
 });

@@ -244,6 +244,17 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Invite codes and their rate-limit counters are callable-only. Keep these
+    // recursive matches explicit so a future top-level rule cannot accidentally
+    // treat either server-owned namespace as ordinary client data.
+    match /invites/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /inviteRateLimits/{document=**} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

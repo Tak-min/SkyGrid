@@ -2,7 +2,7 @@
 
 日付: 2026-08-11（同日2セッション目）
 前セッション: `share-card-qr-removal-and-invite-blueprint_2026-08-11.md`
-状態: **両方とも完了・テスト通過。Step 3a〜3c（index/TTL・招待Functions・deleteAccount）は本番反映済み**
+状態: **両方とも完了・テスト通過。Step 3a〜3cは本番反映済み、Step 4の明示denyはローカル完成**
 
 ---
 
@@ -237,7 +237,7 @@ revoke の応答同一性／レート制限の実挙動／`generation` の記録
 - `firestore.indexes.json` に live-invite query の複合indexと、`invites.expireAt` /
   `inviteRateLimits.expireAt` のTTLを正本化した。
 
-最新の再検証: functions 45/45、Firestore emulator **20/20**、rules 32/32、TypeScript 0 error、
+最新の再検証: functions 45/45、Firestore emulator **20/20**、rules **34/34**、TypeScript 0 error、
 JSON妥当、compiled exports は新規4本が `asia-northeast1`、既存3本が `us-central1`。
 
 ---
@@ -271,6 +271,27 @@ policyは空。本番既存Functionsが使う `us-central1` はFirebase既定の
 
 App Checkトークン無しで `createInvite` にPOSTしたpost-deploy smoke testはHTTP 401となり、
 ハンドラーのデータ書き込み前に期待どおり拒否された。App Check付き実機E2Eは引き続き未実施。
+
+### Step 4 ローカル完了（2026-08-11）
+
+`firestore.rules` のcatch-all直前に、`invites/{document=**}` と
+`inviteRateLimits/{document=**}` の明示的なrecursive denyを追加した。これはAdmin SDK、TTL、
+管理コンソールを止めるものではなく、mobile/web clientからの直接アクセスだけを拒否する。
+Firestore RulesはoverlapするmatchをOR評価するため、明示deny自体は将来の広いallowを上書きしない。
+安全性の本体は `rules-tests/test.js` の回帰テストである。
+
+テストは従来のtop-level get/list/writeに加え、未認証アクセス、rate-limit counterの
+list/update/delete、両namespace配下のsubcollection get/list/create/update/deleteまで拡張し、
+Firestore＋Storageエミュレータで **34/34 passing**。`firebase deploy --only firestore:rules
+--dry-run --project sky-grid-app` も成功した。
+
+本番Rules release `projects/sky-grid-app/rulesets/8e0c5453-b443-40da-9b4e-f154cf145c98`
+（release update 2026-08-08）は、Step 4追加前のローカル `HEAD:ios/firestore.rules` と末尾改行以外
+一致した。したがって現時点のStep 5 deploy差分は上記2本の明示denyだけ。ただし次セッションでも
+deploy直前にremote/local差分を再確認する。
+
+**次の機能ゲートはStep 5のRules対象限定deploy。** 本番Rules全体を置換するためユーザーの明示承認が
+必要。その後はStep 6（WorkerのAASA＋`/i/*`）→Step 7以降（iOSクライアント）。
 
 デプロイ後すぐに確認すべきこと:
 1. `firebase functions:list` で新規4本だけ ACTIVE、region/runtime/maxInstancesを確認。
