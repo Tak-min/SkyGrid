@@ -116,6 +116,7 @@
 		A6D484118FFD38385978B4E2 /* StreakCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0540437D43AF806B0EDF1375 /* StreakCalculator.swift */; };
 		A73532A7336134B3C0372AD9 /* LaunchGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8945AFCB6B9F61F9F5436235 /* LaunchGate.swift */; };
 		A7E8BB5A0D4AE334716D86EE /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEAF0DB8B065969DB18A168A /* WelcomeView.swift */; };
+		A9AECCE519AD72DE12470FFD /* AppStoreIdentityExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2D214A3D439287791AB534 /* AppStoreIdentityExportView.swift */; };
 		AA8BC5A9E132FEA6EA1F344D /* FirebaseImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */; };
 		AB2B0E119BF9C3478B4B03E8 /* FirebaseUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */; };
 		AC6D5CF00AFA32E554B4FED3 /* WeekRhythm.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0891E1A60B6C28DB901200 /* WeekRhythm.swift */; };
@@ -236,6 +237,7 @@
 		0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBuddyView.swift; sourceTree = "<group>"; };
 		0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicy.swift; sourceTree = "<group>"; };
+		0D2D214A3D439287791AB534 /* AppStoreIdentityExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreIdentityExportView.swift; sourceTree = "<group>"; };
 		130FA656FED8CCC97C00BAA5 /* BuddyRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyRow.swift; sourceTree = "<group>"; };
 		13BACEF1CC5D7C6A30CC8F3B /* PostStatusBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostStatusBanner.swift; sourceTree = "<group>"; };
 		1651F3A167F06A63A99A9BE9 /* LocalDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDate.swift; sourceTree = "<group>"; };
@@ -685,6 +687,7 @@
 		BEF5A36321E1DAF2FA0EA3CA /* Grid */ = {
 			isa = PBXGroup;
 			children = (
+				0D2D214A3D439287791AB534 /* AppStoreIdentityExportView.swift */,
 				087C71720687FEA840D1BCE1 /* GridArchiveView.swift */,
 				2B3AD0FDB72D81461B58527B /* GridCanvas.swift */,
 				EE39B2D2D1B78B2B5EC4B614 /* GridLayoutMath.swift */,
@@ -1030,6 +1033,7 @@
 				83CF699A774D52C1BE8E651A /* AppServices.swift in Sources */,
 				4BA845FD309C5FDC34D7CD44 /* AppStartupController.swift in Sources */,
 				B82B9B25C76792D539F9D70B /* AppStartupView.swift in Sources */,
+				A9AECCE519AD72DE12470FFD /* AppStoreIdentityExportView.swift in Sources */,
 				04C41D55F7B9281D7068F93B /* BigTimeView.swift in Sources */,
 				67424D7061C96DB4C79B1AE8 /* BuddiesView.swift in Sources */,
 				6B314D6B5FF83D8EFCC172DC /* BuddyRevealGate.swift in Sources */,

@@ -47,10 +47,15 @@ enum SGExport {
     static let cellEmpty = Color.white.opacity(0.09)
     static let cellPostedNoThumb = Color.white.opacity(0.14)
 
-    /// The link a QR scan or a typed URL both land on. Points straight at the App
-    /// Store listing rather than the marketing site — a share card's job is a
-    /// one-hop install, not a second landing page. Shared by every export surface
-    /// so the two cards can never drift apart.
+    /// The canonical listing link. Points straight at the App Store rather than the
+    /// marketing site — a share card's job is a one-hop install, not a second
+    /// landing page. Shared by every export surface so the cards can never drift.
+    ///
+    /// The cards stopped *drawing* this as a QR on 2026-08-11 (see
+    /// `Grid/AppStoreIdentityExportView.swift` for why a QR cannot work on a Story).
+    /// It is kept because it is still the one true listing URL for any surface that
+    /// needs to hand someone the app — share text, the invite web page, or an
+    /// on-screen code meant to be scanned by a *second* device, in person.
     static let downloadURLString = "https://apps.apple.com/us/app/sky-grid-morning-wake/id6796222704"
 }
 

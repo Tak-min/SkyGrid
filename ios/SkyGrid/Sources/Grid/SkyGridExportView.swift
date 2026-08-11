@@ -96,27 +96,8 @@ struct SkyGridExportView: View {
     }
 
     private var downloadFooter: some View {
-        HStack(spacing: 20) {
-            // A fixed white quiet zone keeps the code scannable regardless of the
-            // surrounding theme's background colour.
-            if let qrImage = QRCodeGenerator.image(for: SGExport.downloadURLString) {
-                Image(uiImage: qrImage)
-                    .interpolation(.none)
-                    .resizable()
-                    .frame(width: 128, height: 128)
-                    .padding(16)
-                    .background(Color.white, in: RoundedRectangle(cornerRadius: 12))
-            }
-            VStack(alignment: .leading, spacing: 8) {
-                if let handle {
-                    Text("@\(handle.value)")
-                        .font(SGFont.fixedNumeric(34, weight: .semibold))
-                        .foregroundStyle(SGExport.ink)
-                }
-                Text("Sky Grid — one sky, every morning")
-                    .font(SGFont.fixedCaption(24))
-                    .foregroundStyle(SGExport.ink2)
-            }
+        HStack(spacing: 24) {
+            AppStoreIdentity(handle: handle)
             Spacer(minLength: 0)
         }
     }
