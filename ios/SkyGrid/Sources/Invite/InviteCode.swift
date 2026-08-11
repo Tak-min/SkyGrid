@@ -8,7 +8,7 @@ import Foundation
 /// `INVITE_LINK_BASE`. Preview and claim only agree with each other because both the
 /// client and the server normalize the same way; if this drifts from the server file,
 /// a code a person can type may preview as valid and fail to claim, or the reverse.
-struct InviteCode: Hashable, Sendable {
+struct InviteCode: Hashable, Sendable, Identifiable {
     /// Crockford Base32 minus `I`, `L`, `O`, `U` — see `invites.ts` for why those four
     /// are dropped (misread as `1`/`1`/`0` by hand, and `U` to keep codes clean).
     static let alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
@@ -18,6 +18,8 @@ struct InviteCode: Hashable, Sendable {
     /// Canonical form: uppercase, unhyphenated, exactly `length` characters, every
     /// character in `alphabet`.
     let value: String
+
+    var id: String { value }
 
     /// Accepts what a person can plausibly type or paste — case-folded, with the
     /// display hyphen dropped and the three Crockford look-alikes mapped to the digit

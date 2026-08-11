@@ -20,6 +20,7 @@ struct RootView: View {
     @State private var streakSignal = StreakSignal()
     @State private var postCaptureArming: PostCaptureArming?
     @State private var milestoneMoment: MilestoneMoment?
+    @State private var inviteMoment: InviteCode?
     @State private var selectedTab: HomeTab = ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") ? .grid : .today
     let onAccountDeleted: () -> Void
 
@@ -35,12 +36,14 @@ struct RootView: View {
                     .onAppear {
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
+                        resolvePendingInvite()
                         Task { await reconcileMorningRitual(services: services) }
                     }
                     .onChange(of: scenePhase) { _, phase in
                         guard phase == .active else { return }
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
+                        resolvePendingInvite()
                         Task { await reconcileMorningRitual(services: services) }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
@@ -56,6 +59,7 @@ struct RootView: View {
                     }
                     .onChange(of: destination) { _, _ in
                         consumePendingCameraRequestIfNeeded()
+                        resolvePendingInvite()
                     }
             } else {
                 ProgressView()
@@ -148,11 +152,15 @@ struct RootView: View {
             // capture earned can be presented from here without racing iOS's own
             // dismissal animation — the reason this is a callback and not a timer.
             resolvePostCaptureMoment()
+            resolvePendingInvite()
         }) {
             cameraSheet(services: services)
         }
         .fullScreenCover(item: $milestoneMoment) { moment in
-            MilestoneView(moment: moment, onDone: { milestoneMoment = nil })
+            MilestoneView(moment: moment, onDone: {
+                milestoneMoment = nil
+                resolvePendingInvite()
+            })
         }
         .onChange(of: streakSignal.reading) { _, _ in
             // The other half of the resolution: the streak usually lands after the
@@ -172,6 +180,7 @@ struct RootView: View {
             // outcome: a celebration arriving after a minute inside a purchase flow
             // no longer reads as caused by the capture.
             resolvePostCaptureMoment()
+            resolvePendingInvite()
         }) {
             PaywallView(
                 purchases: services.purchases,
@@ -185,7 +194,22 @@ struct RootView: View {
                 onDismissed: recordAutomaticPaywallDismissalIfNeeded
             )
         }
+        .sheet(item: $inviteMoment, onDismiss: {
+            // Swiping the sheet away (rather than tapping a terminal "Done"/"Not now")
+            // still counts as a decision: the same code can always be re-opened from
+            // the original link, so there is nothing to preserve by keeping it pending.
+            router.consumePendingInvite()
+        }) { code in
+            InviteClaimView(
+                code: code,
+                uid: services.currentUid,
+                inviteRepository: services.inviteRepository,
+                userRepository: services.userRepository,
+                onFinished: { inviteMoment = nil }
+            )
+        }
         .task { consumePendingCameraRequestIfNeeded() }
+        .task { resolvePendingInvite() }
     }
 
     private func cameraSheet(services: AppServices) -> some View {
@@ -452,6 +476,22 @@ struct RootView: View {
                 return
             }
         }
+    }
+
+    /// Surfaces a Universal-Link-tapped invite once nothing else is claiming the
+    /// screen. Called from every lifecycle hook that could make the guards newly
+    /// pass — cold launch, foreground, `destination` finally reaching `.today`, and
+    /// every point another modal closes — the same repeated-re-ask shape as
+    /// `resolvePostCaptureMoment`, kept as a separate function because an invite tap
+    /// is a deliberate user action, not a derived celebration, and must never be
+    /// silently dropped by `PostCaptureMomentPolicy`'s arming/backstop machinery.
+    private func resolvePendingInvite() {
+        guard destination == .today,
+              inviteMoment == nil,
+              !showCamera, !showPaywall, milestoneMoment == nil,
+              let code = router.pendingInviteCode
+        else { return }
+        inviteMoment = code
     }
 
     private func firstValue<T: Sendable>(from stream: AsyncStream<T>) async -> T? {
