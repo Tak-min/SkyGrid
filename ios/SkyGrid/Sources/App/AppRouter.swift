@@ -13,6 +13,20 @@ enum AppRoute: Equatable {
 final class AppRouter {
     var pendingRoute: AppRoute?
 
+    /// Set when a buddy-post push notification is tapped. Deliberately a separate
+    /// slot from `pendingRoute` rather than a new `AppRoute` case: `pendingRoute` is
+    /// single-valued, and a buddy-reveal tap arriving after the morning alarm has
+    /// already armed `.camera` would silently overwrite the app's single most
+    /// important route (VISION.md §3, pain #2) instead of coexisting with it.
+    var pendingBuddyRevealRoute = false
+
+    /// Bumped by `NotificationRouter` on *any* buddy-post push arrival — tapped or
+    /// merely delivered while foregrounded — so `TodayView` can re-resolve the buddy
+    /// strip via `TodayViewModel.refreshBuddiesNow()`. A counter rather than a `Bool`
+    /// so two arrivals close together (e.g. two buddies posting minutes apart) are
+    /// both observable as distinct `onChange` events, not coalesced into one.
+    var buddyRevealRefreshTicks = 0
+
     /// Set by `handle(url:)`/`handle(userActivity:)` when the URL is an invite link,
     /// and mirrored to `LocalDefaults.pendingInviteCode` so it survives a cold launch
     /// that lands on the auth or onboarding screen before `RootView` exists. Read this

@@ -257,12 +257,15 @@ final class TodayViewModel {
     /// A Firestore snapshot listener would normally catch that on its own, but
     /// `refreshBuddies` deliberately takes one snapshot per buddy and lets its
     /// stream terminate (see its doc comment) rather than holding a live listener
-    /// open per buddy. Call this on scene-phase-active to cover the dominant case —
-    /// "the app was backgrounded when a buddy posted and is only now being
-    /// reopened." It does not cover a buddy posting while this app is already
-    /// foregrounded; that would need either a live per-buddy listener or a
-    /// foreground poll, and `dev-notes/invite-link-ios-blueprint_2026-08-11.md` §7
-    /// records that tradeoff as deliberately deferred rather than solved here.
+    /// open per buddy. Call this on scene-phase-active to cover "the app was
+    /// backgrounded when a buddy posted and is only now being reopened." A buddy
+    /// posting while this app is already foregrounded is covered separately:
+    /// `RootView` also calls this (via `TodayView`'s `buddyRefreshToken`) whenever
+    /// `onBuddyPostCreated`'s push notification arrives, tapped or merely delivered
+    /// — see `NotificationRouter` and `AppRouter.buddyRevealRefreshTicks`.
+    /// `dev-notes/invite-link-ios-blueprint_2026-08-11.md` recorded that gap as
+    /// deliberately deferred; the push closes it without a live per-buddy listener
+    /// or a foreground poll.
     func refreshBuddiesNow() {
         guard let today = observedDate, !acceptedFriendships.isEmpty else { return }
         Task { await refreshBuddies(friendships: acceptedFriendships, today: today) }

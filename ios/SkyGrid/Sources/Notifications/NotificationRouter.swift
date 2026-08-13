@@ -22,12 +22,21 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
         let identifier = response.notification.request.identifier
         let isMorningNotification = identifier == MorningAlarmScheduler.notificationIdentifier
             || identifier.hasPrefix(MorningFollowUpScheduler.identifierPrefix)
-        guard isMorningNotification else {
+        let userInfo = response.notification.request.content.userInfo
+        let buddyPost = BuddyPushPayload.parse(userInfo)
+
+        guard isMorningNotification || buddyPost != nil else {
             completionHandler()
             return
         }
         Task { @MainActor [weak self] in
-            self?.appRouter.pendingRoute = .camera
+            if isMorningNotification {
+                self?.appRouter.pendingRoute = .camera
+            }
+            if buddyPost != nil {
+                self?.appRouter.pendingBuddyRevealRoute = true
+                self?.appRouter.buddyRevealRefreshTicks += 1
+            }
             completionHandler()
         }
     }
@@ -45,6 +54,14 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
             // delivered. Avoid a contradictory banner/sound in that narrow race.
             completionHandler([])
             return
+        }
+        // A buddy-post push that arrives while the app is already foregrounded is not
+        // tapped — nobody navigates — but the buddy strip should still catch up, so
+        // this bumps the same refresh counter `didReceive` bumps on a tap.
+        if BuddyPushPayload.parse(notification.request.content.userInfo) != nil {
+            Task { @MainActor [weak self] in
+                self?.appRouter.buddyRevealRefreshTicks += 1
+            }
         }
         completionHandler([.banner, .sound])
     }

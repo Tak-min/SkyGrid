@@ -8,6 +8,13 @@ import SwiftUI
 /// So before capture the tile must show sealed suspense — it deliberately does
 /// **not** say "not yet", because at that point the app genuinely cannot tell the
 /// difference between a buddy who slept in and one who was up before you.
+///
+/// What's sealed here is the *content* (the sky colour) — not the *fact* of a post.
+/// A buddy-post push notification (`onBuddyPostCreated`) tells the viewer out of
+/// band that a buddy captured this morning, without revealing anything about their
+/// sky; this tile still shows sealed suspense until the viewer posts too. The two
+/// are deliberately different channels: this view answers "what can I show", the
+/// push answers "should I go remind you to look."
 struct BuddyTile: View {
     let displayName: String
     let revealState: TodayViewModel.BuddyRevealState

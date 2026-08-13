@@ -14,6 +14,10 @@ struct TodayView: View {
     /// Switches to the Buddies tab. Owned by the parent because the tab selection
     /// lives there; Today only knows that it wants to send someone to invite.
     let onOpenBuddies: () -> Void
+    /// Bumped by `RootView` whenever a buddy-post push notification arrives (tapped
+    /// or merely delivered while foregrounded) — see `RootView.buddyRefreshToken`.
+    /// Not read directly by `body`; only its `.onChange` transition matters.
+    let buddyRefreshToken: Int
     init(
         viewModel: TodayViewModel,
         imageFetching: any ImageFetching,
@@ -21,7 +25,8 @@ struct TodayView: View {
         onOpenCamera: @escaping () -> Void,
         subscriptionPlan: SubscriptionPlan,
         onOpenPaywall: @escaping () -> Void,
-        onOpenBuddies: @escaping () -> Void
+        onOpenBuddies: @escaping () -> Void,
+        buddyRefreshToken: Int = 0
     ) {
         _viewModel = State(initialValue: viewModel)
         self.imageFetching = imageFetching
@@ -30,6 +35,7 @@ struct TodayView: View {
         self.subscriptionPlan = subscriptionPlan
         self.onOpenPaywall = onOpenPaywall
         self.onOpenBuddies = onOpenBuddies
+        self.buddyRefreshToken = buddyRefreshToken
     }
 
     var body: some View {
@@ -61,6 +67,9 @@ struct TodayView: View {
         .onDisappear { viewModel.stop() }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            viewModel.refreshBuddiesNow()
+        }
+        .onChange(of: buddyRefreshToken) { _, _ in
             viewModel.refreshBuddiesNow()
         }
     }

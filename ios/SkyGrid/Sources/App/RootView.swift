@@ -34,6 +34,12 @@ struct RootView: View {
     /// otherwise stop it matching `revealSignal.reading`.
     @State private var deferredSoloPaywallDate: LocalDate?
     @State private var inviteMoment: InviteCode?
+    /// Bumped every time `consumePendingBuddyRevealIfNeeded()` acts on a buddy-post
+    /// push, so `TodayView` can re-resolve the buddy strip via
+    /// `TodayViewModel.refreshBuddiesNow()` — mirrors `streakSignal`/`revealSignal`:
+    /// passed down as a plain value rather than left for the view model to own,
+    /// since `TodayViewModel` is reconstructed on every body evaluation.
+    @State private var buddyRefreshToken = 0
     @State private var selectedTab: HomeTab = ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") ? .grid : .today
     let onAccountDeleted: () -> Void
 
@@ -49,6 +55,7 @@ struct RootView: View {
                     .onAppear {
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
+                        consumePendingBuddyRevealIfNeeded()
                         resolvePendingPresentations(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
@@ -56,6 +63,7 @@ struct RootView: View {
                         guard phase == .active else { return }
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
+                        consumePendingBuddyRevealIfNeeded()
                         resolvePendingPresentations(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
@@ -72,6 +80,7 @@ struct RootView: View {
                     }
                     .onChange(of: destination) { _, _ in
                         consumePendingCameraRequestIfNeeded()
+                        consumePendingBuddyRevealIfNeeded()
                         resolvePendingPresentations(services: services)
                     }
             } else {
@@ -114,7 +123,8 @@ struct RootView: View {
                     onOpenCamera: { showCamera = true },
                     subscriptionPlan: services.entitlements.plan,
                     onOpenPaywall: { presentPaywall(from: .home) },
-                    onOpenBuddies: { selectedTab = .buddies }
+                    onOpenBuddies: { selectedTab = .buddies },
+                    buddyRefreshToken: buddyRefreshToken
                 )
                 .tag(HomeTab.today)
                 .tabItem { Label("Today", systemImage: "sun.horizon") }
@@ -238,6 +248,14 @@ struct RootView: View {
             )
         }
         .task { consumePendingCameraRequestIfNeeded() }
+        .task { consumePendingBuddyRevealIfNeeded() }
+        .onChange(of: router.buddyRevealRefreshTicks) { _, _ in
+            // A buddy-post push that arrived while this app was already foregrounded
+            // is not a tap — nobody navigated — but the strip should still catch up.
+            // Safe to react to directly, unlike `pendingBuddyRevealRoute`: this only
+            // ever changes while the app (and this observing view) is already alive.
+            buddyRefreshToken += 1
+        }
         .task { resolvePendingPresentations(services: services) }
     }
 
@@ -623,6 +641,22 @@ struct RootView: View {
                 return
             }
         }
+    }
+
+    /// Mirrors `consumePendingCameraRequestIfNeeded()`'s multi-hook re-check pattern —
+    /// see that function's doc comment for the exact failure it exists to avoid. A
+    /// plain `.onChange(of: router.pendingBuddyRevealRoute)` would silently miss a
+    /// cold launch from a tapped buddy-post notification: the flag is already `true`
+    /// before this view (and its `.onChange`/`.onAppear` hooks) exist, since
+    /// `refreshDestination` awaits a network call before `destination` becomes
+    /// `.today`. Re-checking the current value from every relevant lifecycle hook —
+    /// appear, scenePhase becoming active, destination changing, and this view's own
+    /// `.task` — closes that gap the same way it does for the camera route.
+    private func consumePendingBuddyRevealIfNeeded() {
+        guard destination == .today, router.pendingBuddyRevealRoute else { return }
+        router.pendingBuddyRevealRoute = false
+        selectedTab = .today
+        buddyRefreshToken += 1
     }
 
     /// The single entry point every lifecycle hook and modal-dismissal callback calls

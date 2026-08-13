@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { setGlobalOptions } from "firebase-functions/v2";
 import {
   FREE_SUBSCRIPTION,
@@ -28,6 +29,7 @@ import {
   revokeInviteDocument,
 } from "./inviteStore.js";
 import type { RateLimitedAction } from "./rateLimit.js";
+import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
 
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 2 });
@@ -134,8 +136,8 @@ export const deleteAccount = onCall(
       throw error;
     }
 
-    // recursiveDelete removes nested post/device documents; deleting only the parent
-    // would leave those subcollections intact.
+    // recursiveDelete removes nested post/device/postNotifications documents;
+    // deleting only the parent would leave those subcollections intact.
     await db.recursiveDelete(userRef);
 
     // A retry after a partially completed deletion must succeed, not 500. A
@@ -486,6 +488,45 @@ export const revenueCatWebhook = onRequest(
       hasRecognisedProduct: plan !== null,
     });
     response.status(200).json({ received: true });
+  },
+);
+
+/**
+ * The delivery half of SkyGrid's core mutual-reveal mechanic: a buddy finding out a
+ * post happened without reopening the app. Notifies every accepted, unblocked buddy
+ * of the poster — see `buddyNotificationStore.ts` for the marker/quiet-hours/
+ * stale-token logic this only triggers.
+ *
+ * `region: "asia-northeast1"` is required, not a style choice: the Firestore database
+ * is single-region `asia-northeast1` (`dev-notes/firebase-backend-provisioning_2026-07-29.md`),
+ * and a Firestore-triggered (Eventarc) function must run in the same region as the
+ * database it watches — unlike the `onCall`/`onRequest` functions above, whose region
+ * only affects client latency. `retry: false`: `notifyBuddiesOfPost` already claims an
+ * idempotency marker before sending anything and is documented to never throw, so a
+ * retried delivery of the same event would only ever hit the "already claimed" path —
+ * there is nothing a retry could fix that this function's own error handling doesn't
+ * already cover, and retrying would just extend how long a truly stuck event lingers.
+ */
+export const onBuddyPostCreated = onDocumentCreated(
+  {
+    document: "users/{uid}/posts/{localDate}",
+    region: "asia-northeast1",
+    retry: false,
+  },
+  async (event) => {
+    const { uid: posterUid, localDate } = event.params;
+    try {
+      await notifyBuddiesOfPost(admin.firestore(), admin.messaging(), {
+        posterUid,
+        localDate,
+        nowMs: Date.now(),
+      });
+    } catch (error: unknown) {
+      // `notifyBuddiesOfPost` is documented to never throw; this is a last-resort net
+      // so a truly unexpected failure here can never surface as a failed trigger for
+      // a post that already succeeded and is not going anywhere.
+      logger.error("Unhandled error notifying buddies of a post.", { posterUid, localDate, error });
+    }
   },
 );
 

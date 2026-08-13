@@ -237,6 +237,14 @@ service cloud.firestore {
       allow delete: if signedIn() && request.auth.uid == uid;
     }
 
+    // The buddy-post-notification idempotency marker (`onBuddyPostCreated` /
+    // `buddyNotificationStore.ts`). Admin-SDK-only, like `invites`/`inviteRateLimits`
+    // below — kept explicit so a future top-level rule cannot accidentally treat this
+    // server-owned namespace as ordinary client data.
+    match /users/{uid}/postNotifications/{document=**} {
+      allow read, write: if false;
+    }
+
     // RevenueCat lifecycle webhooks write this mirror through the Admin SDK only.
     // It is never an entitlement source for the client, nor a client-writable
     // profile field.

@@ -11,7 +11,7 @@
     "deploy": "firebase deploy --only functions",
     "lint": "tsc --noEmit",
     "test": "npm run build && node --test test/*.test.js",
-    "test:emulator": "npm run build && cd .. && firebase emulators:exec --only firestore \"cd functions && node --test test/emulator/*.test.js\""
+    "test:emulator": "npm run build && cd .. && firebase emulators:exec --only firestore \"cd functions && node --test --test-concurrency=1 test/emulator/*.test.js\""
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
