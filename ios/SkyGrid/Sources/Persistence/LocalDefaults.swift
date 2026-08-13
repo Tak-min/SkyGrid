@@ -126,6 +126,45 @@ enum LocalDefaults {
         unlockPaywallPresentedAt = nil
     }
 
+    /// Scopes the cadenced solo-morning paywall to an account, kept separate from
+    /// `unlockPaywallAccountID`/`automaticPaywallAccountID`/`milestoneAccountID` for
+    /// the same reason each of those is separate — nothing solo-paywall-related may
+    /// perturb any other automatic prompt's bookkeeping.
+    @UserDefaultBacked(key: "soloPaywallAccountID", defaultValue: nil)
+    static var soloPaywallAccountID: String?
+
+    /// `completedCaptureCount` at the moment the solo paywall was last presented.
+    /// `nil` means "never presented" — distinct from `0`, which would falsely satisfy
+    /// `SoloMorningPaywallPolicy`'s "captured enough since last prompt" check on the
+    /// very first eligible capture.
+    @UserDefaultBacked(key: "lastSoloPaywallPromptCaptureCount", defaultValue: nil)
+    static var lastSoloPaywallPromptCaptureCount: Int?
+
+    /// `LocalDate.docID` of the day the solo paywall was last presented. Stored as a
+    /// string (Firestore/`UserDefaults`-safe), parsed back to `LocalDate` at the read
+    /// site — mirrors `lastCompletedCaptureLocalDate`.
+    @UserDefaultBacked(key: "lastSoloPaywallPromptLocalDate", defaultValue: nil)
+    static var lastSoloPaywallPromptLocalDate: String?
+
+    /// Consecutive solo-paywall presentations dismissed without purchasing. Reset to
+    /// `0` the moment a purchase succeeds; drives `SoloMorningPaywallPolicy.snoozeUntil`.
+    @UserDefaultBacked(key: "consecutiveSoloPaywallDismissals", defaultValue: 0)
+    static var consecutiveSoloPaywallDismissals: Int
+
+    /// `nil` means "no snooze in effect." Set by `SoloMorningPaywallPolicy.snoozeUntil`
+    /// after repeated dismissals; a `Date` (not a `Bool`) so it self-expires on its own
+    /// schedule rather than needing an explicit clear on every calendar-day rollover.
+    @UserDefaultBacked(key: "soloPaywallSnoozedUntil", defaultValue: nil)
+    static var soloPaywallSnoozedUntil: Date?
+
+    static func resetSoloPaywallState() {
+        soloPaywallAccountID = nil
+        lastSoloPaywallPromptCaptureCount = nil
+        lastSoloPaywallPromptLocalDate = nil
+        consecutiveSoloPaywallDismissals = 0
+        soloPaywallSnoozedUntil = nil
+    }
+
     /// The user has explicitly turned on their morning wake flow. This is a user
     /// preference only; the scheduler still checks AlarmKit / notification state
     /// before it claims an alarm exists.
@@ -168,6 +207,7 @@ enum LocalDefaults {
         personalizationProfileData = nil
         resetAutomaticPaywallState()
         resetUnlockPaywallState()
+        resetSoloPaywallState()
         resetMilestoneState()
         morningAlarmEnabled = false
         morningAlarmBackend = "automatic"

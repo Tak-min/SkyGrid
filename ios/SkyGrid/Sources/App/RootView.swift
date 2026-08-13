@@ -26,6 +26,13 @@ struct RootView: View {
     @State private var revealSignal = RevealSignal()
     @State private var postCaptureArming: PostCaptureArming?
     @State private var milestoneMoment: MilestoneMoment?
+    /// Set only when a milestone outranks an eligible solo paywall, to the exact
+    /// capture day that made it eligible. See the write site in
+    /// `resolvePostCaptureMoment` and the read site in `resolveSoloPaywall` for why
+    /// this must be the frozen `LocalDate` rather than a `Bool` re-derived as
+    /// "today" — a calendar-day rollover between the defer and the re-ask would
+    /// otherwise stop it matching `revealSignal.reading`.
+    @State private var deferredSoloPaywallDate: LocalDate?
     @State private var inviteMoment: InviteCode?
     @State private var selectedTab: HomeTab = ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") ? .grid : .today
     let onAccountDeleted: () -> Void
@@ -162,13 +169,19 @@ struct RootView: View {
         }) {
             cameraSheet(services: services)
         }
-        .fullScreenCover(item: $milestoneMoment) { moment in
+        .fullScreenCover(item: $milestoneMoment, onDismiss: {
+            // A milestone that outranked an eligible first-unlock or solo paywall
+            // deferred it without recording anything — this is what lets the
+            // paywall claim its turn the moment the arbiter is free again. Waiting
+            // for the cover's own `onDismiss` (rather than calling this from
+            // `onDone` synchronously) avoids presenting a new sheet in the same
+            // runloop as this cover's own dismissal animation, which could
+            // otherwise swallow it — mirrors the camera's
+            // `fullScreenCover(isPresented:onDismiss:)` above.
+            resolvePendingPresentations(services: services)
+        }) { moment in
             MilestoneView(moment: moment, onDone: {
                 milestoneMoment = nil
-                // A milestone that outranked an eligible first-unlock paywall
-                // deferred it without recording anything — this is what lets the
-                // paywall claim its turn the moment the arbiter is free again.
-                resolvePendingPresentations(services: services)
             })
         }
         .onChange(of: streakSignal.reading) { _, _ in
@@ -199,8 +212,15 @@ struct RootView: View {
                 entryPoint: paywallEntryPoint,
                 onEntitlementGranted: {
                     await services.entitlements.refresh()
+                    // A purchase from the solo paywall resolves its cadence — there
+                    // is nothing left to snooze once someone has subscribed.
+                    if case .soloMorning = paywallEntryPoint {
+                        LocalDefaults.consecutiveSoloPaywallDismissals = 0
+                        LocalDefaults.soloPaywallSnoozedUntil = nil
+                    }
                 },
-                onPresented: recordAutomaticPaywallPresentationIfNeeded
+                onPresented: { recordAutomaticPaywallPresentationIfNeeded(services: services) },
+                onDismissed: recordSoloPaywallDismissalIfNeeded
             )
         }
         .sheet(item: $inviteMoment, onDismiss: {
@@ -338,16 +358,33 @@ struct RootView: View {
         guard !showCamera, !showPaywall, milestoneMoment == nil else { return }
 
         prepareUnlockPaywallState(for: services.currentUid)
-        let isPaywallEligible = FirstUnlockPaywallPolicy.shouldPresent(
+        let isFirstUnlockEligible = FirstUnlockPaywallPolicy.shouldPresent(
             entitlementStatus: services.entitlements.status,
             reading: revealSignal.reading,
             completedCaptureCount: LocalDefaults.completedCaptureCount,
             hasPresentedUnlockPaywall: LocalDefaults.unlockPaywallPresentedAt != nil
         )
 
+        prepareSoloPaywallState(for: services.currentUid)
+        let soloVerdict = SoloMorningPaywallPolicy.evaluate(
+            entitlementStatus: services.entitlements.status,
+            reading: revealSignal.reading,
+            completedCaptureCount: LocalDefaults.completedCaptureCount,
+            captureLocalDate: arming.localDate,
+            lastPromptedCaptureCount: LocalDefaults.lastSoloPaywallPromptCaptureCount,
+            lastPromptedLocalDate: LocalDefaults.lastSoloPaywallPromptLocalDate.flatMap(LocalDate.init(docID:)),
+            snoozedUntil: LocalDefaults.soloPaywallSnoozedUntil,
+            now: Date()
+        )
+        let isSoloEligible = soloVerdict == .present
+
+        // A mutually-unlocked buddy (`isFirstUnlockEligible`) and zero accepted
+        // buddies (`isSoloEligible`) can never both be true — `mutuallyUnlockedBuddyCount`
+        // only counts up from `acceptedBuddyCount`, which `SoloMorningPaywallPolicy`
+        // requires to be exactly `0` — so at most one automatic offer is ever live.
         switch PostCaptureMomentPolicy.decide(
             arming: arming,
-            isPaywallEligible: isPaywallEligible,
+            isPaywallEligible: isFirstUnlockEligible || isSoloEligible,
             reading: streakSignal.reading,
             lastCelebratedMilestone: LocalDefaults.lastCelebratedStreakMilestone,
             hasRequestedAppReview: LocalDefaults.hasRequestedAppReview,
@@ -363,7 +400,7 @@ struct RootView: View {
             // it (`recordAutomaticPaywallPresentationIfNeeded`). A deferred paywall
             // (the milestone branch below wins instead) records nothing, which is
             // exactly what lets the very next re-ask offer it again.
-            presentPaywall(from: .firstUnlock)
+            presentPaywall(from: isFirstUnlockEligible ? .firstUnlock : .soloMorning(captureCount: arming.completedCaptureCount))
         case .milestone(let milestone):
             guard case .observed(_, _, let post?) = streakSignal.reading else {
                 // `decide` already proved this, but reading the post back out is what
@@ -373,6 +410,13 @@ struct RootView: View {
             // Persisted *before* presenting, so a re-entrant resolution or a crash
             // mid-presentation can never produce the same celebration twice.
             LocalDefaults.lastCelebratedStreakMilestone = milestone.streak
+            // The paywall defers to the next re-ask by simply not happening here —
+            // for the solo paywall specifically, remember which capture day made it
+            // eligible so `resolveSoloPaywall` can still match it against
+            // `revealSignal.reading` even across a calendar-day rollover.
+            if isSoloEligible {
+                deferredSoloPaywallDate = arming.localDate
+            }
             consumePostCaptureArming()
             milestoneMoment = MilestoneMoment(
                 milestone: milestone,
@@ -430,6 +474,43 @@ struct RootView: View {
         presentPaywall(from: .firstUnlock)
     }
 
+    /// Mirrors `resolveFirstUnlockPaywall`: the solo paywall's other trigger, for
+    /// when nothing is currently being arbitrated (the friendship snapshot resolves
+    /// to zero buddies on a later foreground or `revealSignal` update, with no
+    /// capture in flight). Uses `deferredSoloPaywallDate` — the exact capture day a
+    /// milestone deferred this offer for — when one is pending, falling back to
+    /// today otherwise; see that property's write site for why "today" is not
+    /// always the right day to re-ask against.
+    private func resolveSoloPaywall(services: AppServices) {
+        guard !showCamera, !showPaywall, milestoneMoment == nil, inviteMoment == nil else { return }
+        // A capture is currently being arbitrated — that path owns this decision so
+        // a milestone can still outrank the paywall; this resolver only ever handles
+        // the case where there is nothing else in flight to arbitrate against.
+        guard postCaptureArming == nil else { return }
+
+        prepareSoloPaywallState(for: services.currentUid)
+        let evaluationDate = deferredSoloPaywallDate ?? services.clock.today()
+        let verdict = SoloMorningPaywallPolicy.evaluate(
+            entitlementStatus: services.entitlements.status,
+            reading: revealSignal.reading,
+            completedCaptureCount: LocalDefaults.completedCaptureCount,
+            captureLocalDate: evaluationDate,
+            lastPromptedCaptureCount: LocalDefaults.lastSoloPaywallPromptCaptureCount,
+            lastPromptedLocalDate: LocalDefaults.lastSoloPaywallPromptLocalDate.flatMap(LocalDate.init(docID:)),
+            snoozedUntil: LocalDefaults.soloPaywallSnoozedUntil,
+            now: Date()
+        )
+        // Only a conclusive answer consumes the deferral — `.undetermined` means the
+        // friendship snapshot for `evaluationDate` still hasn't landed, and the next
+        // re-ask must keep matching against the original capture day, not whatever
+        // "today" has since become.
+        guard verdict != .undetermined else { return }
+        deferredSoloPaywallDate = nil
+        guard verdict == .present else { return }
+
+        presentPaywall(from: .soloMorning(captureCount: LocalDefaults.completedCaptureCount))
+    }
+
     /// Mirrors `prepareAutomaticPaywallState` but is deliberately a separate function
     /// with separate storage, so milestone bookkeeping can never perturb paywall state.
     private func prepareMilestoneState(for uid: String) {
@@ -438,13 +519,37 @@ struct RootView: View {
         LocalDefaults.milestoneAccountID = uid
     }
 
-    /// The one-shot write, and the only one — every other path that decides the
-    /// paywall is due but doesn't present it yet (the milestone branch of
-    /// `PostCaptureMomentPolicy.decide`) must leave `unlockPaywallPresentedAt` `nil`,
-    /// which is exactly what lets the very next re-ask offer it again.
-    private func recordAutomaticPaywallPresentationIfNeeded() {
-        guard case .firstUnlock = paywallEntryPoint else { return }
-        LocalDefaults.unlockPaywallPresentedAt = Date()
+    /// The one-shot write for `.firstUnlock`, and the prompt-cadence bookkeeping for
+    /// `.soloMorning`. Every other path that decides a paywall is due but doesn't
+    /// present it yet (the milestone branch of `PostCaptureMomentPolicy.decide`)
+    /// must leave both untouched, which is exactly what lets the very next re-ask
+    /// offer it again.
+    private func recordAutomaticPaywallPresentationIfNeeded(services: AppServices) {
+        switch paywallEntryPoint {
+        case .firstUnlock:
+            LocalDefaults.unlockPaywallPresentedAt = Date()
+        case .soloMorning(let captureCount):
+            LocalDefaults.lastSoloPaywallPromptCaptureCount = captureCount
+            LocalDefaults.lastSoloPaywallPromptLocalDate = services.clock.today().docID
+        default:
+            break
+        }
+    }
+
+    /// The solo paywall's cadence needs to know about a decline, unlike `.firstUnlock`
+    /// (one-shot — the write above is enough). Any exit that is not a successful
+    /// purchase reaches here: `PaywallView.purchase`/`restorePurchases` set
+    /// `hasResolvedExit` themselves before dismissing, so `onDismissed` never fires
+    /// on the path that should reset this instead (see the `onEntitlementGranted`
+    /// closure passed to `PaywallView` above).
+    private func recordSoloPaywallDismissalIfNeeded(_ reason: PaywallDismissalReason) {
+        guard case .soloMorning = paywallEntryPoint else { return }
+        let count = LocalDefaults.consecutiveSoloPaywallDismissals + 1
+        LocalDefaults.consecutiveSoloPaywallDismissals = count
+        LocalDefaults.soloPaywallSnoozedUntil = SoloMorningPaywallPolicy.snoozeUntil(
+            afterConsecutiveDismissals: count,
+            now: Date()
+        )
     }
 
     private func prepareAutomaticPaywallState(for uid: String) {
@@ -461,6 +566,15 @@ struct RootView: View {
         guard LocalDefaults.unlockPaywallAccountID != uid else { return }
         LocalDefaults.resetUnlockPaywallState()
         LocalDefaults.unlockPaywallAccountID = uid
+    }
+
+    /// Mirrors `prepareMilestoneState`/`prepareUnlockPaywallState`: scopes the
+    /// cadenced solo-paywall bookkeeping to an account, kept in its own storage so
+    /// nothing here can perturb any other automatic prompt's state, and vice versa.
+    private func prepareSoloPaywallState(for uid: String) {
+        guard LocalDefaults.soloPaywallAccountID != uid else { return }
+        LocalDefaults.resetSoloPaywallState()
+        LocalDefaults.soloPaywallAccountID = uid
     }
 
     /// Two independent sources can request "open straight to the camera": the
@@ -522,6 +636,7 @@ struct RootView: View {
         resolvePendingInvite()
         resolvePostCaptureMoment(services: services)
         resolveFirstUnlockPaywall(services: services)
+        resolveSoloPaywall(services: services)
     }
 
     /// Surfaces a Universal-Link-tapped invite once nothing else is claiming the

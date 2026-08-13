@@ -10,7 +10,11 @@ struct PaywallFlowTests {
             PaywallEntryPoint.onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: 360),
             .home,
             .archive,
-            .settings
+            .settings,
+            // Unlike `.ritualMilestone`/`.firstUnlock`, `.soloMorning` gets the full
+            // flow: nothing has demonstrated the product's value to a solo person
+            // yet, so the value step still earns its place.
+            .soloMorning(captureCount: 3)
         ]
     )
     func fullFlowForActiveEntryPoints(entryPoint: PaywallEntryPoint) {

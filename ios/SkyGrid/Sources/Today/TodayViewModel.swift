@@ -77,6 +77,13 @@ final class TodayViewModel {
     /// the moment the server starts permitting buddy post reads) without waiting
     /// for the friendship listener to fire again.
     private var acceptedFriendships: [Friendship] = []
+    /// True once the friendship listener has delivered at least one snapshot this
+    /// observation cycle. `acceptedFriendships.isEmpty` alone cannot distinguish
+    /// "confirmed zero buddies" from "snapshot hasn't landed yet" — both look like an
+    /// empty array — and `SoloMorningPaywallPolicy` must never treat the latter as
+    /// the former, or a person who is actually paired could be flashed a solo-user
+    /// paywall during the brief window before their first friendship snapshot arrives.
+    private var hasResolvedFriendships = false
     /// Cancelled and replaced on every `refreshBuddies` call so a slower, earlier
     /// resolution (e.g. from the friendship listener) can never overwrite `buddies`
     /// with stale data after a faster, later one (e.g. the viewer's own post
@@ -119,6 +126,7 @@ final class TodayViewModel {
         streakWindowDays = StreakWindow.observedDays
         buddies = []
         acceptedFriendships = []
+        hasResolvedFriendships = false
         pendingSummary = []
         todayIntegrity = .undetermined
         orphanedPostRecoveryError = nil
@@ -165,6 +173,7 @@ final class TodayViewModel {
                 guard case .value(let friendships) = observation else { continue }
                 let accepted = friendships.filter { $0.status == .accepted }
                 self.acceptedFriendships = accepted
+                self.hasResolvedFriendships = true
                 await self.refreshBuddies(friendships: accepted, today: today)
             }
         })
@@ -238,6 +247,7 @@ final class TodayViewModel {
         refreshBuddiesTask = nil
         observedDate = nil
         acceptedFriendships = []
+        hasResolvedFriendships = false
     }
 
     /// Re-checks the buddy strip without waiting for a listener to re-emit.
@@ -370,7 +380,11 @@ final class TodayViewModel {
         // hasPostedFor(localDate)` has actually permitted the read, so this count is
         // server-verified proof of mutual unlock, not a client inference.
         let unlockedCount = statuses.filter { if case .posted = $0.revealState { true } else { false } }.count
-        revealSignal?.record(RevealReading(localDate: today, mutuallyUnlockedBuddyCount: unlockedCount))
+        revealSignal?.record(RevealReading(
+            localDate: today,
+            mutuallyUnlockedBuddyCount: unlockedCount,
+            acceptedBuddyCount: hasResolvedFriendships ? friendships.count : nil
+        ))
     }
 
     private func firstValue<T: Sendable>(from stream: AsyncStream<T>) async -> T? {

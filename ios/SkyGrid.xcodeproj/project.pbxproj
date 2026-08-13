@@ -85,6 +85,7 @@
 		6741DF5A5F207CC0E0E9E033 /* InviteClaimViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73292024EA2929A1738EC081 /* InviteClaimViewModelTests.swift */; };
 		67424D7061C96DB4C79B1AE8 /* BuddiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49AC2202E0868FB93F5D007B /* BuddiesView.swift */; };
 		67582E6C7F2757FEBA5B6AAF /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 7A2F9AC7FEDF52ACCCB77DD2 /* FirebaseMessaging */; };
+		680FFFAAE8CFF9A53425D69B /* SoloMorningPaywallPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */; };
 		6855FABADB7E8A62C3A00773 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A927580850A3394C8C30C4A3 /* CameraViewModel.swift */; };
 		69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */; };
 		6B314D6B5FF83D8EFCC172DC /* BuddyRevealGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */; };
@@ -121,6 +122,7 @@
 		9CA29FF725BF91173ED29EA9 /* FirebasePostRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C856196405B33988CBE21663 /* FirebasePostRepository.swift */; };
 		9CD0A99FE7C08BDC812753CF /* ExportTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF7B0FB03E7C1A4AF7B6B57 /* ExportTheme.swift */; };
 		9CDFBE38EAD3893389F2454E /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 019FE329E5EF8FD84ED28979 /* RevenueCat */; };
+		9DDB15DE5B564EDF2B0BBA81 /* SoloMorningPaywallPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED768CEB58968D7F7E67E722 /* SoloMorningPaywallPolicy.swift */; };
 		9FBA7F296942F2D9FDCE220F /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B84167ED16C9B88AC593F1 /* ImageProcessor.swift */; };
 		A07EE3F5DEAC63A1CE95C71E /* RevealSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 223D04A8062F9444EF6C7083 /* RevealSignal.swift */; };
 		A1036E2C1EEC9390679582F7 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F0E8E0123775F322B6B2E0B /* Typography.swift */; };
@@ -292,6 +294,7 @@
 		399D785A4FF2ECB99992BD10 /* PendingUpload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingUpload.swift; sourceTree = "<group>"; };
 		3DB163E0D34F01969A98C3E0 /* SkyGridWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SkyGridWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E91ECCE7507AB3089451A75 /* PaywallStepScaffold.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallStepScaffold.swift; sourceTree = "<group>"; };
+		4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoloMorningPaywallPolicyTests.swift; sourceTree = "<group>"; };
 		46A4C8B5EA3EEEDC4D0D9725 /* real_clear_sky.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = real_clear_sky.jpg; sourceTree = "<group>"; };
 		49AC2202E0868FB93F5D007B /* BuddiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddiesView.swift; sourceTree = "<group>"; };
 		4A6AD71E8A1083E36FB4E3A0 /* MorningRitualActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualActivity.swift; sourceTree = "<group>"; };
@@ -427,6 +430,7 @@
 		EB826926C08B938D939A15C8 /* InviteLinkParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteLinkParser.swift; sourceTree = "<group>"; };
 		EBF16BFCD3C19F0AFA074361 /* ServiceFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceFactory.swift; sourceTree = "<group>"; };
 		ECF7CE1E526D62EABA393B5D /* WakeGoalPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeGoalPickerView.swift; sourceTree = "<group>"; };
+		ED768CEB58968D7F7E67E722 /* SoloMorningPaywallPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoloMorningPaywallPolicy.swift; sourceTree = "<group>"; };
 		EE39B2D2D1B78B2B5EC4B614 /* GridLayoutMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLayoutMath.swift; sourceTree = "<group>"; };
 		F0480073CD95A74D4E826811 /* MorningCardExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningCardExportView.swift; sourceTree = "<group>"; };
 		F09395274920B285E51BAB84 /* ATTRIBUTION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ATTRIBUTION.md; sourceTree = "<group>"; };
@@ -576,6 +580,7 @@
 				E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */,
 				87D89CFE518D3C5B6A064724 /* PaywallViewModel.swift */,
 				8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */,
+				ED768CEB58968D7F7E67E722 /* SoloMorningPaywallPolicy.swift */,
 			);
 			path = Paywall;
 			sourceTree = "<group>";
@@ -871,6 +876,7 @@
 				B464F1444E53D886E4F974E1 /* RevenueCatServiceTests.swift */,
 				E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */,
 				6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */,
+				4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */,
 				7B807172FF977F014E4488CB /* StartupFailureMessageTests.swift */,
 				2D1A3C90FF9151B784398B50 /* StreakCalculatorTests.swift */,
 				3866D3B5A0B65B9D4FCAFAB4 /* StreakMilestoneTests.swift */,
@@ -1209,6 +1215,7 @@
 				38B29DA22E13F9633322DDD3 /* SkyGridExportView.swift in Sources */,
 				92AB0781583020CF0AC93B74 /* SkyGridView.swift in Sources */,
 				523CBFDDEB46964B8ED61F4E /* SkyPost.swift in Sources */,
+				9DDB15DE5B564EDF2B0BBA81 /* SoloMorningPaywallPolicy.swift in Sources */,
 				29BC0765DB83D109C7A6F1BD /* StartupFailureMessage.swift in Sources */,
 				A6D484118FFD38385978B4E2 /* StreakCalculator.swift in Sources */,
 				D7BD4846070557242842767F /* StreakMilestone.swift in Sources */,
@@ -1271,6 +1278,7 @@
 				EAD14BEF648B531FC044E7BE /* RevenueCatServiceTests.swift in Sources */,
 				F9F04A8B066CD6D489EECB79 /* SkyColorExtractorTests.swift in Sources */,
 				69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */,
+				680FFFAAE8CFF9A53425D69B /* SoloMorningPaywallPolicyTests.swift in Sources */,
 				421E3E0F6C109A03B8E28E43 /* StartupFailureMessageTests.swift in Sources */,
 				C0989E5EC678F1A95C2C0097 /* StreakCalculatorTests.swift in Sources */,
 				3C7786DD975353D2A9EC9DDC /* StreakMilestoneTests.swift in Sources */,

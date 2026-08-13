@@ -6,8 +6,8 @@ import Testing
 struct FirstUnlockPaywallPolicyTests {
     private let today = LocalDate(year: 2025, month: 1, day: 10)
 
-    private func reading(count: Int) -> RevealReading {
-        RevealReading(localDate: today, mutuallyUnlockedBuddyCount: count)
+    private func reading(count: Int, acceptedBuddyCount: Int? = 1) -> RevealReading {
+        RevealReading(localDate: today, mutuallyUnlockedBuddyCount: count, acceptedBuddyCount: acceptedBuddyCount)
     }
 
     @Test("does not present without a mutual unlock")
@@ -59,6 +59,16 @@ struct FirstUnlockPaywallPolicyTests {
             reading: reading(count: 3),
             completedCaptureCount: 40,
             hasPresentedUnlockPaywall: true
+        ))
+    }
+
+    @Test("ignores acceptedBuddyCount entirely — a nil (unresolved) value must not block a real mutual unlock")
+    func doesNotReadAcceptedBuddyCount() {
+        #expect(FirstUnlockPaywallPolicy.shouldPresent(
+            entitlementStatus: .notSubscribed,
+            reading: reading(count: 1, acceptedBuddyCount: nil),
+            completedCaptureCount: 1,
+            hasPresentedUnlockPaywall: false
         ))
     }
 }

@@ -13,6 +13,11 @@ enum PaywallEntryPoint {
     /// `FirstUnlockPaywallPolicy`): fires once, the moment a buddy is first
     /// mutually revealed, never on a capture-count cadence.
     case firstUnlock
+    /// The cadenced automatic reminder for someone with **zero accepted buddies**
+    /// (`SoloMorningPaywallPolicy`). `.firstUnlock` structurally never fires for
+    /// this person — there is no buddy relationship to unlock — so this is their
+    /// only automatic offer.
+    case soloMorning(captureCount: Int)
 
     var headline: String {
         switch self {
@@ -28,12 +33,14 @@ enum PaywallEntryPoint {
             return "\(captureCount) mornings in. Keep the whole sky record."
         case .firstUnlock:
             return "Your first sky together is revealed. Keep the ritual going."
+        case .soloMorning(let captureCount):
+            return "\(captureCount) mornings, just for you. Keep your whole sky record."
         }
     }
 
     var isAutomaticReminder: Bool {
         switch self {
-        case .ritualMilestone, .firstUnlock: true
+        case .ritualMilestone, .firstUnlock, .soloMorning: true
         default: false
         }
     }
@@ -48,6 +55,7 @@ enum PaywallEntryPoint {
         case .settings: "settings"
         case .ritualMilestone: "ritual_milestone"
         case .firstUnlock: "first_unlock"
+        case .soloMorning: "solo_morning"
         }
     }
 

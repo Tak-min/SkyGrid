@@ -14,6 +14,12 @@ struct RevealReading: Equatable, Sendable {
     /// acts on "the read failed" — only on "at least one buddy is unlocked" — so there
     /// is no failed-read state that could be mistaken for an unlock.
     let mutuallyUnlockedBuddyCount: Int
+    /// The count of accepted buddy relationships, independent of today's reveal state.
+    /// `nil` means the friendship snapshot has never landed yet — genuinely unknown,
+    /// not zero. `SoloMorningPaywallPolicy` depends on this distinction: treating an
+    /// unresolved read as "zero buddies" would misclassify a paired person as solo
+    /// during the window before their friendship listener first fires.
+    let acceptedBuddyCount: Int?
 }
 
 /// A one-way channel from the buddy strip's single producer (`TodayViewModel`) up to
