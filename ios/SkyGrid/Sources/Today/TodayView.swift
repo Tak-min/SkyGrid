@@ -327,7 +327,7 @@ struct TodayView: View {
         } else {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
                 sectionLabel(viewModel.streak.hasPostedToday ? "THIS MORNING, TOGETHER" : "SEALED UNTIL YOU POST")
-                BuddyRow(buddies: viewModel.buddies)
+                BuddyRow(buddies: viewModel.buddies, imageFetching: imageFetching)
             }
             .skyAnimation(SGMotion.settle, value: viewModel.streak.hasPostedToday)
         }
@@ -350,7 +350,7 @@ struct TodayView: View {
                     .contentTransition(.numericText())
                     .skyAnimation(SGMotion.exchange, value: viewModel.weekRhythm.postedCount)
             }
-            WeekRhythmView(rhythm: viewModel.weekRhythm, accent: accentColor)
+            WeekRhythmView(rhythm: viewModel.weekRhythm, imageFetching: imageFetching, accent: accentColor)
 
             NavigationLink {
                 MorningAlarmSettingsView()

@@ -208,7 +208,7 @@ final class TodayViewModel {
                     continue
                 }
                 let postedDays = posts.map(\.localDate)
-                self.weekRhythm = WeekRhythmCalculator.summarize(postedDays: postedDays, today: today)
+                self.weekRhythm = WeekRhythmCalculator.summarize(posts: posts, today: today)
                 // `exemptDays` is empty on purpose: `RestDayPolicy` has no
                 // persistence and `TimeZonePolicy` has no change-log producer, so
                 // there is currently no honest source of exempt days. See the

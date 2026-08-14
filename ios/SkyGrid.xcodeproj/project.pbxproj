@@ -117,6 +117,7 @@
 		96AAAA3A3CCE3D7C97EC1186 /* InviteLinkParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB826926C08B938D939A15C8 /* InviteLinkParser.swift */; };
 		9704BB90A6A7B3AB268A783D /* InviteClaimViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EF52A37FFF8CD0AAA9C43B /* InviteClaimViewModel.swift */; };
 		97B3EC0B6DFD4B254FDC5EAE /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9E89B3BC61DAD003FF5FB7 /* Haptics.swift */; };
+		97C2FA766BD262206C3E0DC5 /* ThumbnailLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0311052A58EF78B829795EA /* ThumbnailLoader.swift */; };
 		9C14252D573F94B51704D976 /* PostCaptureMomentPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24CD4632F0E1C7B923E6B77D /* PostCaptureMomentPolicy.swift */; };
 		9C2207FBB300E6C8596467C6 /* AppReviewPromptPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70F59EE3E4F6A33D40AF7BAB /* AppReviewPromptPolicy.swift */; };
 		9C587179DBFD9054E6354709 /* InviteAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F1325EDBEBFA016DB36C59B /* InviteAnalytics.swift */; };
@@ -416,6 +417,7 @@
 		CF60E656FE9ADB4E620BA632 /* StreakMilestone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakMilestone.swift; sourceTree = "<group>"; };
 		CF76E707C52CA8021139C3F5 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
 		CFEDC0478E6AD05FF0887391 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		D0311052A58EF78B829795EA /* ThumbnailLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailLoader.swift; sourceTree = "<group>"; };
 		D06EFCFEBF86821B0DBBBA94 /* PostPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPublisher.swift; sourceTree = "<group>"; };
 		D092127B8762158B82CF2D6E /* PostIntegrityPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostIntegrityPolicy.swift; sourceTree = "<group>"; };
 		D3DD7839BDCF230A7AE8F936 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
@@ -673,6 +675,7 @@
 				90A91166C9D084E17F084FC2 /* InviteRepository.swift */,
 				AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */,
 				AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */,
+				D0311052A58EF78B829795EA /* ThumbnailLoader.swift */,
 				03121E39C84779B0B43F9764 /* UserRepository.swift */,
 				0B9A88FFA839DB62994A84EC /* Firebase */,
 			);
@@ -1233,6 +1236,7 @@
 				42A36B412EDA3EE668831FE5 /* StreakSignal.swift in Sources */,
 				8B79845CB51E4DBBA87D2170 /* StreakWindow.swift in Sources */,
 				17B78EFE784768727DE3AA0A /* Theme.swift in Sources */,
+				97C2FA766BD262206C3E0DC5 /* ThumbnailLoader.swift in Sources */,
 				62D371902E633F9E431148A7 /* TimeZonePolicy.swift in Sources */,
 				539EDA42CFB950F02BCC4FB4 /* TodayPhotoCard.swift in Sources */,
 				B2B2EC2EB744283C732D4016 /* TodayView.swift in Sources */,
