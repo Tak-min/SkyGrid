@@ -193,6 +193,9 @@ final class FriendsViewModel {
         defer { acceptingPairIDs.remove(friendship.pairId) }
         do {
             try await friendRepository.acceptRequest(pairId: friendship.pairId, acceptingUid: uid)
+            // A fresh pairing is the first moment there is anything for
+            // `onBuddyPostCreated`'s push to notify this person about.
+            await BuddyPairingNotificationPermission.requestIfNeeded()
         } catch let error as RepositoryError {
             switch error {
             case .network:

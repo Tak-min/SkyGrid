@@ -81,6 +81,11 @@ final class InviteClaimViewModel {
             let result = try await inviteRepository.claimInvite(code: code)
             InviteAnalytics.record(.claimResolved, claimOutcome: result.outcome)
             step = .result(result.outcome)
+            // A fresh pairing is the first moment there is anything for
+            // `onBuddyPostCreated`'s push to notify this person about.
+            if result.outcome == .paired {
+                await BuddyPairingNotificationPermission.requestIfNeeded()
+            }
         } catch {
             step = .failed(Self.message(for: error))
         }

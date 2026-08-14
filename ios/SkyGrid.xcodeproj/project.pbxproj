@@ -93,6 +93,7 @@
 		752C1378D18B4AA527A9D8F4 /* OrphanedPostRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A44F9555D9421767F1992D2 /* OrphanedPostRecovery.swift */; };
 		768812D1C860F17A1025743A /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */; };
 		7889754EF83A9BC4FABD9A5C /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 7005B019440911A08B733C9C /* FirebaseAuth */; };
+		7A0D2CBFCEFA972D20F505EE /* BuddyPairingNotificationPermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE558B73B23D63DFBA24F8A /* BuddyPairingNotificationPermission.swift */; };
 		7B3FD00A67C9D505A9D3D14D /* MorningRitualPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEDD608FFAD3ABEAB21C546C /* MorningRitualPolicy.swift */; };
 		7BD7DDA744B97999595E92B2 /* FirebaseRepositoryError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA8996478709BCDADA1C141 /* FirebaseRepositoryError.swift */; };
 		7BE8DB9A03F8E294EA685172 /* golden_hour.png in Resources */ = {isa = PBXBuildFile; fileRef = F9EF2E981E7BC80C2403175B /* golden_hour.png */; };
@@ -426,6 +427,7 @@
 		DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicyTests.swift; sourceTree = "<group>"; };
 		DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseImageStore.swift; sourceTree = "<group>"; };
 		DEDD608FFAD3ABEAB21C546C /* MorningRitualPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualPolicy.swift; sourceTree = "<group>"; };
+		DFE558B73B23D63DFBA24F8A /* BuddyPairingNotificationPermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyPairingNotificationPermission.swift; sourceTree = "<group>"; };
 		E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorExtractorTests.swift; sourceTree = "<group>"; };
 		E1B4AE5E7BA49A92C1C962AD /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
@@ -846,6 +848,7 @@
 		EDF614BB78AC7CBB8574750C /* Notifications */ = {
 			isa = PBXGroup;
 			children = (
+				DFE558B73B23D63DFBA24F8A /* BuddyPairingNotificationPermission.swift */,
 				06433918EDC1C3800C409EE3 /* BuddyPushPayload.swift */,
 				F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */,
 				6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */,
@@ -1107,6 +1110,7 @@
 				A9AECCE519AD72DE12470FFD /* AppStoreIdentityExportView.swift in Sources */,
 				04C41D55F7B9281D7068F93B /* BigTimeView.swift in Sources */,
 				67424D7061C96DB4C79B1AE8 /* BuddiesView.swift in Sources */,
+				7A0D2CBFCEFA972D20F505EE /* BuddyPairingNotificationPermission.swift in Sources */,
 				C083EF26AEC24FCCEF99F163 /* BuddyPushPayload.swift in Sources */,
 				6B314D6B5FF83D8EFCC172DC /* BuddyRevealGate.swift in Sources */,
 				61705FFBA67541492EEBB035 /* BuddyRow.swift in Sources */,
