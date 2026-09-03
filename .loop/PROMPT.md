@@ -33,9 +33,12 @@ iteration left off.
    Address CRITICAL and HIGH findings now, in this same iteration.
 
 5. Run the project's own verification from `ios/`:
-   `xcodebuild test -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
-   Baseline is 211 tests passing — never let this regress. Leave the gate greener than you found
-   it, never redder.
+   `xcodebuild test -project SkyGrid.xcodeproj -scheme SkyGrid -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
+   (must include `-project`/`-scheme` explicitly — omitting them errors out; never pipe this
+   through `tail` or anything else that would swallow its real exit code, since that's what let
+   iteration 1 believe a failing run had passed). Target is 211/211 passing; 2 are currently
+   failing (`CollectionObservationStateTests.gridPreservesLastConfirmedPosts`, pre-existing, see
+   VISION.md) — fix, don't just tolerate. Leave the gate greener than you found it, never redder.
 
 6. Update `.loop/VISION.md`'s TODO checklist (check off what's done, add anything newly
    discovered — e.g. a sub-step the recon revealed) and write a one-line status to
@@ -48,6 +51,9 @@ iteration left off.
 8. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
 
 If you believe every item in the Definition of Done (`.loop/VISION.md`) is fully and verifiably
-met, run the full verification suite (`xcodebuild test` AND
-`xcodebuild build -configuration Release -destination 'generic/platform=iOS'` from `ios/`) to
-confirm, write the final summary dev-note, and say so explicitly — that is the success exit.
+met, run the full verification suite from `ios/` — `xcodebuild test -project SkyGrid.xcodeproj
+-scheme SkyGrid -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
+AND `xcodebuild build -project SkyGrid.xcodeproj -scheme SkyGrid -configuration Release
+-destination 'generic/platform=iOS'` — to confirm (check the actual exit code, do not pipe to
+anything that could mask it), write the final summary dev-note, and say so explicitly — that is
+the success exit.

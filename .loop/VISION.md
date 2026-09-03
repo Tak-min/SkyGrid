@@ -61,7 +61,18 @@ later 2026-08-08 session (streak+reveal wiring, QR/App-Store-URL on the share ca
   screenshot predates that fix (and predates the buddy-strip wiring). Re-shoot screenshots before
   claiming any before/after in the DoD-3 visual pass. See
   `dev-notes/virality-stickiness-assessment_2026-09-04.md` §1 (B3) for the file:line evidence.
-- 211 Swift tests is the current green baseline (`xcodebuild test`). Do not regress it.
+- **CORRECTION (2026-09-04, human resume session):** "211 tests, all green" was **not actually
+  true** — the iteration-1 verify command was broken (piped through `tail`, which always exits 0,
+  so a real xcodebuild failure was read as a pass) and separately was missing `-project`/`-scheme`
+  entirely. Running it correctly (`xcodebuild test -project SkyGrid.xcodeproj -scheme SkyGrid
+  -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`) shows **211
+  tests, 2 failing**: `CollectionObservationStateTests.gridPreservesLastConfirmedPosts()`
+  (`ios/SkyGrid/Tests/OrphanedPostRecoveryTests.swift:308`). `git diff 200d2e4..HEAD --stat` shows
+  no `ios/` Swift file was touched by iteration 1, so this failure **predates this loop** — it is
+  not a regression from anything done here, but it must still be fixed before DoD-8 can be met.
+  See PROMPT.md for the corrected verify command. Investigate this test as an early TODO item
+  (likely a `Task.yield()`-count race against `GridArchiveViewModel`'s async pipeline, not a real
+  logic bug — confirm before changing production code to fit the test).
 
 ## Definition of Done (loop stops here)
 
@@ -99,10 +110,11 @@ All of the following, each independently verified:
 7. `dev-notes/aso-comparison-vs-erly_<date>.md`: concrete, specific ASO recommendations
    (screenshots order, keywords, subtitle, preview video) compared point-by-point against Erly's
    actual App Store listing — not generic ASO advice.
-8. `xcodebuild test -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
-   green (≥211 tests passing), and a Release build
-   (`xcodebuild build -configuration Release -destination 'generic/platform=iOS'`) succeeds with
-   0 errors.
+8. `xcodebuild test -project SkyGrid.xcodeproj -scheme SkyGrid -only-testing:SkyGridTests
+   -destination 'platform=iOS Simulator,name=iPhone 17'` green (211/211 tests passing — 2 are
+   currently failing, see the correction above, fix before claiming this done), and a Release
+   build (`xcodebuild build -project SkyGrid.xcodeproj -scheme SkyGrid -configuration Release
+   -destination 'generic/platform=iOS'`) succeeds with 0 errors.
 
 No influencer/promotion actions are in scope. Promotion resumes only after the product owner
 reviews this loop's results.
@@ -116,6 +128,13 @@ reviews this loop's results.
   `cd ios && xcodegen generate` and confirm the pbxproj changed accordingly.
 - Preserve the mutual-reveal privacy gate as a server-enforced fact (`firestore.rules`), never
   degrade it to client-only blur, at any point during the N-way migration.
+- **The headless driver (`loop-engine.sh`) does its own checkpoint commit with `git add -A`
+  after every iteration, regardless of what this file says.** This already happened once
+  (iteration 1's `1cff73d` swept in `videos/joespov-skygrid-remix/.media/`, fixed in `7a90495`
+  by untracking + gitignoring the path). The driver is now run with `LOOP_NO_COMMIT=1` so only
+  the agent's own explicit-path commit (PROMPT.md step 7) lands — if you are resuming headless
+  mode after an interruption, re-check that env var is still set before relaunching
+  `loop-engine.sh`, and never assume the driver's own checkpoint respects this file's guardrails.
 
 ## TODO checklist (check off as completed; add newly discovered items)
 
@@ -134,6 +153,11 @@ reviews this loop's results.
       already a list per user and the Firestore rule is already evaluated per-relationship. See
       VISION ground-truth correction above and dev-note §6 for the ego-network direction (keep
       pairwise edges, add a server-side circle cap ~8, no group document).
+- [ ] Fix (or confirm root cause of) the pre-existing failing test
+      `CollectionObservationStateTests.gridPreservesLastConfirmedPosts()`
+      (`ios/SkyGrid/Tests/OrphanedPostRecoveryTests.swift:308`) — required for DoD-8, blocks
+      claiming any test-suite item done. Predates this loop (confirmed via
+      `git diff 200d2e4..HEAD --stat` showing no `ios/` Swift changes yet).
 - [ ] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
       the `mutuallyUnlockedBuddyCount` 0→≥1 transition in `TodayViewModel.performRefreshBuddies`,
       plus a `skygrid_capture_completed` event in `PostPublisher` (dev-note §3).
