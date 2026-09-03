@@ -55,3 +55,6 @@ branding/promo/skies/
 branding/promo/__pycache__/
 branding/promo/video-v1/build/
 branding/promo/out/contact-sheet.png
+
+# In-flight media from a concurrent unrelated session — never let a loop checkpoint sweep this in.
+videos/joespov-skygrid-remix/.media/
