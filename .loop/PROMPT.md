@@ -32,13 +32,13 @@ iteration left off.
 4. If the step touches real logic, dispatch the review agent from step 2 before trusting it.
    Address CRITICAL and HIGH findings now, in this same iteration.
 
-5. Run the project's own verification from `ios/`:
-   `xcodebuild test -project SkyGrid.xcodeproj -scheme SkyGrid -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
-   (must include `-project`/`-scheme` explicitly — omitting them errors out; never pipe this
-   through `tail` or anything else that would swallow its real exit code, since that's what let
-   iteration 1 believe a failing run had passed). Target is 211/211 passing; 2 are currently
-   failing (`CollectionObservationStateTests.gridPreservesLastConfirmedPosts`, pre-existing, see
-   VISION.md) — fix, don't just tolerate. Leave the gate greener than you found it, never redder.
+5. Run `.loop/verify.sh` from the repo root (this is also the headless driver's `LOOP_VERIFY_CMD`
+   — it fails while any VISION.md TODO item is unchecked, and only then runs the real
+   `xcodebuild test` + Release `xcodebuild build`, both with explicit `-project`/`-scheme`, never
+   piped through anything that could mask their exit code). Note: **the headless driver exits the
+   entire loop the instant this script exits 0** — do not check off a TODO item, or leave the
+   checklist all-checked, unless the work behind it is genuinely done; a false-green here stops
+   the loop early on unfinished work, which already happened twice before this script existed.
 
 6. Update `.loop/VISION.md`'s TODO checklist (check off what's done, add anything newly
    discovered — e.g. a sub-step the recon revealed) and write a one-line status to
@@ -51,9 +51,6 @@ iteration left off.
 8. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
 
 If you believe every item in the Definition of Done (`.loop/VISION.md`) is fully and verifiably
-met, run the full verification suite from `ios/` — `xcodebuild test -project SkyGrid.xcodeproj
--scheme SkyGrid -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
-AND `xcodebuild build -project SkyGrid.xcodeproj -scheme SkyGrid -configuration Release
--destination 'generic/platform=iOS'` — to confirm (check the actual exit code, do not pipe to
-anything that could mask it), write the final summary dev-note, and say so explicitly — that is
-the success exit.
+met, run `.loop/verify.sh` from the repo root to confirm (check its actual exit code), write the
+final summary dev-note, and say so explicitly — that is the success exit, and it is also what
+makes the headless driver itself exit 0.

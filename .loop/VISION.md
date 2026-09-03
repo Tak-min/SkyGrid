@@ -128,6 +128,15 @@ reviews this loop's results.
   `cd ios && xcodegen generate` and confirm the pbxproj changed accordingly.
 - Preserve the mutual-reveal privacy gate as a server-enforced fact (`firestore.rules`), never
   degrade it to client-only blur, at any point during the N-way migration.
+- **The headless driver (`loop-engine.sh`) exits the entire loop the instant `LOOP_VERIFY_CMD`
+  exits 0 — it treats any green verify as full Definition-of-Done, not per-iteration progress.**
+  This already happened twice: iteration 1 exited after a broken `tail`-piped test command falsely
+  reported green, and after that was fixed, iteration 2 (the flaky-test fix) exited again because
+  a bare `xcodebuild test` alone is not this project's DoD. Fixed by adding `.loop/verify.sh`,
+  which only exits 0 once **no `- [ ]` line remains in this file's TODO checklist** AND
+  `xcodebuild test` AND the Release `xcodebuild build` are both green — set this as
+  `LOOP_VERIFY_CMD` on every relaunch. Do not check off a TODO item (or leave the list all-checked)
+  unless the underlying work is genuinely done — that checkbox is now what stops the whole loop.
 - **The headless driver (`loop-engine.sh`) does its own checkpoint commit with `git add -A`
   after every iteration, regardless of what this file says.** This already happened once
   (iteration 1's `1cff73d` swept in `videos/joespov-skygrid-remix/.media/`, fixed in `7a90495`

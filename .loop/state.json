@@ -1,1 +1,1 @@
-{"iteration": 2, "status": "fixed flaky gridPreservesLastConfirmedPosts race + reviewer-found handle-wait gap; 211/211 green", "verify_rc": 0, "same_count": 0}
+{"iteration":2,"status":"resumed","verify_rc":1,"same_count":0}
