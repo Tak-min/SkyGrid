@@ -1,0 +1,7 @@
+[loop-engine 15:46:54] WARNING: no verify command detected/given. Loop runs WITHOUT a closed-loop gate (risky).
+[loop-engine 15:46:54] Starting loop. MAX_ITER=20 MODEL=sonnet VERIFY='<none>' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 15:46:54] === iteration 1 / 20 ===
+You've hit your session limit · resets 5:50pm (Asia/Tokyo)
+[loop-engine 15:49:59] claude -p returned non-zero on iteration 1 (continuing to verify).
+[loop-engine 15:50:02] === iteration 2 / 20 ===
+You've hit your session limit · resets 5:50pm (Asia/Tokyo)

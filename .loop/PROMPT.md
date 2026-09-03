@@ -1,41 +1,53 @@
-You are one iteration of an autonomous loop-engineering cycle. Work in the current directory,
-which is the SkyGrid repo root (`~/Desktop/SkyGrid`); the Xcode project lives under `ios/`.
+You are running one iteration of a bounded autonomous coding loop in
+`/Users/taku8/Desktop/SkyGrid`. Read `.loop/VISION.md` in full first — it holds the goal, the
+verified ground truth (do not re-derive facts already stated there), the Definition of Done, and
+the TODO checklist. Read `.loop/state.json` and `git log --oneline -5` for where the previous
+iteration left off.
 
-Do exactly ONE smallest verifiable step toward the goal, then stop.
+1. Pick the **next smallest verifiable step** from the unchecked TODO items in `.loop/VISION.md`,
+   in the order listed (research/assessment before visual design, before the buddy-model
+   migration, before alarm/share/ASO work) — unless a dependency makes a different order
+   obviously correct (e.g. don't start the N-way buddy UI before the architecture escalation item
+   is checked off).
 
-1. Read `.loop/VISION.md` (goal + Definition of Done + Recon findings + TODO) — **not** the
-   repo-root `VISION.md`, which is a *different*, pre-existing project document (the app's
-   living design/status doc) and must not be edited by this loop. Also read
-   `.loop/state.json` (where the last iteration left off) and run `git status`/`git diff`
-   from the repo root to see current state.
-2. Pick the single next smallest step from `.loop/VISION.md`'s TODO list. If a verify gate is
-   currently failing, fixing that failure IS your step — do not start new work on a red gate.
-3. Implement the step inside `ios/SkyGrid/Sources/` (or `ios/storage.rules` if that turns out
-   to be the actual blocker per the recon notes). Match existing conventions: dense
-   reasoning-carrying doc comments, pure functions with injected dependencies where testable,
-   Swift Testing (`@Test`/`#expect`) for new test files, `@testable import SkyGrid`. Never
-   hand-edit `ios/SkyGrid.xcodeproj/project.pbxproj` — if you add a new Swift file, run
-   `cd ios && xcodegen generate` afterward and confirm the pbxproj changed accordingly.
-4. If the step touches real logic (not a pure doc-comment fix), dispatch an independent
-   reviewer (`code-reviewer` on sonnet, or `swift-reviewer` if it's more idiom-specific) before
-   trusting it. Address CRITICAL and HIGH findings now, in this same iteration.
+2. **Model routing for this step** (pass `model` explicitly on every Agent spawn):
+   - The two items marked "Opus escalation" in VISION.md's TODO list are exactly that: dispatch
+     `architect` or `planner` on **opus**, once per item, and reuse/continue that same escalation
+     if a later iteration needs to refine it — do not re-run a fresh Opus pass per call site.
+   - Design research (the 50-source pass) and general "where is X" recon: `Explore` on
+     **haiku/sonnet** — have it return a tight source list + what was taken from each, not raw
+     dumps. Use `WebSearch`/`WebFetch` directly for the actual reference gathering; do not
+     fabricate sources.
+   - Normal implementation (Swift, SwiftUI, Firestore rules, Cloud Functions): you, the main
+     loop, on **sonnet**.
+   - Independent review when the step touches real logic (not a pure doc/comment change):
+     `swift-reviewer` or `code-reviewer` on **sonnet**. For the Firestore-rules/buddy-model
+     migration specifically, also consider `security-reviewer` on **opus** once, given it's a
+     privacy-boundary change.
+
+3. Implement the step. Never invent unverifiable claims (a fake source, a fake metric, a
+   "users will love this" line with no evidence) — if something is genuinely unmeasured, write
+   `unmeasured` and say what the cheapest test would be, per the kernel's claim/bet discipline.
+
+4. If the step touches real logic, dispatch the review agent from step 2 before trusting it.
+   Address CRITICAL and HIGH findings now, in this same iteration.
+
 5. Run the project's own verification from `ios/`:
    `xcodebuild test -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17'`
-   Leave the gate greener than you found it, never redder. The baseline is 209 tests passing —
-   never let this regress.
-6. Update the TODO checklist in `.loop/VISION.md` (check off what's done, add anything newly
-   discovered) and write a one-line status to `.loop/state.json`.
-7. `git add -A && git commit` with a clear message (pre-authorized this session — do not push).
+   Baseline is 211 tests passing — never let this regress. Leave the gate greener than you found
+   it, never redder.
+
+6. Update `.loop/VISION.md`'s TODO checklist (check off what's done, add anything newly
+   discovered — e.g. a sub-step the recon revealed) and write a one-line status to
+   `.loop/state.json` (`{"iteration": N, "status": "...", "verify_rc": ..., "same_count": ...}`).
+
+7. `git add <explicit paths you touched>` — **never `git add -A`**, this repo has a concurrent
+   unrelated session writing to `videos/joespov-skygrid-remix/`. Commit with a clear message
+   (pre-authorized this session — do not push).
+
 8. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
 
-Model routing: explore cheap (haiku/Explore agent) only if something in "Recon findings" turns
-out stale or a new area is discovered; implement yourself on sonnet; escalate only a genuinely
-hard cross-cutting decision (e.g. the buddy-image-fetch capability design, if not already
-resolved by an earlier iteration) to `architect` or `code-architect` on opus — once, not per
-call site. Always pass `model` explicitly when spawning agents.
-
-If you believe the Definition of Done in `.loop/VISION.md` is fully and verifiably met, run
-the full verification suite (`xcodebuild test` AND `xcodebuild build -configuration Release
--destination 'generic/platform=iOS'` from `ios/`) to confirm, write
-`dev-notes/photo-over-color-conversion_2026-08-14.md` if you haven't already, and say so
-explicitly — that is the success exit.
+If you believe every item in the Definition of Done (`.loop/VISION.md`) is fully and verifiably
+met, run the full verification suite (`xcodebuild test` AND
+`xcodebuild build -configuration Release -destination 'generic/platform=iOS'` from `ios/`) to
+confirm, write the final summary dev-note, and say so explicitly — that is the success exit.
