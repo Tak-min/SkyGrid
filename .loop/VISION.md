@@ -153,11 +153,25 @@ reviews this loop's results.
       already a list per user and the Firestore rule is already evaluated per-relationship. See
       VISION ground-truth correction above and dev-note §6 for the ego-network direction (keep
       pairwise edges, add a server-side circle cap ~8, no group document).
-- [ ] Fix (or confirm root cause of) the pre-existing failing test
+- [x] Fix (or confirm root cause of) the pre-existing failing test
       `CollectionObservationStateTests.gridPreservesLastConfirmedPosts()`
       (`ios/SkyGrid/Tests/OrphanedPostRecoveryTests.swift:308`) — required for DoD-8, blocks
       claiming any test-suite item done. Predates this loop (confirmed via
       `git diff 200d2e4..HEAD --stat` showing no `ios/` Swift changes yet).
+      **Root cause confirmed as a scheduler-timing race, not a production bug**: the test
+      used a fixed `for _ in 0..<8 { await Task.yield() }` to let an `AsyncStream`-backed
+      observation `Task` settle before asserting — reproduced 211/211 green twice locally
+      (`/tmp/full_test.log`, `/tmp/full_test2.log`) plus 2 isolated reruns of the suite, so it
+      is not deterministically reproducible on this machine, consistent with a load-dependent
+      race rather than a logic defect in `GridArchiveViewModel`/`FriendsViewModel`. Replaced
+      the fixed-yield pattern at all 5 call sites in the file (both `@Suite`s) with a new
+      `awaitCondition(timeout:_:)` helper that polls the actual expected state
+      (`loadState == .unavailable`, `friendshipState == .unavailable`, etc.) bounded by a
+      2s wall-clock deadline instead of a magic yield count. swift-reviewer flagged HIGH: the
+      two `sendRequest` tests' condition (`friendshipState != .checking`) didn't also wait on
+      `handle != nil`, which `sendRequest` requires and which comes from an independently
+      scheduled profile-observation task — fixed to
+      `friendshipState != .checking && handle != nil`; re-verified 211/211 green after the fix.
 - [ ] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
       the `mutuallyUnlockedBuddyCount` 0→≥1 transition in `TodayViewModel.performRefreshBuddies`,
       plus a `skygrid_capture_completed` event in `PostPublisher` (dev-note §3).

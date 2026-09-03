@@ -2,6 +2,22 @@ import Testing
 import Foundation
 @testable import SkyGrid
 
+/// Waits for `condition` to become true instead of a fixed `Task.yield()` count.
+///
+/// A fixed yield count is a race: it assumes the observation `Task` gets scheduled
+/// within N cooperative yields, which holds on a quiet machine but can flake under
+/// load (parallel test execution, a busy CI host) when the runtime's global executor
+/// is slower to resume the child task. Polling the actual condition is deterministic
+/// in the common (fast) case and still bounded so a genuine regression fails loudly
+/// instead of hanging.
+@MainActor
+private func awaitCondition(timeout: TimeInterval = 2.0, _ condition: () -> Bool) async {
+    let deadline = Date().addingTimeInterval(timeout)
+    while !condition() && Date() < deadline {
+        await Task.yield()
+    }
+}
+
 @Suite("OrphanedPostRecovery")
 @MainActor
 struct OrphanedPostRecoveryTests {
@@ -329,7 +345,7 @@ struct CollectionObservationStateTests {
         )
 
         viewModel.start()
-        for _ in 0..<8 { await Task.yield() }
+        await awaitCondition { viewModel.loadState == .unavailable }
 
         #expect(viewModel.posts[date] == post)
         #expect(viewModel.loadState == .unavailable)
@@ -352,7 +368,7 @@ struct CollectionObservationStateTests {
         )
 
         viewModel.start()
-        for _ in 0..<8 { await Task.yield() }
+        await awaitCondition { viewModel.friendshipState == .unavailable }
 
         #expect(viewModel.accepted == [friendship])
         #expect(viewModel.friendshipState == .unavailable)
@@ -375,7 +391,7 @@ struct CollectionObservationStateTests {
         )
 
         viewModel.start()
-        for _ in 0..<8 { await Task.yield() }
+        await awaitCondition { viewModel.profileState == .unavailable }
 
         #expect(viewModel.handle == Handle(raw: "last_confirmed"))
         #expect(viewModel.hasHandle == true)
@@ -399,7 +415,7 @@ struct CollectionObservationStateTests {
             userRepository: FixedUserRepository()
         )
         viewModel.start()
-        for _ in 0..<8 { await Task.yield() }
+        await awaitCondition { viewModel.friendshipState != .checking && viewModel.handle != nil }
 
         let sent = await viewModel.sendRequest(toHandleRaw: "buddy_handle")
 
@@ -430,7 +446,7 @@ struct CollectionObservationStateTests {
             userRepository: FixedUserRepository()
         )
         viewModel.start()
-        for _ in 0..<8 { await Task.yield() }
+        await awaitCondition { viewModel.friendshipState != .checking && viewModel.handle != nil }
 
         let sent = await viewModel.sendRequest(toHandleRaw: "buddy_handle")
 
