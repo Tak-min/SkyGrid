@@ -11,6 +11,7 @@ import UIKit
 /// preview is the product rather than an approximation of it.
 struct MilestoneView: View {
     let moment: MilestoneMoment
+    let inviteRepository: any InviteRepository
     let onDone: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -86,6 +87,18 @@ struct MilestoneView: View {
             Button("Share this morning") { prepareShareImage() }
                 .buttonStyle(SkyLoudButtonStyle())
                 .accessibilityHint("Opens the share sheet with this card as an image")
+
+            // Bet 3 (dev-note §7 P0): a person already excited enough to be looking at
+            // a milestone is the cheapest place to test whether invite *placement*,
+            // not desire, was the binding constraint — see the Buddies-tab-only
+            // version of this same card. Only shown once a handle exists, matching
+            // the gate `InviteLinkCard`'s own doc comment describes; `moment.handle`
+            // is already resolved by the presenter, so no extra fetch is needed here.
+            if moment.handle != nil {
+                // The dark colour scheme is already applied to the whole view in
+                // `body` — no need to reassert it here.
+                InviteLinkCard(inviteRepository: inviteRepository, placement: .milestone)
+            }
 
             Button("Done", action: onDone)
                 .font(SGFont.body(16))

@@ -16,8 +16,20 @@ enum InviteAnalytics {
         case claimResolved = "skygrid_invite_claim_resolved"
     }
 
+    /// Where the invite card was shown, not who saw it — added so `linkCreated`/
+    /// `linkShared` from the milestone-moment placement (VISION.md's Bet 3) can be
+    /// compared against the Buddies-tab placement without a second event name. This
+    /// is the whole measurement for that bet: if `milestone` doesn't outperform
+    /// `buddiesTab`, placement wasn't the binding constraint.
+    enum Placement: String {
+        case buddiesTab = "buddies_tab"
+        case milestone = "milestone"
+        case onboarding = "onboarding"
+    }
+
     static func record(
         _ event: Event,
+        placement: Placement? = nil,
         previewState: InvitePreviewState? = nil,
         claimOutcome: InviteClaimOutcome? = nil
     ) {
@@ -26,6 +38,9 @@ enum InviteAnalytics {
         guard FirebaseApp.app() != nil else { return }
 
         var parameters: [String: Any] = [:]
+        if let placement {
+            parameters["placement"] = placement.rawValue
+        }
         if let previewState {
             parameters["preview_state"] = previewState.rawValue
         }

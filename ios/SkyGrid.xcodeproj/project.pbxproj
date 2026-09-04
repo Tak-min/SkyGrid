@@ -14,6 +14,7 @@
 		03B5D7D34E491DAA8C82B861 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531084A1F75F338E4A45CC85 /* ShareSheet.swift */; };
 		04C41D55F7B9281D7068F93B /* BigTimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */; };
 		0545DAEEF2E00C2A8E71EC1C /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 068F1BE807A1588E40B46E89 /* FirebaseAppCheck */; };
+		064AE3B73A3EC2D38CAE4BF1 /* OnboardingInviteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FB553030C359619542B5B54 /* OnboardingInviteView.swift */; };
 		09420A7F5E15A84F20BC404A /* SkyGridUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */; };
 		0999E1B3F926013D1FC47ED8 /* FriendsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6A3B5CC0ADD2C9D6F8F4CDF /* FriendsViewModel.swift */; };
 		0A3B444EFC749E0E946DAF5D /* PostRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */; };
@@ -35,9 +36,11 @@
 		29BC0765DB83D109C7A6F1BD /* StartupFailureMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB33195EF4E65FEBAB084D7 /* StartupFailureMessage.swift */; };
 		29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */; };
 		2AC46F9CD036558D1F3F6825 /* real_overcast_sky.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EA734E93CF42C8AD1AB11848 /* real_overcast_sky.jpg */; };
+		2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */; };
 		2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40E82FC02E08596714BA7FB /* RootView.swift */; };
 		2E14D29C579773ADF5F2F5F1 /* GridArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087C71720687FEA840D1BCE1 /* GridArchiveView.swift */; };
 		33755F234CF98678EFB43647 /* MorningRitualCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9348C0D211964D2CF1B5EC19 /* MorningRitualCoordinator.swift */; };
+		3396B627FB301F1EED6800EE /* YesterdaySkyBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9902856F934E3CD0729A0B7B /* YesterdaySkyBackdrop.swift */; };
 		33D71F66E9BC0DC37D1A945A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */; };
 		3769C03A8261944DBB234CFA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD181FD3F9CD149F317299BA /* Assets.xcassets */; };
 		3783962C8C57500685EB4D03 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 0AF085D3C6D7750CCAC773AC /* FirebaseFunctions */; };
@@ -301,6 +304,7 @@
 		399D785A4FF2ECB99992BD10 /* PendingUpload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingUpload.swift; sourceTree = "<group>"; };
 		3DB163E0D34F01969A98C3E0 /* SkyGridWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SkyGridWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E91ECCE7507AB3089451A75 /* PaywallStepScaffold.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallStepScaffold.swift; sourceTree = "<group>"; };
+		4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowTests.swift; sourceTree = "<group>"; };
 		4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoloMorningPaywallPolicyTests.swift; sourceTree = "<group>"; };
 		46A4C8B5EA3EEEDC4D0D9725 /* real_clear_sky.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = real_clear_sky.jpg; sourceTree = "<group>"; };
 		49AC2202E0868FB93F5D007B /* BuddiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddiesView.swift; sourceTree = "<group>"; };
@@ -350,6 +354,7 @@
 		7E1238F3EDFD5D891AA112A8 /* ServiceEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceEnvironment.swift; sourceTree = "<group>"; };
 		7F748C3EC4D32E455D9427F7 /* WakeGoal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WakeGoal.swift; sourceTree = "<group>"; };
 		7F8226F41E37D81F38B2EA3D /* QRCodeGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeGenerator.swift; sourceTree = "<group>"; };
+		7FB553030C359619542B5B54 /* OnboardingInviteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingInviteView.swift; sourceTree = "<group>"; };
 		81D5E4D6A1F3A08B61CCED03 /* MorningRitualLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualLiveActivity.swift; sourceTree = "<group>"; };
 		8202E9E76197437219166CA2 /* FirebasePostWriteFailureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebasePostWriteFailureTests.swift; sourceTree = "<group>"; };
 		84BE272CCACA06B1E3005D3E /* FirebaseDocumentCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseDocumentCodec.swift; sourceTree = "<group>"; };
@@ -375,6 +380,7 @@
 		9677E6B310F6E014A7FF3956 /* ImageProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessorTests.swift; sourceTree = "<group>"; };
 		96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZonePolicy.swift; sourceTree = "<group>"; };
 		9707DFE75C337522093E25A5 /* SkyGridExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridExportView.swift; sourceTree = "<group>"; };
+		9902856F934E3CD0729A0B7B /* YesterdaySkyBackdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YesterdaySkyBackdrop.swift; sourceTree = "<group>"; };
 		9C4B09225F2C599CBFB99F5B /* PaywallStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallStep.swift; sourceTree = "<group>"; };
 		9DE316403FC0C5F12B7048A3 /* InviteLinkCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteLinkCard.swift; sourceTree = "<group>"; };
 		9F475C0E96E7506F4ADBD33C /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -777,6 +783,7 @@
 			isa = PBXGroup;
 			children = (
 				B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */,
+				7FB553030C359619542B5B54 /* OnboardingInviteView.swift */,
 				A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */,
 				5DE08F2693E2014B6F411183 /* PersonalizationQuestionsView.swift */,
 				51E7DB5261372B33FD7508EA /* PersonalizedPlanView.swift */,
@@ -885,6 +892,7 @@
 				BD23650166A18C5BF4671015 /* LocalDateTests.swift */,
 				F80275CA399B3382985AACD9 /* MorningFollowUpSchedulerTests.swift */,
 				AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */,
+				4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */,
 				C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */,
 				FE2A2882ADF140C0BD62770C /* PaywallFlowTests.swift */,
 				BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */,
@@ -932,6 +940,7 @@
 				3247098004C9D5F5DB487BFE /* TodayView.swift */,
 				CF76E707C52CA8021139C3F5 /* TodayViewModel.swift */,
 				A42CCE5459D2B84AB5ADBCB9 /* WeekRhythmView.swift */,
+				9902856F934E3CD0729A0B7B /* YesterdaySkyBackdrop.swift */,
 			);
 			path = Today;
 			sourceTree = "<group>";
@@ -1191,6 +1200,7 @@
 				7B3FD00A67C9D505A9D3D14D /* MorningRitualPolicy.swift in Sources */,
 				57E37E5EDCF65B9C244A572E /* NotificationRouter.swift in Sources */,
 				D4E05414E3DAF916F1D1AD68 /* OnboardingCoordinatorView.swift in Sources */,
+				064AE3B73A3EC2D38CAE4BF1 /* OnboardingInviteView.swift in Sources */,
 				51D8332E35DB3D52BAF33AE6 /* OrphanedPostBanner.swift in Sources */,
 				752C1378D18B4AA527A9D8F4 /* OrphanedPostRecovery.swift in Sources */,
 				182A0D8FCDD0CF028DEB4A12 /* PaywallAnalytics.swift in Sources */,
@@ -1261,6 +1271,7 @@
 				AC6D5CF00AFA32E554B4FED3 /* WeekRhythm.swift in Sources */,
 				7C1052A3348A0D64AB39949F /* WeekRhythmView.swift in Sources */,
 				A7E8BB5A0D4AE334716D86EE /* WelcomeView.swift in Sources */,
+				3396B627FB301F1EED6800EE /* YesterdaySkyBackdrop.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1293,6 +1304,7 @@
 				E5768E9031FE2B5AE0CBB959 /* LocalDateTests.swift in Sources */,
 				EC95088712901C8CACF695EB /* MorningFollowUpSchedulerTests.swift in Sources */,
 				E2FBCBB5FE138027E0A9D949 /* MorningRitualPolicyTests.swift in Sources */,
+				2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */,
 				529EC867219879D7D0B8146A /* OrphanedPostRecoveryTests.swift in Sources */,
 				5B1ADCD16515E93BF000C3EE /* PaywallFlowTests.swift in Sources */,
 				8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */,

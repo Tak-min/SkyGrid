@@ -15,9 +15,11 @@ final class InviteLinkViewModel {
     private(set) var isRevoking = false
 
     private let inviteRepository: any InviteRepository
+    private let placement: InviteAnalytics.Placement
 
-    init(inviteRepository: any InviteRepository) {
+    init(inviteRepository: any InviteRepository, placement: InviteAnalytics.Placement = .buddiesTab) {
         self.inviteRepository = inviteRepository
+        self.placement = placement
     }
 
     /// Always asks for the caller's existing live link (`fresh: false`) — the invite
@@ -35,7 +37,7 @@ final class InviteLinkViewModel {
             // "created" event would drown out the signal of how often someone
             // actually mints a fresh invite.
             if !link.isReused {
-                InviteAnalytics.record(.linkCreated)
+                InviteAnalytics.record(.linkCreated, placement: placement)
             }
             linkState = .ready(link)
         } catch {

@@ -76,14 +76,17 @@ struct SkySecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(SGFont.body(16))
-            .foregroundStyle(SGT.ink)
+            // Match the primary control's disabled treatment: retain the
+            // unfilled, stroked capsule and lower the label to ink3 rather
+            // than dimming the whole control into a muddy grey.
+            .foregroundStyle(isEnabled ? SGT.ink : SGT.ink3)
             .frame(maxWidth: .infinity, minHeight: 52)
             .padding(.horizontal, SGSpacing.lg)
             .background(SGT.fill, in: Capsule())
             .overlay(Capsule().strokeBorder(SGT.rule, lineWidth: 1))
             .frame(maxWidth: 340)
             .frame(maxWidth: .infinity)
-            .opacity(isEnabled ? (configuration.isPressed ? 0.72 : 1) : 0.42)
+            .opacity(isEnabled && configuration.isPressed ? 0.72 : 1)
             .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }

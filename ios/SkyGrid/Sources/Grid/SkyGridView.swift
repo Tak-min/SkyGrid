@@ -24,7 +24,6 @@ struct SkyGridView: View {
     private static let topAnchorID = "sky-grid-header"
 
     private var postedCount: Int { posts.count }
-    private var totalDays: Int { GridLayoutMath.allDates(forYear: year).count }
 
     var body: some View {
         ZStack {
@@ -151,11 +150,16 @@ struct SkyGridView: View {
 
     private var gridActions: some View {
         VStack(alignment: .trailing, spacing: SGSpacing.md) {
-            Text(isArchiveUnavailable && posts.isEmpty ? "Not checked" : "\(postedCount) / \(totalDays)")
+            Text(isArchiveUnavailable && posts.isEmpty ? "Not checked" : "\(postedCount)")
                 .font(SGFont.numeric(16, weight: .medium))
                 .foregroundStyle(SGT.ink2)
                 .contentTransition(.numericText())
                 .skyAnimation(SGMotion.exchange, value: postedCount)
+                .accessibilityLabel(
+                    isArchiveUnavailable && posts.isEmpty
+                        ? "Archive not checked"
+                        : "\(postedCount) morning skies photographed this year"
+                )
             if canShare, let onShare {
                 Button(action: onShare) {
                     if isPreparingShare {

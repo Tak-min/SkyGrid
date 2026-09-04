@@ -103,6 +103,9 @@ private struct UIAuditRoot: View {
             OnboardingCoordinatorView(
                 purchases: UIAuditPurchases(),
                 entitlements: auditEntitlements,
+                uid: UIAuditData.currentUID,
+                userRepository: auditUserRepository,
+                inviteRepository: UIAuditInviteRepository(),
                 onFinished: {}
             )
         } else if scenario == .paywall {
@@ -162,6 +165,7 @@ private struct UIAuditRoot: View {
                     photo: isDayOne ? nil : UIAuditData.thumbnails[UIAuditData.posts[17].localDate],
                     handle: Handle(raw: "morning_auditor")
                 ),
+                inviteRepository: UIAuditInviteRepository(),
                 onDone: {}
             )
         } else if scenario == .cameraReview {

@@ -189,38 +189,11 @@ struct TodayView: View {
     private var emptyMorningRecord: some View {
         VStack(alignment: .leading, spacing: SGSpacing.lg) {
             ZStack(alignment: .bottomLeading) {
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(emptySkyGradient)
-                    // Keep the daily capture dominant without pushing the
-                    // week rhythm and alarm under the persistent tab bar.
-                    .frame(height: 280)
-                    .overlay(alignment: .topTrailing) {
-                        Circle()
-                            .fill(.white.opacity(0.24))
-                            .frame(width: 168, height: 168)
-                            .blur(radius: 2)
-                            .offset(x: 28, y: -36)
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 32, style: .continuous)
-                            .strokeBorder(.white.opacity(0.32), lineWidth: 1)
-                    }
-
-                // `readableInk` picks its ink from the accent colour alone, but this
-                // card is a *gradient* that ends in a warm cream — so ink chosen for
-                // the blue top was landing on the pale bottom-right corner, exactly
-                // where the streak caption sits. The recorded card already solves
-                // this with a bottom scrim; mirror it rather than inventing a second
-                // approach.
-                    .overlay {
-                        LinearGradient(
-                            colors: [.clear, .black.opacity(0.42)],
-                            startPoint: .center,
-                            endPoint: .bottom
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                        .allowsHitTesting(false)
-                    }
+                YesterdaySkyBackdrop(
+                    thumbPath: yesterdayThumbnailPath,
+                    imageFetching: imageFetching,
+                    fallback: emptySkyGradient
+                )
 
                 // The hero of the pre-capture screen is the streak, not a
                 // placeholder clock. The previous "—:—" at ultraLight 74pt rendered
@@ -383,6 +356,14 @@ struct TodayView: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
+    }
+
+    /// The seven-day history listener that powers the streak already includes
+    /// yesterday, so this adds neither a read nor a second source of truth.
+    private var yesterdayThumbnailPath: String? {
+        viewModel.weekRhythm.days
+            .first { $0.date == observedDate.adding(days: -1) }?
+            .thumbPath
     }
 
     private var alarmTime: String {

@@ -1,16 +1,20 @@
 import SwiftUI
 import UIKit
 
-/// Lives inside the Buddies tab, in the `hasHandle == true` branch — a handle is
-/// required before `createInvite` will succeed (`MissingHandleError` server-side), so
-/// this card only ever appears once one exists.
+/// Lives inside the Buddies tab, in the `hasHandle == true` branch, and (since
+/// VISION.md Bet 3) inside `MilestoneView` when the moment already carries a handle —
+/// a handle is required before `createInvite` will succeed (`MissingHandleError`
+/// server-side), so this card only ever appears once one exists. `placement`
+/// distinguishes the two call sites in analytics without a second event name.
 struct InviteLinkCard: View {
     @State private var viewModel: InviteLinkViewModel
     @State private var showCopiedConfirmation = false
     @State private var showRevokeConfirmation = false
+    private let placement: InviteAnalytics.Placement
 
-    init(inviteRepository: any InviteRepository) {
-        _viewModel = State(initialValue: InviteLinkViewModel(inviteRepository: inviteRepository))
+    init(inviteRepository: any InviteRepository, placement: InviteAnalytics.Placement = .buddiesTab) {
+        _viewModel = State(initialValue: InviteLinkViewModel(inviteRepository: inviteRepository, placement: placement))
+        self.placement = placement
     }
 
     var body: some View {
@@ -88,13 +92,13 @@ struct InviteLinkCard: View {
             .simultaneousGesture(TapGesture().onEnded {
                 // ShareLink has no completion callback, only this tap — recorded on
                 // the intent to share, not confirmed delivery.
-                InviteAnalytics.record(.linkShared)
+                InviteAnalytics.record(.linkShared, placement: placement)
             })
 
             Button {
                 UIPasteboard.general.string = link.code.formatted
                 showCopiedConfirmation = true
-                InviteAnalytics.record(.codeCopied)
+                InviteAnalytics.record(.codeCopied, placement: placement)
             } label: {
                 Label(showCopiedConfirmation ? "Copied" : "Copy code", systemImage: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
                     .font(SGFont.body(15))

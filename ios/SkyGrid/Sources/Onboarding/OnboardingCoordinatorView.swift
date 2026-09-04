@@ -10,6 +10,7 @@ enum OnboardingStep: Equatable {
     case reminder
     case wakeGoal
     case plan
+    case invite
 }
 
 @MainActor
@@ -48,6 +49,10 @@ final class OnboardingViewModel {
         step = .plan
     }
 
+    func advanceToInvite() {
+        step = .invite
+    }
+
     func goBack(to step: OnboardingStep) {
         self.step = step
     }
@@ -61,7 +66,8 @@ final class OnboardingViewModel {
         case .privacy: step = .reminder
         case .reminder: step = .wakeGoal
         case .wakeGoal: step = .plan
-        case .plan: break
+        case .plan: step = .invite
+        case .invite: break
         }
     }
 
@@ -75,6 +81,7 @@ final class OnboardingViewModel {
         case .reminder: step = .privacy
         case .wakeGoal: step = .reminder
         case .plan: step = .wakeGoal
+        case .invite: step = .plan
         }
     }
 
@@ -103,6 +110,9 @@ struct OnboardingCoordinatorView: View {
     @State private var transitionEdge: Edge = .trailing
     let purchases: any PurchasesServicing
     let entitlements: EntitlementStore
+    let uid: String
+    let userRepository: any UserRepository
+    let inviteRepository: any InviteRepository
     let onFinished: () -> Void
 
     var body: some View {
@@ -163,8 +173,15 @@ struct OnboardingCoordinatorView: View {
                     profile: viewModel.personalizationProfile,
                     wakeGoalMinutes: viewModel.wakeGoalMinutes,
                     onExplorePro: { showPaywall = true },
-                    onContinueFree: finish,
+                    onContinueFree: advanceToInvite,
                     onEditAnswers: goBack
+                )
+            case .invite:
+                OnboardingInviteView(
+                    uid: uid,
+                    userRepository: userRepository,
+                    inviteRepository: inviteRepository,
+                    onSkip: finish
                 )
             }
         }
@@ -197,9 +214,9 @@ struct OnboardingCoordinatorView: View {
                 ),
                 onEntitlementGranted: {
                     await entitlements.refresh()
-                    finish()
+                    advanceToInvite()
                 },
-                onDismissed: { _ in finish() }
+                onDismissed: { _ in advanceToInvite() }
             )
         }
     }
@@ -229,6 +246,13 @@ struct OnboardingCoordinatorView: View {
         transitionEdge = .trailing
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
             viewModel.skipToPlan()
+        }
+    }
+
+    private func advanceToInvite() {
+        transitionEdge = .trailing
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
+            viewModel.advanceToInvite()
         }
     }
 }

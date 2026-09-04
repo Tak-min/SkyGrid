@@ -10,7 +10,10 @@ final class FirebaseInviteRepository: InviteRepository {
     /// calls `Functions.functions(region:)`, which traps if `FirebaseApp` is
     /// unconfigured (the UI-audit harness and unit-test hosts deliberately leave it
     /// that way; give them a stub `InviteRepository` instead of this type).
-    static let region = "asia-northeast1"
+    /// A process-wide immutable String. `init` default arguments are evaluated
+    /// outside this type's main-actor isolation, so this must stay nonisolated
+    /// rather than making construction accidentally depend on actor hopping.
+    nonisolated static let region = "asia-northeast1"
 
     private let functions: Functions
 

@@ -93,7 +93,13 @@ struct RootView: View {
     private func content(services: AppServices) -> some View {
         switch destination {
         case .onboarding:
-            OnboardingCoordinatorView(purchases: services.purchases, entitlements: services.entitlements) {
+            OnboardingCoordinatorView(
+                purchases: services.purchases,
+                entitlements: services.entitlements,
+                uid: services.currentUid,
+                userRepository: services.userRepository,
+                inviteRepository: services.inviteRepository
+            ) {
                 Task { await refreshDestination(services: services) }
             }
         case .today:
@@ -190,7 +196,7 @@ struct RootView: View {
             // `fullScreenCover(isPresented:onDismiss:)` above.
             resolvePendingPresentations(services: services)
         }) { moment in
-            MilestoneView(moment: moment, onDone: {
+            MilestoneView(moment: moment, inviteRepository: services.inviteRepository, onDone: {
                 milestoneMoment = nil
             })
         }
@@ -717,4 +723,3 @@ private enum HomeTab: Hashable {
     case grid
     case buddies
 }
-
