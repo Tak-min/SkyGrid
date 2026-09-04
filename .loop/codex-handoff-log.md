@@ -514,3 +514,39 @@ the primary tap" (swipe/overflow) without requiring a new detail view. Explainer
 and empty-state-primary-CTA points were unblocked, proceed as originally scoped.
 
 Running as of this log entry — result not yet in.
+
+## Batch 16 — verified + shipped (2026-09-04)
+
+Codex's implementation verified independently: `xcodebuild build` initially **failed**
+(`BuddySafetyRoute` needs `Hashable` for `navigationDestination(item:)`) — Codex's own
+verification didn't complete (CoreSimulatorService/Xcode-lock error in its shell), so its
+"done" report was premature; fixed the one-line conformance gap directly, then confirmed
+**BUILD SUCCEEDED** and **212/212 SkyGridTests passed**. Committed as `0893105`.
+
+## User feature proposals (2026-09-04) — three items, Opus consulted for plan only per user's
+explicit process constraint (Opus = planning only, implementation = Sonnet/Codex)
+
+User proposed, and asked for critical analysis of:
+1. Optimistic/async UI so a user's own post appears on Grid before server round-trip
+   completes (currently `GridArchiveViewModel` sources display purely from
+   `postRepository.observePosts` — no merge of the local SwiftData upload-outbox row, so an
+   own-capture doesn't show until the Firestore doc write lands).
+2. Duolingo-style streak recovery, explicitly asking for free-vs-paid critical analysis of
+   the rewind-count gating. **Finding: this already exists as fully-designed, fully-dormant
+   policy code** — `RestDayPolicy.swift` (free=1 rest-day/week, pro=unlimited) +
+   `StreakCalculator`'s `exemptDays` mechanism — but `TodayViewModel.swift:227`'s own comment
+   says it's wired to `exemptDays: []` always, because nothing persists
+   `usedRestDaysThisWeek` anywhere. Zero backend/persistence work has happened on this despite
+   the policy logic being complete.
+3. An automated design/UX scoring loop (screenshot → score → re-iterate). Noted dependency:
+   most of the app currently cannot be screenshotted at all (Simulator App Check block, no
+   device-screenshot path in this environment) — a scoring loop needs that unblocked first.
+
+Sent all three to an Opus architect agent (background) for critical verdict + minimal design
++ Codex-batch-shaped task descriptions per item. Not yet returned as of this log entry.
+
+## Batch 17 (sent 2026-09-04) — D1: share control on Today's own recorded-morning card
+
+Running in background. Reuses `ShareCardRenderer.renderMorning` + `ShareSheet`, same pattern
+`MilestoneView.swift` already uses for its own share button — makes every day shareable, not
+just milestone days. Result pending.
