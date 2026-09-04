@@ -634,3 +634,37 @@ claim + real rules hole) → Item 3 (tooling, cheap half only available now).
 
 Codex hit its own usage-limit wall this session (see batch 17 note above) — retry after
 2026-09-04 17:04 JST per its own error message. These three batches are queued for then.
+
+## Item 3 Tier A — implemented directly (2026-09-04, Sonnet, no Codex needed)
+
+Codex was unavailable (usage-limit wall), and per the Opus consult this tier needs no
+Simulator/screenshots, so implemented it directly rather than waiting: `.loop/tools/design_lint.py`,
+a dependency-free static-analysis lint over `ios/SkyGrid/Sources` for the 5 categories from
+`~/.claude/rules/ecc/swift/ui-design.md`'s own audit order. First baseline run:
+
+```
+emoji_needs_review: 0
+raw_color: 21
+spacing_literal: 151
+font_literal: 21
+glass_panel_files: 0
+icon_only_button_missing_label: 0
+(157 files scanned)
+```
+
+**Observed false-positive rate (spot-checked ~14 matches by hand):** most findings look real
+(unrouted `Color.black`/`Color(red:,green:,blue:)` gradients, bare numeric `.padding`/`spacing`
+values), but at least 2 known false-positive classes exist and should be discounted when acting
+on this baseline:
+1. `.frame(minHeight: 44)`-style Apple HIG minimum-tap-target sizes (44pt is a platform
+   constant, not a missing design token).
+2. Fixed export/canvas dimensions (e.g. `.frame(width: 1080, height: 1920)` in
+   `SkyGridApp.swift` — the share-card's fixed output resolution, not a spacing choice).
+
+Zero hits for emoji-as-iconography (consistent with the design rule's own note that this app
+already avoids that failure mode) and zero icon-only-buttons-missing-accessibilityLabel (a
+genuine positive signal — accessibility labeling is already consistently applied). Baseline
+saved to `.loop/design-lint.json`; re-run `python3 .loop/tools/design_lint.py` (add `--write` to
+update the baseline) after any UI batch to see the delta. Did not act on any of these findings
+yet — this batch was baseline-only, per the Opus consult's explicit instruction ("first run is a
+baseline, change no UI code").

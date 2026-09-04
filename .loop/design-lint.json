@@ -1,0 +1,260 @@
+{
+  "totals": {
+    "emoji_needs_review": 0,
+    "raw_color": 21,
+    "spacing_literal": 151,
+    "font_literal": 21,
+    "glass_panel_files": 0,
+    "icon_only_button_missing_label": 0
+  },
+  "glass_panel_duplicate_files": [],
+  "per_file": {
+    "ios/SkyGrid/Sources/App/AppStartupView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 4,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/App/SkyGridApp.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 2,
+      "spacing_literal": 1,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Camera/CameraView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 9,
+      "spacing_literal": 12,
+      "font_literal": 2,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Camera/ShutterButton.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 2,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Friends/AddBuddyView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Friends/BuddiesView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 11,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Friends/FriendRequestsView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 5,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Friends/HandleClaimView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Grid/AppStoreIdentityExportView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 7,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Grid/MorningCardExportView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 16,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Grid/SkyGridExportView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 14,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Grid/SkyGridView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 12,
+      "font_literal": 2,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Invite/InviteClaimView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 2,
+      "font_literal": 2,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Invite/InviteLinkCard.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 3,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Milestone/MilestoneLoudButtonStyle.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Milestone/MilestoneView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Models/SkyColor.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 1,
+      "spacing_literal": 0,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Notifications/MorningAlarmScheduler.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 1,
+      "spacing_literal": 0,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Notifications/MorningAlarmSettingsView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Onboarding/OnboardingInviteView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 2,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Onboarding/PersonalizationQuestionsView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 9,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Onboarding/PersonalizedPlanView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 4,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Onboarding/RitualGridMark.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 6,
+      "spacing_literal": 0,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Onboarding/WakeGoalPickerView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 3,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Paywall/PaywallPlanStepView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 6,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Paywall/PaywallStepScaffold.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 4,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Settings/SettingsView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 1,
+      "spacing_literal": 7,
+      "font_literal": 3,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/BuddyRow.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/BuddyTile.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 3,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/OrphanedPostBanner.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 3,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/PostStatusBanner.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 2,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/TodayPhotoCard.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 1,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/TodayView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 1,
+      "spacing_literal": 7,
+      "font_literal": 5,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/WeekRhythmView.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 3,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    },
+    "ios/SkyGrid/Sources/Today/YesterdaySkyBackdrop.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 2,
+      "font_literal": 0,
+      "icon_only_button_missing_label": 0
+    }
+  },
+  "files_scanned": 157,
+  "note": "Tier A deterministic lint. emoji_needs_review is flagged, not asserted as a violation, per the 2026-09-04 Opus consult (static analysis can't reliably tell structural iconography from inline text flourish)."
+}
