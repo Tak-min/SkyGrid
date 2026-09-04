@@ -1,18 +1,30 @@
 # LOOP VISION — Pre-promotion design & stickiness overhaul (started 2026-09-04)
 
-## PIVOT (2026-09-04, human): this loop no longer implements code
+## PIVOT (2026-09-04, human) — **SUPERSEDED, same day, see below**
 
-Per explicit instruction, this loop's job is now **problem discovery + abstracted improvement
+~~Per explicit instruction, this loop's job is now **problem discovery + abstracted improvement
 proposals only** — no more Swift/Firestore implementation happens inside this Claude Code loop.
 The headless implementation driver (`loop-engine.sh`) was stopped; do not relaunch it against
 `.loop/verify.sh` (that gate assumes code-implementation DoD items and will never pass under the
 new scope). Accumulated findings are handed off in batches to a separately-running Codex CLI
 session (another terminal window, operated directly by the assistant), which does the actual
-codebase verification and implementation. Everything below this point (the original DoD, the
-code-implementation guardrails, the driver-specific notes) is **historical record of the
-discovery work already done** — keep it as source material for future findings, but stop treating
-DoD items 3-8 as something this loop will build. `dev-notes/virality-stickiness-assessment_2026-09-04.md`
-is the first (and, at time of pivot, only) findings/proposals batch handed to Codex.
+codebase verification and implementation.~~ Kept struck-through, not deleted, so the reasoning
+stays visible — but every clause of it is now stale. Do not act on it.
+
+## UN-PIVOT (2026-09-04, human, same day) — this is the current, authoritative policy
+
+Implementation resumed the same day, first interactively (`0893105` "invert Buddies tab
+hierarchy" onward), then explicitly re-authorized after Codex hit its own account-wide usage
+limit: **implement directly (Swift/Firestore/Cloud Functions), no Codex dependency, no
+discovery-only restriction.** DoD items 3-8 below ARE things this loop builds. The headless
+`loop-engine.sh` driver against `.loop/verify.sh` **is meant to be running** — a fresh headless
+iteration that reads only the struck-through PIVOT block above without reaching this UN-PIVOT
+correction would incorrectly self-halt (this already happened once, ~19:59 on 2026-09-04 — the
+agent correctly noticed the contradiction between "don't relaunch the driver" and the driver
+having just been relaunched, and safely stopped to ask rather than guess; this section exists so
+that never has to happen again). `dev-notes/virality-stickiness-assessment_2026-09-04.md` is
+still valid source material (a findings/proposals batch), it is simply no longer the *only*
+channel for turning findings into code — this loop now does that directly too.
 
 ## Why this loop exists
 
