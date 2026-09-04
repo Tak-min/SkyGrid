@@ -113,3 +113,35 @@ something either agent loop should keep re-discovering).
 Onboarding: add a skippable invite step at the end (reuse existing `createInvite` + share sheet);
 evaluate cutting `pace`/`frequency` steps to make room, but only after confirming what
 `PersonalizedPlanView` actually consumes from `PersonalizationProfile` — don't cut blind.
+
+**Result (received 2026-09-04, 4m52s):** Implemented. Added a skippable step 9
+(`Onboarding/OnboardingInviteView.swift`) explaining the mutual-reveal mechanic, letting the user
+create a handle if needed then reuses the existing invite-link + share-sheet flow unchanged;
+resumed onboarding with an existing handle skips straight to the invite link. Kept `pace`/
+`frequency` — verified they feed `PersonalizedPlanView` and paywall copy, so not decorative.
+Tagged the invite event `placement: onboarding` (lets us compare conversion against the existing
+Buddies-tab invite placement later). Added an onboarding-transition test; iOS Simulator build and
+that test both green. Files: `OnboardingInviteView.swift`, `OnboardingCoordinatorView.swift:4`,
+hypothesis + retraction condition recorded in `PRODUCT-MODEL.md:46`.
+
+**Noted in passing (not yet actioned, low priority):** a Swift 6 language-mode warning in
+`Data/Firebase/FirebaseInviteRepository.swift:17` (`main actor-isolated static property 'region'
+can not be referenced from a nonisolated context` — will become a hard error under strict Swift 6
+concurrency checking). Candidate for a future turn once the higher-priority items are through.
+
+## Batch 4 (sent 2026-09-04 — cadence now every 5 min per user)
+
+Correction, not a new feature request: the user reports enabling Google Analytics in the Firebase
+Console and downloading a fresh `GoogleService-Info.plist`
+(`~/Downloads/GoogleService-Info (2).plist`, downloaded 2026-09-04 12:43). **I independently
+checked it with PlistBuddy before sending this and it still reads `IS_ANALYTICS_ENABLED = false`
+with no measurement ID** — identical to the two older downloads in the same folder (Jul 1, Jul
+29). So the Console change likely didn't fully take (project-level "enable Analytics" is a
+different step from linking Analytics to this specific iOS app registration). Also worth being
+explicit with Codex: **Firebase Analytics SDK is already integrated and already in active use**
+(`PaywallAnalytics.swift`, `InviteAnalytics.swift` already call `Analytics.logEvent`) — there is no
+SDK-addition or initialization code to write; the only gap has only ever been the Console-side app
+registration + BigQuery export. Sent Codex the file path and asked it to independently verify
+before touching anything, and to only replace the in-repo plist if the new file genuinely shows
+Analytics enabled — otherwise report back exactly what's still missing so it can be relayed to the
+user precisely (which Console screen/step to check).
