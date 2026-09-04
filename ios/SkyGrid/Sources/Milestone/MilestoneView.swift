@@ -117,6 +117,7 @@ struct MilestoneView: View {
             handle: moment.handle
         ) else { return }
         shareImage = ShareableCard(image: image)
+        MorningShareAnalytics.record(.shared, placement: .milestone)
     }
 }
 

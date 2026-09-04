@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 
 /// The home screen deliberately has one visual destination: the morning record.
 /// Secondary information is kept below the fold so the first five seconds never
 /// resemble a social feed or a dashboard.
 struct TodayView: View {
     @State private var viewModel: TodayViewModel
+    @State private var shareImage: TodayShareableCard?
     @Environment(\.scenePhase) private var scenePhase
     let imageFetching: any ImageFetching
     let observedDate: LocalDate
@@ -71,6 +73,9 @@ struct TodayView: View {
         }
         .onChange(of: buddyRefreshToken) { _, _ in
             viewModel.refreshBuddiesNow()
+        }
+        .sheet(item: $shareImage) { card in
+            ShareSheet(items: [card.image])
         }
     }
 
@@ -169,6 +174,15 @@ struct TodayView: View {
                 }
                 .accessibilityElement(children: .combine)
 
+                Button {
+                    prepareShareImage(for: post)
+                } label: {
+                    Label("Share this morning", systemImage: "square.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(SkySecondaryButtonStyle())
+                .accessibilityHint("Opens the share sheet with this morning's card as an image")
+
                 if viewModel.todayIntegrity == .orphaned {
                     OrphanedPostBanner(
                         isRecovering: viewModel.isRecoveringOrphanedPost,
@@ -234,6 +248,22 @@ struct TodayView: View {
             }
             .buttonStyle(SkyPrimaryButtonStyle())
         }
+    }
+
+    /// Keep the ordinary-day card on the same local-first path as the milestone
+    /// moment: an immediately-posted capture can be shared offline, while a cache
+    /// miss degrades truthfully to its extracted sky colour in `renderMorning`.
+    private func prepareShareImage(for post: SkyPost) {
+        let photoData = ImageFileStore.pendingImageData(forRemotePath: post.imagePath)
+            ?? ImageFileStore.cachedImageData(forRemotePath: post.imagePath)
+        guard let image = ShareCardRenderer.renderMorning(
+            post: post,
+            photo: photoData.flatMap(UIImage.init(data:)),
+            streak: viewModel.streak.currentStreak,
+            handle: LocalDefaults.handle.flatMap(Handle.init(raw:))
+        ) else { return }
+        shareImage = TodayShareableCard(image: image)
+        MorningShareAnalytics.record(.shared, placement: .today)
     }
 
     private var recordAvailabilityCard: some View {
@@ -400,4 +430,9 @@ struct TodayView: View {
         formatter.dateFormat = "H:mm"
         return "Captured \(formatter.string(from: post.capturedAt)) / Posted \(formatter.string(from: post.uploadedAt))"
     }
+}
+
+private struct TodayShareableCard: Identifiable {
+    let image: UIImage
+    let id = UUID()
 }

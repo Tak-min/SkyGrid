@@ -106,6 +106,7 @@
 		805B9D2D3F41C2C5B93D4C5B /* PersonalizationProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */; };
 		833F269B76A024546360D8D3 /* SkyGridApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B877BE3CFC484D9D98406261 /* SkyGridApp.swift */; };
 		83CF699A774D52C1BE8E651A /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64724AE9311BCBE64D785927 /* AppServices.swift */; };
+		850C2AB52D7199C0772067D3 /* MorningShareAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64EF84342454008AD295D027 /* MorningShareAnalytics.swift */; };
 		8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */; };
 		857B4BB61A10FD7277F2CC75 /* FirebaseInviteRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A718743EB429B93FE69755C /* FirebaseInviteRepository.swift */; };
 		8B79845CB51E4DBBA87D2170 /* StreakWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2736F19C390C6A1B75861584 /* StreakWindow.swift */; };
@@ -325,6 +326,7 @@
 		631F582E35EE45934978586B /* AccountDeletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletedView.swift; sourceTree = "<group>"; };
 		632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigTimeView.swift; sourceTree = "<group>"; };
 		64724AE9311BCBE64D785927 /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
+		64EF84342454008AD295D027 /* MorningShareAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningShareAnalytics.swift; sourceTree = "<group>"; };
 		65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLayoutMathTests.swift; sourceTree = "<group>"; };
 		66BB3A44CB5F9D749092A935 /* SkyGridWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridWidgetsBundle.swift; sourceTree = "<group>"; };
 		6732698298E8B949C2C00DF1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -608,6 +610,7 @@
 			isa = PBXGroup;
 			children = (
 				9FEC1CD55E9BB2FD248A7187 /* CaptureAnalytics.swift */,
+				64EF84342454008AD295D027 /* MorningShareAnalytics.swift */,
 				6A44F9555D9421767F1992D2 /* OrphanedPostRecovery.swift */,
 				D092127B8762158B82CF2D6E /* PostIntegrityPolicy.swift */,
 				D06EFCFEBF86821B0DBBBA94 /* PostPublisher.swift */,
@@ -1198,6 +1201,7 @@
 				1C0CC5CB69F8226DCB9C6083 /* MorningRitualAttributes.swift in Sources */,
 				33755F234CF98678EFB43647 /* MorningRitualCoordinator.swift in Sources */,
 				7B3FD00A67C9D505A9D3D14D /* MorningRitualPolicy.swift in Sources */,
+				850C2AB52D7199C0772067D3 /* MorningShareAnalytics.swift in Sources */,
 				57E37E5EDCF65B9C244A572E /* NotificationRouter.swift in Sources */,
 				D4E05414E3DAF916F1D1AD68 /* OnboardingCoordinatorView.swift in Sources */,
 				064AE3B73A3EC2D38CAE4BF1 /* OnboardingInviteView.swift in Sources */,
