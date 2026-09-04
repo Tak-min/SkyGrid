@@ -295,6 +295,10 @@ export interface ClaimResult {
   pairId?: string;
   buddyUid?: string;
   buddyHandle?: string;
+  /** The caller's own handle — present alongside `buddyUid` so the callable can
+   * tell the *inviter* (`buddyUid`) who just joined, without a second profile
+   * read (see `notifyInviterOfClaim`). */
+  claimerHandle?: string;
   generation?: 0 | 1;
 }
 
@@ -412,6 +416,7 @@ export async function claimInvite(
       pairId,
       buddyUid: invite.creatorUid,
       buddyHandle: creatorHandle,
+      claimerHandle: callerHandle,
       generation: invite.generation,
     };
   });

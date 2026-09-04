@@ -30,6 +30,7 @@ import {
 } from "./inviteStore.js";
 import type { RateLimitedAction } from "./rateLimit.js";
 import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
+import { notifyInviterOfClaim } from "./inviteNotificationStore.js";
 
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 2 });
@@ -275,7 +276,35 @@ export const claimInviteCode = onCall(inviteCallableOptions, async (request) => 
   if (!code) return { outcome: "unknown" };
 
   try {
-    return await claimInvite(admin.firestore(), { code, callerUid: uid, nowMs });
+    const result = await claimInvite(admin.firestore(), { code, callerUid: uid, nowMs });
+    // Only a genuinely new pairing (closes D2) — `alreadyBuddies` means the two
+    // were already buddies before this call (a repeat/idempotent claim), and
+    // nothing about the relationship actually changed for the inviter to hear
+    // about. Awaited, not fire-and-forget: `notifyInviterOfClaim` is documented
+    // to never throw, but a Cloud Functions instance can be frozen or recycled
+    // the moment this callable returns, so an un-awaited call risks never
+    // actually running.
+    if (result.outcome === "paired" && result.pairId && result.buddyUid) {
+      try {
+        await notifyInviterOfClaim(admin.firestore(), admin.messaging(), {
+          inviterUid: result.buddyUid,
+          pairId: result.pairId,
+          claimerHandle: result.claimerHandle ?? null,
+          nowMs,
+        });
+      } catch (error: unknown) {
+        // `notifyInviterOfClaim` is documented to never throw; this is the same
+        // last-resort net `onBuddyPostCreated` keeps around its own call to
+        // `notifyBuddiesOfPost` — the pairing already succeeded and committed, so
+        // an unexpected failure here must never turn into a failed claim response.
+        logger.error("Unhandled error notifying an inviter of a claim.", {
+          inviterUid: result.buddyUid,
+          pairId: result.pairId,
+          error,
+        });
+      }
+    }
+    return result;
   } catch (error: unknown) {
     if (error instanceof AccountUnavailableError) {
       throw new HttpsError("failed-precondition", "This account is being deleted.");
