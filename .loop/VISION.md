@@ -299,7 +299,19 @@ reviews this loop's results.
       and shipped as `5766c96` in the interactive session immediately before this one
       (`TodayView.swift:264-271`, `MorningShareAnalytics.record(.shared, placement: .today)`).
       Verified present in the current tree while resuming this loop; no new work needed here.
-- [ ] ≥50-source design research pass (`dev-notes/design-research-sources_<date>.md`).
+- [x] ≥50-source design research pass (`dev-notes/design-research-sources_2026-09-04.md`).
+      **59 real sources retrieved** (11 Apple HIG pages, 10 BeReal, 6 Erly, 23 broader —
+      Apple Design Award winners, Locket/Poparazzi/Marco Polo closed-circle comparators,
+      Duolingo/Swarm streak psychology, Dunbar's-number research anchoring the ~8-person
+      circle cap decision below) + 4 dead ends recorded honestly (a 404'd HIG page, two
+      403'd case studies, one wrong-company false lead) rather than padded over. Every URL
+      actually fetched/searched this session, no fabricated citations. Top findings: three
+      independent design-award-caliber sources converge on "anchor in a real photo, not a
+      gradient" for Today's pre-capture card; Apple's own Tab Bar HIG explicitly forbids a
+      tab reading as just an explainer for being empty (validates the Buddies redesign);
+      BeReal's own onboarding teardown supports showing the mutual-reveal mechanic
+      functionally rather than narrating it. The invite-at-onboarding-end idea is flagged
+      honestly as an unprecedented bet, not an established pattern.
 - [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
       synthetic gradient (raise "stopping power"); demote the "Free" plan badge off the primary
       screen. (Blank wake-time placeholder is already fixed — do not redo.)
