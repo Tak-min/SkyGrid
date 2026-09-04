@@ -382,3 +382,19 @@ even after the blank-placeholder bug was fixed. Asked Codex to anchor it in yest
 captured photo (heavily darkened/treated) instead, falling back to the current gradient only on
 day one or a cache miss -- the app already loads a similar photo elsewhere (WeekRhythmView,
 BuddyTile) so this should reuse existing loading machinery rather than adding new fetch code.
+
+**Batch 12 result (received 2026-09-04, 3m27s):** Implemented. New file
+`Today/YesterdaySkyBackdrop.swift` (+69 lines) reuses the existing 7-day history +
+`ThumbnailLoader` -- no new Firestore reads, no new cache layer. `TodayView.swift` pre-capture
+card now shows a darkened yesterday's photo when available, falls back to the original gradient
+on day one, no-post-yesterday, offline, or a cache miss. Hypothesis + cheapest-test criteria
+recorded in `PRODUCT-MODEL.md:42` (compare next-morning capture rate for users who see the photo
+backdrop vs. the old gradient, once instrumented). Verified: iOS Simulator build green,
+`WeekRhythmCalculatorTests` green, `git diff --check` clean. **Caveat: actual on-device visual
+confirmation is blocked by the same Simulator App Check debug-token issue from batch 9** -- logic
+is implemented and unit-tested but not eyeballed running.
+
+**Codex's own CLI surfaced a usage warning**: "Heads up, you have less than 25% of your 5h limit
+left." -- Codex's own session (separate quota from this Claude session) is approaching its own
+usage ceiling. Combined with this Claude session's cost now past $50 (flagged CRITICAL), pausing
+here to check in with the user rather than continuing to grind automatically.
