@@ -307,3 +307,24 @@ continuing to grind on it, while the rest of the loop moves on to other items. N
 out as fixed or broken -- it stays an open item, revisit later with fresh eyes (possibly a real
 device rather than Simulator, since Simulator networking/entitlements have their own quirks
 unrelated to anything code-side).
+
+## Batch 9 (sent 2026-09-04 — 5 min cadence continues)
+
+Parked the Analytics-verification thread (see above) after re-confirming DebugView still empty
+(zero debug devices registered at all, not just zero matching events) 3-4 min post-event, twice,
+including a hard reload. Told Codex to stop grinding on it for now; revisit later, possibly on a
+real device.
+
+Moved to a new item Codex itself surfaced: the App Check rejection that blocked reaching the
+paywall screen normally in Simulator (forcing the lldb workaround). Asked Codex to determine
+whether this is Simulator-only (App Check debug-provider config gap) or something that would also
+reject real users -- if the latter, that's a much higher-priority finding than anything else so
+far, since a broken paywall blocks monetization entirely.
+
+**Note on git state:** noticed via `git status` that Codex has a substantial backlog of uncommitted
+implementation changes across many files (RootView.swift, SkyGridApp.swift,
+FirebaseInviteRepository.swift, InviteAnalytics.swift, InviteLinkCard.swift,
+InviteLinkViewModel.swift, MilestoneView.swift, onboarding files, new OnboardingInviteView.swift +
+OnboardingFlowTests.swift, new PRODUCT-MODEL.md) spanning batches 3-9. Not touching any of it
+myself -- that's Codex's own commit to make when it judges a checkpoint appropriate, and touching
+it risks stepping on in-progress work. Will only ever `git add`/commit this log file from my side.
