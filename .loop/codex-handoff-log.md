@@ -80,17 +80,36 @@ first_open→capture_completed→reveal cohort *query*, not new client-side coll
 new custom event if `first_open` turns out to be genuinely unusable, and scope it to the actual
 gap, not a general install-tracking system.
 
-Status: sent, Codex acknowledged and started working. Awaiting result.
+Status: **result received (2026-09-04, after 2m46s)**. Codex's finding supersedes my proposal:
+**Firebase Analytics is currently disabled in the shipped config**, not merely un-queried.
+`GoogleService-Info.plist` has `IS_ANALYTICS_ENABLED = false` and no measurement ID; no BigQuery
+export dataset exists either; a past Analytics property (if any) can't be confirmed — Admin API
+read access is missing. So `first_open` is not flowing anywhere right now, and neither is any of
+the capture/invite/reveal events already in the client. **Codex correctly did not flip this
+itself** (an external Firebase Console change needs explicit human approval) — it updated
+`PRODUCT-MODEL.md:9` with the corrected fact and stopped there.
+**BLOCKED — needs the human**: enable Google Analytics for the Firebase project in the Firebase
+Console, download the updated `GoogleService-Info.plist`, ship it in the next build. Everything
+downstream of this (D7 mutual-reveal rate, and *every* funnel number this loop has been assuming
+exists) is unmeasurable until that one manual step happens. Flagged to the user directly (not
+something either agent loop should keep re-discovering).
 
 ## Next candidates (not yet sent — pick one per future turn, check off / annotate when sent)
 
+- [x] ~~Firebase Analytics real event delivery/aggregation~~ — resolved into a clear blocker
+      (Analytics disabled at the config level). Reported to the human 2026-09-04; not a Claude/Codex
+      task until the human flips it in Firebase Console.
 - [ ] Item 10 (still open per Codex): external design research (Apple HIG, BeReal reveal/UI
       patterns, Erly onboarding+ASO) before further visual changes — this is a real research task,
       not a quick abstracted note; scope it down to one concrete sub-question at a time rather
       than resending the full "≥50 sources" ask in one turn.
-- [ ] Firebase Analytics real event delivery/aggregation — Codex flagged this as unverified
-      locally (no console access from their sandbox either, presumably) — may need the human's
-      Firebase console access; flag back to the user rather than looping on it indefinitely.
-- [ ] Push notification real-device delivery — same category, likely needs a real device + human.
-- [ ] Once first_open/cohort question resolves, close the loop: ask Codex for the actual D7
-      mutual-reveal-rate value once computable, to replace `unmeasured` in PRODUCT-MODEL.md.
+- [ ] Push notification real-device delivery — same category as Analytics, likely needs a real
+      device + human; do not send to Codex until there's a concrete code-level question to ask.
+- [ ] Once Analytics is enabled by the human, ask Codex for the actual D7 mutual-reveal-rate value
+      (or confirm the cohort query is ready to run) to replace `unmeasured` in PRODUCT-MODEL.md.
+
+## Batch 3 (sent 2026-09-04 — cadence changed to every 10 min per user)
+
+Onboarding: add a skippable invite step at the end (reuse existing `createInvite` + share sheet);
+evaluate cutting `pace`/`frequency` steps to make room, but only after confirming what
+`PersonalizedPlanView` actually consumes from `PersonalizationProfile` — don't cut blind.
