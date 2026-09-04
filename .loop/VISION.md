@@ -1,5 +1,19 @@
 # LOOP VISION — Pre-promotion design & stickiness overhaul (started 2026-09-04)
 
+## PIVOT (2026-09-04, human): this loop no longer implements code
+
+Per explicit instruction, this loop's job is now **problem discovery + abstracted improvement
+proposals only** — no more Swift/Firestore implementation happens inside this Claude Code loop.
+The headless implementation driver (`loop-engine.sh`) was stopped; do not relaunch it against
+`.loop/verify.sh` (that gate assumes code-implementation DoD items and will never pass under the
+new scope). Accumulated findings are handed off in batches to a separately-running Codex CLI
+session (another terminal window, operated directly by the assistant), which does the actual
+codebase verification and implementation. Everything below this point (the original DoD, the
+code-implementation guardrails, the driver-specific notes) is **historical record of the
+discovery work already done** — keep it as source material for future findings, but stop treating
+DoD items 3-8 as something this loop will build. `dev-notes/virality-stickiness-assessment_2026-09-04.md`
+is the first (and, at time of pivot, only) findings/proposals batch handed to Codex.
+
 ## Why this loop exists
 
 The 2026-08-21 collabstr influencer shortlist is **paused**. Before spending on influencer
