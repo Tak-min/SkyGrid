@@ -183,74 +183,31 @@ service cloud.firestore {
     }
 
     match /friendships/{pairId} {
-      function otherMember(members) {
-        return members[0] == request.auth.uid ? members[1] : members[0];
-      }
-
-      // New clients denormalize both immutable handles so pending invitations
-      // remain recognizable without opening either person's private profile.
-      // The optional branch keeps older app builds able to create requests; if
-      // either handle field is present, both must be genuine mappings.
-      function validRequestHandles() {
-        let keys = request.resource.data.keys();
-        let hasHandleFields = keys.hasAny(['requestedByHandle', 'recipientHandle']);
-        return !hasHandleFields || (
-          keys.hasAll(['requestedByHandle', 'recipientHandle'])
-          && request.resource.data.requestedByHandle is string
-          && request.resource.data.requestedByHandle.matches('[a-z0-9_]{3,20}')
-          && request.resource.data.recipientHandle is string
-          && request.resource.data.recipientHandle.matches('[a-z0-9_]{3,20}')
-          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.handle == request.resource.data.requestedByHandle
-          && get(/databases/$(database)/documents/handles/$(request.resource.data.requestedByHandle)).data.uid == request.auth.uid
-          && get(/databases/$(database)/documents/handles/$(request.resource.data.recipientHandle)).data.uid == otherMember(request.resource.data.members)
-        );
-      }
-
       allow get, list: if signedIn() && resource.data.members.hasAny([request.auth.uid]);
-      allow create: if signedIn()
-        && request.resource.data.keys().hasOnly([
-          'members', 'status', 'requestedBy', 'requestedByHandle',
-          'recipientHandle', 'createdAt', 'blockedBy'
-        ])
-        && request.resource.data.members.size() == 2
-        && request.resource.data.members[0] < request.resource.data.members[1]
-        && request.resource.data.members.hasAny([request.auth.uid])
-        && request.resource.data.requestedBy == request.auth.uid
-        && request.resource.data.status == 'pending'
-        && request.resource.data.blockedBy.size() == 0
-        && exists(/databases/$(database)/documents/users/$(otherMember(request.resource.data.members)))
-        && validRequestHandles()
-        && pairId == relationshipId(request.resource.data.members[0], request.resource.data.members[1]);
+      // A rule cannot count accepted edges, so either client-side create or a client-side
+      // pending→accepted transition would bypass the eight-buddy cap. `requestBuddy`,
+      // `acceptBuddy`, and `claimInviteCode` own those transitions atomically on the
+      // server. Blocking direct writes is what makes the cap real rather than advisory.
+      allow create: if false;
       allow update: if signedIn()
         && resource.data.members.hasAny([request.auth.uid])
         && request.resource.data.members == resource.data.members
         && request.resource.data.requestedBy == resource.data.requestedBy
         && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blockedBy'])
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.blockedBy.hasOnly(resource.data.members)
         && (
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-            && resource.data.status == 'pending'
-            && request.resource.data.status == 'accepted'
-            && resource.data.requestedBy != request.auth.uid
+            request.resource.data.blockedBy.size() == resource.data.blockedBy.size() + 1
+            && request.resource.data.blockedBy.hasAll(resource.data.blockedBy)
+            && request.resource.data.blockedBy.hasAny([request.auth.uid])
           )
           ||
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blockedBy'])
-            && request.resource.data.status == resource.data.status
-            && request.resource.data.blockedBy.hasOnly(resource.data.members)
-            && (
-              (
-                request.resource.data.blockedBy.size() == resource.data.blockedBy.size() + 1
-                && request.resource.data.blockedBy.hasAll(resource.data.blockedBy)
-                && request.resource.data.blockedBy.hasAny([request.auth.uid])
-              )
-              ||
-              (
-                request.resource.data.blockedBy.size() + 1 == resource.data.blockedBy.size()
-                && resource.data.blockedBy.hasAll(request.resource.data.blockedBy)
-                && !request.resource.data.blockedBy.hasAny([request.auth.uid])
-              )
-            )
+            request.resource.data.blockedBy.size() + 1 == resource.data.blockedBy.size()
+            && resource.data.blockedBy.hasAll(request.resource.data.blockedBy)
+            && !request.resource.data.blockedBy.hasAny([request.auth.uid])
           )
         );
       allow delete: if signedIn() && resource.data.members.hasAny([request.auth.uid]);

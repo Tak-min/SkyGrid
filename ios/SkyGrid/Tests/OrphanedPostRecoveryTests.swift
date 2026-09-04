@@ -230,6 +230,7 @@ struct CollectionObservationStateTests {
         let friendship: Friendship
         var requestResult: FriendRequestResult = .sent
         var acceptError: RepositoryError?
+        var acceptResult: FriendRequestAcceptanceResult = .accepted
         private(set) var lastRequest: (from: String, to: String, requester: Handle, recipient: Handle)?
 
         init(friendship: Friendship) { self.friendship = friendship }
@@ -258,8 +259,9 @@ struct CollectionObservationStateTests {
             lastRequest = (from, to, requesterHandle, recipientHandle)
             return requestResult
         }
-        func acceptRequest(pairId: String, acceptingUid: String) async throws {
+        func acceptRequest(pairId: String, acceptingUid: String) async throws -> FriendRequestAcceptanceResult {
             if let acceptError { throw acceptError }
+            return acceptResult
         }
         func removeFriendship(pairId: String) async throws {}
         func block(ownerUid: String, blockedUid: String) async throws {}
@@ -477,6 +479,32 @@ struct CollectionObservationStateTests {
         await viewModel.accept(friendship)
 
         #expect(viewModel.acceptErrorMessage == "No connection. The request is still waiting; try again.")
+        #expect(viewModel.acceptingPairIDs.isEmpty)
+    }
+
+    @Test("a full circle explains why a pending buddy request remains pending")
+    func buddyAcceptCircleFullIsVisible() async {
+        let friendship = Friendship(
+            pairId: PairID.make("uid", "friend"),
+            members: ["uid", "friend"],
+            status: .pending,
+            requestedBy: "friend",
+            requestedByHandle: Handle(raw: "buddy_handle"),
+            recipientHandle: Handle(raw: "test_handle"),
+            createdAt: Date(timeIntervalSince1970: 1_786_147_200),
+            blockedBy: []
+        )
+        let repository = ValueThenUnavailableFriends(friendship: friendship)
+        repository.acceptResult = .circleFull
+        let viewModel = FriendsViewModel(
+            uid: "uid",
+            friendRepository: repository,
+            userRepository: FixedUserRepository()
+        )
+
+        await viewModel.accept(friendship)
+
+        #expect(viewModel.acceptErrorMessage == "Your buddy circle is full. Remove a buddy before accepting another request.")
         #expect(viewModel.acceptingPairIDs.isEmpty)
     }
 }

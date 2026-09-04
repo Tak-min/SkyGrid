@@ -74,10 +74,10 @@ test("the caller's stored window is never mutated", () => {
   assert.deepEqual(current, { windowStartMs: NOW, count: 3 });
 });
 
-test("every code-taking action carries a limit, since each one answers the same question", () => {
+test("every callable that can create cost or relationship state carries a limit", () => {
   // `previewInvite` is the obvious oracle, but `claimInvite` reveals the same fact.
   // Limiting only preview would be bypassed by calling claim instead.
-  for (const action of ["preview", "claim", "create"]) {
+  for (const action of ["preview", "claim", "create", "buddyRequest", "buddyAccept"]) {
     assert.equal(typeof RATE_LIMITS[action], "number");
     assert.ok(RATE_LIMITS[action] > 0);
   }

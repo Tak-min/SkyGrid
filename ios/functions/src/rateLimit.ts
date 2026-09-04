@@ -19,7 +19,7 @@
  * leaves it with nothing to enumerate.
  */
 
-export type RateLimitedAction = "preview" | "claim" | "create";
+export type RateLimitedAction = "preview" | "claim" | "create" | "buddyRequest" | "buddyAccept";
 
 export interface RateLimitWindow {
   windowStartMs: number;
@@ -48,6 +48,8 @@ export const RATE_LIMITS: Readonly<Record<RateLimitedAction, number>> = {
   preview: 20,
   claim: 10,
   create: 10,
+  buddyRequest: 20,
+  buddyAccept: 20,
 };
 
 /**

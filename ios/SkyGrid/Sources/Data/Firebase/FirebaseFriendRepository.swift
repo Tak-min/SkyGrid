@@ -1,4 +1,5 @@
 @preconcurrency import FirebaseFirestore
+@preconcurrency import FirebaseFunctions
 import Foundation
 import os
 
@@ -6,9 +7,14 @@ import os
 final class FirebaseFriendRepository: FriendRepository {
     private static let logger = Logger(subsystem: "com.takmin.skygrid", category: "friends")
     private let firestore: Firestore
+    private let functions: Functions
 
-    init(firestore: Firestore = Firestore.firestore()) {
+    init(
+        firestore: Firestore = Firestore.firestore(),
+        functions: Functions = Functions.functions(region: FirebaseInviteRepository.region)
+    ) {
         self.firestore = firestore
+        self.functions = functions
     }
 
     func observeFriendships(uid: String) -> AsyncStream<FriendshipCollectionObservation> {
@@ -64,78 +70,48 @@ final class FirebaseFriendRepository: FriendRepository {
         recipientHandle: Handle
     ) async throws -> FriendRequestResult {
         guard from != to else { throw RepositoryError.unknown(underlying: "You cannot add yourself as a buddy.") }
-        let pairID = PairID.make(from, to)
-        let document = firestore.collection("friendships").document(pairID)
         do {
-            // Do not transaction-read an absent pair before creating it. Rules
-            // intentionally permit reads only to existing members, so that shape
-            // is denied before the transaction can ever reach its create. A direct
-            // set is create-only in practice: if the deterministic document exists,
-            // the strict update rule rejects replacing its immutable fields.
-            try await document.setDataAsync([
-                "members": [from, to].sorted(),
-                "status": FriendshipStatus.pending.rawValue,
-                "requestedBy": from,
-                "requestedByHandle": requesterHandle.value,
+            // The protocol retains `from`/`to` for local repositories and test
+            // doubles, but this Firebase path deliberately trusts neither. The
+            // callable derives identities from Auth plus server-owned handle docs.
+            _ = requesterHandle
+            let result = try await functions.httpsCallable("requestBuddy").call([
                 "recipientHandle": recipientHandle.value,
-                "createdAt": FieldValue.serverTimestamp(),
-                "blockedBy": [],
             ])
-            return .sent
-        } catch {
-            let originalError = FirebaseRepositoryError.map(error)
-
-            // Duplicate taps, reciprocal requests, accepted connections, and
-            // blocks all arrive here because overwriting an existing pair is
-            // forbidden. Once it exists, this member may read it and turn that
-            // rejection into truthful, actionable UI. If the read also fails
-            // (App Check, auth, network, or a genuinely absent target), preserve
-            // the original infrastructure error instead of calling it a duplicate.
-            if let snapshot = try? await document.getDocumentAsync(),
-               snapshot.exists,
-               let friendship = FirebaseDocumentCodec.friendship(from: snapshot),
-               friendship.members.contains(from), friendship.members.contains(to) {
-                if !friendship.blockedBy.isEmpty {
-                    return .blocked
-                }
-                switch friendship.status {
-                case .accepted:
-                    return .alreadyBuddies
-                case .pending where friendship.requestedBy == from:
-                    return .alreadyPending
-                case .pending:
-                    return .incomingRequestExists
-                }
+            guard let payload = result.data as? [String: Any],
+                  let rawOutcome = payload["outcome"] as? String
+            else { throw RepositoryError.unknown(underlying: "requestBuddy response was malformed.") }
+            switch rawOutcome {
+            case "sent": return .sent
+            case "alreadyPending": return .alreadyPending
+            case "incomingRequestExists": return .incomingRequestExists
+            case "alreadyBuddies": return .alreadyBuddies
+            case "blocked": return .blocked
+            case "unknownHandle", "ownHandle":
+                throw RepositoryError.unknown(underlying: "The buddy handle is no longer available.")
+            default:
+                throw RepositoryError.unknown(underlying: "requestBuddy returned an unknown outcome.")
             }
-            Self.logger.error("sendRequest(\(pairID, privacy: .public)) failed: \(String(describing: error), privacy: .public)")
-            throw originalError
+        } catch {
+            Self.logger.error("sendRequest callable failed: \(String(describing: error), privacy: .public)")
+            throw FirebaseRepositoryError.map(error)
         }
     }
 
-    func acceptRequest(pairId: String, acceptingUid: String) async throws {
-        let document = firestore.collection("friendships").document(pairId)
+    func acceptRequest(pairId: String, acceptingUid: String) async throws -> FriendRequestAcceptanceResult {
         do {
-            _ = try await firestore.runTransaction { transaction, errorPointer in
-                do {
-                    let snapshot = try transaction.getDocument(document)
-                    guard let friendship = FirebaseDocumentCodec.friendship(from: snapshot),
-                          friendship.status == .pending,
-                          friendship.members.contains(acceptingUid),
-                          friendship.requestedBy != acceptingUid
-                    else {
-                        errorPointer?.pointee = NSError(
-                            domain: "SkyGrid.Firebase.Friends",
-                            code: 403,
-                            userInfo: [NSLocalizedDescriptionKey: "This request cannot be accepted."]
-                        )
-                        return nil
-                    }
-                    transaction.updateData(["status": FriendshipStatus.accepted.rawValue], forDocument: document)
-                    return nil
-                } catch {
-                    errorPointer?.pointee = error as NSError
-                    return nil
-                }
+            _ = acceptingUid
+            let result = try await functions.httpsCallable("acceptBuddy").call(["pairId": pairId])
+            guard let payload = result.data as? [String: Any],
+                  let rawOutcome = payload["outcome"] as? String
+            else { throw RepositoryError.unknown(underlying: "acceptBuddy response was malformed.") }
+            switch rawOutcome {
+            case "accepted": return .accepted
+            case "alreadyAccepted": return .alreadyAccepted
+            case "circleFull": return .circleFull
+            case "buddyCircleFull": return .buddyCircleFull
+            case "invalidRequest": return .invalidRequest
+            default: throw RepositoryError.unknown(underlying: "acceptBuddy returned an unknown outcome.")
             }
         } catch {
             throw FirebaseRepositoryError.map(error)

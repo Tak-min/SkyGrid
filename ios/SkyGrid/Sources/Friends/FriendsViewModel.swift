@@ -192,10 +192,19 @@ final class FriendsViewModel {
         acceptErrorMessage = nil
         defer { acceptingPairIDs.remove(friendship.pairId) }
         do {
-            try await friendRepository.acceptRequest(pairId: friendship.pairId, acceptingUid: uid)
-            // A fresh pairing is the first moment there is anything for
-            // `onBuddyPostCreated`'s push to notify this person about.
-            await BuddyPairingNotificationPermission.requestIfNeeded()
+            let result = try await friendRepository.acceptRequest(pairId: friendship.pairId, acceptingUid: uid)
+            switch result {
+            case .accepted, .alreadyAccepted:
+                // A fresh pairing is the first moment there is anything for
+                // `onBuddyPostCreated`'s push to notify this person about.
+                await BuddyPairingNotificationPermission.requestIfNeeded()
+            case .circleFull:
+                acceptErrorMessage = "Your buddy circle is full. Remove a buddy before accepting another request."
+            case .buddyCircleFull:
+                acceptErrorMessage = "This buddy's circle is full right now. They can make room and resend the request."
+            case .invalidRequest:
+                acceptErrorMessage = "This request is no longer available. Refresh your buddies and try again."
+            }
         } catch let error as RepositoryError {
             switch error {
             case .network:

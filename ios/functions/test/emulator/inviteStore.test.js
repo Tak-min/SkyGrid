@@ -12,6 +12,10 @@ const {
   previewInviteCode,
   revokeInviteDocument,
 } = require("../../lib/inviteStore.js");
+const {
+  acceptBuddyRequest,
+  requestBuddyByHandle,
+} = require("../../lib/friendshipStore.js");
 const { INVITE_TTL_MS, MAX_ACCEPTED_BUDDIES } = require("../../lib/invites.js");
 const { RATE_LIMITS } = require("../../lib/rateLimit.js");
 
@@ -30,7 +34,7 @@ const db = admin.firestore();
 const NOW = 1_786_000_000_000;
 
 async function reset() {
-  for (const collection of ["invites", "friendships", "users", "inviteRateLimits"]) {
+  for (const collection of ["invites", "friendships", "users", "handles", "inviteRateLimits"]) {
     const snapshot = await db.collection(collection).get();
     await Promise.all(snapshot.docs.map((document) => document.ref.delete()));
   }
@@ -38,6 +42,7 @@ async function reset() {
 
 async function makeUser(uid, handle) {
   await db.collection("users").doc(uid).set({ handle, displayName: "Sky Grid member" });
+  await db.collection("handles").doc(handle).set({ uid, createdAt: admin.firestore.Timestamp.fromMillis(NOW) });
 }
 
 function pairKey(first, second) {
@@ -614,4 +619,73 @@ test("a user with no handle cannot issue a link that says who invited you", asyn
   await db.collection("users").doc("nameless").set({ displayName: "Sky Grid member" });
 
   await assert.rejects(() => createInviteForUser(db, "nameless", NOW), /no handle/);
+});
+
+test("a handle request is server-authored with the exact friendship shape", async () => {
+  await reset();
+  await makeUser("requester", "mira_sky");
+  await makeUser("recipient", "theo_dawn");
+
+  const result = await requestBuddyByHandle(db, {
+    callerUid: "requester",
+    recipientHandle: "theo_dawn",
+    nowMs: NOW,
+  });
+
+  assert.deepEqual(result, { outcome: "sent" });
+  const friendship = (await db.collection("friendships").doc("recipient_requester").get()).data();
+  assert.deepEqual(Object.keys(friendship).sort(), [
+    "blockedBy", "createdAt", "members", "recipientHandle", "requestedBy", "requestedByHandle", "status",
+  ]);
+  assert.deepEqual(friendship.members, ["recipient", "requester"]);
+  assert.equal(friendship.status, "pending");
+  assert.equal(friendship.requestedBy, "requester");
+  assert.equal(friendship.requestedByHandle, "mira_sky");
+  assert.equal(friendship.recipientHandle, "theo_dawn");
+  assert.deepEqual(friendship.blockedBy, []);
+});
+
+test("accepting a pending handle request refuses a ninth buddy without changing it", async () => {
+  await reset();
+  await makeUser("requester", "mira_sky");
+  await makeUser("recipient", "theo_dawn");
+  await fillCircle("recipient", MAX_ACCEPTED_BUDDIES, "recipient_buddy");
+  await requestBuddyByHandle(db, {
+    callerUid: "requester",
+    recipientHandle: "theo_dawn",
+    nowMs: NOW,
+  });
+
+  const result = await acceptBuddyRequest(db, {
+    callerUid: "recipient",
+    pairId: "recipient_requester",
+  });
+
+  assert.deepEqual(result, { outcome: "circleFull" });
+  assert.equal(
+    (await db.collection("friendships").doc("recipient_requester").get()).data().status,
+    "pending",
+  );
+});
+
+test("accepting a pending handle request allows the eighth buddy and is idempotent", async () => {
+  await reset();
+  await makeUser("requester", "mira_sky");
+  await makeUser("recipient", "theo_dawn");
+  await fillCircle("requester", MAX_ACCEPTED_BUDDIES - 1, "requester_buddy");
+  await fillCircle("recipient", MAX_ACCEPTED_BUDDIES - 1, "recipient_buddy");
+  await requestBuddyByHandle(db, {
+    callerUid: "requester",
+    recipientHandle: "theo_dawn",
+    nowMs: NOW,
+  });
+
+  assert.deepEqual(await acceptBuddyRequest(db, {
+    callerUid: "recipient",
+    pairId: "recipient_requester",
+  }), { outcome: "accepted" });
+  assert.deepEqual(await acceptBuddyRequest(db, {
+    callerUid: "recipient",
+    pairId: "recipient_requester",
+  }), { outcome: "alreadyAccepted" });
 });

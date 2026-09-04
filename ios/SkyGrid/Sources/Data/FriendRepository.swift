@@ -22,6 +22,14 @@ enum FriendRequestResult: Sendable, Equatable {
     case blocked
 }
 
+enum FriendRequestAcceptanceResult: Sendable, Equatable {
+    case accepted
+    case alreadyAccepted
+    case circleFull
+    case buddyCircleFull
+    case invalidRequest
+}
+
 @MainActor
 protocol FriendRepository: Sendable {
     /// All *visible* friendships involving `uid` (both pending and accepted) —
@@ -40,7 +48,7 @@ protocol FriendRepository: Sendable {
         requesterHandle: Handle,
         recipientHandle: Handle
     ) async throws -> FriendRequestResult
-    func acceptRequest(pairId: String, acceptingUid: String) async throws
+    func acceptRequest(pairId: String, acceptingUid: String) async throws -> FriendRequestAcceptanceResult
     func removeFriendship(pairId: String) async throws
 
     func block(ownerUid: String, blockedUid: String) async throws

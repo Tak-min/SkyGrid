@@ -593,7 +593,7 @@ private final class UIAuditFriendRepository: FriendRepository {
         if to == "mira" || to == "ren" { return .alreadyBuddies }
         return .sent
     }
-    func acceptRequest(pairId: String, acceptingUid: String) async throws {}
+    func acceptRequest(pairId: String, acceptingUid: String) async throws -> FriendRequestAcceptanceResult { .accepted }
     func removeFriendship(pairId: String) async throws {}
     func block(ownerUid: String, blockedUid: String) async throws {}
     func unblock(ownerUid: String, blockedUid: String) async throws {}

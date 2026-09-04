@@ -31,6 +31,10 @@ import {
 import type { RateLimitedAction } from "./rateLimit.js";
 import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
 import { notifyInviterOfClaim } from "./inviteNotificationStore.js";
+import {
+  acceptBuddyRequest,
+  requestBuddyByHandle,
+} from "./friendshipStore.js";
 
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 2 });
@@ -343,6 +347,54 @@ export const revokeInvite = onCall(inviteCallableOptions, async (request) => {
   if (!code) return { revoked: false };
 
   return revokeInviteDocument(admin.firestore(), { code, callerUid: uid });
+});
+
+/**
+ * Creates a pending buddy request by handle. This replaces the historical direct
+ * Firestore create: Rules cannot count accepted edges, so client authority here would
+ * permanently bypass the circle cap enforced by both this path and invite claims.
+ */
+export const requestBuddy = onCall(inviteCallableOptions, async (request) => {
+  const uid = requireCaller(request.auth?.uid);
+  const nowMs = Date.now();
+  await enforceRateLimit(uid, "buddyRequest", nowMs);
+  const recipientHandle = request.data?.recipientHandle;
+  if (typeof recipientHandle !== "string") {
+    throw new HttpsError("invalid-argument", "Invalid request.");
+  }
+  try {
+    return await requestBuddyByHandle(admin.firestore(), { callerUid: uid, recipientHandle, nowMs });
+  } catch (error: unknown) {
+    if (error instanceof AccountUnavailableError) {
+      throw new HttpsError("failed-precondition", "Choose a handle before adding a buddy.");
+    }
+    if (error instanceof MalformedFriendshipError) {
+      logger.error("Malformed friendship blocked a buddy request.", { uid, category: "malformed_friendship" });
+      return { outcome: "unknownHandle" as const };
+    }
+    logger.error("Buddy request failed.", { uid, errorCode: errorCodeForLog(error) });
+    throw new HttpsError("internal", "Could not send the request.");
+  }
+});
+
+/**
+ * Promotes a pending buddy request only when both accepted circles still have room.
+ * The transaction owns the status transition, closing the old client-side bypass.
+ */
+export const acceptBuddy = onCall(inviteCallableOptions, async (request) => {
+  const uid = requireCaller(request.auth?.uid);
+  const nowMs = Date.now();
+  await enforceRateLimit(uid, "buddyAccept", nowMs);
+  const pairId = request.data?.pairId;
+  if (typeof pairId !== "string" || !/^[A-Za-z0-9_-]+_[A-Za-z0-9_-]+$/.test(pairId)) {
+    throw new HttpsError("invalid-argument", "Invalid request.");
+  }
+  try {
+    return await acceptBuddyRequest(admin.firestore(), { callerUid: uid, pairId });
+  } catch (error: unknown) {
+    logger.error("Buddy accept failed.", { uid, errorCode: errorCodeForLog(error) });
+    throw new HttpsError("internal", "Could not accept the request.");
+  }
 });
 
 /**

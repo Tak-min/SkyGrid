@@ -489,6 +489,13 @@ a separate session.
       terminal states instead of degrading them to “This link isn't valid”.
       `InviteClaimViewModelTests` covers both outcomes (10 outcomes total; focused suite green).
       Neither committed backend change is deployed.
+      **Partial 4 (2026-09-04, Codex):** handle-based request and acceptance now use
+      server-authoritative `requestBuddy` / `acceptBuddy` callables, with the same
+      transaction cap and specific capacity outcomes; source Rules deny direct create
+      and direct pending→accepted transitions. 66 Functions pure tests, 50 Functions
+      emulator tests, 38 Rules tests, and iOS Debug build passed. This is intentionally
+      still undeployed because existing App Store builds use direct writes; see
+      `dev-notes/hard-circle-cap-authority_2026-09-04.md` for mandatory staged rollout.
 - [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
       whether missed days cluster on weekends from existing post data (Bet 6 exit condition) —
       if uniform, this may not be the right lever.

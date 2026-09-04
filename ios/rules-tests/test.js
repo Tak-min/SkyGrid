@@ -374,10 +374,10 @@ describe("firestore.rules posts/{localDate} create — localDate bound (2026-09-
 });
 
 describe("firestore.rules buddy request lifecycle", () => {
-  it("allows a sender to create a new deterministic pair without reading it first", async () => {
+  it("blocks a sender from creating a deterministic pair directly", async () => {
     await seedInviteIdentities();
     const firestore = testEnv.authenticatedContext(OWNER).firestore();
-    await assertSucceeds(
+    await assertFails(
       firestore.collection("friendships").doc(relationshipId(OWNER, BUDDY)).set(requestData())
     );
   });
@@ -390,20 +390,15 @@ describe("firestore.rules buddy request lifecycle", () => {
     );
   });
 
-  it("requires the target profile to exist", async () => {
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      const firestore = context.firestore();
-      await firestore.collection("users").doc(OWNER).set(profileData("owner_sky"));
-      await firestore.collection("handles").doc("owner_sky").set({ uid: OWNER, createdAt: new Date() });
-      await firestore.collection("handles").doc("buddy_sky").set({ uid: BUDDY, createdAt: new Date() });
-    });
+  it("blocks direct creation even where target and handle data are valid", async () => {
+    await seedInviteIdentities();
     const firestore = testEnv.authenticatedContext(OWNER).firestore();
     await assertFails(
       firestore.collection("friendships").doc(relationshipId(OWNER, BUDDY)).set(requestData())
     );
   });
 
-  it("rejects forged or mismatched request handles", async () => {
+  it("blocks direct creation regardless of supplied request handles", async () => {
     await seedInviteIdentities();
     const firestore = testEnv.authenticatedContext(OWNER).firestore();
     await assertFails(
@@ -433,7 +428,7 @@ describe("firestore.rules buddy request lifecycle", () => {
     }
   });
 
-  it("allows only the recipient to accept a pending request", async () => {
+  it("blocks direct pending-request acceptance for either member", async () => {
     await seedInviteIdentities();
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await context.firestore().collection("friendships").doc(relationshipId(OWNER, BUDDY)).set({
@@ -447,7 +442,7 @@ describe("firestore.rules buddy request lifecycle", () => {
       .collection("friendships").doc(relationshipId(OWNER, BUDDY));
 
     await assertFails(ownerDocument.update({ status: "accepted" }));
-    await assertSucceeds(buddyDocument.update({ status: "accepted" }));
+    await assertFails(buddyDocument.update({ status: "accepted" }));
   });
 });
 
