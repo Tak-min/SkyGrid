@@ -128,7 +128,6 @@ struct RootView: View {
                     observedDate: today,
                     onOpenCamera: { showCamera = true },
                     subscriptionPlan: services.entitlements.plan,
-                    onOpenPaywall: { presentPaywall(from: .home) },
                     onOpenBuddies: { selectedTab = .buddies },
                     buddyRefreshToken: buddyRefreshToken
                 )

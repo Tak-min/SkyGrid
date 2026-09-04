@@ -12,7 +12,6 @@ struct TodayView: View {
     let observedDate: LocalDate
     let onOpenCamera: () -> Void
     let subscriptionPlan: SubscriptionPlan
-    let onOpenPaywall: () -> Void
     /// Switches to the Buddies tab. Owned by the parent because the tab selection
     /// lives there; Today only knows that it wants to send someone to invite.
     let onOpenBuddies: () -> Void
@@ -26,7 +25,6 @@ struct TodayView: View {
         observedDate: LocalDate,
         onOpenCamera: @escaping () -> Void,
         subscriptionPlan: SubscriptionPlan,
-        onOpenPaywall: @escaping () -> Void,
         onOpenBuddies: @escaping () -> Void,
         buddyRefreshToken: Int = 0
     ) {
@@ -35,7 +33,6 @@ struct TodayView: View {
         self.observedDate = observedDate
         self.onOpenCamera = onOpenCamera
         self.subscriptionPlan = subscriptionPlan
-        self.onOpenPaywall = onOpenPaywall
         self.onOpenBuddies = onOpenBuddies
         self.buddyRefreshToken = buddyRefreshToken
     }
@@ -123,13 +120,15 @@ struct TodayView: View {
 
     private func headingStatus(alignment: HorizontalAlignment) -> some View {
         VStack(alignment: alignment, spacing: SGSpacing.xs) {
-            if subscriptionPlan.canOpenPaywall {
-                Button(action: onOpenPaywall) {
-                    planStatusBadge
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel). Open plans")
-            } else {
+            // The "Free" badge is a permanent upsell nag sitting at the very top of
+            // the hero, right next to the app title, on every single visit — the
+            // opposite of the "one visual destination" this screen is meant to be.
+            // Settings' "SKY GRID PRO" section is already the considered, one-tap-
+            // deeper upgrade path (`SettingsView.swift`), always reachable from the
+            // toolbar gearshape, so this primary-screen copy is not the only entry
+            // point being removed. A paid plan is a quiet badge of status, not an
+            // upsell, so it still shows here.
+            if subscriptionPlan.isPaid {
                 planStatusBadge
                     .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel)")
             }

@@ -348,9 +348,26 @@ a separate session.
       BeReal's own onboarding teardown supports showing the mutual-reveal mechanic
       functionally rather than narrating it. The invite-at-onboarding-end idea is flagged
       honestly as an unprecedented bet, not an established pattern.
-- [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
+- [x] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
       synthetic gradient (raise "stopping power"); demote the "Free" plan badge off the primary
       screen. (Blank wake-time placeholder is already fixed — do not redo.)
+      **Correction: the yesterday's-photo anchor was stale-unchecked** — already implemented
+      and shipped as `d1d3e7e` (`YesterdaySkyBackdrop.swift`, wired into `TodayView.emptyMorningRecord`),
+      verified present in the current tree; no new work needed there. **New work this iteration**:
+      the "Free" plan badge is removed from `TodayView.headingStatus` for `subscriptionPlan ==
+      .free` — it was a permanent tappable upsell capsule sitting at the top of the hero, right
+      next to the "Sky Grid" title, on every single visit, which is exactly the "competing for
+      visual space in the first five seconds" failure the dev-note criticized. Settings' existing
+      "SKY GRID PRO" section (`SettingsView.swift`, always reachable via the toolbar gearshape)
+      is the real upgrade entry point and is unaffected. A paid plan still shows as a quiet,
+      non-tappable status badge (no longer an upsell, a badge of status). 227/227 tests green.
+      swift-reviewer pass (sonnet): no CRITICAL/HIGH; correctness, accessibility, and layout all
+      confirmed correct (`isPaid` is the exact logical inverse of the old `canOpenPaywall` gate;
+      `recordingStatus` never renders empty so the heading never looks visually broken for free
+      users). One MEDIUM (the now-unused `onOpenPaywall` closure param left as dead plumbing)
+      fixed immediately: removed from `TodayView`'s stored properties/init and both call sites
+      (`RootView.swift`, `SkyGridApp.swift`). 227/227 tests green after both the badge change and
+      the dead-param removal.
 - [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
       handle) leads, explainer card collapses once user has ≥1 buddy, row's primary destination
       becomes the relationship not Safety/Block, empty state's single action is the invite link

@@ -183,7 +183,6 @@ private struct UIAuditRoot: View {
                         observedDate: UIAuditData.today,
                         onOpenCamera: {},
                         subscriptionPlan: .free,
-                        onOpenPaywall: {},
                         onOpenBuddies: { selectedTab = .buddies }
                     )
                     .tag(UIAuditTab.today)
