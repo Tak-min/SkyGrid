@@ -158,6 +158,30 @@ reviews this loop's results.
   the agent's own explicit-path commit (PROMPT.md step 7) lands — if you are resuming headless
   mode after an interruption, re-check that env var is still set before relaunching
   `loop-engine.sh`, and never assume the driver's own checkpoint respects this file's guardrails.
+- **Never run `firebase deploy` (any target — `firestore:rules`, `functions`, `storage`) from
+  inside this loop, under any circumstances, no matter how green the tests are.** This is a
+  hard, non-negotiable guardrail: a production deploy is an external-facing, hard-to-reverse
+  action that requires the product owner's own explicit, in-the-moment authorization — something
+  a headless/unattended iteration structurally cannot obtain. Commit freely (pre-authorized this
+  session); never deploy. Two backend changes already sit committed-but-undeployed as of
+  2026-09-04 (`d3ae515` invite-claim notification, `cdcaa2d` buddy circle cap) — leave them that
+  way; do not deploy them "since they're done and tested." Only the `firestore.rules` `localDate`
+  fix was ever deployed, and only after an explicit, multi-turn, human-confirmed authorization
+  sequence in an earlier interactive session — that precedent does not extend to anything else.
+
+## Deferred to a future session (tracked here, explicitly OUT OF SCOPE for this loop)
+
+**Plain bullets, not `- [ ]` checkboxes — `.loop/verify.sh` only counts `^- \[ \]` lines as
+blocking, and these must never block this loop's Definition of Done.** Do not act on any item in
+this section from inside this loop, however trivial it looks; the product owner will handle it in
+a separate session.
+
+- App Store Connect listing fix (found by `dev-notes/aso-comparison-vs-erly_2026-09-04.md`,
+  2026-09-04): the live description still claims the sky becomes "the true average color"
+  (false since the photo-over-color pivot, `82f39a3`), and 2 of 6 live screenshots show the
+  already-fixed `"___:___"` placeholder-UI bug. This is an App Store Connect metadata change, not
+  a code change — no file in this repo to edit for it, and promotion/listing actions are already
+  out of this loop's scope per its own "Why this loop exists" section above.
 
 ## TODO checklist (check off as completed; add newly discovered items)
 

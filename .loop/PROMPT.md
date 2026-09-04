@@ -48,6 +48,15 @@ iteration left off.
    unrelated session writing to `videos/joespov-skygrid-remix/`. Commit with a clear message
    (pre-authorized this session — do not push).
 
+   **Never run `firebase deploy` (any target) from this loop, ever, regardless of how green
+   everything is.** Committing is pre-authorized; deploying to production is not, and cannot be
+   granted to an unattended loop — see VISION.md's guardrails section. Backend work (Cloud
+   Functions, Firestore rules) stops at "committed and verified," full stop.
+
+   **Never act on anything in VISION.md's "Deferred to a future session" section** (currently: an
+   App Store Connect listing fix) — it is plain bullets, not checklist items, specifically so it
+   can never block `.loop/verify.sh`'s Definition-of-Done check; leave it exactly as-is.
+
 8. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
 
 If you believe every item in the Definition of Done (`.loop/VISION.md`) is fully and verifiably
