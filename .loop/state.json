@@ -1,1 +1,1 @@
-{"iteration":2,"status":"resumed","verify_rc":1,"same_count":0}
+{"iteration": 4, "status": "instrumented mutual-reveal + capture-completed analytics; fixed in-memory refire bug from prior iteration via LocalDefaults persistence", "verify_rc": 1, "same_count": 0}

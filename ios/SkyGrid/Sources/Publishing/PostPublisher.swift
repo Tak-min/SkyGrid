@@ -24,5 +24,8 @@ final class PostPublisher: PostPublishing {
         // the row eligible for Storage, so an offline capture can close promptly
         // without ever uploading orphaned bytes.
         try await uploadQueue.enqueue(draft)
+        // Fired only after `enqueue` returns without throwing, i.e. the capture is
+        // durably committed locally — never on a draft that might still be lost.
+        CaptureAnalytics.record(.captureCompleted, minutesFromGoal: draft.minutesFromGoal)
     }
 }

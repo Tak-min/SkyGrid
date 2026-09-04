@@ -199,6 +199,24 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "pendingInviteCode", defaultValue: nil)
     static var pendingInviteCode: String?
 
+    /// `LocalDate.docID` of the day `skygrid_mutual_reveal_unlocked` last fired.
+    /// Persisted (not an in-memory `TodayViewModel` property) because the metric's
+    /// contract is "fires at most once per calendar day" — an in-memory flag would
+    /// refire on every relaunch after the buddy strip is already unlocked that day,
+    /// inflating the funnel this instrumentation exists to measure.
+    @UserDefaultBacked(key: "mutualRevealUnlockedLocalDate", defaultValue: nil)
+    static var mutualRevealUnlockedLocalDate: String?
+
+    /// Scopes the above to an account, mirroring `milestoneAccountID` — signing in
+    /// as someone else must not inherit their already-fired date.
+    @UserDefaultBacked(key: "mutualRevealUnlockedAccountID", defaultValue: nil)
+    static var mutualRevealUnlockedAccountID: String?
+
+    static func resetMutualRevealAnalyticsState() {
+        mutualRevealUnlockedLocalDate = nil
+        mutualRevealUnlockedAccountID = nil
+    }
+
     static func resetAccountScopedValues() {
         lastKnownTimeZoneIdentifier = nil
         handle = nil
@@ -209,6 +227,7 @@ enum LocalDefaults {
         resetUnlockPaywallState()
         resetSoloPaywallState()
         resetMilestoneState()
+        resetMutualRevealAnalyticsState()
         morningAlarmEnabled = false
         morningAlarmBackend = "automatic"
         openCameraAfterMorningAlarm = false

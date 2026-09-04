@@ -89,6 +89,21 @@ final class TodayViewModel {
     /// with stale data after a faster, later one (e.g. the viewer's own post
     /// arriving) has already published the current answer.
     private var refreshBuddiesTask: Task<Void, Never>?
+    /// Whether `BuddyAnalytics.mutualRevealUnlocked` has already fired for `today`,
+    /// read fresh from `LocalDefaults` on each check rather than cached in an
+    /// in-memory property — a process relaunch reconstructs `TodayViewModel` from
+    /// scratch, and an in-memory flag would refire the metric on every relaunch
+    /// after the buddy strip is already unlocked that day. Keyed by date (via
+    /// `LocalDefaults.mutualRevealUnlockedLocalDate`) rather than "was the previous
+    /// count zero" so it also survives `stop()`/`start(for:)` cycles unscathed:
+    /// `retryPostObservation()` calls `stop()` (which clears `observedDate`) then
+    /// `start(for:)` with the *same* day, and a transient Firestore read failure can
+    /// drop `mutuallyUnlockedBuddyCount` from 1 back to 0 before recovering — neither
+    /// should re-fire the metric this loop is measuring.
+    private func hasFiredMutualRevealAnalytics(for today: LocalDate) -> Bool {
+        LocalDefaults.mutualRevealUnlockedAccountID == uid
+            && LocalDefaults.mutualRevealUnlockedLocalDate == today.docID
+    }
 
     init(
         uid: String,
@@ -388,6 +403,18 @@ final class TodayViewModel {
             mutuallyUnlockedBuddyCount: unlockedCount,
             acceptedBuddyCount: hasResolvedFriendships ? friendships.count : nil
         ))
+        // The target metric this loop is optimizing for (see
+        // dev-notes/virality-stickiness-assessment_2026-09-04.md): fire exactly once
+        // per day, on the 0→≥1 transition, never on every re-resolution (the
+        // friendship/post listeners can both re-emit the same already-unlocked state,
+        // and a transient read failure can drop the count back to 0 and recover —
+        // see `hasFiredMutualRevealAnalytics`'s doc comment for why this is keyed by
+        // date, persisted, and not by the previous in-memory count).
+        if unlockedCount >= 1, !hasFiredMutualRevealAnalytics(for: today) {
+            BuddyAnalytics.record(.mutualRevealUnlocked, unlockedBuddyCount: unlockedCount)
+            LocalDefaults.mutualRevealUnlockedAccountID = uid
+            LocalDefaults.mutualRevealUnlockedLocalDate = today.docID
+        }
     }
 
     private func firstValue<T: Sendable>(from stream: AsyncStream<T>) async -> T? {

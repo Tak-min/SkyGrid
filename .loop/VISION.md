@@ -181,9 +181,15 @@ reviews this loop's results.
       `handle != nil`, which `sendRequest` requires and which comes from an independently
       scheduled profile-observation task — fixed to
       `friendshipState != .checking && handle != nil`; re-verified 211/211 green after the fix.
-- [ ] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
+- [x] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
       the `mutuallyUnlockedBuddyCount` 0→≥1 transition in `TodayViewModel.performRefreshBuddies`,
       plus a `skygrid_capture_completed` event in `PostPublisher` (dev-note §3).
+      `BuddyAnalytics`/`CaptureAnalytics` added; `skygrid_mutual_reveal_unlocked` fires exactly
+      once per calendar day (persisted via `LocalDefaults.mutualRevealUnlockedLocalDate`,
+      account-scoped like `milestoneAccountID` — an in-memory-only flag was caught by
+      swift-reviewer as refiring on every relaunch after unlock, fixed before committing);
+      `skygrid_capture_completed` fires once per successful `PostPublisher.publish`. No uid,
+      handle, or photo in either payload. 211/211 tests green, Debug and Release builds green.
 - [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
       actions stack, next to "Share this morning" (dev-note §7, P0) — cheapest test for whether
       Stage 2→3a placement, not desire, is the binding constraint.
