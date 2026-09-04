@@ -212,3 +212,13 @@ after shipping a build with the flag flipped — that live-event check is the re
 another plist download.
 
 Resuming the 5-minute loop cadence now with batch 5's result check + batch 6 send.
+
+**Batch 5 result (received 2026-09-04, 2m17s):** Fixed. Changed `region` in
+`FirebaseInviteRepository.swift:16` to `nonisolated static let` — safe since it's an immutable
+`String`, so it doesn't need actor isolation and doesn't require MainActor for default-argument
+evaluation. Grepped the repo: this was the only instance of the pattern. iOS Simulator build
+green, warning gone. Also tried a full `SWIFT_STRICT_CONCURRENCY=complete` build to double-check
+for more instances — that build fails, but the failure is the **Firebase SDK dependency itself**
+(FirebaseStorage/FirebaseAuth 12.17.0 crashing the Swift compiler under strict mode), not a
+SkyGrid-side issue — correctly scoped as out of this item's boundary, not something to chase
+further right now.
