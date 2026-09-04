@@ -399,6 +399,11 @@ a separate session.
       exists in principle — the rules comment says "streak values are server-owned", just nothing
       writes them), or (b) accept per-buddy streak is out of scope for the tri-state row and drop
       it from the P0 spec. Needs a product-owner call, not a Sonnet implementation guess.
+      **Partial (2026-09-04, Codex):** the row's primary destination is now an explicit
+      relationship screen showing only the current per-pair reveal state, connection date,
+      removal, and Safety/Report. It does not disclose historical posts. The selected server-side
+      streak work remains separate because its time-zone/rest-day disclosure contract is not yet
+      represented by a trustworthy server value.
 - [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
       photos, not averaged color, since commit `82f39a3`); add one step showing the mutual-reveal
       mechanic visually; add a skippable invite step at the end; cut `pace`/`frequency` steps to

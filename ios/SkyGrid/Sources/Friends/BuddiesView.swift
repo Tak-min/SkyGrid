@@ -9,6 +9,7 @@ struct BuddiesView: View {
     private let inviteRepository: any InviteRepository
     private let revealSignal: RevealSignal
     @State private var safetyRoute: BuddySafetyRoute?
+    @State private var relationshipRoute: BuddyRelationshipRoute?
 
     init(
         uid: String,
@@ -59,11 +60,20 @@ struct BuddiesView: View {
 
                 ForEach(viewModel.accepted, id: \.pairId) { friendship in
                     if let otherUid = friendship.otherMember(than: viewModel.uid) {
-                        BuddyNameRow(
-                            uid: otherUid,
-                            userRepository: viewModel.userRepository,
-                            revealState: revealState(for: otherUid)
-                        )
+                        Button {
+                            relationshipRoute = BuddyRelationshipRoute(
+                                friendship: friendship,
+                                subjectUid: otherUid,
+                                revealState: revealState(for: otherUid)
+                            )
+                        } label: {
+                            BuddyNameRow(
+                                uid: otherUid,
+                                userRepository: viewModel.userRepository,
+                                revealState: revealState(for: otherUid)
+                            )
+                        }
+                        .buttonStyle(.plain)
                         .contentShape(Rectangle())
                         // Safety is an overflow action on the relationship, not its
                         // primary destination (dev-note §7 P0) — a swipe action keeps
@@ -193,6 +203,17 @@ struct BuddiesView: View {
                 ownerUid: viewModel.uid,
                 subjectUid: route.subjectUid,
                 friendRepository: viewModel.friendRepository,
+                contentSafetyRepository: contentSafetyRepository
+            )
+        }
+        .navigationDestination(item: $relationshipRoute) { route in
+            BuddyRelationshipView(
+                ownerUid: viewModel.uid,
+                friendship: route.friendship,
+                subjectUid: route.subjectUid,
+                revealState: route.revealState,
+                friendRepository: viewModel.friendRepository,
+                userRepository: viewModel.userRepository,
                 contentSafetyRepository: contentSafetyRepository
             )
         }
@@ -330,6 +351,178 @@ private struct BuddyNameRow: View {
 private struct BuddySafetyRoute: Identifiable, Hashable {
     let subjectUid: String
     var id: String { subjectUid }
+}
+
+private struct BuddyRelationshipRoute: Identifiable, Hashable {
+    let friendship: Friendship
+    let subjectUid: String
+    let revealState: TodayViewModel.BuddyRevealState
+    var id: String { friendship.pairId }
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+private struct BuddyRelationshipView: View {
+    let ownerUid: String
+    let friendship: Friendship
+    let subjectUid: String
+    let revealState: TodayViewModel.BuddyRevealState
+    let friendRepository: any FriendRepository
+    let userRepository: any UserRepository
+    let contentSafetyRepository: any ContentSafetyRepository
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var profile: UserProfile?
+    @State private var showRemoveConfirmation = false
+    @State private var isRemoving = false
+    @State private var removeError: String?
+
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                    Text(profile?.displayName ?? "Buddy")
+                        .font(SGFont.serifTitle(28))
+                        .foregroundStyle(SGT.ink)
+                    Text(profile?.handle.map { "@" + $0.value } ?? "@…")
+                        .font(SGFont.body(15))
+                        .foregroundStyle(SGT.ink2)
+                    Text("Connected \(friendship.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                        .font(SGFont.caption(13))
+                        .foregroundStyle(SGT.ink3)
+                }
+                .padding(.vertical, SGSpacing.xs)
+            }
+            .listRowBackground(SGT.fill)
+            .listRowSeparator(.hidden)
+
+            Section("THIS MORNING") {
+                HStack(spacing: SGSpacing.sm) {
+                    Image(systemName: statusIcon)
+                        .foregroundStyle(statusColor)
+                        .frame(width: 20)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(statusTitle)
+                            .font(SGFont.body(16))
+                            .foregroundStyle(SGT.ink)
+                        Text(statusDetail)
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(SGT.ink2)
+                    }
+                }
+                .frame(minHeight: 52)
+            }
+            .listRowBackground(SGT.fill)
+            .listRowSeparator(.hidden)
+
+            Section {
+                NavigationLink {
+                    BuddySafetyView(
+                        ownerUid: ownerUid,
+                        subjectUid: subjectUid,
+                        friendRepository: friendRepository,
+                        contentSafetyRepository: contentSafetyRepository
+                    )
+                } label: {
+                    Label("Safety and reporting", systemImage: "hand.raised")
+                }
+
+                Button(role: .destructive) {
+                    showRemoveConfirmation = true
+                } label: {
+                    if isRemoving {
+                        HStack { ProgressView(); Text("Removing…") }
+                    } else {
+                        Label("Remove from your circle", systemImage: "person.badge.minus")
+                    }
+                }
+                .disabled(isRemoving)
+            }
+            .listRowBackground(SGT.fill)
+            .listRowSeparator(.hidden)
+
+            if let removeError {
+                Section {
+                    Text(removeError)
+                        .font(SGFont.caption(13))
+                        .foregroundStyle(SGT.ink2)
+                }
+                .listRowBackground(SGT.fill)
+                .listRowSeparator(.hidden)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(SGT.background)
+        .navigationTitle("Buddy")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Remove this buddy?", isPresented: $showRemoveConfirmation) {
+            Button("Remove", role: .destructive) { removeRelationship() }
+            Button("Keep", role: .cancel) {}
+        } message: {
+            Text("You will no longer reveal each other's skies. You can reconnect later with a new request.")
+        }
+        .task {
+            for await observation in userRepository.observeProfile(uid: subjectUid) {
+                if case .value(let profile) = observation {
+                    self.profile = profile
+                    break
+                }
+            }
+        }
+    }
+
+    private var statusIcon: String {
+        switch revealState {
+        case .sealed: "lock.fill"
+        case .posted: "checkmark.circle.fill"
+        case .notYet: "clock"
+        }
+    }
+
+    private var statusColor: Color {
+        switch revealState {
+        case .sealed: SGT.ink3
+        case .posted: SGT.ink
+        case .notYet: SGT.ink2
+        }
+    }
+
+    private var statusTitle: String {
+        switch revealState {
+        case .sealed: "Your sky is still needed"
+        case .posted: "Your skies are revealed"
+        case .notYet: "They haven't captured yet"
+        }
+    }
+
+    private var statusDetail: String {
+        switch revealState {
+        case .sealed: "Capture your own sky to reveal together."
+        case .posted: "You each captured this morning."
+        case .notYet: "Their sky stays private until they do."
+        }
+    }
+
+    private func removeRelationship() {
+        guard !isRemoving else { return }
+        isRemoving = true
+        removeError = nil
+        Task {
+            defer { isRemoving = false }
+            do {
+                try await friendRepository.removeFriendship(pairId: friendship.pairId)
+                dismiss()
+            } catch let error as RepositoryError {
+                removeError = error.errorDescription ?? "This buddy could not be removed. Try again."
+            } catch {
+                removeError = "This buddy could not be removed. Try again."
+            }
+        }
+    }
 }
 
 struct BuddySafetyView: View {
