@@ -56,6 +56,7 @@
 		3D6BA32B8F08E6380CDFF0E1 /* FirstUnlockPaywallPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75CD56B996E0488D246831AE /* FirstUnlockPaywallPolicyTests.swift */; };
 		3F1C1221C32E6A4754A7F7A6 /* BuddyTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB41B2F732D5C25821B6051 /* BuddyTile.swift */; };
 		421E3E0F6C109A03B8E28E43 /* StartupFailureMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B807172FF977F014E4488CB /* StartupFailureMessageTests.swift */; };
+		4262808CDCBD5509575509FB /* OnboardingAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E0907AF5694D836BC9375E /* OnboardingAnalytics.swift */; };
 		42A36B412EDA3EE668831FE5 /* StreakSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF610064E6D532BA32BC680 /* StreakSignal.swift */; };
 		44CE64858E6E6A18AD409B73 /* WakeGoal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F748C3EC4D32E455D9427F7 /* WakeGoal.swift */; };
 		46968A01BEE2FBE99E0F7125 /* ServiceEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1238F3EDFD5D891AA112A8 /* ServiceEnvironment.swift */; };
@@ -414,6 +415,7 @@
 		B156A846BD6D16D03BA1658D /* CameraSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSessionController.swift; sourceTree = "<group>"; };
 		B3D627874BC46D26619EF098 /* InviteClaimView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteClaimView.swift; sourceTree = "<group>"; };
 		B464F1444E53D886E4F974E1 /* RevenueCatServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatServiceTests.swift; sourceTree = "<group>"; };
+		B5E0907AF5694D836BC9375E /* OnboardingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingAnalytics.swift; sourceTree = "<group>"; };
 		B877BE3CFC484D9D98406261 /* SkyGridApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridApp.swift; sourceTree = "<group>"; };
 		BBE626ECA74382CDC96957E5 /* ContentReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentReport.swift; sourceTree = "<group>"; };
 		BD181FD3F9CD149F317299BA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -795,6 +797,7 @@
 		CA1C273648696CD169B136A5 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				B5E0907AF5694D836BC9375E /* OnboardingAnalytics.swift */,
 				B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */,
 				7FB553030C359619542B5B54 /* OnboardingInviteView.swift */,
 				A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */,
@@ -1215,6 +1218,7 @@
 				7B3FD00A67C9D505A9D3D14D /* MorningRitualPolicy.swift in Sources */,
 				850C2AB52D7199C0772067D3 /* MorningShareAnalytics.swift in Sources */,
 				57E37E5EDCF65B9C244A572E /* NotificationRouter.swift in Sources */,
+				4262808CDCBD5509575509FB /* OnboardingAnalytics.swift in Sources */,
 				D4E05414E3DAF916F1D1AD68 /* OnboardingCoordinatorView.swift in Sources */,
 				064AE3B73A3EC2D38CAE4BF1 /* OnboardingInviteView.swift in Sources */,
 				51D8332E35DB3D52BAF33AE6 /* OrphanedPostBanner.swift in Sources */,

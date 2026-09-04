@@ -1,7 +1,7 @@
 import Observation
 import SwiftUI
 
-enum OnboardingStep: Equatable {
+enum OnboardingStep: String, Equatable {
     case welcome
     case intention
     case pace
@@ -188,6 +188,12 @@ struct OnboardingCoordinatorView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(SGT.background)
         .id(viewModel.step)
+        // A task keyed by the current step runs once for the initial screen and
+        // once for each actual new step. Pairing `onAppear` with `onChange` here
+        // would double-count because `.id(viewModel.step)` recreates the subtree.
+        .task(id: viewModel.step) {
+            OnboardingAnalytics.record(.stepViewed, step: viewModel.step)
+        }
         .transition(reduceMotion ? .identity : .asymmetric(
             insertion: .move(edge: transitionEdge).combined(with: .opacity),
             removal: .move(edge: transitionEdge == .trailing ? .leading : .trailing).combined(with: .opacity)
@@ -223,12 +229,15 @@ struct OnboardingCoordinatorView: View {
 
     private func finish() {
         guard !viewModel.didComplete else { return }
+        OnboardingAnalytics.record(.completed, step: viewModel.step)
         viewModel.complete()
         showPaywall = false
         onFinished()
     }
 
     private func advance() {
+        guard viewModel.step != .invite else { return }
+        OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
         transitionEdge = .trailing
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
             viewModel.advance()
@@ -236,6 +245,8 @@ struct OnboardingCoordinatorView: View {
     }
 
     private func goBack() {
+        guard viewModel.step != .welcome else { return }
+        OnboardingAnalytics.record(.stepBacked, step: viewModel.step)
         transitionEdge = .leading
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
             viewModel.goBackOneStep()
@@ -243,6 +254,7 @@ struct OnboardingCoordinatorView: View {
     }
 
     private func skipToPlan() {
+        OnboardingAnalytics.record(.stepSkipped, step: viewModel.step)
         transitionEdge = .trailing
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
             viewModel.skipToPlan()
@@ -250,6 +262,8 @@ struct OnboardingCoordinatorView: View {
     }
 
     private func advanceToInvite() {
+        guard viewModel.step != .invite else { return }
+        OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
         transitionEdge = .trailing
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
             viewModel.advanceToInvite()

@@ -435,6 +435,15 @@ a separate session.
       (mirroring the existing `BuddyAnalytics`/`CaptureAnalytics` pattern) and let it run before
       deciding; not done this iteration since it's a new instrumentation task, not a redesign
       step. Left both steps in place rather than remove them speculatively.
+      **Instrumentation added 2026-09-04:** `OnboardingAnalytics` now records anonymous
+      `step_viewed`, actual `step_advanced`/`step_backed`, `step_skipped`, and `completed`
+      events with only the step name and `schema_version: 1` — no UID, handle, selected answer,
+      or wake time. A review caught and this pass fixed two measurement bugs before commit:
+      `.onAppear` + `.onChange` would double-count after `.id(step)` recreated the subtree, so a
+      single `.task(id: step)` now records each shown step; and edge swipes at welcome/invite now
+      emit no impossible back/advance event. DEBUG simulator build succeeds. This creates the
+      cheapest valid test; retain `pace`/`frequency` until real cohorts establish whether their
+      drop-off cost exceeds the personalized-plan value.
 - [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
       see cancelled-escalation note above): copy changes wherever "one person" is asserted
       (`TodayView.swift:310-313`, `BuddiesView.swift:212-224`, onboarding), server-side circle
