@@ -462,3 +462,55 @@ unresolved on Simulator) — trigger the flows that fire `skygrid_capture_comple
 `skygrid_mutual_reveal_unlocked` / invite events on-device and check Firebase DebugView /
 Realtime report. Also independently verify the App Check debug-token claim above before
 registering anything in Firebase Console.
+
+## Design/UX audit (2026-09-04, resumed session, user-requested)
+
+User asked to build+install the app and independently assess how much of the design/UX
+critique from `dev-notes/virality-stickiness-assessment_2026-09-04.md` has actually been
+implemented (suspected gap between claimed and real progress).
+
+**Build/install:** Rebuilt Debug for Simulator, fully erased iPhone 17 Pro Simulator (to clear
+persisted Keychain/auth state), fresh install. Confirmed reachable: the "Sign in with Apple" /
+"Start without an account" first onboarding screen only — everything past it (including
+anonymous sign-in) 403s on the same App Check debug-token issue (still unresolved/parked;
+Firebase Console registration attempt was blocked by the harness's own form-submission
+classifier, not a technical failure — needs a human to do it directly in console, or another
+session with different permission settings). Physical device (iPhone 15 Pro) has no available
+screenshot path in this environment (`idevicescreenshot`/libimobiledevice doesn't see the
+CoreDevice-only wireless pairing).
+
+**Code-level verification (since live screenshots are blocked) against §7's priority list:**
+
+| Priority | Item | Status | Evidence |
+|---|---|---|---|
+| P0 | Buddies tab hierarchy invert (B5) | **NOT STARTED** | `BuddiesView.swift` untouched by any batch-3-13 commit; `BuddyRitualCard` still renders first, `BuddyNameRow`'s only destination is still `BuddySafetyView` (Block/Report), empty-state text unchanged |
+| P0 | Today card share control (D1) | **NOT STARTED** | no share-related code in `TodayView.swift` |
+| P0 | Inviter notified on invite accepted (D2, second half) | **NOT STARTED** | no matching code anywhere in `ios/SkyGrid/Sources` |
+| P0 | Invite prompt in milestone (D2, first half) | ✅ done | `MilestoneView.swift:100`, `InviteLinkCard(placement: .milestone)` next to the Share button |
+| P1 | Onboarding sells the mechanic (C3) | ✅ done | `OnboardingInviteView.swift` (70 lines), step 9/9 |
+| P1 | Today pre-capture card stopping power | ✅ done (batch 12) | `YesterdaySkyBackdrop.swift` |
+| P2 | Grid n/365 | ✅ done (batch 11, minor) | |
+
+**Conclusion delivered to user:** of the assessment's top-priority (P0) items, only 1 of 3 is
+done; the single item explicitly ranked highest — Buddies tab hierarchy inversion — is
+completely untouched. The batches so far picked cheap/safe items (button contrast, n/365,
+pre-capture backdrop) over the harder, higher-impact structural fix. This matches the user's
+suspicion.
+
+## Batch 16 (sent 2026-09-04) — Buddies tab hierarchy inversion (the P0 gap above)
+
+First attempt: Codex correctly refused to guess/fabricate — flagged that (a) the sealed/posted/
+notYet tri-state is computed inside `TodayViewModel.performRefreshBuddies`
+(`TodayViewModel.swift:367-396`), not directly reusable from `BuddiesView.swift` alone, and
+(b) `UserProfile.streakCurrent` is never actually server-written (stays 0), so displaying a
+"current streak" per the original spec would be showing fabricated data. Also confirmed no
+existing relationship-detail view exists to redirect the primary tap to.
+
+Re-scoped and re-sent: dropped the streak display entirely (agreed — don't show data that
+doesn't exist), authorized wiring today-status through `RootView`/a small view model if that's
+the smallest clean path (or a plain list without live status as an acceptable fallback if even
+that's too large for one batch), and simplified the tap-target ask to "move Block/Report off
+the primary tap" (swipe/overflow) without requiring a new detail view. Explainer-card-collapse
+and empty-state-primary-CTA points were unblocked, proceed as originally scoped.
+
+Running as of this log entry — result not yet in.
