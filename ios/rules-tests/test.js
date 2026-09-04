@@ -33,6 +33,31 @@ function imagePath(uid = OWNER, fileName = "abc123.jpg") {
   return `posts/${uid}/${LOCAL_DATE}/${fileName}`;
 }
 
+// `YYYY-MM-DD` for the real UTC calendar day the emulator's `request.time` falls
+// on — used only by the `isRecentLocalDate` bound tests below, which need a date
+// that is actually "now" rather than the fixed historical `LOCAL_DATE` fixture
+// every other test in this file uses for seeded (rules-bypassed) reads.
+function todayLocalDate() {
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function postCreateData(uid, localDate, fileName = "abc123.jpg") {
+  return {
+    ownerUid: uid,
+    capturedAt: serverTimestamp(),
+    uploadedAt: serverTimestamp(),
+    imagePath: `posts/${uid}/${localDate}/${fileName}`,
+    thumbPath: `posts/${uid}/${localDate}/${fileName.replace(".jpg", "_thumb.jpg")}`,
+    skyColorHex: "#7EA3C8",
+    minutesFromGoal: 5,
+    reactions: {},
+  };
+}
+
 function profileData(handle) {
   return {
     ...(handle ? { handle } : {}),
@@ -295,6 +320,56 @@ describe("firestore.rules activeBuddy() (same predicate, Firestore side)", () =>
     await seedPost(BUDDY);
     const buddyCtx = testEnv.authenticatedContext(BUDDY);
     await assertSucceeds(buddyCtx.firestore().doc(postPath()).get());
+  });
+});
+
+describe("firestore.rules posts/{localDate} create — localDate bound (2026-09-04 integrity fix)", () => {
+  // Previously only `capturedAt`/`uploadedAt` were checked against server time;
+  // the `localDate` path segment itself was unconstrained, so a client could
+  // create a post document for an arbitrary past (or future) day — a backfilled
+  // Grid cell. `isRecentLocalDate` in firestore.rules closes that.
+  it("lets an owner create a post for today's actual local date", async () => {
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    const localDate = todayLocalDate();
+    await assertSucceeds(
+      ownerCtx.firestore().doc(`users/${OWNER}/posts/${localDate}`).set(postCreateData(OWNER, localDate))
+    );
+  });
+
+  it("blocks creating a post for a date years in the past", async () => {
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    const localDate = "2020-01-01";
+    await assertFails(
+      ownerCtx.firestore().doc(`users/${OWNER}/posts/${localDate}`).set(postCreateData(OWNER, localDate))
+    );
+  });
+
+  it("blocks creating a post for a date far in the future", async () => {
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    const localDate = "2099-01-01";
+    await assertFails(
+      ownerCtx.firestore().doc(`users/${OWNER}/posts/${localDate}`).set(postCreateData(OWNER, localDate))
+    );
+  });
+
+  it("blocks a non-zero-padded localDate even though it names the same real day (MEDIUM-1 fix)", async () => {
+    // Without the `localDate.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')` guard, this
+    // would still pass `isRecentLocalDate` (int() parses a 5-digit, leading-zero
+    // year the same as the canonical 4-digit one) and create a *second*,
+    // differently-keyed post document for a day that already has one — breaking
+    // the one-post-per-day invariant the app relies on everywhere else
+    // (Grid/streak counting, `hasPostedFor`). A leading zero on the year
+    // (rather than stripping the month/day's own padding) keeps this
+    // deterministically non-canonical regardless of what today's actual date
+    // happens to be, unlike `Number(mm)`/`Number(dd)`, which collide with the
+    // canonical string whenever the current month and day are both >= 10.
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    const canonical = todayLocalDate();
+    const [yyyy, mm, dd] = canonical.split("-");
+    const nonCanonical = `0${yyyy}-${mm}-${dd}`;
+    await assertFails(
+      ownerCtx.firestore().doc(`users/${OWNER}/posts/${nonCanonical}`).set(postCreateData(OWNER, nonCanonical))
+    );
   });
 });
 

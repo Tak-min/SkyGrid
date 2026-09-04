@@ -466,6 +466,58 @@ struct UploadQueueTests {
         #expect(summary.first?.state == .done)
     }
 
+    // `discardStaleUpload` shares its guarded deletion with `discardOrphanedRow`
+    // (see `UploadQueue.discardRow`) — these three tests exist to prove the two
+    // named entry points behave identically (same mismatch/completed-row guards),
+    // not to re-verify the deletion mechanics twice.
+
+    @Test("discardStaleUpload deletes a row whose localDate has aged out")
+    func discardStaleUploadDeletesAnAgedOutRow() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let queue = UploadQueue(modelContainer: container, uploader: AlwaysFailingImageUploader())
+        let draft = try makeDraft()
+        try await queue.enqueue(draft)
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        let queueID = PendingUpload.queueID(ownerUid: draft.ownerUid, localDateID: draft.localDate.docID)
+        try await queue.discardStaleUpload(queueID: queueID, fullImagePath: draft.imagePath)
+
+        let summary = try await queue.pendingSummary()
+        #expect(summary.isEmpty)
+    }
+
+    @Test("discardStaleUpload is a no-op when the row belongs to a different capture")
+    func discardStaleUploadIgnoresAMismatchedImagePath() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let queue = UploadQueue(modelContainer: container, uploader: AlwaysFailingImageUploader())
+        let draft = try makeDraft()
+        try await queue.enqueue(draft)
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        let queueID = PendingUpload.queueID(ownerUid: draft.ownerUid, localDateID: draft.localDate.docID)
+        try await queue.discardStaleUpload(queueID: queueID, fullImagePath: "posts/other/other/other.jpg")
+
+        let summary = try await queue.pendingSummary()
+        #expect(summary.count == 1, "a row for a different capture must not be discarded")
+    }
+
+    @Test("discardStaleUpload is a no-op once the row has finished uploading")
+    func discardStaleUploadIgnoresACompletedRow() async throws {
+        let container = LocalStoreContainer.make(inMemory: true)
+        let queue = UploadQueue(modelContainer: container, uploader: SucceedingImageUploader())
+        let draft = try makeDraft()
+        try await queue.enqueue(draft)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        #expect(try await queue.pendingSummary().first?.state == .done)
+
+        let queueID = PendingUpload.queueID(ownerUid: draft.ownerUid, localDateID: draft.localDate.docID)
+        try await queue.discardStaleUpload(queueID: queueID, fullImagePath: draft.imagePath)
+
+        let summary = try await queue.pendingSummary()
+        #expect(summary.count == 1, "a row that already succeeded must never be discarded")
+        #expect(summary.first?.state == .done)
+    }
+
     @Test("upload queue uniqueness is scoped to account and local day")
     func differentAccountsCanQueueTheSameDay() async throws {
         let container = LocalStoreContainer.make(inMemory: true)

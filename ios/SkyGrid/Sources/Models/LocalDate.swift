@@ -69,6 +69,16 @@ struct LocalDate: Hashable, Sendable {
         let end = calendar.date(from: DateComponents(year: other.year, month: other.month, day: other.day))!
         return calendar.dateComponents([.day], from: start, to: end).day!
     }
+
+    /// 1 = Sunday ... 7 = Saturday, from `referenceCalendar` — deliberately not
+    /// locale-dependent (unlike `Calendar.current.firstWeekday`), so a fixed
+    /// Monday-anchored week block (see `RestDayPolicy`) means the same 7 real-world
+    /// days regardless of device region settings.
+    var weekday: Int {
+        let calendar = Self.referenceCalendar
+        let base = calendar.date(from: DateComponents(year: year, month: month, day: day))!
+        return calendar.component(.weekday, from: base)
+    }
 }
 
 extension LocalDate: Comparable {

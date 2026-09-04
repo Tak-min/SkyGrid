@@ -8,9 +8,9 @@ typically respond within a few days.
 ## Common questions
 
 **I missed my morning photo — is my streak gone?**
-Sky Grid gives you one Rest Day per week for free (unlimited on Pro), so a
-single missed morning doesn't necessarily break your streak. Check the Sky
-Grid tab to see which days counted.
+Sky Grid gives every account one Rest Day per week, so a single missed morning
+doesn't necessarily break your streak. Check the Sky Grid tab to see which
+days counted.
 
 **How do I remove a buddy or report a photo?**
 Open the buddy's profile from the Today or Sky Grid screen — you'll find

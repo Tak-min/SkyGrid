@@ -97,6 +97,23 @@ actor UploadQueue {
     /// mismatch — never destroy someone else's in-flight upload) or if it has
     /// already reached `.uploading`/`.done` between evaluation and this call.
     func discardOrphanedRow(queueID: String, fullImagePath: String) throws {
+        try discardRow(queueID: queueID, fullImagePath: fullImagePath)
+    }
+
+    /// Clears a row whose `localDate` has aged past what `firestore.rules`'
+    /// `isRecentLocalDate` will still accept (see `PostCreateWindowPolicy`) —
+    /// called from `TodayViewModel` once the UI has told the person their photo
+    /// can no longer be sent, distinct in *reason* from `discardOrphanedRow`
+    /// (server-confirmed-orphaned) even though both end a row the same way: the
+    /// local bytes are retained nowhere else, so this is explicit-user-action
+    /// only, never automatic. Same guards as `discardOrphanedRow` — a no-op if a
+    /// newer capture has replaced this row, or if it already reached
+    /// `.uploading`/`.done` between the UI decision and this call.
+    func discardStaleUpload(queueID: String, fullImagePath: String) throws {
+        try discardRow(queueID: queueID, fullImagePath: fullImagePath)
+    }
+
+    private func discardRow(queueID: String, fullImagePath: String) throws {
         let modelContext = databaseContext()
         guard let existing = try modelContext.fetch(FetchDescriptor<PendingUpload>()).first(where: { $0.queueID == queueID }),
               existing.fullImagePath == fullImagePath,

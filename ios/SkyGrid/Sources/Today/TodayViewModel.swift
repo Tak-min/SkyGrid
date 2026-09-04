@@ -224,11 +224,14 @@ final class TodayViewModel {
                 }
                 let postedDays = posts.map(\.localDate)
                 self.weekRhythm = WeekRhythmCalculator.summarize(posts: posts, today: today)
-                // `exemptDays` is empty on purpose: `RestDayPolicy` has no
-                // persistence and `TimeZonePolicy` has no change-log producer, so
-                // there is currently no honest source of exempt days. See the
-                // dev-note — enabling them is a product decision, not a UI one.
-                self.streak = StreakCalculator.summarize(postedDays: postedDays, today: today)
+                // `RestDayPolicy.exemptDays` is a pure function of `postedDays`/
+                // `today` (2026-09-04 redesign — see its doc comment): no
+                // persistence, no entitlement dependence, never backfillable, so
+                // it's safe to compute directly here. `TimeZonePolicy`'s exemption
+                // stays empty: there is still no change-log producer wired up (see
+                // its own doc comment) — a separate, unrelated gap.
+                let exemptDays = RestDayPolicy.exemptDays(postedDays: postedDays, today: today)
+                self.streak = StreakCalculator.summarize(postedDays: postedDays, today: today, exemptDays: exemptDays)
 
                 if StreakWindow.needsWidening(streak: self.streak.currentStreak, windowDays: windowDays) {
                     let widened = StreakWindow.widened(forStreak: self.streak.currentStreak)
@@ -297,8 +300,38 @@ final class TodayViewModel {
 
     func retryFailedUploads() async {
         for upload in pendingSummary where upload.state == .failed || upload.state == .postFailed {
+            // A row whose `localDate` has aged past what `firestore.rules` will
+            // still accept can never succeed here — retrying it would just spend
+            // a network round-trip to reproduce the same permanent denial (see
+            // `PostCreateWindowPolicy`'s doc comment, and the security review this
+            // fixes: HIGH-2, a "Retry now" that silently never works). Leave it
+            // for `discardStaleUpload` instead of attempting it. `today == nil`
+            // (observation hasn't started yet) is treated as "don't know, so
+            // don't skip" — that path only ever runs if a person opened Today
+            // and reached the retry banner before `start(for:)` set `observedDate`,
+            // which nothing in this codebase currently allows, but a wasted retry
+            // attempt is a strictly smaller failure than silently doing nothing
+            // for a row that may in fact still be within the window.
+            if let today = observedDate,
+               let uploadLocalDate = LocalDate(docID: upload.localDateID),
+               PostCreateWindowPolicy.isTooOldToRetry(localDate: uploadLocalDate, today: today) {
+                continue
+            }
             try? await uploadQueue.retryFailed(queueID: upload.queueID)
         }
+        pendingSummary = ((try? await uploadQueue.pendingSummary()) ?? [])
+            .filter { $0.ownerUid == uid }
+    }
+
+    /// Ends a capture that can never reach Firestore any more — the person has
+    /// been told explicitly (via `PostStatusBanner`'s stale-upload message) that
+    /// this morning's photo is too old to send, and has chosen to clear it rather
+    /// than leave a permanently-failing "Retry now" affordance in place forever.
+    /// Only ever call this for a row `PostCreateWindowPolicy.isTooOldToRetry`
+    /// already confirmed unrecoverable — never as a generic "give up" action.
+    func discardStaleUpload(queueID: String) async {
+        guard let upload = pendingSummary.first(where: { $0.queueID == queueID }) else { return }
+        try? await uploadQueue.discardStaleUpload(queueID: queueID, fullImagePath: upload.fullImagePath)
         pendingSummary = ((try? await uploadQueue.pendingSummary()) ?? [])
             .filter { $0.ownerUid == uid }
     }

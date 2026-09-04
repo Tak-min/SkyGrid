@@ -52,9 +52,14 @@ struct TodayView: View {
                         .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
                     buddySection
                     rhythmSection
-                    PostStatusBanner(pending: viewModel.pendingSummary) {
-                        Task { await viewModel.retryFailedUploads() }
-                    }
+                    PostStatusBanner(
+                        pending: viewModel.pendingSummary,
+                        today: observedDate,
+                        onRetry: { Task { await viewModel.retryFailedUploads() } },
+                        onDiscardStale: { queueID in
+                            Task { await viewModel.discardStaleUpload(queueID: queueID) }
+                        }
+                    )
                 }
                 .padding(.horizontal, SGSpacing.xl)
                 .padding(.top, SGSpacing.sm)

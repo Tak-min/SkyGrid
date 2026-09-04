@@ -21,6 +21,7 @@
 		0A3B444EFC749E0E946DAF5D /* PostRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */; };
 		0AF2AF74483FAC6BD88908B1 /* PostPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06EFCFEBF86821B0DBBBA94 /* PostPublisher.swift */; };
 		0B5ED10C14C0F2046C95EF96 /* PostStatusBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BACEF1CC5D7C6A30CC8F3B /* PostStatusBanner.swift */; };
+		0BC13706EAC24250D7F8A7CC /* PostCreateWindowPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A2E7BB4F115A3D42C4B46D /* PostCreateWindowPolicyTests.swift */; };
 		0D08CA1587327FC4F7CA31B8 /* FirebaseFriendRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693330AB30D1C5DE9A429663 /* FirebaseFriendRepository.swift */; };
 		0D705181B9D38C4BC85CD9AB /* AccountDeletionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5FFDFF024E0F5F0A04B163 /* AccountDeletionService.swift */; };
 		111340BF6049F7D65B747105 /* PaywallViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D89CFE518D3C5B6A064724 /* PaywallViewModel.swift */; };
@@ -38,6 +39,7 @@
 		29BC0765DB83D109C7A6F1BD /* StartupFailureMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB33195EF4E65FEBAB084D7 /* StartupFailureMessage.swift */; };
 		29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */; };
 		2AC46F9CD036558D1F3F6825 /* real_overcast_sky.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EA734E93CF42C8AD1AB11848 /* real_overcast_sky.jpg */; };
+		2AFFA576038DB77880A6AE70 /* PostCreateWindowPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = F90CB6B3227E2B2A1F4B2456 /* PostCreateWindowPolicy.swift */; };
 		2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */; };
 		2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40E82FC02E08596714BA7FB /* RootView.swift */; };
 		2E14D29C579773ADF5F2F5F1 /* GridArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087C71720687FEA840D1BCE1 /* GridArchiveView.swift */; };
@@ -264,6 +266,7 @@
 		00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostDraft.swift; sourceTree = "<group>"; };
 		03121E39C84779B0B43F9764 /* UserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserRepository.swift; sourceTree = "<group>"; };
 		0540437D43AF806B0EDF1375 /* StreakCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakCalculator.swift; sourceTree = "<group>"; };
+		05A2E7BB4F115A3D42C4B46D /* PostCreateWindowPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCreateWindowPolicyTests.swift; sourceTree = "<group>"; };
 		06433918EDC1C3800C409EE3 /* BuddyPushPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyPushPayload.swift; sourceTree = "<group>"; };
 		087C71720687FEA840D1BCE1 /* GridArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridArchiveView.swift; sourceTree = "<group>"; };
 		0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBuddyView.swift; sourceTree = "<group>"; };
@@ -464,6 +467,7 @@
 		F7A7BF16B757C167E7799973 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		F80275CA399B3382985AACD9 /* MorningFollowUpSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningFollowUpSchedulerTests.swift; sourceTree = "<group>"; };
 		F8A106169F1B40CFAEFB8BC4 /* UploadQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadQueueTests.swift; sourceTree = "<group>"; };
+		F90CB6B3227E2B2A1F4B2456 /* PostCreateWindowPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCreateWindowPolicy.swift; sourceTree = "<group>"; };
 		F9EF2E981E7BC80C2403175B /* golden_hour.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = golden_hour.png; sourceTree = "<group>"; };
 		FA5FFDFF024E0F5F0A04B163 /* AccountDeletionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletionService.swift; sourceTree = "<group>"; };
 		FB7C3472C4E695E07F9D978C /* WeekRhythmTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekRhythmTests.swift; sourceTree = "<group>"; };
@@ -704,6 +708,7 @@
 		9AE96A3B39B9D8D3C6FB5AF6 /* Upload */ = {
 			isa = PBXGroup;
 			children = (
+				F90CB6B3227E2B2A1F4B2456 /* PostCreateWindowPolicy.swift */,
 				0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */,
 				B0C06D7AD160C0956C2C73E8 /* UploadQueue.swift */,
 				69D70E24F9606F52435C88DA /* UploadTriggers.swift */,
@@ -906,6 +911,7 @@
 				3DE535718E8F305008C110CE /* PendingCellStateTests.swift */,
 				BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */,
 				C0A3E28C33210B0166319703 /* PostCaptureMomentPolicyTests.swift */,
+				05A2E7BB4F115A3D42C4B46D /* PostCreateWindowPolicyTests.swift */,
 				165570757A55F9BFB6931185 /* PostIntegrityPolicyTests.swift */,
 				DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */,
 				B464F1444E53D886E4F974E1 /* RevenueCatServiceTests.swift */,
@@ -1228,6 +1234,7 @@
 				E87922CD54E95934223F2841 /* PersonalizationQuestionsView.swift in Sources */,
 				ED281546431F7E899784C3CD /* PersonalizedPlanView.swift in Sources */,
 				9C14252D573F94B51704D976 /* PostCaptureMomentPolicy.swift in Sources */,
+				2AFFA576038DB77880A6AE70 /* PostCreateWindowPolicy.swift in Sources */,
 				8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */,
 				B15B34758471892550063922 /* PostIntegrityPolicy.swift in Sources */,
 				0AF2AF74483FAC6BD88908B1 /* PostPublisher.swift in Sources */,
@@ -1321,6 +1328,7 @@
 				06CA68D5ABBF09AED97E528D /* PendingCellStateTests.swift in Sources */,
 				8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */,
 				BCABB8A620F0C9DDC2BD07E8 /* PostCaptureMomentPolicyTests.swift in Sources */,
+				0BC13706EAC24250D7F8A7CC /* PostCreateWindowPolicyTests.swift in Sources */,
 				DB73F085B9551FE23C4F6816 /* PostIntegrityPolicyTests.swift in Sources */,
 				F3B83571F3DFC0124517F154 /* RetryPolicyTests.swift in Sources */,
 				EAD14BEF648B531FC044E7BE /* RevenueCatServiceTests.swift in Sources */,
