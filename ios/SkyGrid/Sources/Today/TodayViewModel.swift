@@ -29,7 +29,7 @@ final class TodayViewModel {
         case notYet
     }
 
-    struct BuddyStatus: Identifiable, Sendable {
+    struct BuddyStatus: Identifiable, Sendable, Equatable {
         let uid: String
         let displayName: String
         let revealState: BuddyRevealState
@@ -401,7 +401,8 @@ final class TodayViewModel {
         revealSignal?.record(RevealReading(
             localDate: today,
             mutuallyUnlockedBuddyCount: unlockedCount,
-            acceptedBuddyCount: hasResolvedFriendships ? friendships.count : nil
+            acceptedBuddyCount: hasResolvedFriendships ? friendships.count : nil,
+            buddyStatuses: statuses
         ))
         // The target metric this loop is optimizing for (see
         // dev-notes/virality-stickiness-assessment_2026-09-04.md): fire exactly once

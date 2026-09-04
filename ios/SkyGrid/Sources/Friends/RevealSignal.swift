@@ -20,6 +20,22 @@ struct RevealReading: Equatable, Sendable {
     /// unresolved read as "zero buddies" would misclassify a paired person as solo
     /// during the window before their friendship listener first fires.
     let acceptedBuddyCount: Int?
+    /// The same privacy-gated states displayed in Today's buddy strip. Keeping the
+    /// already-resolved values here lets the Buddies tab describe a relationship
+    /// without issuing a second post read or attempting to reproduce the gate.
+    let buddyStatuses: [TodayViewModel.BuddyStatus]
+
+    init(
+        localDate: LocalDate,
+        mutuallyUnlockedBuddyCount: Int,
+        acceptedBuddyCount: Int?,
+        buddyStatuses: [TodayViewModel.BuddyStatus] = []
+    ) {
+        self.localDate = localDate
+        self.mutuallyUnlockedBuddyCount = mutuallyUnlockedBuddyCount
+        self.acceptedBuddyCount = acceptedBuddyCount
+        self.buddyStatuses = buddyStatuses
+    }
 }
 
 /// A one-way channel from the buddy strip's single producer (`TodayViewModel`) up to

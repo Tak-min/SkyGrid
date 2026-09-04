@@ -7,13 +7,16 @@ struct BuddiesView: View {
     @State private var viewModel: FriendsViewModel
     private let contentSafetyRepository: any ContentSafetyRepository
     private let inviteRepository: any InviteRepository
+    private let revealSignal: RevealSignal
+    @State private var safetyRoute: BuddySafetyRoute?
 
     init(
         uid: String,
         friendRepository: any FriendRepository,
         userRepository: any UserRepository,
         contentSafetyRepository: any ContentSafetyRepository,
-        inviteRepository: any InviteRepository
+        inviteRepository: any InviteRepository,
+        revealSignal: RevealSignal
     ) {
         _viewModel = State(initialValue: FriendsViewModel(
             uid: uid,
@@ -22,14 +25,57 @@ struct BuddiesView: View {
         ))
         self.contentSafetyRepository = contentSafetyRepository
         self.inviteRepository = inviteRepository
+        self.revealSignal = revealSignal
     }
 
     var body: some View {
         List {
             Section {
-                BuddyRitualCard()
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
+                if viewModel.friendshipState == .checking, viewModel.accepted.isEmpty {
+                    HStack(spacing: SGSpacing.sm) {
+                        ProgressView()
+                        Text("Checking your circle…")
+                            .foregroundStyle(SGT.ink2)
+                    }
+                    .listRowBackground(SGT.fill)
+                    .listRowSeparator(.hidden)
+                } else if viewModel.friendshipState == .available, viewModel.accepted.isEmpty {
+                    if viewModel.hasHandle == true {
+                        InviteLinkCard(inviteRepository: inviteRepository)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets())
+                    } else if viewModel.hasHandle == false {
+                        HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
+                            viewModel.markHandleClaimed(handle)
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
+                    } else {
+                        ProgressView("Preparing your invite…")
+                            .listRowBackground(SGT.fill)
+                            .listRowSeparator(.hidden)
+                    }
+                }
+
+                ForEach(viewModel.accepted, id: \.pairId) { friendship in
+                    if let otherUid = friendship.otherMember(than: viewModel.uid) {
+                        BuddyNameRow(
+                            uid: otherUid,
+                            userRepository: viewModel.userRepository,
+                            revealState: revealState(for: otherUid)
+                        )
+                        .contentShape(Rectangle())
+                        .contextMenu {
+                            Button("Block or report", systemImage: "hand.raised") {
+                                safetyRoute = BuddySafetyRoute(subjectUid: otherUid)
+                            }
+                        }
+                        .listRowBackground(SGT.fill)
+                        .listRowSeparator(.hidden)
+                    }
+                }
+            } header: {
+                Text("YOUR CIRCLE")
             }
 
             if viewModel.friendshipState == .unavailable {
@@ -51,8 +97,7 @@ struct BuddiesView: View {
                 }
             }
 
-            switch viewModel.profileState {
-            case .unavailable:
+            if viewModel.profileState == .unavailable {
                 Section {
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
                         Text("We couldn't load your invite settings.")
@@ -68,39 +113,6 @@ struct BuddiesView: View {
                     }
                     .listRowBackground(SGT.fill)
                     .listRowSeparator(.hidden)
-                }
-            case .checking:
-                Section {
-                    HStack(spacing: SGSpacing.sm) {
-                        ProgressView()
-                        Text("Preparing your buddy settings…")
-                            .foregroundStyle(SGT.ink2)
-                    }
-                }
-            case .available:
-                if viewModel.hasHandle == false {
-                    Section {
-                        HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
-                            viewModel.markHandleClaimed(handle)
-                        }
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
-                    } header: {
-                        Text("YOUR INVITE HANDLE")
-                    } footer: {
-                        Text("A handle is only for invitations. Your daily ritual works without one.")
-                    }
-                } else {
-                    Section {
-                        AddBuddyView(viewModel: viewModel)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(EdgeInsets())
-                    }
-                    Section {
-                        InviteLinkCard(inviteRepository: inviteRepository)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(EdgeInsets())
-                    }
                 }
             }
 
@@ -139,51 +151,25 @@ struct BuddiesView: View {
                 }
             }
 
-            Section("YOUR BUDDIES") {
-                if viewModel.friendshipState == .checking, viewModel.accepted.isEmpty {
-                    HStack(spacing: SGSpacing.sm) {
-                        ProgressView()
-                        Text("Checking your buddies…")
-                            .font(SGFont.caption(13))
-                            .foregroundStyle(SGT.ink2)
-                    }
-                    .listRowBackground(SGT.fill)
-                    .listRowSeparator(.hidden)
-                } else if viewModel.friendshipState == .available, viewModel.accepted.isEmpty {
-                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                        Text(viewModel.hasHandle == false ? "Choose a handle to invite someone." : "No buddies yet")
-                            .font(SGFont.body(16))
-                        Text("When you both capture the morning, you reveal each other’s sky.")
-                            .font(SGFont.caption(13))
-                    }
-                        .foregroundStyle(SGT.ink3)
-                        .listRowBackground(SGT.fill)
-                        .listRowSeparator(.hidden)
+            if viewModel.hasHandle == true {
+                Section {
+                    AddBuddyView(viewModel: viewModel)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
                 }
-
                 if !viewModel.accepted.isEmpty {
-                    ForEach(viewModel.accepted, id: \.pairId) { friendship in
-                        if let otherUid = friendship.otherMember(than: viewModel.uid) {
-                            NavigationLink {
-                                BuddySafetyView(
-                                    ownerUid: viewModel.uid,
-                                    subjectUid: otherUid,
-                                    friendRepository: viewModel.friendRepository,
-                                    contentSafetyRepository: contentSafetyRepository
-                                )
-                            } label: {
-                                BuddyNameRow(uid: otherUid, userRepository: viewModel.userRepository)
-                            }
-                            // The app never uses the system's stark white row +
-                            // hairline separator anywhere else — every other card
-                            // (ritual card, invite form, Settings rows) sits on the
-                            // same warm `SGT.fill` surface with no dividers. Match
-                            // that here instead of leaving List's default row chrome.
-                            .listRowBackground(SGT.fill)
-                            .listRowSeparator(.hidden)
-                        }
+                    Section {
+                        InviteLinkCard(inviteRepository: inviteRepository)
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets())
                     }
                 }
+            }
+
+            Section {
+                BuddyRitualCard(isCollapsed: !viewModel.accepted.isEmpty)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
             }
         }
         .scrollContentBackground(.hidden)
@@ -197,33 +183,53 @@ struct BuddiesView: View {
         // This view is one tab inside the root NavigationStack. An inline title
         // avoids List reserving a large-title gap when tab selection changes.
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $safetyRoute) { route in
+            BuddySafetyView(
+                ownerUid: viewModel.uid,
+                subjectUid: route.subjectUid,
+                friendRepository: viewModel.friendRepository,
+                contentSafetyRepository: contentSafetyRepository
+            )
+        }
         .task { viewModel.start() }
         .onDisappear { viewModel.stop() }
+    }
+
+    private func revealState(for uid: String) -> TodayViewModel.BuddyRevealState {
+        revealSignal.reading?.buddyStatuses.first(where: { $0.uid == uid })?.revealState ?? .sealed
     }
 }
 
 private struct BuddyRitualCard: View {
+    let isCollapsed: Bool
+
     var body: some View {
-        VStack(alignment: .center, spacing: SGSpacing.sm) {
+        VStack(alignment: isCollapsed ? .leading : .center, spacing: SGSpacing.sm) {
             Label("MORNING TOGETHER", systemImage: "person.2.fill")
                 .font(SGFont.caption(11))
                 .tracking(1.2)
                 .foregroundStyle(SGT.ink3)
-            Text("Two skies, revealed together.")
-                .font(SGFont.serifTitle(27))
-                .foregroundStyle(SGT.ink)
-                .fixedSize(horizontal: false, vertical: true)
-                .multilineTextAlignment(.center)
-            Text("Invite one trusted person. Each sky stays private until you have both captured that morning.")
-                .font(SGFont.body(14))
-                .foregroundStyle(SGT.ink2)
-                .multilineTextAlignment(.center)
-            HStack(spacing: 0) {
-                BuddyRitualStep(number: "1", label: "Invite")
-                BuddyRitualStep(number: "2", label: "Capture")
-                BuddyRitualStep(number: "3", label: "Reveal")
+            if isCollapsed {
+                Text("Your skies stay sealed until you both capture this morning.")
+                    .font(SGFont.caption(13))
+                    .foregroundStyle(SGT.ink2)
+            } else {
+                Text("Two skies, revealed together.")
+                    .font(SGFont.serifTitle(27))
+                    .foregroundStyle(SGT.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.center)
+                Text("Invite one trusted person. Each sky stays private until you have both captured that morning.")
+                    .font(SGFont.body(14))
+                    .foregroundStyle(SGT.ink2)
+                    .multilineTextAlignment(.center)
+                HStack(spacing: 0) {
+                    BuddyRitualStep(number: "1", label: "Invite")
+                    BuddyRitualStep(number: "2", label: "Capture")
+                    BuddyRitualStep(number: "3", label: "Reveal")
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
         }
         .padding(SGSpacing.md)
         .background(SGT.fill, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -256,20 +262,69 @@ private struct BuddyRitualStep: View {
 private struct BuddyNameRow: View {
     let uid: String
     let userRepository: any UserRepository
-    @State private var displayName: String?
+    let revealState: TodayViewModel.BuddyRevealState
+    @State private var profile: UserProfile?
 
     var body: some View {
-        Text(displayName ?? "Buddy")
-            .foregroundStyle(SGT.ink)
+        HStack(spacing: SGSpacing.sm) {
+            Image(systemName: statusIcon)
+                .foregroundStyle(statusColor)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(profile?.displayName ?? "Buddy")
+                    .font(SGFont.body(16))
+                    .foregroundStyle(SGT.ink)
+                Text(profile?.handle.map { "@" + $0.value } ?? "@…")
+                    .font(SGFont.caption(13))
+                    .foregroundStyle(SGT.ink3)
+            }
+            Spacer()
+            Text(statusText)
+                .font(SGFont.caption(12))
+                .foregroundStyle(SGT.ink2)
+                .multilineTextAlignment(.trailing)
+        }
+        .frame(minHeight: 56)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(profile?.displayName ?? "Buddy"), \(profile?.handle.map { "at " + $0.value } ?? "handle loading"), \(statusText)")
             .task {
                 for await observation in userRepository.observeProfile(uid: uid) {
                     if case .value(let profile) = observation {
-                        displayName = profile?.displayName
+                        self.profile = profile
                         break
                     }
                 }
             }
     }
+
+    private var statusIcon: String {
+        switch revealState {
+        case .sealed: "lock.fill"
+        case .posted: "checkmark.circle.fill"
+        case .notYet: "clock"
+        }
+    }
+
+    private var statusColor: Color {
+        switch revealState {
+        case .sealed: SGT.ink3
+        case .posted: SGT.ink
+        case .notYet: SGT.ink2
+        }
+    }
+
+    private var statusText: String {
+        switch revealState {
+        case .sealed: "Sealed until\nyou capture"
+        case .posted: "Captured today"
+        case .notYet: "Not yet today"
+        }
+    }
+}
+
+private struct BuddySafetyRoute: Identifiable, Hashable {
+    let subjectUid: String
+    var id: String { subjectUid }
 }
 
 struct BuddySafetyView: View {
