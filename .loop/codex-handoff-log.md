@@ -246,3 +246,37 @@ Asked Codex to close the loop on this itself: build+run on iOS Simulator, trigge
 already-instrumented events (Paywall or Invite path) to actually fire a real Analytics event, and
 report back once done — I'll then check Firebase's DebugView/Realtime report via browser to
 confirm arrival, closing out the Analytics-verification thread for good either way.
+
+**Batch 7 result (received 2026-09-04, 3m14s):** Codex could not reach the paywall screen
+normally in-Simulator because **App Check rejected the token** (a separate, newly-surfaced issue
+-- noted below as a candidate). Worked around it by attaching lldb to the already-running Debug
+process and directly invoking `FIRAnalytics logEventWithName:parameters:` (Swift-level `expr`
+failed first with "cannot find 'Analytics'/'PaywallAnalytics' in scope", so it dropped to the ObjC
+runtime call, which succeeded). Fired `skygrid_paywall_presented` (entry_point=settings,
+automatic=0) around 13:10 JST on a fresh Simulator install. Reported confirming locally (via device
+log) that Analytics collection is enabled and an upload attempt fired immediately after, plus the
+SDK's automatic `first_open` should also have fired on this same fresh install.
+
+**My browser verification (2026-09-04, ~13:14 JST, ~4-5 min after the claimed event):**
+- DebugView: empty ("Waiting for debug events... no development devices have logged any debug
+  events") -- expected, since debug mode wasn't enabled on this launch (no `-FIRDebugEnabled`),
+  so DebugView was never going to show this regardless of delivery.
+- **Realtime report (the actual test): 0 active users in the last 5 minutes AND the last 30
+  minutes.** No user/session activity of any kind registered, several minutes after the claimed
+  13:10 event -- this is long enough that a genuinely-delivered event should normally show here.
+
+So as of this check, **the event does not appear to have actually reached Firebase**, despite the
+local log showing an upload attempt. Possible causes worth Codex investigating: (a) the same App
+Check rejection that blocked the normal paywall screen may also be blocking the Analytics
+collection endpoint if this project enforces App Check broadly; (b) the lldb session detached
+right after the call, which may have killed the process before Firebase's async batched-upload
+actually completed the network round trip; (c) Simulator network reachability to Analytics'
+collection domain specifically (as opposed to Firestore/Functions, which are already known to
+work). Sending this back to Codex as batch 8 rather than concluding anything myself -- it needs
+codebase-level investigation (App Check scope, upload-batching code, logs) that's Codex's side of
+the split.
+
+**New candidate noted, not yet a batch:** the App Check rejection blocking normal paywall
+navigation in the Simulator is itself worth a dedicated item later (it's presumably not new to
+today, but it's the first time it actually blocked reaching a screen during verification work) --
+hold off sending it until the Analytics-delivery thread is resolved one way or the other.
