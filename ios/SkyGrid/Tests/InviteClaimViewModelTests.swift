@@ -120,7 +120,8 @@ struct InviteClaimViewModelTests {
     @Test(
         "maps every claim outcome without crashing",
         arguments: [
-            InviteClaimOutcome.paired, .alreadyBuddies, .blocked, .expired, .revoked, .claimed, .unknown, .ownInvite
+            InviteClaimOutcome.paired, .alreadyBuddies, .blocked, .expired, .revoked, .claimed, .unknown, .ownInvite,
+            .circleFull, .buddyCircleFull
         ]
     )
     @MainActor

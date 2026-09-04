@@ -182,6 +182,22 @@ struct InviteClaimView: View {
             terminal(icon: "person.crop.circle.badge.xmark", title: "This link has already been used", message: "Ask for a new invite link.", primaryTitle: "Done", primaryAction: onFinished)
         case .ownInvite:
             terminal(icon: "link", title: "This is your own link", message: "Share it with someone else to add them as a buddy.", primaryTitle: "Done", primaryAction: onFinished)
+        case .circleFull:
+            terminal(
+                icon: "person.2.badge.minus",
+                title: "Your circle is full",
+                message: "Remove a buddy in Settings before joining someone new.",
+                primaryTitle: "Done",
+                primaryAction: onFinished
+            )
+        case .buddyCircleFull:
+            terminal(
+                icon: "person.2.badge.minus",
+                title: "This circle is full",
+                message: "Ask them to make room, then try this link again.",
+                primaryTitle: "Done",
+                primaryAction: onFinished
+            )
         case .unknown:
             terminal(icon: "questionmark.circle", title: "This link isn't valid", message: "Double-check the link, or ask for a new one.", primaryTitle: "Done", primaryAction: onFinished)
         }

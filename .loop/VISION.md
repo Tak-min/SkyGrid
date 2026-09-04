@@ -466,11 +466,20 @@ a separate session.
       other CRITICAL/HIGH. 227/227 unit tests green, `xcodebuild test` re-run by the main loop
       after all fixes including the onboarding one found afterward by a second self-grep.
       **Still open**:
-      the buddy-refresh read fan-out bound (still capped at the pre-N-way limit — needs its own
-      verification pass reading `TodayViewModel`'s buddy-refresh path) and tri-state preservation
-      per buddy under N members (needs a dedicated pass through `BuddyRow`/`revealState` once the
-      fan-out bound is confirmed correct, since tri-state depends on what data actually gets
-      fetched per buddy). Not deployed.
+      the buddy-refresh read fan-out bound and tri-state preservation per buddy under N members.
+      **Correction (2026-09-04, independent review): do not simply prefix `TodayViewModel` at
+      the 12 tiles in `BuddyRow`.** `RevealSignal.buddyStatuses` also feeds every row in the
+      Buddies tab, while the tab itself renders all accepted edges. Prefixing the fetch would make
+      buddy 13+ falsely appear `.sealed` and could suppress `mutualRevealUnlocked` when only a
+      later buddy has posted. This is reachable today because the server cap only covers invite
+      claims; the direct handle-request/accept path is not yet cap-authoritative. The next safe
+      design must either make both creation paths server-authoritative first, or separate bounded
+      Today-strip reads from full relationship-state reads without treating unobserved state as
+      absence. **Partial 3 (2026-09-04):** client `InviteClaimOutcome` now recognizes the already
+      committed server outcomes `circleFull` / `buddyCircleFull` and renders retryable, truthful
+      terminal states instead of degrading them to “This link isn't valid”.
+      `InviteClaimViewModelTests` covers both outcomes (10 outcomes total; focused suite green).
+      Neither committed backend change is deployed.
 - [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
       whether missed days cluster on weekends from existing post data (Bet 6 exit condition) —
       if uniform, this may not be the right lever.

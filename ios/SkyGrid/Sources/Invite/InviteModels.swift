@@ -25,6 +25,13 @@ enum InviteClaimOutcome: String, Sendable {
     case claimed
     case unknown
     case ownInvite
+    /// The claimant already has the maximum number of accepted buddies. This is
+    /// distinct from `.unknown`: the invite remains valid and can be retried after
+    /// a slot is freed.
+    case circleFull
+    /// The inviter's circle is full. Do not expose their identity beyond the link
+    /// the claimant intentionally opened.
+    case buddyCircleFull
 }
 
 /// The caller's own invite link, from `createInvite`.
