@@ -222,3 +222,8 @@ for more instances — that build fails, but the failure is the **Firebase SDK d
 (FirebaseStorage/FirebaseAuth 12.17.0 crashing the Swift compiler under strict mode), not a
 SkyGrid-side issue — correctly scoped as out of this item's boundary, not something to chase
 further right now.
+
+## Batch 6 (sent 2026-09-04 — resuming 5-min cadence after the out-of-loop browser task above)
+
+See message text below (sent verbatim to Codex): browser-verified Analytics status + the
+manual-flag-flip proposal, sourced from the "Out-of-loop task" section above.
