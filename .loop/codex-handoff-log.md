@@ -328,3 +328,26 @@ InviteLinkViewModel.swift, MilestoneView.swift, onboarding files, new Onboarding
 OnboardingFlowTests.swift, new PRODUCT-MODEL.md) spanning batches 3-9. Not touching any of it
 myself -- that's Codex's own commit to make when it judges a checkpoint appropriate, and touching
 it risks stepping on in-progress work. Will only ever `git add`/commit this log file from my side.
+
+**Batch 9 result (received 2026-09-04):** Resolved — **Simulator-only, not a production bug.**
+The 403 traces to `exchangeDebugToken`, used only by `AppCheckDebugProviderFactory` under
+`#if DEBUG && targetEnvironment(simulator)` (`AppDelegate.swift:42`); the Simulator build has a
+debug token that's simply unregistered/invalid in Firebase Console's App Check settings for this
+app. Real devices (both Debug and Release) go through a completely different path,
+`AppAttestProviderFactory` (`AppDelegate.swift:56`), backed by a real App Attest production
+entitlement already present in `SkyGrid.entitlements:11`. No evidence real users are rejected;
+priority is "restore Simulator dev environment," not "fix broken monetization." Codex recommends
+registering the Simulator's debug token in Firebase Console → App Check for the iOS app (I can
+do this via browser once Codex hands me the actual token value from a simulator log), and
+suggests a short real-device smoke test (anonymous sign-in → Settings → paywall) as the one
+still-unconfirmed step, since the production entitlement path hasn't been directly exercised
+end-to-end, only architecturally verified. No code changes made.
+
+## Batch 10 (sent 2026-09-04 — 5 min cadence continues)
+
+Small, low-risk item to keep momentum cheap this cycle (session cost is running high; picking
+something quick rather than another investigation): the one remaining B6-family disabled-button
+contrast issue from the original assessment — `SkySecondaryButtonStyle`'s disabled state still
+uses a flat `.opacity(0.42)` (`ViewModifiers.swift:86`), the same weak-contrast failure mode the
+primary button style was already fixed for. Asked Codex to bring it in line with
+`SkyPrimaryButtonStyle`'s fix (unfilled stroked capsule) for consistency.
