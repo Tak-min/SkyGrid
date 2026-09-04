@@ -65,10 +65,15 @@ struct BuddiesView: View {
                             revealState: revealState(for: otherUid)
                         )
                         .contentShape(Rectangle())
-                        .contextMenu {
+                        // Safety is an overflow action on the relationship, not its
+                        // primary destination (dev-note §7 P0) — a swipe action keeps
+                        // it one gesture away without making Block/Report the thing a
+                        // tap on the row would ever lead to.
+                        .swipeActions(edge: .trailing) {
                             Button("Block or report", systemImage: "hand.raised") {
                                 safetyRoute = BuddySafetyRoute(subjectUid: otherUid)
                             }
+                            .tint(SGT.ink3)
                         }
                         .listRowBackground(SGT.fill)
                         .listRowSeparator(.hidden)

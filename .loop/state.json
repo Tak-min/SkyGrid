@@ -1,1 +1,1 @@
-{"iteration":1,"status":"working","verify_rc":1,"same_count":1}
+{"iteration": 2, "status": "Buddies row: moved Block/Report to swipeActions; reverted a buddy-streak display after swift-reviewer caught streakCurrent is dead-in-production data. Buddies redesign item stays unchecked pending a real streak data source decision.", "verify_rc": 1, "same_count": 1}

@@ -372,6 +372,33 @@ a separate session.
       handle) leads, explainer card collapses once user has ≥1 buddy, row's primary destination
       becomes the relationship not Safety/Block, empty state's single action is the invite link
       (dev-note §7 P0).
+      **Status (2026-09-04, Sonnet):** re-verified against the current tree before touching
+      anything — 3 of 4 sub-items were already shipped by an earlier interactive session
+      (`0893105` "invert Buddies tab hierarchy to lead with relationship state"): the explainer
+      card already collapses to one line once `accepted` is non-empty (`BuddyRitualCard`,
+      `isCollapsed: !viewModel.accepted.isEmpty`), the empty state's single action is already
+      the invite link/handle-claim card at the top of "YOUR CIRCLE" (not a 3-step explainer),
+      and rows already carry handle + tri-state. This iteration moved Block/Report from a
+      long-press `.contextMenu` to a `.swipeActions(edge: .trailing)` button so Safety is
+      unambiguously an overflow gesture, never the row's tap destination — swift-reviewer
+      (sonnet) confirmed the swipeActions placement/usage is correct, no CRITICAL/HIGH there.
+      **Still open, and the reason this stays unchecked — streak has no real data source**:
+      attempted adding `profile.streakCurrent` to the row; swift-reviewer (sonnet) caught a
+      CRITICAL finding before commit — `StreakWindow.swift:6-12` documents that
+      `UserProfile.streakCurrent` is **permanently 0 in production** (`firestore.rules` only
+      allows `displayName`/`timezone`/`wakeGoalMinutes` on `/users/{uid}` updates, no Cloud
+      Function ever computes/writes it; `TodayViewModel` works around this today by computing
+      the *signed-in user's own* streak client-side from their own always-readable post
+      history). A buddy's streak has no equivalent path yet: computing it client-side would mean
+      observing each buddy's post history, which is gated by the mutual-reveal rule
+      (`hasPostedFor(localDate)`) and isn't simply "read more of what Today already reads" — it's
+      new read-fanout and gate-interaction design, out of scope for this smallest-step iteration.
+      Reverted the streak UI before commit rather than ship a permanently-0 display. **Real next
+      step**: either (a) a Cloud Function that computes/writes `streakCurrent` server-side on
+      post-create (would need a rules change to allow that server-owned write, which already
+      exists in principle — the rules comment says "streak values are server-owned", just nothing
+      writes them), or (b) accept per-buddy streak is out of scope for the tri-state row and drop
+      it from the P0 spec. Needs a product-owner call, not a Sonnet implementation guess.
 - [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
       photos, not averaged color, since commit `82f39a3`); add one step showing the mutual-reveal
       mechanic visually; add a skippable invite step at the end; cut `pace`/`frequency` steps to
