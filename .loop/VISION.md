@@ -227,6 +227,40 @@ reviews this loop's results.
       3 new), Debug + Release builds green. `.loop/design-lint.json` re-baselined
       (`font_literal` 21→23, from 2 new icon-glyph `.font(.system(size:...))` declarations —
       same existing pattern as `SkyGridView.swift`'s other icon-only symbols, not a new style).
+- [x] Rest-day recovery redesign + `firestore.rules` `localDate` integrity hole (Opus consult
+      Item 2, 2026-09-04, implemented directly by Sonnet — Codex was rate-limited). Two
+      independent fixes, both committed as `3211577`:
+      1. `RestDayPolicy` rewritten from a dead, dangerous
+         `hasRestDayAvailable(usedRestDaysThisWeek:isPro:)` (never wired to production; would
+         have made a Pro streak unfalsifiable and fed a *current* entitlement into a
+         *historical* calculation) to a pure `exemptDays(postedDays:today:)`: one
+         entitlement-independent constant (1/week, same for every account), fixed
+         Monday-Sunday calendar-week blocks (never a sliding window), zero persistence. Wired
+         into `TodayViewModel.observeHistory` (previously always `exemptDays: []`). Legal/
+         support copy (3 files) corrected — dropped the false "unlimited on Pro" claim.
+      2. `firestore.rules`: `posts/{localDate}`'s `create` rule validated `capturedAt`/
+         `uploadedAt` against server time but never constrained the `localDate` path segment
+         itself — a client could backfill an arbitrary past day. Added `isRecentLocalDate`,
+         verified against the real Firestore emulator (38/38 `rules-tests` green). A
+         product-owner security review of this specific change found HIGH-1 (asymmetric +2
+         day future leniency — **explicitly left as-is per product-owner instruction**),
+         MEDIUM-1 (no format validation, fixed with `localDate.matches(...)`), and HIGH-2 (a
+         pending-upload row whose `localDate` ages past the window would show a permanently-
+         lying "Retry now" once deployed) — fixed client-side with `PostCreateWindowPolicy` +
+         `UploadQueue.discardStaleUpload` + an honest `PostStatusBanner` message, re-verified
+         by a second adversarial `swift-reviewer` pass per explicit product-owner request
+         (verdict: FIXED, hand-derivation confirmed zero false-negatives). **Deployed to
+         production** (`firebase deploy --only firestore:rules --project sky-grid-app`,
+         2026-09-04) only after both fixes were verified. 227/227 tests green (was 219),
+         Debug + Release builds green.
+      **Follow-up (non-blocking, found by the HIGH-2 re-verification pass):** if a stale
+      unrecoverable row and a fresh genuinely-retryable failed row are pending
+      simultaneously, `PostStatusBanner`'s single-banner-for-everything design (pre-existing
+      pattern — `postConflict` already overrides everything the same way) hides the fresh
+      row's "Retry now" button behind the stale row's "Remove" message until the stale row is
+      discarded. Not a recurrence of HIGH-2's harm (never falsely claims recoverability), just
+      a usability rough edge — surface both messages, or add a secondary retry action,
+      whenever this area is next touched.
 - [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
       actions stack, next to "Share this morning" (dev-note §7, P0) — cheapest test for whether
       Stage 2→3a placement, not desire, is the binding constraint.
