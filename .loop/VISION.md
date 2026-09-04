@@ -328,6 +328,17 @@ reviews this loop's results.
       (`TodayView.swift:310-313`, `BuddiesView.swift:212-224`, onboarding), server-side circle
       cap (~8) enforced in `claimInviteCode`, bound buddy-refresh read fan-out to the same 12 the
       UI shows, preserve `sealed`/`posted`/`notYet` tri-state per buddy.
+      **Partial (2026-09-04, Sonnet): the server-side circle cap slice is done and committed
+      (`cdcaa2d`).** `MAX_ACCEPTED_BUDDIES = 8` + pure `applyCircleCap` (`functions/src/
+      invites.ts`) wired into `claimInvite`'s existing transaction (`inviteStore.ts`) via two
+      new `transaction.get(query)` reads, gated on the cap being on circle size *after* the
+      claim (7 existing → may gain an 8th; 8 existing → may not gain a 9th). New
+      `circleFull`/`buddyCircleFull` outcomes distinguish whose circle is full for future
+      client copy. 5 new pure tests + 7 new emulator tests, independently re-verified by the
+      main loop (not just the implementing agent's own report): 66/66 pure, 47/47 emulator,
+      build+lint clean. **Still open**: the copy changes (`TodayView.swift`/`BuddiesView.swift`/
+      onboarding), the buddy-refresh fan-out bound, and tri-state preservation — deliberately
+      deferred until the copy work can draw on the design-research pass above. Not deployed.
 - [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
       whether missed days cluster on weekends from existing post data (Bet 6 exit condition) —
       if uniform, this may not be the right lever.
