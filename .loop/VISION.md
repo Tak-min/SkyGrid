@@ -488,9 +488,15 @@ a separate session.
       Implement as an in-app shutter precondition on the camera screen (e.g. CoreMotion stand-up
       gate) instead, behind a setting; do not touch the AlarmKit dismissal path (dev-note §5,
       Bet 4).
-- [ ] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
+- [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
-      item above) and re-verify thumbnail legibility empirically if touched.
+      item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
+      2026-09-04:** rebuilt the DEBUG UI-audit host, captured `share-year` and `share-morning`
+      on iPhone 17 (`screenshots/ui-audit-share-year-current.png`,
+      `screenshots/ui-audit-share-morning-current.png`), then inspected 300px reductions. The
+      annual card retains its `20` focal number, recognizable mosaic, Sky Grid/App Store footer;
+      the morning card retains its `18` focal number and photo-first hierarchy. No redesign was
+      required.
 - [x] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_2026-09-04.md`). Both live
       listings actually fetched and screenshotted (SkyGrid `id6796222704`, Erly
       `id6751428380`), not guessed. **Two urgent findings surfaced to the product owner
