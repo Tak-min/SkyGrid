@@ -55,6 +55,21 @@ export const INVITE_LINK_BASE = "https://skygrid.my/i/";
  */
 export const MAX_OPEN_INVITES_PER_USER = 3;
 
+/**
+ * The N-way circle cap (see `dev-notes/virality-stickiness-assessment_2026-09-04.md` §6):
+ * the pairwise `friendships/{pairId}` model already supports any number of buddies per
+ * user, so nothing stops an unbounded circle without a server-side limit. This is that
+ * limit — a growth/product decision, not a technical one, so it lives in the callable
+ * transaction rather than `firestore.rules` (Rules cannot count a user's edges without a
+ * fan-out counter).
+ *
+ * The cap is on the count *after* the claim succeeds, not before: a user with exactly 7
+ * accepted, unblocked buddies may still gain an 8th, but not a 9th. This is what "cap ~8"
+ * in the design note cashes out to — 8 is the maximum circle size a claim may produce,
+ * never a threshold that must already be clear beforehand.
+ */
+export const MAX_ACCEPTED_BUDDIES = 8;
+
 export type InviteStatus = "open" | "claimed" | "revoked";
 
 export interface InviteRecord {
@@ -105,7 +120,12 @@ export type ClaimOutcome =
   | "revoked"
   | "claimed"
   | "unknown"
-  | "ownInvite";
+  | "ownInvite"
+  /** The *claimer's* circle is already at `MAX_ACCEPTED_BUDDIES` — theirs to fix (remove a buddy). */
+  | "circleFull"
+  /** The *inviter's* circle is already at `MAX_ACCEPTED_BUDDIES`. Named after `buddyUid`/`buddyHandle`
+   * on `ClaimResult`, which likewise mean "the other party, from the claimer's point of view". */
+  | "buddyCircleFull";
 
 /** What the caller's side of the pair looks like before the claim is applied. */
 export interface ExistingFriendship {
@@ -227,6 +247,40 @@ export function resolveClaim(input: {
     return { outcome: "paired", consumesInvite: true, friendshipAction: "promote" };
   }
   return { outcome: "paired", consumesInvite: true, friendshipAction: "create" };
+}
+
+/**
+ * Overrides a `create`/`promote` decision with a refusal when either side's circle would
+ * exceed `MAX_ACCEPTED_BUDDIES` after this claim. Kept as a second, pure function rather
+ * than folded into `resolveClaim` because the counts it needs come from two extra
+ * Firestore queries that only the `friendshipAction !== "none"` branch ever needs to run —
+ * `claimInvite` calls `resolveClaim` first and only pays for those reads, and for this
+ * check, when there is an edge to actually cap.
+ *
+ * `*AcceptedCount` is the count *before* this claim (accepted and unblocked friendships,
+ * i.e. what `firestore.rules`' `activeBuddy()` would also treat as a real buddy) — the
+ * `+ 1` below accounts for the edge this claim is about to create or promote.
+ *
+ * Checked in a fixed order — claimer's circle before the inviter's — because a claimer
+ * whose own circle is full has an immediate remedy (remove one of their own buddies) that
+ * an inviter's fullness does not offer them, so it is the more actionable thing to report
+ * first when (rarely) both are true at once.
+ */
+export function applyCircleCap(input: {
+  decision: ClaimDecision;
+  inviterAcceptedCount: number;
+  claimerAcceptedCount: number;
+}): ClaimDecision {
+  const { decision, inviterAcceptedCount, claimerAcceptedCount } = input;
+  if (decision.friendshipAction === "none") return decision;
+
+  if (claimerAcceptedCount + 1 > MAX_ACCEPTED_BUDDIES) {
+    return { outcome: "circleFull", consumesInvite: false, friendshipAction: "none" };
+  }
+  if (inviterAcceptedCount + 1 > MAX_ACCEPTED_BUDDIES) {
+    return { outcome: "buddyCircleFull", consumesInvite: false, friendshipAction: "none" };
+  }
+  return decision;
 }
 
 /**

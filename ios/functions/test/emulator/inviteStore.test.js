@@ -12,7 +12,7 @@ const {
   previewInviteCode,
   revokeInviteDocument,
 } = require("../../lib/inviteStore.js");
-const { INVITE_TTL_MS } = require("../../lib/invites.js");
+const { INVITE_TTL_MS, MAX_ACCEPTED_BUDDIES } = require("../../lib/invites.js");
 const { RATE_LIMITS } = require("../../lib/rateLimit.js");
 
 /**
@@ -38,6 +38,34 @@ async function reset() {
 
 async function makeUser(uid, handle) {
   await db.collection("users").doc(uid).set({ handle, displayName: "Sky Grid member" });
+}
+
+function pairKey(first, second) {
+  return first < second ? `${first}_${second}` : `${second}_${first}`;
+}
+
+/**
+ * Writes an already-accepted, unblocked friendship straight to Firestore — the fixture a
+ * circle-cap test needs is a pre-existing count of real buddies, not the invite flow that
+ * would normally have produced them one at a time.
+ */
+async function makeAcceptedFriendship(uidA, uidB) {
+  await db.collection("friendships").doc(pairKey(uidA, uidB)).set({
+    members: [uidA, uidB].sort(),
+    status: "accepted",
+    requestedBy: uidA,
+    createdAt: admin.firestore.Timestamp.fromMillis(NOW - 1000),
+    blockedBy: [],
+  });
+}
+
+/** Fills `uid`'s circle with `count` distinct, unrelated accepted buddies. */
+async function fillCircle(uid, count, prefix) {
+  for (let index = 0; index < count; index += 1) {
+    const otherUid = `${prefix}${index}`;
+    await makeUser(otherUid, `${prefix}${index}_handle`);
+    await makeAcceptedFriendship(uid, otherUid);
+  }
 }
 
 test("a claimed invite writes a friendship the security rules would accept", async () => {
@@ -131,6 +159,148 @@ test("a pending request is promoted rather than duplicated", async () => {
   assert.equal(
     (await db.collection("friendships").doc("claimer_creator").get()).data().status,
     "accepted"
+  );
+});
+
+test("a claim that would push the claimer's circle past the cap is refused, and the code survives", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+
+  assert.equal(result.outcome, "circleFull");
+  assert.equal(
+    (await db.collection("invites").doc(created.code).get()).data().status,
+    "open",
+    "a refused claim must not burn the code"
+  );
+  assert.equal(
+    (await db.collection("friendships").doc("claimer_creator").get()).exists,
+    false,
+    "no friendship may be written for a refused claim"
+  );
+});
+
+test("a claim that would push the inviter's circle past the cap is refused, and the code survives", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("creator", MAX_ACCEPTED_BUDDIES, "creator_buddy");
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+
+  assert.equal(result.outcome, "buddyCircleFull");
+  assert.equal(
+    (await db.collection("invites").doc(created.code).get()).data().status,
+    "open",
+    "a refused claim must not burn the code"
+  );
+  assert.equal(
+    (await db.collection("friendships").doc("claimer_creator").get()).exists,
+    false,
+    "no friendship may be written for a refused claim"
+  );
+});
+
+test("a refused claim can still be claimed later once a buddy is removed", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const refused = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+  assert.equal(refused.outcome, "circleFull");
+
+  // Simulate the claimer removing one buddy, freeing a slot.
+  await db.collection("friendships").doc(pairKey("claimer", "claimer_buddy0")).delete();
+
+  const retried = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW + 1000 });
+  assert.equal(retried.outcome, "paired");
+  assert.equal(
+    (await db.collection("invites").doc(created.code).get()).data().status,
+    "claimed"
+  );
+});
+
+test("the cap is on the circle size after the claim, not before: 7 existing buddies may still gain an 8th", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES - 1, "claimer_buddy");
+  await fillCircle("creator", MAX_ACCEPTED_BUDDIES - 1, "creator_buddy");
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+
+  assert.equal(result.outcome, "paired", "8 is the max circle size after the claim, not before it");
+  assert.equal(
+    (await db.collection("friendships").doc("claimer_creator").get()).data().status,
+    "accepted"
+  );
+});
+
+test("exactly 8 existing buddies on either side refuses the 9th", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+  await fillCircle("creator", MAX_ACCEPTED_BUDDIES, "creator_buddy");
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+
+  assert.equal(result.outcome, "circleFull");
+  assert.equal((await db.collection("friendships").doc("claimer_creator").get()).exists, false);
+});
+
+test("a blocked buddy does not count against the circle cap", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES - 1, "claimer_buddy");
+  await makeUser("claimer_blocked", "claimer_blocked_handle");
+  await db.collection("friendships").doc(pairKey("claimer", "claimer_blocked")).set({
+    members: ["claimer", "claimer_blocked"].sort(),
+    status: "accepted",
+    requestedBy: "claimer",
+    createdAt: admin.firestore.Timestamp.fromMillis(NOW - 1000),
+    blockedBy: ["claimer"],
+  });
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+
+  // The claimer has MAX_ACCEPTED_BUDDIES - 1 real buddies plus one blocked one; the
+  // blocked edge must not count toward the cap or this would wrongly refuse.
+  assert.equal(result.outcome, "paired");
+});
+
+test("promoting a pending request into the 8th accepted buddy still respects the cap", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+  await db.collection("friendships").doc("claimer_creator").set({
+    members: ["claimer", "creator"],
+    status: "pending",
+    requestedBy: "claimer",
+    createdAt: admin.firestore.Timestamp.fromMillis(NOW - 1000),
+    blockedBy: [],
+  });
+
+  const created = await createInviteForUser(db, "creator", NOW);
+  const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
+
+  assert.equal(result.outcome, "circleFull");
+  assert.equal(
+    (await db.collection("friendships").doc("claimer_creator").get()).data().status,
+    "pending",
+    "a refused promotion must leave the pending request untouched"
   );
 });
 

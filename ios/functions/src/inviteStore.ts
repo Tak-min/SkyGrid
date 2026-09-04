@@ -1,10 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { Timestamp, type Firestore } from "firebase-admin/firestore";
+import { Timestamp, type Firestore, type QuerySnapshot } from "firebase-admin/firestore";
 import {
   INVITE_LINK_BASE,
   type ClaimOutcome,
   type FriendshipSummary,
   type InviteRecord,
+  applyCircleCap,
   existingFriendshipFrom,
   generateInviteCode,
   inviteDocumentFields,
@@ -285,6 +286,19 @@ export async function createInviteForUser(
   throw new CodeExhaustionError("Could not draw an unused invite code.");
 }
 
+/**
+ * How many of a `.where("status", "==", "accepted")` query's results are also unblocked —
+ * the same "real buddy" predicate as `activeBuddy()` in `firestore.rules` and
+ * `inviteGeneration` above. Lives here rather than in `invites.ts` because it reads a raw
+ * `QuerySnapshot`, which that module stays free of on purpose.
+ */
+function countUnblockedAcceptedFriendships(snapshot: QuerySnapshot): number {
+  return snapshot.docs.reduce((count, document) => {
+    const blockedBy = document.data().blockedBy;
+    return Array.isArray(blockedBy) && blockedBy.length === 0 ? count + 1 : count;
+  }, 0);
+}
+
 function isAlreadyExists(error: unknown): boolean {
   // gRPC status 6 = ALREADY_EXISTS.
   return (error as { code?: number })?.code === 6;
@@ -380,7 +394,27 @@ export async function claimInvite(
       throw new MalformedFriendshipError("Existing friendship data is malformed.");
     }
 
-    const decision = resolveClaim({ invite, nowMs, callerUid, existingFriendship });
+    const preliminaryDecision = resolveClaim({ invite, nowMs, callerUid, existingFriendship });
+
+    // Only `create`/`promote` ever add an accepted edge, so only those branches pay for
+    // the two extra queries the cap needs. Both run before any write in this transaction,
+    // which Firestore transactions require of every read regardless.
+    let decision = preliminaryDecision;
+    if (preliminaryDecision.friendshipAction !== "none") {
+      const acceptedQuery = (uid: string) =>
+        transaction.get(
+          db.collection(FRIENDSHIPS).where("members", "array-contains", uid).where("status", "==", "accepted")
+        );
+      const [inviterFriendships, claimerFriendships] = await Promise.all([
+        acceptedQuery(invite.creatorUid),
+        acceptedQuery(callerUid),
+      ]);
+      decision = applyCircleCap({
+        decision: preliminaryDecision,
+        inviterAcceptedCount: countUnblockedAcceptedFriendships(inviterFriendships),
+        claimerAcceptedCount: countUnblockedAcceptedFriendships(claimerFriendships),
+      });
+    }
 
     if (decision.friendshipAction === "create") {
       const members = [invite.creatorUid, callerUid].sort();
