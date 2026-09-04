@@ -550,3 +550,87 @@ Sent all three to an Opus architect agent (background) for critical verdict + mi
 Running in background. Reuses `ShareCardRenderer.renderMorning` + `ShareSheet`, same pattern
 `MilestoneView.swift` already uses for its own share button — makes every day shareable, not
 just milestone days. Result pending.
+
+## Batch 17 — verified + shipped (2026-09-04)
+
+Codex hit its own usage limit mid-batch (before verifying/reporting), but had already made
+complete, correct edits on disk. Verified independently: `MorningShareAnalytics.swift` existed
+but was never registered in `project.pbxproj` (this project uses XcodeGen — `ios/project.yml` —
+not Xcode 16 synchronized groups; a new file needs `xcodegen generate`, not just disk
+existence). Ran that, then confirmed BUILD SUCCEEDED + 212/212 tests. Committed `5766c96`.
+
+**Note for future batches: Codex's own usage limit (separate from this Claude session's) is a
+recurring constraint** — it hit the wall again this session (previously flagged in the
+"Session close" section above too). When Codex reports a usage-limit failure mid-task, check
+`git status` before assuming nothing happened — it may have completed real, correct work before
+hitting the wall, just without its own final verification step.
+
+## Opus architecture consult — 3 user-proposed features (2026-09-04)
+
+Per explicit user process constraint this session: Opus for planning/critical-analysis only,
+implementation goes to Sonnet or Codex. Full decision doc below (condensed); read this before
+sending related Codex batches so scope isn't rediscovered.
+
+### Item 1 — Own-post optimistic rendering on Grid
+**Verdict:** the gap is real (`GridArchiveViewModel` sources display purely from
+`postRepository.observePosts`, `TodayView.swift:200` already polls the outbox and shows
+`PostStatusBanner` but Grid doesn't) but the stated cause ("server round-trip latency") is
+**unverified and likely wrong for the common case** — Firestore's offline-persistence snapshot
+listeners normally echo local writes with `hasPendingWrites` near-instantly; the more likely
+real behavior is the known App Check 403 **rejecting the write server-side and Firestore
+rolling back the optimistic local mutation** (post appears then vanishes), which is a
+different bug needing a different fix (surface the failure, not hide it behind fake optimism).
+**Design:** merge SwiftData outbox into `GridArchiveViewModel` keyed by `LocalDate`, Firestore
+doc always wins, 3 honest visual states (in-flight / retryable-failure / conflict-needs-review)
+mapped 1:1 with `PostStatusBanner`'s existing `UploadState` handling — never a 4th "looks
+confirmed" state. Pending cells must NOT count toward Grid counter/streak/share card. Do NOT
+extend this to buddy-side data — the mutual-reveal gate (`firestore.rules:118`) is a privacy
+boundary; even "they've posted, revealing soon" leaks metadata the rules deliberately withhold.
+**Codex batch drafted** (2-phase: verify Firestore latency-compensation behavior first, then
+implement) — ready to send next Codex session.
+
+### Item 2 — Streak rest-day recovery, free vs. paid
+**Verdict — reject two things explicitly:**
+- **Backfill (taking a makeup photo for a missed day) must be refused outright** — it makes
+  every Grid cell an unfalsifiable claim and could retroactively satisfy the mutual-reveal gate
+  for a day that didn't really happen together. The existing `exemptDays` design (forgive,
+  never increment, no photo) is the correct shape — keep it.
+- **`Pro = unlimited rest days` (current `RestDayPolicy.hasRestDayAvailable` code) is dangerous
+  and technically buggy**, not just a monetization-taste issue: an unlimited exemption makes a
+  Pro streak unfalsifiable (sells away the record's meaning), AND feeding a *current*
+  entitlement into a *historical* streak calculation means a lapsed subscription retroactively
+  un-exempts past days and collapses the streak. Recommend a single entitlement-independent
+  constant (1/week, no Pro differentiation) unless overridden; any override must be an absolute
+  cap, never unlimited.
+- **The persistence question (where does `usedRestDaysThisWeek` live) dissolves** if rest days
+  are redesigned as a pure derived function of `postedDays` over fixed calendar-week blocks
+  (not a sliding window) — zero Firestore field, zero `/users/{uid}` rules change, zero forgeable
+  client counter, computed the same way the already-accepted client-side streak is.
+- **New integrity hole found, independent of this feature:** `firestore.rules:120-129`
+  constrains `capturedAt`/`uploadedAt` against server time but places **no constraint on the
+  `{localDate}` path segment itself** — a client can currently create a post doc for an
+  arbitrary past day. Propose bounding `localDate` to ±1 day of server date (not deployed,
+  needs its own review).
+- **Compliance finding:** `ios/legal/site/index.html:23`, `ios/legal/support.md:11`,
+  `waitlist/site/support.html:23` already publicly claim "one Rest Day per week for free
+  (unlimited on Pro)" — a live, currently-false claim about a 100%-dormant feature. Whatever
+  gets implemented, these need to match it.
+**Codex batch drafted** — ready to send next Codex session.
+
+### Item 3 — Automated design/UX scoring loop
+**Verdict:** the "Lighthouse" framing doesn't hold — Lighthouse measures, an LLM screenshot
+score opines (high variance, Goodhart risk, and currently unrunnable anyway since Simulator is
+blocked past onboarding and the physical device has no screenshot path here). **Split into two
+tiers:** Tier A = deterministic static-analysis lint against this project's own
+`~/.claude/rules/ecc/swift/ui-design.md` conventions (color emoji as structural icons, colors/
+spacing/fonts not routed through `SGT`/`SGSpacing`/`SGFont`, duplicated glass-panel boilerplate,
+icon-only buttons missing `.accessibilityLabel`) — buildable **right now**, no screenshots
+needed, outputs `.loop/design-lint.json` + a delta each run. Tier B = pairwise (not absolute)
+screenshot scoring, explicitly **blocked and not to be started** until the App Check/screenshot
+issues are resolved. **Codex batch for Tier A only drafted** — ready to send.
+
+**Recommended order:** Item 1 (loses evidence of an unrepeatable moment) → Item 2 (live false
+claim + real rules hole) → Item 3 (tooling, cheap half only available now).
+
+Codex hit its own usage-limit wall this session (see batch 17 note above) — retry after
+2026-09-04 17:04 JST per its own error message. These three batches are queued for then.
