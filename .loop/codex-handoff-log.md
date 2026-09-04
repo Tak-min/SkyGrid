@@ -280,3 +280,30 @@ the split.
 navigation in the Simulator is itself worth a dedicated item later (it's presumably not new to
 today, but it's the first time it actually blocked reaching a screen during verification work) --
 hold off sending it until the Analytics-delivery thread is resolved one way or the other.
+
+**Batch 8 result (received 2026-09-04, 4m01s):** Good, rigorous split-testing. Confirmed App Check
+is NOT the cause: `firebaseappcheck.googleapis.com` still 403s (that's a separate gate on
+Firestore etc.), but Analytics' own collection endpoint (`app-analytics-services.com/a`) returned
+HTTP 204 at 13:17:00 JST -- network reachability and endpoint-level acceptance both confirmed, not
+just a local log claim this time. Relaunched with the correct `-FIRDebugEnabled` flag this time
+(SDK log confirmed "debug mode enabled, Analytics collection enabled"), fired
+`skygrid_paywall_presented` again from that debug-launched process without detaching lldb
+immediately. Codex's own instruction: if DebugView still doesn't show it, treat that as a
+**Console-side project/data-stream display/matching issue**, not a delivery problem -- and
+explicitly said not to use the Realtime "active users" metric for this judgment (DebugView is the
+right tool for a debug-launched single event).
+
+**My re-check (2026-09-04, 13:20-13:21 JST, ~3-4 min after the 13:17 event, checked twice
+including a hard page reload):** DebugView **still completely empty** -- "Debug Device: 0", "0
+TOTAL" events in the last 30 minutes, "Waiting for debug events." Not just "no matching event
+found" but literally zero registered debug devices at all, which is a stronger negative than
+"delivered but not displayed under this project/stream" -- if a debug-mode device had connected at
+all in the last 30 min, the device count badge would be >0 regardless of event name.
+
+This sub-thread (Analytics event delivery verification) has now gone 3 rounds
+(batch7 fire -> not visible; batch8 investigate+refire -> still not visible) without a resolved
+verification. Per this loop's own stuck-thread convention, flagging to the user now rather than
+continuing to grind on it, while the rest of the loop moves on to other items. Not closing this
+out as fixed or broken -- it stays an open item, revisit later with fresh eyes (possibly a real
+device rather than Simulator, since Simulator networking/entitlements have their own quirks
+unrelated to anything code-side).
