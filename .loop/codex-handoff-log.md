@@ -365,3 +365,20 @@ original assessment's P2 note) frames the year as a completion percentage nobody
 better ("N morning skies photographed this year", `SkyGridExportView.swift:99-122`) -- asked
 Codex to match that framing in the live Grid screen for consistency, i.e. drop the `/365`
 denominator and just show the count.
+
+**Batch 11 result (received 2026-09-04):** Done. `SkyGridView.swift` visual counter changed from
+`"{postedCount} / {totalDays}"` to just `"{postedCount}"` (removed the now-unused `totalDays`
+computed property entirely rather than leaving dead code); VoiceOver accessibility label updated
+to match the share card's exact phrasing ("N morning skies photographed this year") for
+consistency between visual and accessible experience. iOS Simulator build green, `git diff --check`
+clean.
+
+## Batch 12 (sent 2026-09-04 — 5 min cadence continues)
+
+Moving to a slightly larger item from the original design assessment (P1): Today's pre-capture
+card currently renders a generic soft gradient with a blurred white circle
+(`TodayView.swift:191-207, 380-386`), which is the one "low stopping power" critique that survived
+even after the blank-placeholder bug was fixed. Asked Codex to anchor it in yesterday's actual
+captured photo (heavily darkened/treated) instead, falling back to the current gradient only on
+day one or a cache miss -- the app already loads a similar photo elsewhere (WeekRhythmView,
+BuddyTile) so this should reuse existing loading machinery rather than adding new fetch code.
