@@ -30,6 +30,7 @@ import {
 } from "./inviteStore.js";
 import type { RateLimitedAction } from "./rateLimit.js";
 import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
+import { updateBuddyStreaksForPost } from "./buddyStreakStore.js";
 import { notifyInviterOfClaim } from "./inviteNotificationStore.js";
 import {
   acceptBuddyRequest,
@@ -607,6 +608,33 @@ export const onBuddyPostCreated = onDocumentCreated(
       // so a truly unexpected failure here can never surface as a failed trigger for
       // a post that already succeeded and is not going anywhere.
       logger.error("Unhandled error notifying buddies of a post.", { posterUid, localDate, error });
+    }
+  },
+);
+
+/** Maintains the server-owned pair streak; retries are safe because same-date
+ * deliveries are a no-op and all writes are transactional. */
+export const onPostCreatedUpdateBuddyStreaks = onDocumentCreated(
+  {
+    document: "users/{uid}/posts/{localDate}",
+    region: "asia-northeast1",
+    retry: true,
+  },
+  async (event) => {
+    const { uid: posterUid, localDate } = event.params;
+    try {
+      await updateBuddyStreaksForPost(admin.firestore(), { posterUid, localDate });
+    } catch (error: unknown) {
+      // Log for visibility, then rethrow: `retry: true` above only has an effect if the
+      // handler actually reports failure to Eventarc. Swallowing here would silently drop
+      // a legitimate mutual-day increment on any transient Firestore error, contradicting
+      // this trigger's own idempotent-retry design.
+      logger.error("Unhandled error updating buddy streaks for a post; will retry.", {
+        posterUid,
+        localDate,
+        error,
+      });
+      throw error;
     }
   },
 );

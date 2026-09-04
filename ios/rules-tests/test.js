@@ -446,6 +446,35 @@ describe("firestore.rules buddy request lifecycle", () => {
   });
 });
 
+describe("firestore.rules friendships/{pairId} update — server-owned streak fields (3B)", () => {
+  it("a member cannot write the server-owned streak fields on their own friendship", async () => {
+    await seedFriendship({ status: "accepted" });
+    const ownerDocument = testEnv.authenticatedContext(OWNER).firestore()
+      .collection("friendships").doc(relationshipId(OWNER, BUDDY));
+
+    await assertFails(ownerDocument.update({ streakCurrent: 1 }));
+    await assertFails(ownerDocument.update({ streakLongest: 1 }));
+    await assertFails(ownerDocument.update({ streakLastMutualDate: "2026-03-10" }));
+    // Same diff-based rule already denies this — asserted here explicitly for the
+    // streak fields rather than relying on the general blockedBy-only coverage above.
+    await assertFails(ownerDocument.update({ blockedBy: [OWNER], streakCurrent: 1 }));
+  });
+
+  it("a member can still block/unblock a friendship that already carries streak fields", async () => {
+    await seedFriendship({
+      status: "accepted",
+      streakCurrent: 3,
+      streakLongest: 5,
+      streakLastMutualDate: "2026-03-10",
+    });
+    const ownerDocument = testEnv.authenticatedContext(OWNER).firestore()
+      .collection("friendships").doc(relationshipId(OWNER, BUDDY));
+
+    await assertSucceeds(ownerDocument.update({ blockedBy: [OWNER] }));
+    await assertSucceeds(ownerDocument.update({ blockedBy: [] }));
+  });
+});
+
 describe("firestore.rules handle claims", () => {
   it("allows an authenticated account to create only the default initial profile", async () => {
     const firestore = testEnv.authenticatedContext(HANDLE_CLAIMER).firestore();

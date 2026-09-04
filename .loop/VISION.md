@@ -541,6 +541,30 @@ a separate session.
       3. 3B client display behind the flag, once step 1 has run for ≥1 day of real pair data
          (record §5 point 3 — otherwise every pair shows a flat "counting since today").
       Full test matrices are in the record (§1.6, §2.9) — do not invent a smaller test set.
+      **Step 1 (3B, functions-only) done and committed (2026-09-05, Codex + main-loop fix).**
+      `ios/functions/src/buddyStreaks.ts` (pure `advanceStreak`) +
+      `buddyStreakStore.ts` (transactional Firestore I/O, `transaction.update()` only —
+      never `set()`, so `blockedBy` can't be dropped) + `onPostCreatedUpdateBuddyStreaks`
+      trigger in `index.ts` (region `asia-northeast1`, `retry: true`, matching
+      `onBuddyPostCreated`'s pattern). No `firestore.rules` change (existing
+      `hasOnly(['blockedBy'])` diff rule already denies client writes to the new fields —
+      asserted explicitly by 2 new rules-tests rather than left implicit). No Swift/client
+      change; `FeatureFlags.buddyStreakVisible` (step 3) not created yet.
+      **Two real bugs caught before commit, not just by Codex's own report:**
+      (1) the main loop actually ran the emulator suite (Codex's sandbox couldn't bind the
+      Firestore-emulator ports; the failure was environmental, not "tests pass" as claimed)
+      and caught `advanceStreak`'s reset branch not raising `longest` off 0 on a fresh
+      pair's first mutual day — `Math.max(longest, 1)` fixed, new pure test added for the
+      zero-to-one case. (2) `code-reviewer` (sonnet) caught a HIGH: the trigger's
+      `catch`+`logger.error` swallowed every error instead of rethrowing, so `retry: true`
+      was dead configuration — a transient Firestore error would silently and permanently
+      drop a legitimate mutual-day increment. Fixed by rethrowing after logging.
+      **Test results after both fixes:** 71/71 functions pure tests, 55/55 functions
+      emulator tests (Firestore emulator, `test:emulator`), 40/40 rules-tests (2 new: a
+      member cannot write `streakCurrent`/`streakLongest`/`streakLastMutualDate` directly;
+      a member can still block/unblock a friendship doc that already carries streak
+      fields). `tsc` build clean. Not deployed (guardrail). **Still open**: 5C (weekday/time
+      alarm model + re-alarm loop) and 6C, then 3B's client display step.
       No `firebase deploy` for the functions step; committed-and-verified only, per this loop's
       standing guardrail.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
