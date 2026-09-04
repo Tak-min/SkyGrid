@@ -18,12 +18,21 @@ iteration left off.
      **haiku/sonnet** — have it return a tight source list + what was taken from each, not raw
      dumps. Use `WebSearch`/`WebFetch` directly for the actual reference gathering; do not
      fabricate sources.
-   - Normal implementation (Swift, SwiftUI, Firestore rules, Cloud Functions): you, the main
-     loop, on **sonnet**.
+   - **Normal implementation (Swift, SwiftUI, Firestore rules, Cloud Functions): delegate to
+     Codex, not the main loop (owner instruction, 2026-09-05 — Codex is running in the owner's
+     own separate terminal window specifically to own coding for this project).** Use
+     `mcp__codex__codex` per `~/.claude/rules/ecc/common/codex-delegation.md`: one bounded task
+     per call, state the exact working directory (`/Users/taku8/Desktop/SkyGrid`), the success
+     criterion, and what must not be touched (no `firebase deploy`, no `git add -A`); never pass
+     a model override — Codex routes Terra/Sol itself. The main loop's own role for this step is
+     to pick the task, write the bounded prompt, and verify Codex's result — not to write the
+     Swift/TypeScript itself.
+   - Read every file Codex reports changing (Read/Grep, not just its own summary — codex's report
+     is hearsay until checked) before running review or verify.
    - Independent review when the step touches real logic (not a pure doc/comment change):
-     `swift-reviewer` or `code-reviewer` on **sonnet**. For the Firestore-rules/buddy-model
-     migration specifically, also consider `security-reviewer` on **opus** once, given it's a
-     privacy-boundary change.
+     `swift-reviewer` or `code-reviewer` on **sonnet**, over Codex's actual diff. For the
+     Firestore-rules/buddy-model migration specifically, also consider `security-reviewer` on
+     **opus** once, given it's a privacy-boundary change.
 
 3. Implement the step. Never invent unverifiable claims (a fake source, a fake metric, a
    "users will love this" line with no evidence) — if something is genuinely unmeasured, write

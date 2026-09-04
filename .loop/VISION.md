@@ -26,6 +26,26 @@ that never has to happen again). `dev-notes/virality-stickiness-assessment_2026-
 still valid source material (a findings/proposals batch), it is simply no longer the *only*
 channel for turning findings into code — this loop now does that directly too.
 
+## RE-PIVOT on coding ownership only (2026-09-05, human) — supersedes UN-PIVOT's "no Codex dependency" clause
+
+The owner has Codex running in their own separate terminal window specifically to own coding for
+this project going forward. **Application code changes (Swift, SwiftUI, Firestore rules, Cloud
+Functions) route through Codex** (`mcp__codex__codex`, per `codex-delegation.md`), not the main
+loop directly — see `.loop/PROMPT.md`'s updated model-routing section. Everything else in
+UN-PIVOT stands: the headless driver keeps running against `.loop/verify.sh`, DoD items 3-8 are
+still this loop's job, git commits stay pre-authorized (no push, no deploy).
+
+**Known risk, not hypothetical**: Codex previously hit its own account-wide usage limit mid-loop
+on 2026-09-04, which is *why* UN-PIVOT originally moved coding back to direct Sonnet
+implementation. Re-routing to Codex can hit that same wall again. If a Codex delegation call
+errors on a usage/rate limit, the correct response is to **log it in `.loop/state.json` and stop
+the iteration cleanly** (same as any other blocked step) — not to silently fall back to writing
+the application code directly in the main loop, which would violate this instruction, and not to
+let the headless driver's identical-verify-streak halt condition misreport a rate-limit stall as
+"agent is stuck" (this already happened once with Claude's own `claude -p` limit on 2026-09-04
+20:22 — the halt reason logged "no progress: identical verify result 3 iterations in a row" when
+the actual cause was two consecutive session-limit failures, not a logical dead end).
+
 ## Why this loop exists
 
 The 2026-08-21 collabstr influencer shortlist is **paused**. Before spending on influencer
@@ -501,14 +521,28 @@ a separate session.
       emulator tests, 38 Rules tests, and iOS Debug build passed. This is intentionally
       still undeployed because existing App Store builds use direct writes; see
       `dev-notes/hard-circle-cap-authority_2026-09-04.md` for mandatory staged rollout.
-- [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
-      whether missed days cluster on weekends from existing post data (Bet 6 exit condition) —
-      if uniform, this may not be the right lever.
-- [ ] Erly-style motion-gated alarm dismissal — **note the hard platform constraint**: AlarmKit
-      silences the OS alarm before app code runs, so the alert's Stop button cannot be gated.
-      Implement as an in-app shutter precondition on the camera screen (e.g. CoreMotion stand-up
-      gate) instead, behind a setting; do not touch the AlarmKit dismissal path (dev-note §5,
-      Bet 4).
+- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+      (owner-confirmed Q1-Q5, no further design questions open).** Supersedes both bullets this
+      replaces — old "multi-alarm-time" bullet is 5C, old "Erly-style motion-gated dismissal"
+      bullet is **cancelled and replaced** by the re-alarm loop (decision record §3.2 — a
+      CoreMotion stand-up gate was rejected as not matching the owner's actual intent, and as
+      unbuildable in the "alarm keeps sounding" form the handoff doc had guessed at). Build order
+      per the record's own §5/§2.10/§1.7 (all via Codex, see RE-PIVOT above):
+      1. 3B: `onPostCreatedUpdateBuddyStreaks` trigger + `buddyStreaks.ts` pure logic +
+         `buddyStreakStore.ts`, functions-only, no Rules change, no client display yet
+         (`FeatureFlags.buddyStreakVisible` stays off). Independent of 5C — no ordering
+         dependency between the two tracks.
+      2. 5C: `MorningAlarmSchedule` model + migration + pure tests (§2.2-2.3), then
+         `NotificationRouter` prefix match **before** the scheduler emits prefixed identifiers
+         (§2.10 step 2 — sequencing this backwards breaks camera-open routing for a real
+         window), then scheduler reconcile (§2.4), then the re-alarm loop (§2.5), then UI/copy
+         (§2.6's exact approved copy block — the prohibited-phrasing list is a hard rule, not a
+         style note).
+      3. 3B client display behind the flag, once step 1 has run for ≥1 day of real pair data
+         (record §5 point 3 — otherwise every pair shows a flat "counting since today").
+      Full test matrices are in the record (§1.6, §2.9) — do not invent a smaller test set.
+      No `firebase deploy` for the functions step; committed-and-verified only, per this loop's
+      standing guardrail.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
