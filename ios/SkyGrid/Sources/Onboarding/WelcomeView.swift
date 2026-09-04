@@ -16,7 +16,7 @@ struct WelcomeView: View {
                 .font(SGFont.serifTitle(42))
                 .foregroundStyle(SGT.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Its color becomes one quiet day in your grid.")
+            Text("It becomes one quiet day in your grid.")
                 .font(SGFont.body(16))
                 .foregroundStyle(SGT.ink2)
 

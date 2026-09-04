@@ -403,6 +403,38 @@ a separate session.
       photos, not averaged color, since commit `82f39a3`); add one step showing the mutual-reveal
       mechanic visually; add a skippable invite step at the end; cut `pace`/`frequency` steps to
       make room only after confirming what actually consumes `PersonalizationProfile` downstream.
+      **Status (2026-09-04, Sonnet):** re-verified against the current tree before writing new
+      code — 2 of 4 sub-items were already shipped: `OnboardingInviteView.swift` (step 9/9,
+      already wired as the last onboarding step, `onSkip` reachable from both the empty and
+      claimed-handle states) already does double duty as both the "skippable invite step" and
+      the "mutual-reveal mechanic shown visually" sub-items — its copy ("Their sky stays sealed
+      until you have both captured the same morning") plus the `HandleClaimView`/`InviteLinkCard`
+      flow demonstrates the mechanic functionally rather than narrating it in prose, matching the
+      design-research pass's own finding (§ "BeReal's own onboarding teardown supports showing
+      the mutual-reveal mechanic functionally"). **New work this iteration**: grepped
+      `ios/SkyGrid/Sources/Onboarding/*.swift` for the stale "color" claim — only one hit,
+      `WelcomeView.swift`'s subtitle "Its color becomes one quiet day in your grid." (the welcome
+      screen, step 1/9, is a new user's very first product claim). Changed to "It becomes one
+      quiet day in your grid." — same rhythm/length, removes the false "color" claim without
+      inventing new copy. Verified no other onboarding file references color/averaging (only
+      `RitualGridMark`'s literal `Color` struct/type, which is unrelated UI chrome) and no test
+      asserts the old string. Pure copy change, no logic touched — no review agent dispatched per
+      loop step 4's "if the step touches real logic" gate. **Still open, deliberately not done
+      this iteration**: cutting `pace`/`frequency` steps. Read `PersonalizationProfile.swift`'s
+      only consumer (`PersonalizedMorningPlanBuilder.make`): `pace` and `frequency` each
+      contribute exactly one clause to a single concatenated sentence
+      (`"\(paceRecommendation) \(frequencyRecommendation)"`) shown once, on the
+      `PersonalizedPlanView` screen near the end of onboarding — a real but thin payoff for two
+      full swipeable question screens. This is a genuine claim-vs-bet case per the kernel's
+      product-judgment contract: no onboarding funnel/step-drop-off analytics exist in this
+      codebase (grepped for `Analytics.logEvent` near `OnboardingCoordinatorView` — none), so
+      "cut these steps to reduce friction" is currently an **unmeasured bet**, not a verified
+      fix — cutting it now would be exactly the "we implemented X so people will love it"
+      reasoning this loop exists to avoid. Cheapest test before cutting: add step-reached /
+      step-abandoned analytics events to `OnboardingCoordinatorView.advance()`/`goBackOneStep()`
+      (mirroring the existing `BuddyAnalytics`/`CaptureAnalytics` pattern) and let it run before
+      deciding; not done this iteration since it's a new instrumentation task, not a redesign
+      step. Left both steps in place rather than remove them speculatively.
 - [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
       see cancelled-escalation note above): copy changes wherever "one person" is asserted
       (`TodayView.swift:310-313`, `BuddiesView.swift:212-224`, onboarding), server-side circle
