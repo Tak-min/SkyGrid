@@ -398,3 +398,35 @@ is implemented and unit-tested but not eyeballed running.
 left." -- Codex's own session (separate quota from this Claude session) is approaching its own
 usage ceiling. Combined with this Claude session's cost now past $50 (flagged CRITICAL), pausing
 here to check in with the user rather than continuing to grind automatically.
+
+## Session close (2026-09-04, ~14:19 JST)
+
+**Batch 13 result — final commit made.** Codex committed all outstanding work from batches
+3-12 in one commit: `d1d3e7e` "feat: strengthen onboarding and morning record" (20 files,
+365 insertions, 58 deletions). Explicit-path staging only, confirmed via `git status --short`
+before committing — `.loop/driver.out`, `.loop/loop.log`, `.loop/state.json` correctly left
+unstaged as noise, `.loop/report.md` left untracked.
+
+Contains: onboarding invite step + its milestone-invite instrumentation, the Swift 6 concurrency
+fix, the button-style contrast fix, the Grid n/365 → count-only framing, the Today pre-capture
+photo backdrop + its new file, `PRODUCT-MODEL.md`, and the xcodegen-regenerated `.pbxproj`.
+
+**Final verification (reported by Codex):**
+- `xcodebuild test -only-testing:SkyGridTests`: **passed**.
+- Release Simulator build: **passed**.
+- `git diff --check`: **passed** (no whitespace errors).
+- Caveat: the *full* `xcodebuild test` target (including UI tests) was aborted after hanging
+  >5 minutes on Simulator/LLDB debugger-version startup — an environment issue, not a code
+  failure (confirmed separately that the unit-test-only run is clean). Worth a fresh Simulator
+  restart before relying on the full UI test suite in a future session.
+
+**Session ending here** (user moving this collaboration to a new session). State for whoever
+resumes:
+- This log (`.loop/codex-handoff-log.md`) is the full history — read it before sending anything
+  new to Codex.
+- Open/unresolved: Analytics event-delivery verification (stuck after 3 rounds; try a real device
+  next, not Simulator), App Check Simulator debug-token registration (low priority, not a
+  production issue), Item 10 external design/ASO research (not started).
+- `dev-notes/virality-stickiness-assessment_2026-09-04.md` and `PRODUCT-MODEL.md` carry the
+  product-judgment reasoning (target metric, claims vs. bets) behind everything sent this
+  session — read those before generating new findings so the same ground isn't re-covered.
