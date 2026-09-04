@@ -350,7 +350,21 @@ reviews this loop's results.
 - [ ] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched.
-- [ ] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_<date>.md`).
+- [x] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_2026-09-04.md`). Both live
+      listings actually fetched and screenshotted (SkyGrid `id6796222704`, Erly
+      `id6751428380`), not guessed. **Two urgent findings surfaced to the product owner
+      directly, not just logged here**: (1) SkyGrid's live App Store *description* still
+      claims the sky becomes "the true average color" — factually false since the photo-
+      over-color pivot (`82f39a3`), a public false product claim, not just stale onboarding
+      copy; (2) 2 of SkyGrid's 6 live screenshots show the already-fixed `"___:___"`
+      placeholder-UI bug — the listing markets a version of the app that no longer exists.
+      Other findings: SkyGrid's paywall screenshot sits at position 4/6 ahead of its most
+      differentiated feature (buddies, shown last, still bare-name-row per open item B5);
+      Erly has zero paywall screenshots and closes on the alarm-friction moment instead;
+      Erly already ships a "photograph the sky" alarm-dismissal mission, so SkyGrid's own
+      copy should lean on what Erly lacks (year-long archive, buddy mutual-reveal) rather
+      than the single-action framing. Keyword-field strings/promotional text/conversion
+      data left honestly `unverified` (not publicly visible).
 - [ ] Full test suite green + Release build green, final dev-note summarizing before/after
       (re-shoot `screenshots/ui-audit-*.png` first — current ones are stale, see correction
       above).
