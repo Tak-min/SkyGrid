@@ -70,6 +70,7 @@
 		4CC2E2E8F54842CB054CBF98 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F8226F41E37D81F38B2EA3D /* QRCodeGenerator.swift */; };
 		4D0178A5D5C0B27708C30C4D /* FirebaseContentSafetyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */; };
 		4D18633E8DC5D3E5398355E7 /* InviteLinkParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E04A3EBA32F5CB4180A33A /* InviteLinkParserTests.swift */; };
+		4DF257C26750F166783046E9 /* NotificationRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3179FE4DAF5ACD3B53B8FD /* NotificationRouterTests.swift */; };
 		51206B88C29F69D7E89FC54C /* ShareCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896D44D44B9A318AC1D6831F /* ShareCardRenderer.swift */; };
 		51D8332E35DB3D52BAF33AE6 /* OrphanedPostBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78F5E2F5A9A2ACF74DEE529 /* OrphanedPostBanner.swift */; };
 		523CBFDDEB46964B8ED61F4E /* SkyPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9C6B1CE06EF73E6B5B7EAE /* SkyPost.swift */; };
@@ -362,6 +363,7 @@
 		7B78E3CFF8FD9CB7BB7E5F23 /* Clock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clock.swift; sourceTree = "<group>"; };
 		7B807172FF977F014E4488CB /* StartupFailureMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupFailureMessageTests.swift; sourceTree = "<group>"; };
 		7C2A1E4935C2F01342AFEC2E /* PaywallEntryPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallEntryPoint.swift; sourceTree = "<group>"; };
+		7C3179FE4DAF5ACD3B53B8FD /* NotificationRouterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouterTests.swift; sourceTree = "<group>"; };
 		7D0AF054E16234EFB09A2468 /* FriendRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRepository.swift; sourceTree = "<group>"; };
 		7DC4667AB0112EDBEF166F43 /* ContentSafetyRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentSafetyRepository.swift; sourceTree = "<group>"; };
 		7E1238F3EDFD5D891AA112A8 /* ServiceEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceEnvironment.swift; sourceTree = "<group>"; };
@@ -914,6 +916,7 @@
 				C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */,
 				F80275CA399B3382985AACD9 /* MorningFollowUpSchedulerTests.swift */,
 				AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */,
+				7C3179FE4DAF5ACD3B53B8FD /* NotificationRouterTests.swift */,
 				4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */,
 				C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */,
 				FE2A2882ADF140C0BD62770C /* PaywallFlowTests.swift */,
@@ -1334,6 +1337,7 @@
 				05B359A0F28C91CC0B5695D8 /* MorningAlarmScheduleTests.swift in Sources */,
 				EC95088712901C8CACF695EB /* MorningFollowUpSchedulerTests.swift in Sources */,
 				E2FBCBB5FE138027E0A9D949 /* MorningRitualPolicyTests.swift in Sources */,
+				4DF257C26750F166783046E9 /* NotificationRouterTests.swift in Sources */,
 				2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */,
 				529EC867219879D7D0B8146A /* OrphanedPostRecoveryTests.swift in Sources */,
 				5B1ADCD16515E93BF000C3EE /* PaywallFlowTests.swift in Sources */,

@@ -57,6 +57,9 @@ enum MorningAlarmState: Equatable, Sendable {
 /// alarms. The notification identifier remains public for NotificationRouter.
 enum MorningAlarmScheduler {
     static let notificationIdentifier = "com.takmin.skygrid.morning-reminder"
+    /// Reserved namespace for the future multi-schedule reminder fallback requests.
+    /// The trailing dot keeps it distinct from the legacy bare identifier above.
+    static let multiScheduleIdentifierPrefix = "com.takmin.skygrid.morning-reminder."
     static let alarmIdentifier = UUID(uuidString: "8A9A5E2E-4B4A-4E8B-9382-FA8E3F3EF1CB")!
 
     static var preferredKind: MorningAlarmKind {

@@ -14,14 +14,19 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
         self.appRouter = appRouter
     }
 
+    nonisolated static func isMorningNotificationIdentifier(_ identifier: String) -> Bool {
+        identifier == MorningAlarmScheduler.notificationIdentifier
+            || identifier.hasPrefix(MorningAlarmScheduler.multiScheduleIdentifierPrefix)
+            || identifier.hasPrefix(MorningFollowUpScheduler.identifierPrefix)
+    }
+
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let identifier = response.notification.request.identifier
-        let isMorningNotification = identifier == MorningAlarmScheduler.notificationIdentifier
-            || identifier.hasPrefix(MorningFollowUpScheduler.identifierPrefix)
+        let isMorningNotification = Self.isMorningNotificationIdentifier(identifier)
         let userInfo = response.notification.request.content.userInfo
         let buddyPost = BuddyPushPayload.parse(userInfo)
 

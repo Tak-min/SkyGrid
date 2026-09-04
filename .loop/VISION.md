@@ -634,8 +634,28 @@ a separate session.
       getter logs via `os.Logger` (DEBUG only) on corrupt-blob fallback-to-`[]`. Independently
       re-verified by the main loop (not just Codex's own report): `xcodebuild test -only-testing:
       SkyGridTests` 228/228 green, both before and after the review-fix round. Not deployed
-      (nothing here needs deploying — client-only). **Next step**: §2.10 step 2,
-      `NotificationRouter` prefix match, before the scheduler emits prefixed identifiers.
+      (nothing here needs deploying — client-only).
+      **5C step 2 (`NotificationRouter` prefix match, §2.10 step 2) done and committed
+      (2026-09-05, Codex + main-loop verify).** Added
+      `MorningAlarmScheduler.multiScheduleIdentifierPrefix = "com.takmin.skygrid.morning-reminder."`
+      (trailing dot, deliberately distinct from the legacy bare `notificationIdentifier` and from
+      `MorningFollowUpScheduler.identifierPrefix`) — a reserved namespace only, nothing emits
+      identifiers under it yet (that's §2.10 step 3, still open). Extracted
+      `NotificationRouter`'s inline morning-identifier check into a testable
+      `nonisolated static func isMorningNotificationIdentifier(_:)`, now matching the legacy bare
+      identifier (exact), the new multi-schedule prefix, and the existing follow-up prefix — same
+      3-way OR the decision record specifies, delegate method otherwise untouched. New
+      `NotificationRouterTests.swift` (4 tests: new prefix positive, legacy bare positive,
+      follow-up prefix positive — added by the main loop after swift-reviewer flagged it missing
+      from Codex's first pass — and an unrelated-identifier negative). Codex's own test run
+      failed environmentally (sandbox couldn't bind CoreSimulator); the main loop independently
+      ran the real suite twice (`xcodebuild test -only-testing:SkyGridTests`), both green:
+      231/231 right after Codex's diff, 232/232 after the main loop's follow-up-prefix test
+      addition. swift-reviewer (sonnet): no CRITICAL/HIGH, one MEDIUM (missing follow-up-prefix
+      test case) fixed same iteration. `xcodegen generate` re-run, pbxproj diff confirmed
+      (registers the new test file only). Not deployed (client-only, nothing to deploy). **Next
+      step**: §2.10 step 3, scheduler reconcile (§2.4) — the scheduler actually emitting
+      prefixed identifiers, now that the router recognizes them ahead of time.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
