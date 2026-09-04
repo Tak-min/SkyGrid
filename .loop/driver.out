@@ -3,3 +3,5 @@
 [loop-engine 00:56:45] VERIFY failing (rc=1). Identical-failure streak: 1/3.
 [loop-engine 00:56:45] === iteration 2 / 40 ===
 [loop-engine 01:23:27] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 01:23:27] === iteration 3 / 40 ===
+[loop-engine 01:30:18] VERIFY failing (rc=1). Identical-failure streak: 1/3.

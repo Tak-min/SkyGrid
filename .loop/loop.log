@@ -175,3 +175,24 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 663:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 01:23:27] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 01:23:27] === iteration 3 / 40 ===
+Committed as `130b0fa`.
+
+**結果**: 5C step 2 (`NotificationRouter` prefix match) を実装・検証・コミット済み。
+
+- Codexに実装を委譲し、変更内容を自分でRead/Grepで確認
+- `MorningAlarmScheduler.multiScheduleIdentifierPrefix`（末尾ドット付き、既存の裸ID/フォローアップ用プレフィックスと衝突なし）を予約枠として追加
+- `NotificationRouter`の判定ロジックをテスト可能な`static func`に切り出し
+- Codex自身のテスト実行はサンドボックス環境の問題で失敗していたため、メインループ側で実機テストを2回独立実行（231/231→追加テスト後232/232、両方green）
+- swift-reviewer（sonnet）: CRITICAL/HIGHなし、MEDIUM1件（フォローアップ用プレフィックスのテスト欠如）は即修正
+- `.loop/verify.sh`は想定通りrc=1（VISION.mdのTODOがまだ5件未完了のため — 正常な状態、これで良い）
+- VISION.mdのチェックリストに詳細を追記、次のステップ（§2.10 step 3: スケジューラのreconcile実装）を明記
+
+`firebase deploy`や`git add -A`は使用せず、明示パスのみコミット。次のイテレーションはこのまま継続可能な状態です。
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+683:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 01:30:18] VERIFY failing (rc=1). Identical-failure streak: 1/3.
