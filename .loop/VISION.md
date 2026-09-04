@@ -261,15 +261,44 @@ reviews this loop's results.
       discarded. Not a recurrence of HIGH-2's harm (never falsely claims recoverability), just
       a usability rough edge — surface both messages, or add a secondary retry action,
       whenever this area is next touched.
-- [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
+- [x] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
       actions stack, next to "Share this morning" (dev-note §7, P0) — cheapest test for whether
-      Stage 2→3a placement, not desire, is the binding constraint.
-- [ ] Add `onFriendshipCreated` Cloud Function trigger notifying the inviter when their invite is
+      Stage 2→3a placement, not desire, is the binding constraint. **Correction: this checklist
+      item was stale-unchecked** — already implemented and shipped as `d1d3e7e` in an earlier
+      session (`MilestoneView.swift:83-97`: `InviteLinkCard(inviteRepository:, placement:
+      .milestone)` directly below the "Share this morning" button, gated on `moment.handle !=
+      nil`, with the exact "Bet 3 (dev-note §7 P0)" doc-comment citation already in place).
+      Verified present in the current tree while resuming this loop; no new work needed here.
+- [x] Add `onFriendshipCreated` Cloud Function trigger notifying the inviter when their invite is
       claimed (closes D2); confirm `onBuddyPostCreated` fans out to all of a poster's accepted
-      edges, not just one (dev-note §6.4).
-- [ ] Add a share control to Today's recorded-morning card (reuse `ShareCardRenderer.renderMorning`
+      edges, not just one (dev-note §6.4). **Confirmed**: `activeBuddyUIDs` already returns
+      every accepted/unblocked buddy and `notifyBuddiesOfPost` `Promise.all`s a send to each —
+      no bug, no change needed. For the notification itself, **deliberately not a literal
+      `onFriendshipCreated` Firestore trigger**: `friendships/{pairId}` is written by two
+      different origins (an invite claim → created already `status: "accepted"`; an ordinary
+      handle-based friend request → created `status: "pending"`, flipped to `accepted` later by
+      a separate client write) that a bare document-create trigger can't tell apart without
+      re-deriving context the callable already has for free. Implemented instead as
+      `notifyInviterOfClaim` (new `functions/src/inviteNotificationStore.ts`, mirroring
+      `buddyNotificationStore.ts`'s marker/quiet-hours/stale-token pattern), called directly
+      from `claimInviteCode` once `claimInvite` returns `outcome: "paired"`. `ClaimResult`
+      gained `claimerHandle` so the notification can name who joined. 61/61 pure tests green,
+      40/40 Firestore-emulator tests green (8 new, mirroring `buddyNotificationStore.test.js`),
+      `tsc` build + lint clean. Manually re-verified the account-deletion race (a second
+      adversarial review agent hit the account-wide session rate limit mid-run and could not
+      complete — re-checked by hand instead: `deleteAccount`'s `recursiveDelete(userRef)`
+      cleans up the new marker subcollection like every other; `claimInvite`'s own
+      creator-deletion check already blocks a claim before this code can run if account
+      deletion started first). **Committed (`d3ae515`) but NOT deployed** — a new Cloud
+      Functions deploy is a separate production action from the already-authorized
+      `firestore.rules` fix and needs its own explicit go-ahead before `firebase deploy
+      --only functions`.
+- [x] Add a share control to Today's recorded-morning card (reuse `ShareCardRenderer.renderMorning`
       unchanged) so sharing isn't gated behind a milestone threshold (closes D1, dev-note §7 P0
-      / Bet 5).
+      / Bet 5). **Correction: this checklist item was stale-unchecked** — already implemented
+      and shipped as `5766c96` in the interactive session immediately before this one
+      (`TodayView.swift:264-271`, `MorningShareAnalytics.record(.shared, placement: .today)`).
+      Verified present in the current tree while resuming this loop; no new work needed here.
 - [ ] ≥50-source design research pass (`dev-notes/design-research-sources_<date>.md`).
 - [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
       synthetic gradient (raise "stopping power"); demote the "Free" plan badge off the primary
