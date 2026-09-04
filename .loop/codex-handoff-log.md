@@ -145,3 +145,32 @@ registration + BigQuery export. Sent Codex the file path and asked it to indepen
 before touching anything, and to only replace the in-repo plist if the new file genuinely shows
 Analytics enabled — otherwise report back exactly what's still missing so it can be relayed to the
 user precisely (which Console screen/step to check).
+
+**Result (received 2026-09-04):** Independently re-confirmed disabled (own PlistBuddy-equivalent
+check, not just trusting mine). Bundle ID and Firebase project ID are correct for SkyGrid — ruled
+out "wrong app's plist downloaded." Root cause is that **the Firebase project itself was never
+connected to a Google Analytics property** (a separate step from anything per-app). Did not copy
+the file into the repo (correct call, still invalid). Confirmed no SDK/init code is needed — once
+the project↔Analytics link exists, the existing Firebase app auto-links to a data stream. Recorded
+the exact procedure + verification result in `PRODUCT-MODEL.md:67`.
+
+**Precise steps for the human (relayed 2026-09-04):**
+1. Firebase Console → Project settings → **Integrations**.
+2. Select **Google Analytics** → connect an existing or new Google Analytics account/property →
+   complete the terms-of-service acceptance.
+3. Only after that: Project settings → General → Your apps → iOS app `com.takmin.skygrid` → **re-download** `GoogleService-Info.plist`.
+4. Before replacing the file in the repo, confirm it now shows `IS_ANALYTICS_ENABLED=true` and a
+   real measurement ID. (Step 1-2 is the part that's actually missing — steps 3-4 are what was
+   already tried, correctly, just too early.)
+
+Not something either agent can do further on right now — waiting on the human's Firebase Console
+action.
+
+## Batch 5 (sent 2026-09-04 — 5 min cadence continues)
+
+Small technical-debt item you noted in passing during batch 3: the Swift 6 language-mode warning
+in `Data/Firebase/FirebaseInviteRepository.swift:17` (`main actor-isolated static property
+'region' can not be referenced from a nonisolated context`) — flagged as becoming a hard build
+error under strict Swift 6 concurrency checking. Asked you to fix it now while other items are
+blocked on the human, plus do a quick repo-wide grep for the same pattern elsewhere so this isn't
+a one-off fix that leaves siblings broken.
