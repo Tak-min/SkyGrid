@@ -11,6 +11,7 @@ final class MorningAlarmSettingsViewModel {
     private(set) var isWorking = false
 
     func refresh() async {
+        MorningAlarmScheduler.migrateScheduleModelIfNeeded()
         state = await MorningAlarmScheduler.currentState()
         liveActivitiesEnabled = MorningRitualActivity.areActivitiesEnabled
     }

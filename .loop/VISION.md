@@ -612,6 +612,30 @@ a separate session.
       alarm model + re-alarm loop) and 6C, then 3B's client display step.
       No `firebase deploy` for the functions step; committed-and-verified only, per this loop's
       standing guardrail.
+      **5C step 1 (client-only data model + migration, §2.2/§2.3/§2.10 step 1) done and
+      committed (2026-09-05, Codex + main-loop verify).** New `MorningAlarmSchedule.swift`
+      (`Codable`/`Sendable`/`Identifiable`, pure `migrate(morningAlarmEnabled:wakeGoalMinutes:)`
+      reusing the legacy fixed alarm UUID, pure `derivedWakeGoalMinutes(from:)`), new
+      `LocalDefaults.morningAlarmSchedules` ([MorningAlarmSchedule] JSON-backed) +
+      `morningAlarmScheduleModelVersion` (both reset alongside the legacy keys, which are left
+      untouched per the rollback design), migration wired into `resyncIfNeeded()` and
+      `MorningAlarmSettingsViewModel.refresh()`, version-gated so it runs once. Does **not**
+      yet drive any scheduling, cancel any live alarm, or touch `UNUserNotificationCenter`
+      pending requests — §2.4 (scheduler reconcile), §2.5 (re-alarm loop), and §2.6 (UI/copy)
+      remain open. New `MorningAlarmScheduleTests.swift` covers all 4 migration rows from
+      §2.9 (enabled→one everyday schedule w/ legacy UUID, disabled→empty+nil derived minutes,
+      idempotency, derived-minutes-is-min-over-enabled). swift-reviewer (sonnet) pass: no
+      CRITICAL/HIGH; 3 MEDIUM findings (silent encode-failure-after-version-bump, silent
+      decode-failure with no diagnostic trail, `migrateScheduleModelIfNeeded()` had no actor
+      isolation despite being a non-atomic read-check-write) — all three addressed except the
+      encode-failure one (low practical severity today since nothing reads
+      `morningAlarmSchedules` for real scheduling yet; revisit when §2.4 wires this in):
+      `MorningAlarmScheduler` migration path is now `@MainActor`-isolated, and the decode
+      getter logs via `os.Logger` (DEBUG only) on corrupt-blob fallback-to-`[]`. Independently
+      re-verified by the main loop (not just Codex's own report): `xcodebuild test -only-testing:
+      SkyGridTests` 228/228 green, both before and after the review-fix round. Not deployed
+      (nothing here needs deploying — client-only). **Next step**: §2.10 step 2,
+      `NotificationRouter` prefix match, before the scheduler emits prefixed identifiers.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified

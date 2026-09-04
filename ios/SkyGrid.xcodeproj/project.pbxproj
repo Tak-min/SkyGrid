@@ -14,6 +14,7 @@
 		03B5D7D34E491DAA8C82B861 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531084A1F75F338E4A45CC85 /* ShareSheet.swift */; };
 		04C41D55F7B9281D7068F93B /* BigTimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */; };
 		0545DAEEF2E00C2A8E71EC1C /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 068F1BE807A1588E40B46E89 /* FirebaseAppCheck */; };
+		05B359A0F28C91CC0B5695D8 /* MorningAlarmScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */; };
 		064AE3B73A3EC2D38CAE4BF1 /* OnboardingInviteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FB553030C359619542B5B54 /* OnboardingInviteView.swift */; };
 		06CA68D5ABBF09AED97E528D /* PendingCellStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE535718E8F305008C110CE /* PendingCellStateTests.swift */; };
 		09420A7F5E15A84F20BC404A /* SkyGridUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */; };
@@ -34,6 +35,7 @@
 		17B78EFE784768727DE3AA0A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1B4AE5E7BA49A92C1C962AD /* Theme.swift */; };
 		182A0D8FCDD0CF028DEB4A12 /* PaywallAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CDF3D68ADDC45D125CDDA4D /* PaywallAnalytics.swift */; };
 		1C0CC5CB69F8226DCB9C6083 /* MorningRitualAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 358A4E440FA9500DE9D9708E /* MorningRitualAttributes.swift */; };
+		212238C56C8C82E2950DCEA7 /* MorningAlarmSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B2DBD9864A466A2E427117 /* MorningAlarmSchedule.swift */; };
 		26540071FB4476467A5F1568 /* GridLayoutMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */; };
 		2692D8D265A5909EF20C53BA /* PendingCellState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2285E46741780075D5553D8C /* PendingCellState.swift */; };
 		29BC0765DB83D109C7A6F1BD /* StartupFailureMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB33195EF4E65FEBAB084D7 /* StartupFailureMessage.swift */; };
@@ -307,6 +309,7 @@
 		33C293037327B4EC7EB91C1B /* real_dramatic_sky.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = real_dramatic_sky.jpg; sourceTree = "<group>"; };
 		33F794A01BD4E093D6832224 /* MorningFollowUpScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningFollowUpScheduler.swift; sourceTree = "<group>"; };
 		358A4E440FA9500DE9D9708E /* MorningRitualAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualAttributes.swift; sourceTree = "<group>"; };
+		36B2DBD9864A466A2E427117 /* MorningAlarmSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningAlarmSchedule.swift; sourceTree = "<group>"; };
 		37C1EA135CD21F85869C40CE /* SkyColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColor.swift; sourceTree = "<group>"; };
 		3866D3B5A0B65B9D4FCAFAB4 /* StreakMilestoneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakMilestoneTests.swift; sourceTree = "<group>"; };
 		399D785A4FF2ECB99992BD10 /* PendingUpload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingUpload.swift; sourceTree = "<group>"; };
@@ -427,6 +430,7 @@
 		BF20425A2DB3329831D0D75B /* PaywallValueStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallValueStepView.swift; sourceTree = "<group>"; };
 		BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationProfileTests.swift; sourceTree = "<group>"; };
 		C066803C0C09197672F84395 /* AppStartupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStartupController.swift; sourceTree = "<group>"; };
+		C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningAlarmScheduleTests.swift; sourceTree = "<group>"; };
 		C0A3E28C33210B0166319703 /* PostCaptureMomentPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCaptureMomentPolicyTests.swift; sourceTree = "<group>"; };
 		C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanedPostRecoveryTests.swift; sourceTree = "<group>"; };
 		C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
@@ -882,6 +886,7 @@
 			children = (
 				DFE558B73B23D63DFBA24F8A /* BuddyPairingNotificationPermission.swift */,
 				06433918EDC1C3800C409EE3 /* BuddyPushPayload.swift */,
+				36B2DBD9864A466A2E427117 /* MorningAlarmSchedule.swift */,
 				F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */,
 				6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */,
 				33F794A01BD4E093D6832224 /* MorningFollowUpScheduler.swift */,
@@ -906,6 +911,7 @@
 				D5E04A3EBA32F5CB4180A33A /* InviteLinkParserTests.swift */,
 				6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */,
 				BD23650166A18C5BF4671015 /* LocalDateTests.swift */,
+				C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */,
 				F80275CA399B3382985AACD9 /* MorningFollowUpSchedulerTests.swift */,
 				AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */,
 				4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */,
@@ -1208,6 +1214,7 @@
 				469FD0B5717D8F2C6CB264CC /* MilestoneLoudButtonStyle.swift in Sources */,
 				176C5ADC14947459EC3A4833 /* MilestoneMoment.swift in Sources */,
 				47B98544EC63B418A73C3A25 /* MilestoneView.swift in Sources */,
+				212238C56C8C82E2950DCEA7 /* MorningAlarmSchedule.swift in Sources */,
 				29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */,
 				5E231E656EEA92440D8DD0F6 /* MorningAlarmSettingsView.swift in Sources */,
 				649F11771B729B477C677F69 /* MorningCardExportView.swift in Sources */,
@@ -1324,6 +1331,7 @@
 				4D18633E8DC5D3E5398355E7 /* InviteLinkParserTests.swift in Sources */,
 				E8A87BDA1A437D2740E1C528 /* LaunchGateTests.swift in Sources */,
 				E5768E9031FE2B5AE0CBB959 /* LocalDateTests.swift in Sources */,
+				05B359A0F28C91CC0B5695D8 /* MorningAlarmScheduleTests.swift in Sources */,
 				EC95088712901C8CACF695EB /* MorningFollowUpSchedulerTests.swift in Sources */,
 				E2FBCBB5FE138027E0A9D949 /* MorningRitualPolicyTests.swift in Sources */,
 				2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */,

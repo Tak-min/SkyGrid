@@ -64,6 +64,16 @@ enum MorningAlarmScheduler {
         return .reminder
     }
 
+    @MainActor
+    static func migrateScheduleModelIfNeeded() {
+        guard LocalDefaults.morningAlarmScheduleModelVersion == 0 else { return }
+        LocalDefaults.morningAlarmSchedules = MorningAlarmSchedule.migrate(
+            morningAlarmEnabled: LocalDefaults.morningAlarmEnabled,
+            wakeGoalMinutes: LocalDefaults.wakeGoalMinutes
+        )
+        LocalDefaults.morningAlarmScheduleModelVersion = 1
+    }
+
     static func currentState() async -> MorningAlarmState {
         if #available(iOS 26.0, *), preferredKind == .systemAlarm {
             return await alarmKitState()
@@ -149,6 +159,7 @@ enum MorningAlarmScheduler {
     /// unconditionally on every cold launch is safe and does not re-prompt for
     /// authorization once it has already been granted.
     static func resyncIfNeeded() async {
+        await migrateScheduleModelIfNeeded()
         guard LocalDefaults.morningAlarmEnabled else { return }
         let minutes = LocalDefaults.wakeGoalMinutes
         if LocalDefaults.morningAlarmBackend == "reminder" {

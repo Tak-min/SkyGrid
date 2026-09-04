@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// `Optional<Wrapped>` values passed through a generic `T` parameter double-box when
 /// bridged to `Any?`, so `UserDefaults.set(_:forKey:)` receives a non-property-list
@@ -32,6 +33,10 @@ struct UserDefaultBacked<T> {
 /// The single place any code reads/writes `UserDefaults` — no other file should call
 /// `UserDefaults.standard` with a raw string key.
 enum LocalDefaults {
+#if DEBUG
+    private static let logger = Logger(subsystem: "com.takmin.skygrid", category: "persistence")
+#endif
+
     @UserDefaultBacked(key: "lastKnownTimeZoneIdentifier", defaultValue: nil)
     static var lastKnownTimeZoneIdentifier: String?
 
@@ -177,6 +182,29 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "morningAlarmBackend", defaultValue: "automatic")
     static var morningAlarmBackend: String
 
+    @UserDefaultBacked(key: "morningAlarmSchedules", defaultValue: nil)
+    private static var morningAlarmSchedulesData: Data?
+
+    static var morningAlarmSchedules: [MorningAlarmSchedule] {
+        get {
+            guard let morningAlarmSchedulesData else { return [] }
+            do {
+                return try JSONDecoder().decode([MorningAlarmSchedule].self, from: morningAlarmSchedulesData)
+            } catch {
+#if DEBUG
+                logger.debug("Unable to decode morning alarm schedules; using an empty array.")
+#endif
+                return []
+            }
+        }
+        set {
+            morningAlarmSchedulesData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    @UserDefaultBacked(key: "morningAlarmScheduleModelVersion", defaultValue: 0)
+    static var morningAlarmScheduleModelVersion: Int
+
     /// Set by the AlarmKit stop intent. The app consumes it once the scene becomes
     /// active, which makes the system alarm's dismissal lead straight to capture.
     @UserDefaultBacked(key: "openCameraAfterMorningAlarm", defaultValue: false)
@@ -230,6 +258,8 @@ enum LocalDefaults {
         resetMutualRevealAnalyticsState()
         morningAlarmEnabled = false
         morningAlarmBackend = "automatic"
+        morningAlarmSchedules = []
+        morningAlarmScheduleModelVersion = 0
         openCameraAfterMorningAlarm = false
         lastCapturedLocalDateID = nil
     }
