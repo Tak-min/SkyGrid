@@ -4,11 +4,16 @@ verified ground truth (do not re-derive facts already stated there), the Definit
 the TODO checklist. Read `.loop/state.json` and `git log --oneline -5` for where the previous
 iteration left off.
 
-1. Pick the **next smallest verifiable step** from the unchecked TODO items in `.loop/VISION.md`,
-   in the order listed (research/assessment before visual design, before the buddy-model
-   migration, before alarm/share/ASO work) — unless a dependency makes a different order
-   obviously correct (e.g. don't start the N-way buddy UI before the architecture escalation item
-   is checked off).
+1. Read the **OVERNIGHT CONTINUOUS-DESIGN MODE** section of `.loop/VISION.md` first — it changes
+   how this loop is allowed to end tonight. If the unchecked TODO items below it are non-empty,
+   pick the **next smallest verifiable step** from them, in the order listed (research/assessment
+   before visual design, before the buddy-model migration, before alarm/share/ASO work) unless a
+   dependency makes a different order obviously correct. If they are ever empty, do **not**
+   treat that as DoD-met — run the holistic visual audit that section describes (real Simulator
+   screenshots across the primary screens, judged against the owner's ~60/100 critique) and add
+   a freshly-found concrete item to the checklist before implementing it. Either way, this
+   iteration must leave a visible change in `.loop/VISION.md`'s checklist text (see that
+   section's last paragraph on why).
 
 2. **Model routing for this step** (pass `model` explicitly on every Agent spawn):
    - The two items marked "Opus escalation" in VISION.md's TODO list are exactly that: dispatch
@@ -69,6 +74,8 @@ iteration left off.
 8. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
 
 If you believe every item in the Definition of Done (`.loop/VISION.md`) is fully and verifiably
-met, run `.loop/verify.sh` from the repo root to confirm (check its actual exit code), write the
-final summary dev-note, and say so explicitly — that is the success exit, and it is also what
-makes the headless driver itself exit 0.
+met, **first re-read OVERNIGHT CONTINUOUS-DESIGN MODE at the top of VISION.md** — while it is in
+effect (i.e. the owner has not returned to say otherwise), completing the listed checklist is
+not a stop condition: run the holistic visual audit it describes, add what you find, and keep
+going. Only treat a genuinely empty checklist as the real success exit once that mode's own
+text has been removed or superseded by the owner.

@@ -46,6 +46,51 @@ let the headless driver's identical-verify-streak halt condition misreport a rat
 20:22 — the halt reason logged "no progress: identical verify result 3 iterations in a row" when
 the actual cause was two consecutive session-limit failures, not a logical dead end).
 
+## OVERNIGHT CONTINUOUS-DESIGN MODE (2026-09-05, human, going offline) — current, authoritative
+
+The owner is going to sleep and will not be reachable to answer questions or approve anything
+further tonight. The loop must run **fully unsupervised** and must **not stop at the current
+checklist** — once the items below are exhausted, do not declare DoD met and halt; instead treat
+this as an open-ended design/UX improvement loop until the owner returns.
+
+**"Don't just read code" is a literal instruction, not emphasis.** Every iteration that touches
+anything user-visible must include an actual look at the rendered app, not just a source read:
+- Build and run the app in the iOS Simulator (`xcodebuildmcp` tools already available this
+  session: `build_run_sim`, `screenshot`, `snapshot_ui`) or the DEBUG UI-audit host already used
+  earlier in this loop (`screenshots/ui-audit-*.png`).
+- Walk the primary screens (Today, Buddies, Onboarding, Share cards, Settings/Alarm) as a user
+  would, not as a grep target.
+- Judge against the owner's own unsoftened baseline from "Why this loop exists" below (~60/100,
+  "feels AI-generated-generic") using actual design judgment — hierarchy, typography, spacing,
+  copy tone, motion, thumbnail legibility, empty states, whether a screen would make someone want
+  to share it — not just "does the code compile."
+- A pure code-level change (rename, refactor, backend-only trigger) does not need a screenshot;
+  anything that changes what a user sees or reads does.
+
+**How the loop keeps going once the explicit TODOs below are done**: before ever letting
+`.loop/verify.sh` see zero unchecked items, run one holistic design/UX audit pass (screenshots
+across all primary screens + a written critique of what's weakest right now, referencing the
+owner's ~60/100 framing and this loop's DoD items 2-3), pick the single highest-value concrete
+issue found, and add it to the TODO checklist below *before* implementing it — same
+smallest-verifiable-step discipline as every other item, just self-sourced instead of
+pre-written. Never leave the checklist fully empty while the owner is asleep. Actual application
+code for the fix still routes through Codex per the RE-PIVOT section above; the main loop's own
+job in this mode is the visual audit, the design judgment call, the task framing, and verifying
+Codex's result against a fresh screenshot — not writing the Swift itself.
+
+**Guardrails unchanged and still binding**: no `firebase deploy`, no `git add -A`, no push,
+commits stay pre-authorized. If Codex or the main loop hits a usage/rate limit, log it and stop
+the iteration cleanly (per RE-PIVOT above) — do not silently revert to a mode the owner didn't
+authorize (e.g. skipping the visual-audit requirement because it's slower, or writing application
+code directly instead of through Codex) just to keep the iteration counter moving.
+
+**Every iteration must change something in this file's TODO checklist text** (check an item,
+add one, or append a status note), even a design-audit-only iteration — this keeps
+`.loop/verify.sh`'s output hash from repeating byte-for-byte, which is what the driver's
+no-progress detector actually keys on (see the RE-PIVOT section's account of the 2026-09-04
+false-halt). A genuinely idle iteration that changes nothing on disk is itself a signal something
+is wrong; do not let two of those pass silently.
+
 ## Why this loop exists
 
 The 2026-08-21 collabstr influencer shortlist is **paused**. Before spending on influencer
