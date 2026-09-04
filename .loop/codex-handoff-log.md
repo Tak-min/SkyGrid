@@ -351,3 +351,17 @@ contrast issue from the original assessment — `SkySecondaryButtonStyle`'s disa
 uses a flat `.opacity(0.42)` (`ViewModifiers.swift:86`), the same weak-contrast failure mode the
 primary button style was already fixed for. Asked Codex to bring it in line with
 `SkyPrimaryButtonStyle`'s fix (unfilled stroked capsule) for consistency.
+
+**Batch 10 result (received 2026-09-04):** Done cleanly. `SkySecondaryButtonStyle`'s disabled
+state (`ViewModifiers.swift:73-90`) changed from a flat 42% opacity dim to match the primary
+style's treatment: label color drops to `SGT.ink3` while keeping the existing stroke, no more
+whole-control opacity dimming. iOS Simulator build green, `git diff --check` clean.
+
+## Batch 11 (sent 2026-09-04 — 5 min cadence continues)
+
+Another quick one: the Grid screen's `"{n} / 365"` counter (`SkyGridView.swift:154`, per the
+original assessment's P2 note) frames the year as a completion percentage nobody will ever reach
+-- effectively a permanent "94% failure" readout by December. The share card already solved this
+better ("N morning skies photographed this year", `SkyGridExportView.swift:99-122`) -- asked
+Codex to match that framing in the live Grid screen for consistency, i.e. drop the `/365`
+denominator and just show the count.
