@@ -3,7 +3,7 @@
     "emoji_needs_review": 0,
     "raw_color": 21,
     "spacing_literal": 151,
-    "font_literal": 21,
+    "font_literal": 23,
     "glass_panel_files": 0,
     "icon_only_button_missing_label": 0
   },
@@ -72,6 +72,13 @@
       "font_literal": 1,
       "icon_only_button_missing_label": 0
     },
+    "ios/SkyGrid/Sources/Grid/GridCanvas.swift": {
+      "emoji_needs_review": 0,
+      "raw_color": 0,
+      "spacing_literal": 0,
+      "font_literal": 1,
+      "icon_only_button_missing_label": 0
+    },
     "ios/SkyGrid/Sources/Grid/MorningCardExportView.swift": {
       "emoji_needs_review": 0,
       "raw_color": 0,
@@ -90,7 +97,7 @@
       "emoji_needs_review": 0,
       "raw_color": 0,
       "spacing_literal": 12,
-      "font_literal": 2,
+      "font_literal": 3,
       "icon_only_button_missing_label": 0
     },
     "ios/SkyGrid/Sources/Invite/InviteClaimView.swift": {
@@ -255,6 +262,6 @@
       "icon_only_button_missing_label": 0
     }
   },
-  "files_scanned": 157,
+  "files_scanned": 158,
   "note": "Tier A deterministic lint. emoji_needs_review is flagged, not asserted as a violation, per the 2026-09-04 Opus consult (static analysis can't reliably tell structural iconography from inline text flourish)."
 }

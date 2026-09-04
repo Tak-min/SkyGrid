@@ -12,6 +12,12 @@ struct GridCanvas: View {
     let year: Int
     let postedDates: Set<LocalDate>
     let thumbnails: [LocalDate: UIImage]
+    /// Days with a photo in the local outbox but no confirmed post yet (see
+    /// `PendingCellState`). Deliberately never plumbed into the share-card export
+    /// path — `GridArchiveView.shareGrid()` builds `ShareCardRenderer` from
+    /// `visiblePosts`/its own photo dict directly, bypassing this view entirely, so
+    /// an unconfirmed day can never appear in a shared artifact.
+    var pendingStates: [LocalDate: PendingCellState] = [:]
     var spacing: CGFloat = 1.5
 
     /// Injectable so the share-card export can render the same mosaic on its dark
@@ -32,6 +38,10 @@ struct GridCanvas: View {
     var body: some View {
         Canvas { context, size in
             let cellSize = GridLayoutMath.cellSize(for: size, spacing: spacing)
+            // Symbol scale is a fraction of the cell, not a fixed point size: at
+            // the year view's ~29pt cells the glyph needs to stay legible without
+            // overrunning the (typically single) pending cell's bounds.
+            let symbolInset = min(cellSize.width, cellSize.height) * 0.26
 
             if monthBanding {
                 for month in 1...GridLayoutMath.rows where month.isMultiple(of: 2) {
@@ -67,9 +77,21 @@ struct GridCanvas: View {
                     clippedContext.draw(clippedContext.resolve(Image(uiImage: thumbnail)), in: imageRect)
                 } else if postedDates.contains(date) {
                     context.fill(path, with: .color(postedNoThumbFill))
+                } else if let pendingState = pendingStates[date] {
+                    context.fill(path, with: .color(postedNoThumbFill))
+                    if let symbol = context.resolveSymbol(id: pendingState) {
+                        context.draw(symbol, in: rect.insetBy(dx: symbolInset, dy: symbolInset))
+                    }
                 } else {
                     context.fill(path, with: .color(emptyFill))
                 }
+            }
+        } symbols: {
+            ForEach(PendingCellState.allCases, id: \.self) { state in
+                Image(systemName: state.symbolName)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(SGT.ink2)
+                    .tag(state)
             }
         }
     }

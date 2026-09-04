@@ -6,6 +6,7 @@ struct SkyGridView: View {
     let year: Int
     let posts: [LocalDate: SkyPost]
     let thumbnails: [LocalDate: UIImage]
+    var pendingStates: [LocalDate: PendingCellState] = [:]
     let selectedMonth: Int
     let onSelectMonth: (Int) -> Void
     let onSelectPost: (SkyPost) -> Void
@@ -210,6 +211,7 @@ struct SkyGridView: View {
                     year: year,
                     postedDates: Set(posts.keys),
                     thumbnails: thumbnails,
+                    pendingStates: pendingStates,
                     spacing: 1,
                     monthBanding: true
                 )
@@ -254,6 +256,7 @@ struct SkyGridView: View {
                     month: selectedMonth,
                     posts: posts,
                     thumbnails: thumbnails,
+                    pendingStates: pendingStates,
                     onSelectPost: onSelectPost
                 )
                 .id(selectedMonth)
@@ -363,6 +366,7 @@ private struct MonthlyPhotoGrid: View {
     let month: Int
     let posts: [LocalDate: SkyPost]
     let thumbnails: [LocalDate: UIImage]
+    var pendingStates: [LocalDate: PendingCellState] = [:]
     let onSelectPost: (SkyPost) -> Void
 
     // Zero spacing on both axes: adjacent tiles abut with no gap, so the block
@@ -374,12 +378,15 @@ private struct MonthlyPhotoGrid: View {
             ForEach(GridLayoutMath.sequentialDates(year: year, month: month), id: \.self) { date in
                 if let post = posts[date] {
                     Button { onSelectPost(post) } label: {
-                        ArchivePhotoTile(day: date.day, thumbnail: thumbnails[date], hasPhoto: true)
+                        ArchivePhotoTile(day: date.day, thumbnail: thumbnails[date], hasPhoto: true, pendingState: nil)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Open photo from \(date.docID)")
+                } else if let pendingState = pendingStates[date] {
+                    // Not tappable: there is no confirmed post yet to open.
+                    ArchivePhotoTile(day: date.day, thumbnail: nil, hasPhoto: false, pendingState: pendingState)
                 } else {
-                    ArchivePhotoTile(day: date.day, thumbnail: nil, hasPhoto: false)
+                    ArchivePhotoTile(day: date.day, thumbnail: nil, hasPhoto: false, pendingState: nil)
                 }
             }
         }
@@ -404,10 +411,16 @@ private struct ArchivePhotoTile: View {
     let day: Int
     let thumbnail: UIImage?
     let hasPhoto: Bool
+    /// Set only when this day has no confirmed post yet but does have a photo
+    /// sitting in the local upload outbox — see `PendingCellState`. Mutually
+    /// exclusive with `hasPhoto`/`thumbnail`: a caller never sets both.
+    var pendingState: PendingCellState?
+
+    private var isOccupied: Bool { hasPhoto || pendingState != nil }
 
     var body: some View {
         Rectangle()
-            .fill(hasPhoto ? SGT.fill : SGT.ghost)
+            .fill(isOccupied ? SGT.fill : SGT.ghost)
             .aspectRatio(1, contentMode: .fit)
             .overlay {
                 if let thumbnail {
@@ -416,15 +429,23 @@ private struct ArchivePhotoTile: View {
                         .scaledToFill()
                 } else if hasPhoto {
                     ProgressView().controlSize(.mini)
+                } else if let pendingState {
+                    Image(systemName: pendingState.symbolName)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(SGT.ink2)
+                        .accessibilityHidden(true)
                 }
             }
             .clipped()
             .overlay(alignment: .bottomLeading) {
                 Text(String(day))
                     .font(SGFont.fixedNumeric(10, weight: .semibold))
-                    .foregroundStyle(hasPhoto ? .white : SGT.ink3)
-                    .shadow(radius: hasPhoto ? 2 : 0)
+                    .foregroundStyle(isOccupied ? .white : SGT.ink3)
+                    .shadow(radius: isOccupied ? 2 : 0)
                     .padding(4)
             }
+            .accessibilityLabel(
+                pendingState.map { "Day \(day), photo \($0.accessibilitySuffix)" } ?? "Day \(day)"
+            )
     }
 }

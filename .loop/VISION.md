@@ -204,6 +204,29 @@ reviews this loop's results.
       swift-reviewer as refiring on every relaunch after unlock, fixed before committing);
       `skygrid_capture_completed` fires once per successful `PostPublisher.publish`. No uid,
       handle, or photo in either payload. 211/211 tests green, Debug and Release builds green.
+- [x] Own-post optimistic-render gap (Opus consult Item 1, 2026-09-04, implemented directly
+      by Sonnet — Codex was rate-limited): `GridArchiveViewModel` now merges the SwiftData
+      upload outbox keyed by `LocalDate` into a new `pendingStates` map, rendered as one of 3
+      honest states (`PendingCellState.inFlight`/`.retryableFailure`/`.needsReview`, mapped
+      1:1 from `UploadState`, mirroring `PostStatusBanner`'s existing split) — never a 4th
+      "looks confirmed" state, per the Opus verdict that the real bug was more likely an
+      App Check rejection silently rolling back an optimistic write than genuine round-trip
+      latency. Firestore always wins (a confirmed `posts[date]` entry suppresses/retires any
+      pending overlay for that date, both via the poll's own filter and render-order in
+      `GridCanvas`/`MonthlyPhotoGrid`); pending cells never touch `posts`, so
+      `postedCount`/streak/share-card are provably unaffected (`shareGrid()` sources from
+      `visiblePosts`, not `pendingStates` — verified by `swift-reviewer`). New file
+      `PendingCellState.swift` + `PendingCellStateTests.swift` (3 tests). swift-reviewer
+      (sonnet) found no CRITICAL/HIGH; addressed 2 of the 4 MEDIUM findings that were cheap
+      (pending-overlay pruned immediately on Firestore confirmation instead of waiting up to
+      2s for the next poll; the poll only starts for the current year, not past archives) —
+      did not add a second, heavier integration test for the Firestore-wins path beyond the
+      pure `PendingCellState` mapping test (logic already verified by direct code reading across
+      every `posts`/`pendingStates` consumer). Did not touch the buddy side per the consult's
+      explicit instruction (mutual-reveal gate stays untouched). 215/215 tests green (212 +
+      3 new), Debug + Release builds green. `.loop/design-lint.json` re-baselined
+      (`font_literal` 21→23, from 2 new icon-glyph `.font(.system(size:...))` declarations —
+      same existing pattern as `SkyGridView.swift`'s other icon-only symbols, not a new style).
 - [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
       actions stack, next to "Share this morning" (dev-note §7, P0) — cheapest test for whether
       Stage 2→3a placement, not desire, is the binding constraint.

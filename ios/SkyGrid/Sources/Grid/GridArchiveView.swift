@@ -15,23 +15,35 @@ final class GridArchiveViewModel {
     private(set) var thumbnails: [LocalDate: UIImage] = [:]
     private(set) var isPreparingShare = false
     private(set) var loadState: LoadState = .checking
+    /// Days with a photo sitting in the local upload outbox but no confirmed
+    /// Firestore document yet — see `PendingCellState`. Never merged into `posts`,
+    /// so `postedCount`/streak/share-card reads (all sourced from `posts`) are
+    /// unaffected; a date present here is guaranteed absent from `posts` by
+    /// `refreshPendingStates`'s own Firestore-wins filter.
+    private(set) var pendingStates: [LocalDate: PendingCellState] = [:]
 
     private let uid: String
     let year: Int
     private let postRepository: any PostRepository
     private let imageFetching: any ImageFetching
+    /// Optional so existing preview/audit and test call sites that never enqueue an
+    /// upload (and therefore have no outbox to reflect) don't need to construct one
+    /// — matches `TodayViewModel`'s `streakSignal`/`revealSignal` optionality.
+    private let uploadQueue: UploadQueue?
     private var isPro: Bool
     private let today: LocalDate
     private(set) var selectedMonth: Int
     private var observationTask: Task<Void, Never>?
     private var thumbnailTask: Task<Void, Never>?
     private var shareTask: Task<[LocalDate: UIImage]?, Never>?
+    private var pendingPollTask: Task<Void, Never>?
 
     init(
         uid: String,
         year: Int,
         postRepository: any PostRepository,
         imageFetching: any ImageFetching,
+        uploadQueue: UploadQueue? = nil,
         isPro: Bool,
         today: LocalDate,
         selectedMonth: Int
@@ -40,6 +52,7 @@ final class GridArchiveViewModel {
         self.year = year
         self.postRepository = postRepository
         self.imageFetching = imageFetching
+        self.uploadQueue = uploadQueue
         self.isPro = isPro
         self.today = today
         self.selectedMonth = selectedMonth
@@ -60,6 +73,27 @@ final class GridArchiveViewModel {
                 self.posts = Dictionary(posts.map { ($0.localDate, $0) }, uniquingKeysWith: { _, newest in newest })
                 self.thumbnails = self.thumbnails.filter { self.posts[$0.key] != nil }
                 self.loadVisibleThumbnails(from: posts)
+                // Retire any pending overlay the instant its Firestore doc is
+                // confirmed, rather than waiting up to 2s for the next poll tick —
+                // this is belt-and-braces on top of `refreshPendingStates`'s own
+                // filter (and the callers' render-order, which already checks
+                // `posts` before `pendingStates`), so a stale entry is never even
+                // reachable, not just visually shadowed.
+                if !self.pendingStates.isEmpty {
+                    self.pendingStates = self.pendingStates.filter { self.posts[$0.key] == nil }
+                }
+            }
+        }
+
+        // Uploads can only ever be pending for the current year (a capture is
+        // always for "today"), so a past/future-year archive has nothing to poll
+        // for — avoid spinning up a needless recurring SwiftData fetch for it.
+        guard pendingPollTask == nil, uploadQueue != nil, year == today.year else { return }
+        pendingPollTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                await self.refreshPendingStates()
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
             }
         }
     }
@@ -78,7 +112,27 @@ final class GridArchiveViewModel {
         thumbnailTask = nil
         shareTask?.cancel()
         shareTask = nil
+        pendingPollTask?.cancel()
+        pendingPollTask = nil
         isPreparingShare = false
+        pendingStates = [:]
+    }
+
+    /// Polled on the same 2s cadence `TodayViewModel` already uses for its own
+    /// outbox summary — cheap SwiftData fetch, no Firestore round-trip. Firestore
+    /// always wins: a date that already has a confirmed `posts` entry never gets a
+    /// pending overlay, regardless of what state its (now-superseded) outbox row
+    /// still reports.
+    private func refreshPendingStates() async {
+        guard let uploadQueue else { return }
+        let summaries = (try? await uploadQueue.pendingSummary()) ?? []
+        var states: [LocalDate: PendingCellState] = [:]
+        for summary in summaries where summary.ownerUid == uid {
+            guard let date = LocalDate(docID: summary.localDateID), date.year == year else { continue }
+            guard posts[date] == nil else { continue }
+            states[date] = PendingCellState(uploadState: summary.state)
+        }
+        pendingStates = states
     }
 
     /// Loads every *visible* day's thumbnail for the share card. Deliberately not
@@ -187,6 +241,7 @@ struct GridArchiveView: View {
         year: Int,
         postRepository: any PostRepository,
         imageFetching: any ImageFetching,
+        uploadQueue: UploadQueue? = nil,
         isPro: Bool,
         today: LocalDate,
         onUpgrade: @escaping () -> Void,
@@ -199,6 +254,7 @@ struct GridArchiveView: View {
             year: year,
             postRepository: postRepository,
             imageFetching: imageFetching,
+            uploadQueue: uploadQueue,
             isPro: isPro,
             today: today,
             selectedMonth: initialMonth
@@ -216,6 +272,7 @@ struct GridArchiveView: View {
             year: viewModel.year,
             posts: visiblePosts,
             thumbnails: viewModel.thumbnails,
+            pendingStates: viewModel.pendingStates,
             selectedMonth: viewModel.selectedMonth,
             onSelectMonth: viewModel.selectMonth,
             onSelectPost: { selectedPost = ArchivePhotoSelection(post: $0) },
@@ -318,6 +375,7 @@ struct SkyGridArchiveTab: View {
     private let currentYear: Int
     private let postRepository: any PostRepository
     private let imageFetching: any ImageFetching
+    private let uploadQueue: UploadQueue?
     private let isPro: Bool
     private let today: LocalDate
     private let onUpgrade: () -> Void
@@ -328,6 +386,7 @@ struct SkyGridArchiveTab: View {
         currentYear: Int,
         postRepository: any PostRepository,
         imageFetching: any ImageFetching,
+        uploadQueue: UploadQueue? = nil,
         isPro: Bool,
         today: LocalDate,
         onUpgrade: @escaping () -> Void
@@ -336,6 +395,7 @@ struct SkyGridArchiveTab: View {
         self.currentYear = currentYear
         self.postRepository = postRepository
         self.imageFetching = imageFetching
+        self.uploadQueue = uploadQueue
         self.isPro = isPro
         self.today = today
         self.onUpgrade = onUpgrade
@@ -348,6 +408,7 @@ struct SkyGridArchiveTab: View {
             year: selectedYear,
             postRepository: postRepository,
             imageFetching: imageFetching,
+            uploadQueue: uploadQueue,
             isPro: isPro,
             today: today,
             onUpgrade: onUpgrade,

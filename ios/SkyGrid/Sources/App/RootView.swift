@@ -140,6 +140,7 @@ struct RootView: View {
                     currentYear: services.clock.today().year,
                     postRepository: services.postRepository,
                     imageFetching: services.imageFetching,
+                    uploadQueue: services.uploadQueue,
                     isPro: services.entitlements.isPro,
                     today: services.clock.today(),
                     onUpgrade: { presentPaywall(from: .archive) }
