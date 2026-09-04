@@ -174,3 +174,41 @@ in `Data/Firebase/FirebaseInviteRepository.swift:17` (`main actor-isolated stati
 error under strict Swift 6 concurrency checking. Asked you to fix it now while other items are
 blocked on the human, plus do a quick repo-wide grep for the same pattern elsewhere so this isn't
 a one-off fix that leaves siblings broken.
+
+## Out-of-loop task: browser-verified Google Analytics status (2026-09-04, paused loop per user request)
+
+User asked to pause the Claude<->Codex loop and directly operate the already-open Brave browser
+(via the claude-in-chrome MCP tools) to check/enable Google Analytics in the Firebase console
+myself, then resume the loop after.
+
+**What I found (Firebase console, logged-in session, screenshots taken):**
+- Project settings → Integrations → Google Analytics: shows **Enabled**, linked to Google
+  Analytics property `sky-grid-app` (Property ID `552768124`) under "Default Account for
+  Firebase".
+- The Analytics detail page shows the **iOS app "Sky Grid iOS" already linked to a data stream**
+  (Stream ID `15716675392`) — so the project-level Analytics connection Codex's instructions
+  called for is, as of this check, actually done.
+- I clicked "Download GoogleService-Info.plist" myself from Project settings → General → Your
+  apps → Sky Grid iOS (only one iOS app exists, App ID
+  `1:777493020244:ios:623881a3bfc2107d01f7c1`, matching every prior download exactly — ruling out
+  a wrong-app mismatch).
+- **The freshly downloaded file still reads `IS_ANALYTICS_ENABLED = false`**, identical to the
+  three earlier downloads (Jul 1, Jul 29, Sep 4 12:43). No plist download in this project has ever
+  shown it `true`. There is also no measurement/tracking-ID field in any of these files — checked
+  via web research, and confirmed **this is normal for iOS** (that field isn't part of the iOS
+  GoogleService-Info.plist schema at all; Codex's "measurement ID missing" concern doesn't apply
+  to iOS the way it does to web GA4 configs).
+- Web research (Stack Overflow, a Google Groups Firebase thread, a GitHub issue) confirms this
+  exact symptom — Firebase console shows Analytics linked, but the downloaded per-app plist keeps
+  `IS_ANALYTICS_ENABLED=false` — is a **long-standing, repeatedly-reported Firebase quirk**, not
+  something specific to this project. The commonly accepted developer workaround, used across
+  multiple of those sources, is to **manually set the flag to `true`** in the plist that actually
+  ships with the app, since that flag genuinely gates the SDK's runtime collection regardless of
+  the console-side linkage state, and regenerating a "correct" download is not reliable.
+
+**Batch 6 (about to send):** hand Codex the confirmed-correct field values and the
+manual-flag-flip proposal, with the instruction to verify via Firebase's Realtime/DebugView report
+after shipping a build with the flag flipped — that live-event check is the real verification, not
+another plist download.
+
+Resuming the 5-minute loop cadence now with batch 5's result check + batch 6 send.
