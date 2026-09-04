@@ -448,9 +448,29 @@ a separate session.
       `circleFull`/`buddyCircleFull` outcomes distinguish whose circle is full for future
       client copy. 5 new pure tests + 7 new emulator tests, independently re-verified by the
       main loop (not just the implementing agent's own report): 66/66 pure, 47/47 emulator,
-      build+lint clean. **Still open**: the copy changes (`TodayView.swift`/`BuddiesView.swift`/
-      onboarding), the buddy-refresh fan-out bound, and tri-state preservation — deliberately
-      deferred until the copy work can draw on the design-research pass above. Not deployed.
+      build+lint clean.
+      **Partial 2 (2026-09-04, Sonnet): the copy-changes slice is done and committed.** Removed
+      every "exactly one/two" buddy-count assumption found by grepping the whole buddy-pairing
+      surface (not just the two line-pointers above, which turned out incomplete):
+      `TodayView.swift` empty-buddies button ("Invite one person" → "Invite people you trust",
+      plus its accessibility label, which swift-reviewer caught as still saying "Invite a buddy"
+      after the first pass — fixed same iteration before commit), `BuddiesView.swift`'s
+      `BuddyRitualCard` (collapsed caption, expanded headline "Two skies, revealed together." →
+      "Skies revealed together.", expanded body), `InviteClaimView.swift`'s paired/already-buddies
+      terminal screens ("you both have" / "You two are already buddies"), and
+      `OnboardingInviteView.swift`'s invite step ("Invite someone you trust. Their sky stays
+      sealed until you have both captured..." — "someone"/"their"/"both" all assume exactly one
+      buddy). Updated the one UI test asserting the old exact headline string
+      (`SkyGridUITests.testBuddyRitualHeaderIsCentered`). swift-reviewer (sonnet) pass on the
+      first three files: one HIGH (stale accessibility label) found and fixed before commit; no
+      other CRITICAL/HIGH. 227/227 unit tests green, `xcodebuild test` re-run by the main loop
+      after all fixes including the onboarding one found afterward by a second self-grep.
+      **Still open**:
+      the buddy-refresh read fan-out bound (still capped at the pre-N-way limit — needs its own
+      verification pass reading `TodayViewModel`'s buddy-refresh path) and tri-state preservation
+      per buddy under N members (needs a dedicated pass through `BuddyRow`/`revealState` once the
+      fan-out bound is confirmed correct, since tri-state depends on what data actually gets
+      fetched per buddy). Not deployed.
 - [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
       whether missed days cluster on weekends from existing post data (Bet 6 exit condition) —
       if uniform, this may not be the right lever.

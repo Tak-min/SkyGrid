@@ -1,1 +1,1 @@
-{"iteration": 3, "status": "onboarding: fixed stale color claim in WelcomeView.swift; invite+mutual-reveal step confirmed already shipped; pace/frequency cut deferred pending funnel analytics (unmeasured bet). Debug build green. verify.sh still rc=1 (6 other TODO items remain unchecked, expected).", "verify_rc": 1, "same_count": 0}
+{"iteration": 4, "status": "N-way buddy copy slice done (TodayView/BuddiesView/InviteClaimView/OnboardingInviteView de-singularized); fan-out bound + tri-state still open", "verify_rc": 1, "same_count": 0}

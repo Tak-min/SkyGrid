@@ -152,7 +152,7 @@ struct InviteClaimView: View {
             terminal(
                 icon: "checkmark.circle.fill",
                 title: "You're buddies now",
-                message: "Capture your sky together, and you'll reveal each other's the moment you both have.",
+                message: "Capture your sky together, and you'll reveal each other's the moment you've each captured.",
                 primaryTitle: "Done",
                 primaryAction: onFinished
             )
@@ -160,7 +160,7 @@ struct InviteClaimView: View {
             terminal(
                 icon: "checkmark.circle.fill",
                 title: "Already connected",
-                message: "You two are already buddies.",
+                message: "You're already buddies.",
                 primaryTitle: "Done",
                 primaryAction: onFinished
             )

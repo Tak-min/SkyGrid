@@ -314,7 +314,7 @@ struct TodayView: View {
                     Image(systemName: "person.2")
                         .font(.system(size: 15, weight: .medium))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Invite one person")
+                        Text("Invite people you trust")
                             .font(SGFont.body(15))
                         Text("your skies unlock each other")
                             .font(SGFont.caption(12))
@@ -330,7 +330,7 @@ struct TodayView: View {
                 .quietCard()
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Invite a buddy. Your skies unlock each other.")
+            .accessibilityLabel("Invite people you trust. Your skies unlock each other.")
         } else {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
                 sectionLabel(viewModel.streak.hasPostedToday ? "THIS MORNING, TOGETHER" : "SEALED UNTIL YOU POST")

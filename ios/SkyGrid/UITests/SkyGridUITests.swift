@@ -144,7 +144,7 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
         app.launch()
 
-        let headline = app.staticTexts["Two skies, revealed together."]
+        let headline = app.staticTexts["Skies revealed together."]
         XCTAssertTrue(headline.waitForExistence(timeout: 8))
         XCTAssertEqual(headline.frame.midX, app.frame.midX, accuracy: 2)
     }
