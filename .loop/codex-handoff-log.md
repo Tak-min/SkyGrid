@@ -227,3 +227,22 @@ further right now.
 
 See message text below (sent verbatim to Codex): browser-verified Analytics status + the
 manual-flag-flip proposal, sourced from the "Out-of-loop task" section above.
+
+**Batch 6 result (received 2026-09-04, 3m28s) — Codex correctly overrode my proposal:** Codex did
+NOT flip `IS_ANALYTICS_ENABLED`, and was right not to. It checked the actual Firebase iOS SDK
+12.17.0 source (`FirebaseCore/Sources/FIROptions.m`, `FirebaseOptionsPerProduct.md`) rather than
+trusting the web forum consensus I handed it, and found that key is now a **documented unused
+legacy GoogleService-Info field** in the current SDK — setting it to `true` has zero effect on
+real collection. There's also no actual stop-key anywhere in the app; the SDK's own default is
+**collection enabled**. So the premise behind batch 6 (and Codex's own batch-2 finding) was a
+common but outdated misconception carried by most web sources on this topic. Corrected
+`PRODUCT-MODEL.md` to stop treating the plist flag as the test criterion — the only real
+verification left is whether an event actually arrives in Firebase DebugView/Realtime after a
+debug build fires one. iOS Simulator build still green.
+
+## Batch 7 (sent 2026-09-04 — 5 min cadence continues)
+
+Asked Codex to close the loop on this itself: build+run on iOS Simulator, trigger one of the
+already-instrumented events (Paywall or Invite path) to actually fire a real Analytics event, and
+report back once done — I'll then check Firebase's DebugView/Realtime report via browser to
+confirm arrival, closing out the Analytics-verification thread for good either way.
