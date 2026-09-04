@@ -1,3 +1,4 @@
-[loop-engine 00:17:25] Starting loop. MAX_ITER=30 MODEL=sonnet VERIFY='cd ios && xcodebuild test -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17' 2>&1 | tail -50' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
-[loop-engine 00:17:25] === iteration 1 / 30 ===
-[loop-engine 00:35:48] VERIFY PASSED on iteration 1.
+[loop-engine 11:47:02] Starting loop. MAX_ITER=40 MODEL=sonnet VERIFY='bash .loop/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 11:47:02] === iteration 1 / 40 ===
+[loop-engine 11:54:27] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 11:54:27] === iteration 2 / 40 ===

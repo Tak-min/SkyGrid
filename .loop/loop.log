@@ -40,3 +40,172 @@ Resolved source packages:
 2026-09-04 00:35:48.807 xcodebuild[77285:34838115] Writing error result bundle to /var/folders/8z/d4zbpmqx0x155zdrstx90k500000gn/T/ResultBundle_2026-04-09_00-35-0048.xcresult
 xcodebuild: error: The test action requires that the name of a scheme in the project is provided using the "-scheme" option. The "-list" option can be used to find the names of the schemes in the project.
 [loop-engine 00:35:48] VERIFY PASSED on iteration 1.
+[loop-engine 00:41:01] Definition of Done proxy (green gate) reached. Exiting 0.
+[loop-engine 01:10:02] Starting loop. MAX_ITER=30 MODEL=sonnet VERIFY='cd ios && xcodebuild test -project SkyGrid.xcodeproj -scheme SkyGrid -only-testing:SkyGridTests -destination 'platform=iOS Simulator,name=iPhone 17' > /tmp/skygrid_xctest.log 2>&1; ec=$?; tail -60 /tmp/skygrid_xctest.log; exit $ec' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 01:10:02] === iteration 1 / 30 ===
+Committed as `a882407`. Note: `.loop/driver.out` and `.loop/loop.log` show modified in status but were intentionally left unstaged (not part of `git add`), consistent with the explicit-paths-only rule.
+
+## Summary
+
+- **Fixed** the pre-existing flaky test `CollectionObservationStateTests.gridPreservesLastConfirmedPosts()` (DoD-8 blocker). Root cause: a fixed `Task.yield()` count race, not a production logic bug — confirmed via repeated clean 211/211 runs and `git diff` showing no prior `ios/` production changes.
+- Replaced the fixed-yield pattern at all 5 affected call sites in `OrphanedPostRecoveryTests.swift` with a new `awaitCondition(timeout:_:)` polling helper.
+- **swift-reviewer** (Sonnet) caught a real HIGH-severity gap in my first pass: two `sendRequest` tests polled `friendshipState` but not `handle`, which `sendRequest` also needs and which is populated by an independently scheduled task — this would have silently reintroduced the same race. Fixed and re-verified.
+- **Verified**: `xcodebuild test ... -only-testing:SkyGridTests` → 211/211 passing, exit code 0 (checked directly, not piped through anything that could mask the result).
+- Updated `.loop/VISION.md` (checked off the item, documented root cause and the review-fix) and `.loop/state.json`.
+- Committed with explicit paths only (`ios/SkyGrid/Tests/OrphanedPostRecoveryTests.swift`, `.loop/VISION.md`, `.loop/state.json`) — did not touch the concurrent session's files or use `git add -A`.
+
+Next unchecked TODO item per VISION.md order: instrumenting the target metric (`mutuallyUnlockedBuddyCount` 0→≥1 event + `skygrid_capture_completed`), which is the next iteration's task — stopping here per the driver protocol.
+2026-09-04 01:26:22.871180+0900 SkyGrid[22130:170522] [upload] Upload attempt 1 for test-uid:2026-07-29 failed: localFileMissing
+2026-09-04 01:26:22.751371+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+✔ Test "a missing local file fails immediately as terminal, without exhausting retries" passed after 0.313 seconds.
+◇ Test "cancel removes a still-pending row and its local files" started.
+2026-09-04 01:26:23.184688+0900 SkyGrid[22130:170749] [upload] Upload attempt 1 for test-uid:2026-07-29 failed: UploadFailed()
+2026-09-04 01:26:23.080107+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:23.268560+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+✔ Test "cancel removes a still-pending row and its local files" passed after 0.336 seconds.
+◇ Test "cancel is a no-op once the row has already finished uploading" started.
+2026-09-04 01:26:23.469714+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:23.582782+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:23.660654+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+✔ Test "cancel is a no-op once the row has already finished uploading" passed after 0.314 seconds.
+◇ Test "discardOrphanedRow deletes a failed row with no recoverable local file" started.
+2026-09-04 01:26:23.828890+0900 SkyGrid[22130:170746] [upload] Upload attempt 1 for test-uid:2026-07-29 failed: UploadFailed()
+2026-09-04 01:26:23.752332+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:23.830345+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:23.887320+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:23.968868+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.002165+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.017979+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.029083+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.088446+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.103268+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.111282+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.116111+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.122955+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+2026-09-04 01:26:24.125149+0900 SkyGrid[22130:170526] [[FirebaseCore]] 12.17.0 - [FirebaseCore][I-COR000003] The default Firebase app has not yet been configured. Add `FirebaseApp.configure()` to your application initialization. This can be done in in the App Delegate's application(_:didFinishLaunchingWithOptions:)` (or the `@main` struct's initializer in SwiftUI). Read more: https://firebase.google.com/docs/ios/setup#initialize_firebase_in_your_app
+✔ Test "discardOrphanedRow deletes a failed row with no recoverable local file" passed after 0.317 seconds.
+◇ Test "discardOrphanedRow is a no-op when the row belongs to a different capture" started.
+2026-09-04 01:26:24.148647+0900 SkyGrid[22130:170528] [upload] Upload attempt 1 for test-uid:2026-07-29 failed: UploadFailed()
+✔ Test "discardOrphanedRow is a no-op when the row belongs to a different capture" passed after 0.328 seconds.
+◇ Test "discardOrphanedRow is a no-op once the row has finished uploading" started.
+✔ Test "discardOrphanedRow is a no-op once the row has finished uploading" passed after 0.312 seconds.
+◇ Test "upload queue uniqueness is scoped to account and local day" started.
+2026-09-04 01:26:24.801724+0900 SkyGrid[22130:170528] [upload] Upload attempt 1 for test-uid:2026-07-29 failed: UploadFailed()
+2026-09-04 01:26:24.806298+0900 SkyGrid[22130:170528] [upload] Upload attempt 1 for another-account:2026-07-29 failed: UploadFailed()
+✔ Test "upload queue uniqueness is scoped to account and local day" passed after 0.319 seconds.
+✔ Suite "UploadQueue" passed after 5.292 seconds.
+◇ Suite "WeekRhythmCalculator" started.
+◇ Test "produces exactly 7 days ending today" started.
+✔ Test "produces exactly 7 days ending today" passed after 0.001 seconds.
+◇ Test "postedCount reflects only days actually posted" started.
+✔ Test "postedCount reflects only days actually posted" passed after 0.001 seconds.
+◇ Test "a posted day carries its post's thumbPath for photo display" started.
+✔ Test "a posted day carries its post's thumbPath for photo display" passed after 0.001 seconds.
+◇ Test "an unposted day carries no thumbPath" started.
+✔ Test "an unposted day carries no thumbPath" passed after 0.001 seconds.
+✔ Suite "WeekRhythmCalculator" passed after 0.001 seconds.
+✔ Test run with 211 tests in 36 suites passed after 7.728 seconds.
+2026-09-04 01:26:25.468 xcodebuild[20739:161289] [MT] IDETestOperationsObserverDebug: 142.563 elapsed -- Testing started completed.
+2026-09-04 01:26:25.468 xcodebuild[20739:161289] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-09-04 01:26:25.468 xcodebuild[20739:161289] [MT] IDETestOperationsObserverDebug: 142.563 sec, +142.563 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/taku8/Library/Developer/Xcode/DerivedData/SkyGrid-fimfpljtpsxgfacngwcthymfwsqy/Logs/Test/Test-SkyGrid-2026.09.04_01-23-50-+0900.xcresult
+
+** TEST SUCCEEDED **
+
+Testing started
+[loop-engine 01:26:28] VERIFY PASSED on iteration 1.
+[loop-engine 01:26:28] Definition of Done proxy (green gate) reached. Exiting 0.
+[loop-engine 01:55:47] Starting loop. MAX_ITER=40 MODEL=sonnet VERIFY='bash .loop/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 01:55:47] === iteration 1 / 40 ===
+You've hit your session limit · resets 4:40am (Asia/Tokyo)
+[loop-engine 02:00:22] claude -p returned non-zero on iteration 1 (continuing to verify).
+VISION.md still has 14 unchecked TODO item(s):
+184:- [ ] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
+187:- [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
+190:- [ ] Add `onFriendshipCreated` Cloud Function trigger notifying the inviter when their invite is
+193:- [ ] Add a share control to Today's recorded-morning card (reuse `ShareCardRenderer.renderMorning`
+196:- [ ] ≥50-source design research pass (`dev-notes/design-research-sources_<date>.md`).
+197:- [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
+200:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+204:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+208:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+213:- [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
+216:- [ ] Erly-style motion-gated alarm dismissal — **note the hard platform constraint**: AlarmKit
+221:- [ ] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
+224:- [ ] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_<date>.md`).
+225:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 02:00:22] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 02:00:22] === iteration 2 / 40 ===
+You've hit your session limit · resets 4:40am (Asia/Tokyo)
+[loop-engine 02:00:26] claude -p returned non-zero on iteration 2 (continuing to verify).
+VISION.md still has 14 unchecked TODO item(s):
+184:- [ ] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
+187:- [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
+190:- [ ] Add `onFriendshipCreated` Cloud Function trigger notifying the inviter when their invite is
+193:- [ ] Add a share control to Today's recorded-morning card (reuse `ShareCardRenderer.renderMorning`
+196:- [ ] ≥50-source design research pass (`dev-notes/design-research-sources_<date>.md`).
+197:- [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
+200:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+204:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+208:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+213:- [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
+216:- [ ] Erly-style motion-gated alarm dismissal — **note the hard platform constraint**: AlarmKit
+221:- [ ] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
+224:- [ ] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_<date>.md`).
+225:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 02:00:26] VERIFY failing (rc=1). Identical-failure streak: 2/3.
+[loop-engine 02:00:26] === iteration 3 / 40 ===
+You've hit your session limit · resets 4:40am (Asia/Tokyo)
+[loop-engine 02:00:30] claude -p returned non-zero on iteration 3 (continuing to verify).
+VISION.md still has 14 unchecked TODO item(s):
+184:- [ ] Instrument the target metric before/alongside the visual pass: one `Analytics.logEvent` on
+187:- [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
+190:- [ ] Add `onFriendshipCreated` Cloud Function trigger notifying the inviter when their invite is
+193:- [ ] Add a share control to Today's recorded-morning card (reuse `ShareCardRenderer.renderMorning`
+196:- [ ] ≥50-source design research pass (`dev-notes/design-research-sources_<date>.md`).
+197:- [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
+200:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+204:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+208:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+213:- [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
+216:- [ ] Erly-style motion-gated alarm dismissal — **note the hard platform constraint**: AlarmKit
+221:- [ ] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
+224:- [ ] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_<date>.md`).
+225:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 02:00:31] VERIFY failing (rc=1). Identical-failure streak: 3/3.
+[loop-engine 02:00:31] HALT (1): no progress: identical verify result 3 iterations in a row — agent is stuck.
+[loop-engine 11:47:02] Starting loop. MAX_ITER=40 MODEL=sonnet VERIFY='bash .loop/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 11:47:02] === iteration 1 / 40 ===
+Committed. This iteration's work is done — stopping here per the loop protocol.
+
+## Summary
+
+I found the previous (uncommitted) work already in the tree — analytics instrumentation for VISION.md's TODO item ("Instrument the target metric..."). It had a real bug: `TodayViewModel` referenced an undeclared `lastPublishedUnlockedBuddyCount` while a differently-named property (`mutualRevealFiredForDate`) sat unused — this wouldn't have compiled.
+
+**What I did:**
+1. Fixed the compile error by wiring the code to actually use the date-keyed tracking the doc comment described.
+2. Verified build (Debug + Release) and full test suite (211/211) pass.
+3. Dispatched `swift-reviewer` (sonnet) since this touches real logic. It found one real MEDIUM bug: the once-per-day flag was in-memory only, so it would silently refire the metric on every app relaunch after the buddy strip was already unlocked that day — corrupting the exact funnel metric this instrumentation exists to measure.
+4. Fixed it properly: added a persisted, account-scoped `LocalDefaults` flag (`mutualRevealUnlockedLocalDate`/`mutualRevealUnlockedAccountID`), mirroring the repo's existing `milestoneAccountID` pattern, wired into `resetAccountScopedValues()`.
+5. Re-verified: build + 211/211 tests green.
+6. Checked off the TODO item in `.loop/VISION.md` with an honest note about the bug and fix, updated `.loop/state.json`, and committed with explicit paths (no `git add -A`, per repo guardrail).
+
+**Not done / remaining:** 13 other unchecked TODO items remain (invite affordance, onFriendshipCreated trigger, share control, 50-source design research, Today/Buddies/Onboarding redesigns, N-way buddy UI, multi-alarm, motion-gated dismissal, ASO comparison, final full-suite/Release confirmation). `.loop/verify.sh` still correctly exits non-zero. The driver will pick up the next item on its next iteration.
+VISION.md still has 13 unchecked TODO item(s):
+193:- [ ] Add invite affordance to Bet 3's placement: an invite prompt in the day-1 `MilestoneView`
+196:- [ ] Add `onFriendshipCreated` Cloud Function trigger notifying the inviter when their invite is
+199:- [ ] Add a share control to Today's recorded-morning card (reuse `ShareCardRenderer.renderMorning`
+202:- [ ] ≥50-source design research pass (`dev-notes/design-research-sources_<date>.md`).
+203:- [ ] Today screen redesign: anchor pre-capture card in yesterday's actual photo instead of a
+206:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+210:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+214:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+219:- [ ] Multi-alarm-time support in `MorningAlarmScheduler` + settings UI. Before building, check
+222:- [ ] Erly-style motion-gated alarm dismissal — **note the hard platform constraint**: AlarmKit
+227:- [ ] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
+230:- [ ] ASO comparison vs. Erly (`dev-notes/aso-comparison-vs-erly_<date>.md`).
+231:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 11:54:27] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 11:54:27] === iteration 2 / 40 ===

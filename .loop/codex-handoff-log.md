@@ -430,3 +430,35 @@ resumes:
 - `dev-notes/virality-stickiness-assessment_2026-09-04.md` and `PRODUCT-MODEL.md` carry the
   product-judgment reasoning (target metric, claims vs. bets) behind everything sent this
   session — read those before generating new findings so the same ground isn't re-covered.
+
+## Batch 14 (2026-09-04, resumed session)
+
+Resumed the Codex collaboration via the direct `mcp__codex__codex` MCP tool (available this
+session) instead of the prior screen-capture-driven terminal workflow — preferred per
+`codex-delegation.md`.
+
+Asked Codex to extract the App Check Simulator debug-token value (batch-9 follow-up, blocks
+on-device visual confirmation of recent Simulator UI work). Codex reported
+`c3bf4641-553e-4cba-862f-e788dbccb201` sourced from an xcconfig-injected
+`APP_CHECK_DEBUG_TOKEN` value, but could not confirm it via the SDK's own debug-token log line
+(Argent tool-server and CoreSimulatorService were unreachable in Codex's shell at the time) —
+**this value is UNVERIFIED, do not register it in Firebase Console without independently
+confirming it first** (repo-wide `grep` for `APP_CHECK_DEBUG_TOKEN` / the token string in this
+session found no match — Codex's claimed xcconfig source could not be corroborated).
+
+User then asked to verify on the real device instead: the previously-paired iPhone 15 Pro
+(`devicectl` name "俺のGALAXY Pro Max", identifier `FF649B7E-F19F-5E73-9AA2-797C297B8916`,
+`iPhone16,1`) is available over wireless debugging (`available (paired)` via
+`xcrun devicectl list devices`, though `xctrace` still shows it offline via the older USB-based
+check — devicectl's network-tunnel pairing is the current one). Built Debug config for that
+device (`xcodebuild build -destination "id=FF649B7E-..."`, automatic signing, team
+`NVZB82UK53`) — **BUILD SUCCEEDED**. Installed and launched via
+`xcrun devicectl device install app` / `device process launch` — confirmed running
+(PID 29283, plus the SkyGridWidgets extension at PID 29282).
+
+**Next step for whoever continues this thread:** with the app now live on a real device, this
+is the moment to actually resolve the stuck Analytics-event-delivery verification (3 rounds
+unresolved on Simulator) — trigger the flows that fire `skygrid_capture_completed` /
+`skygrid_mutual_reveal_unlocked` / invite events on-device and check Firebase DebugView /
+Realtime report. Also independently verify the App Check debug-token claim above before
+registering anything in Firebase Console.
