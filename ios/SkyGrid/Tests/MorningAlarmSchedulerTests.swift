@@ -27,6 +27,15 @@ struct MorningAlarmSchedulerTests {
         MorningReminderPendingOccurrence(identifier: identifier, hour: hour, minute: minute)
     }
 
+    private func alarm(
+        id: UUID,
+        hour: Int? = 6,
+        minute: Int? = 30,
+        weekdays: Set<Int>? = Set(1...7)
+    ) -> MorningAlarmKitScheduledAlarm {
+        MorningAlarmKitScheduledAlarm(id: id, hour: hour, minute: minute, weekdays: weekdays)
+    }
+
     @Test("a persisted schedule set selects the schedule-aware reminder fallback")
     func persistedSchedulesSelectScheduleAwareFallback() {
         let schedules = [
@@ -233,5 +242,87 @@ struct MorningAlarmSchedulerTests {
             plan: plan,
             successfullyAddedIdentifiers: []
         ).isEmpty)
+    }
+
+    @Test("a new AlarmKit schedule needs scheduling")
+    func newAlarmKitScheduleNeedsAdding() {
+        let entry = schedule()
+
+        let plan = morningAlarmKitReconcilePlan(schedules: [entry], currentAlarms: [])
+
+        #expect(plan.additions == [entry])
+        #expect(plan.cancellations.isEmpty)
+    }
+
+    @Test("an unchanged AlarmKit schedule is a no-op")
+    func unchangedAlarmKitScheduleIsNoOp() {
+        let entry = schedule(minutesAfterMidnight: 400, weekdays: [2, 4])
+
+        let plan = morningAlarmKitReconcilePlan(
+            schedules: [entry],
+            currentAlarms: [alarm(id: entry.id, hour: 6, minute: 40, weekdays: [2, 4])]
+        )
+
+        #expect(plan.additions.isEmpty)
+        #expect(plan.cancellations.isEmpty)
+    }
+
+    @Test("an AlarmKit schedule with a changed time is scheduled again")
+    func changedAlarmKitTimeNeedsAdding() {
+        let entry = schedule(minutesAfterMidnight: 400)
+
+        let plan = morningAlarmKitReconcilePlan(
+            schedules: [entry],
+            currentAlarms: [alarm(id: entry.id, hour: 6, minute: 30)]
+        )
+
+        #expect(plan.additions == [entry])
+        #expect(plan.cancellations.isEmpty)
+    }
+
+    @Test("an AlarmKit schedule with changed weekdays is scheduled again")
+    func changedAlarmKitWeekdaysNeedAdding() {
+        let entry = schedule(weekdays: [2, 4])
+
+        let plan = morningAlarmKitReconcilePlan(
+            schedules: [entry],
+            currentAlarms: [alarm(id: entry.id, weekdays: [2, 3])]
+        )
+
+        #expect(plan.additions == [entry])
+        #expect(plan.cancellations.isEmpty)
+    }
+
+    @Test("a disabled schedule cancels its current AlarmKit alarm")
+    func disabledAlarmKitScheduleNeedsCancelling() {
+        let entry = schedule(isEnabled: false)
+
+        let plan = morningAlarmKitReconcilePlan(
+            schedules: [entry],
+            currentAlarms: [alarm(id: entry.id)]
+        )
+
+        #expect(plan.additions.isEmpty)
+        #expect(plan.cancellations == [entry.id])
+    }
+
+    @Test("AlarmKit reconciliation mixes additions cancellations and unchanged entries")
+    func mixedAlarmKitReconciliation() {
+        let unchanged = schedule(minutesAfterMidnight: 400, weekdays: [2])
+        let changed = schedule(minutesAfterMidnight: 450, weekdays: [4])
+        let added = schedule(minutesAfterMidnight: 500, weekdays: [6])
+        let disabled = schedule(isEnabled: false)
+
+        let plan = morningAlarmKitReconcilePlan(
+            schedules: [unchanged, changed, added, disabled],
+            currentAlarms: [
+                alarm(id: unchanged.id, hour: 6, minute: 40, weekdays: [2]),
+                alarm(id: changed.id, hour: 6, minute: 30, weekdays: [4]),
+                alarm(id: disabled.id)
+            ]
+        )
+
+        #expect(plan.additions == [changed, added])
+        #expect(plan.cancellations == [disabled.id])
     }
 }

@@ -103,6 +103,53 @@ struct MorningReminderReconcilePlan: Equatable, Sendable {
     let cancellations: Set<String>
 }
 
+/// The schedule-bearing fields from an AlarmKit alarm. Optional values represent
+/// an existing alarm whose schedule is not a weekly wall-clock schedule; it is
+/// therefore stale for any matching `MorningAlarmSchedule` identifier.
+struct MorningAlarmKitScheduledAlarm: Equatable, Sendable {
+    let id: UUID
+    let hour: Int?
+    let minute: Int?
+    let weekdays: Set<Int>?
+
+    func matches(_ schedule: MorningAlarmSchedule) -> Bool {
+        hour == schedule.minutesAfterMidnight / 60
+            && minute == schedule.minutesAfterMidnight % 60
+            && weekdays == schedule.weekdays
+    }
+}
+
+/// A schedule replacement uses AlarmKit's same-ID replacement behavior, so a
+/// changed entry belongs in `additions`, not `cancellations`. Cancellations are
+/// strictly alarms whose IDs are no longer desired.
+struct MorningAlarmKitReconcilePlan: Equatable, Sendable {
+    let additions: [MorningAlarmSchedule]
+    let cancellations: Set<UUID>
+}
+
+/// Computes the desired AlarmKit schedule set from the caller's already-scoped
+/// multi-schedule AlarmKit alarms. Matching IDs are insufficient: an alarm whose
+/// wall-clock time or selected weekdays changed must be scheduled again.
+func morningAlarmKitReconcilePlan(
+    schedules: [MorningAlarmSchedule],
+    currentAlarms: [MorningAlarmKitScheduledAlarm]
+) -> MorningAlarmKitReconcilePlan {
+    let desired = schedules.filter(\.isEnabled)
+    let currentByID = Dictionary(
+        currentAlarms.map { ($0.id, $0) },
+        uniquingKeysWith: { first, _ in first }
+    )
+    let desiredIDs = Set(desired.map(\.id))
+
+    return MorningAlarmKitReconcilePlan(
+        additions: desired.filter { schedule in
+            guard let current = currentByID[schedule.id] else { return true }
+            return !current.matches(schedule)
+        },
+        cancellations: Set(currentAlarms.map(\.id)).subtracting(desiredIDs)
+    )
+}
+
 /// Computes the desired reminder-fallback set without consulting notification
 /// authorization or `UNUserNotificationCenter`. A time mismatch for an otherwise
 /// matching identifier is a replacement, not a no-op. `currentPendingOccurrences`
@@ -476,6 +523,150 @@ enum MorningAlarmScheduler {
 #if canImport(AlarmKit)
 @available(iOS 26.0, *)
 private extension MorningAlarmScheduler {
+    static func scheduleAlarmKit(schedules: [MorningAlarmSchedule]) async -> MorningAlarmState {
+        let manager = AlarmManager.shared
+        let currentAlarms: [MorningAlarmKitScheduledAlarm]
+        do {
+            // AlarmKit exposes only this app's alarms. At this incremental stage,
+            // that is the multi-schedule space (including the legacy fixed UUID
+            // reused by migration); future re-alarm IDs will be excluded here.
+            currentAlarms = try manager.alarms.map(alarmKitScheduledAlarm(from:))
+        } catch {
+            return .failed(.systemAlarm)
+        }
+        let plan = morningAlarmKitReconcilePlan(
+            schedules: schedules,
+            currentAlarms: currentAlarms
+        )
+
+        guard schedules.contains(where: \.isEnabled) else {
+            var didFail = false
+            for id in plan.cancellations {
+                do {
+                    try manager.cancel(id: id)
+                } catch {
+                    didFail = true
+                }
+            }
+            guard !didFail else { return .failed(.systemAlarm) }
+            LocalDefaults.morningAlarmEnabled = false
+            return .off(.systemAlarm)
+        }
+
+        let authorization: AlarmManager.AuthorizationState
+        switch manager.authorizationState {
+        case .notDetermined:
+            do {
+                authorization = try await manager.requestAuthorization()
+            } catch {
+                return .failed(.systemAlarm)
+            }
+        default:
+            authorization = manager.authorizationState
+        }
+
+        guard authorization == .authorized else {
+            return authorization == .denied ? .denied(.systemAlarm) : .failed(.systemAlarm)
+        }
+
+        // Keep the soft follow-up permission request aligned with the existing
+        // single-alarm path. Its result never changes whether a system alarm arms.
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+
+        var didFail = false
+        for schedule in plan.additions {
+            do {
+                _ = try await manager.schedule(
+                    id: schedule.id,
+                    configuration: alarmKitConfiguration(schedule: schedule)
+                )
+            } catch {
+                didFail = true
+            }
+        }
+
+        // Schedule first so a successful replacement is never followed by a
+        // cancellation of the same ID; replacements are absent from this set.
+        for id in plan.cancellations {
+            do {
+                try manager.cancel(id: id)
+            } catch {
+                didFail = true
+            }
+        }
+
+        guard !didFail else { return .failed(.systemAlarm) }
+        LocalDefaults.morningAlarmEnabled = true
+        return .scheduled(.systemAlarm)
+    }
+
+    static func alarmKitScheduledAlarm(from alarm: Alarm) -> MorningAlarmKitScheduledAlarm {
+        guard case .relative(let relative) = alarm.schedule,
+              case .weekly(let repeatingWeekdays) = relative.repeats
+        else {
+            return MorningAlarmKitScheduledAlarm(id: alarm.id, hour: nil, minute: nil, weekdays: nil)
+        }
+        return MorningAlarmKitScheduledAlarm(
+            id: alarm.id,
+            hour: relative.time.hour,
+            minute: relative.time.minute,
+            weekdays: Set(repeatingWeekdays.compactMap(morningAlarmWeekday))
+        )
+    }
+
+    static func alarmKitConfiguration(
+        schedule entry: MorningAlarmSchedule
+    ) -> AlarmManager.AlarmConfiguration<SkyGridAlarmMetadata> {
+        let alert = makeAlertPresentation()
+        let attributes = AlarmAttributes(
+            presentation: AlarmPresentation(alert: alert),
+            metadata: SkyGridAlarmMetadata(),
+            tintColor: Color(red: 0.48, green: 0.65, blue: 0.78)
+        )
+        let schedule = Alarm.Schedule.relative(
+            .init(
+                time: .init(
+                    hour: entry.minutesAfterMidnight / 60,
+                    minute: entry.minutesAfterMidnight % 60
+                ),
+                repeats: .weekly(entry.weekdays.sorted().compactMap(morningAlarmWeekday))
+            )
+        )
+        return .alarm(
+            schedule: schedule,
+            attributes: attributes,
+            stopIntent: MorningAlarmStoppedIntent(),
+            secondaryIntent: OpenMorningCameraIntent(),
+            sound: .default
+        )
+    }
+
+    static func morningAlarmWeekday(_ weekday: Int) -> Locale.Weekday? {
+        switch weekday {
+        case 1: return .sunday
+        case 2: return .monday
+        case 3: return .tuesday
+        case 4: return .wednesday
+        case 5: return .thursday
+        case 6: return .friday
+        case 7: return .saturday
+        default: return nil
+        }
+    }
+
+    static func morningAlarmWeekday(_ weekday: Locale.Weekday) -> Int? {
+        switch weekday {
+        case .sunday: return 1
+        case .monday: return 2
+        case .tuesday: return 3
+        case .wednesday: return 4
+        case .thursday: return 5
+        case .friday: return 6
+        case .saturday: return 7
+        @unknown default: return nil
+        }
+    }
+
     static func alarmKitState() async -> MorningAlarmState {
         let manager = AlarmManager.shared
         switch manager.authorizationState {

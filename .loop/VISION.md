@@ -728,10 +728,35 @@ a separate session.
       Codex's claim** (Codex's sandbox could not reach CoreSimulator either pass): 245/245 green
       (`xcodebuild test -only-testing:SkyGridTests`), up from 234 once the pbxproj fix alone made
       the skipped suite's original tests run for the first time, then +11 for this slice's new
-      tests. Not deployed (client-only). **Still open**: the equivalent AlarmKit-side multi-schedule
-      reconcile (currently
-      still single-alarm-only) — deferred as a separate slice per this loop's smallest-step
-      discipline, same reasoning as every earlier 5C step.
+      tests. Not deployed (client-only).
+      **5C step 4 (AlarmKit-side multi-schedule reconcile, additive/dead-code slice, done and
+      committed 2026-09-05, Codex + main-loop verify).** Mirrors the reminder-fallback reconcile
+      pattern for AlarmKit: new pure `morningAlarmKitReconcilePlan(schedules:currentAlarms:)` +
+      `MorningAlarmKitScheduledAlarm`/`MorningAlarmKitReconcilePlan` value types, plus
+      `MorningAlarmScheduler.scheduleAlarmKit(schedules:)` (one AlarmKit alarm per enabled
+      schedule entry, `id = entry.id`,
+      `Alarm.Schedule.relative(.init(time:, repeats: .weekly(entry.weekdays)))` per decision
+      record §2.4). Same-ID content mismatch (changed time or weekdays) is correctly treated as
+      needing re-`schedule`, not a no-op — the exact bug class already caught once on the
+      reminder-fallback side. **Deliberately not wired into `enable()`, `resyncIfNeeded()`, or
+      any other call site yet** — dead code by design, same incremental discipline as every
+      earlier 5C slice; that wiring is the next step. New
+      `MorningAlarmSchedulerTests.swift` coverage (6 tests: new/unchanged/time-changed/
+      weekdays-changed/disabled-cancels/mixed) for the pure reconcile function only (the
+      AlarmKit-calling function itself isn't mockable, same limitation as the pre-existing
+      single-alarm `scheduleAlarmKit(minutes:)`). swift-reviewer (sonnet): no CRITICAL/HIGH; one
+      MEDIUM fixed same iteration (`Dictionary(uniqueKeysWithValues:)` over AlarmKit's own
+      `manager.alarms` would trap on a hypothetical OS-surfaced duplicate ID — an external,
+      not-app-controlled invariant unlike the reminder path's self-generated identifiers — now
+      duplicate-tolerant via `uniquingKeysWith:`); one MEDIUM (an unverified assumption about
+      AlarmKit's same-ID replace-on-throw semantics) and two LOW notes logged for the future
+      wiring slice, not acted on now. Independently re-verified by the main loop (not just
+      Codex's report): `xcodebuild test -only-testing:SkyGridTests/MorningAlarmSchedulerTests`
+      run twice by the main loop itself (17/17 green both times, before and after the MEDIUM
+      fix). Not deployed (client-only). **Still open**: wiring `scheduleAlarmKit(schedules:)`
+      into `enable()`/`resyncIfNeeded()` (replacing the single-alarm `scheduleAlarmKit(minutes:)`
+      call), then §2.5 (re-alarm loop) and §2.6 (UI/copy) — in that order per the decision
+      record's build order.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
