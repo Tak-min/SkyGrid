@@ -101,6 +101,21 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
 - [x] Iteration 8: add/refresh audit scenarios and screenshots.
 - [x] Iteration 9: run full validation, resolve review findings, and write the dev-note.
+- [ ] **Bug (owner-reported 2026-09-06): Day-1 capture freeze — Moku's reward overlay races the
+      Day-1 milestone cover and the app becomes stuck, unable to proceed.** Root cause found by a
+      Claude Code session (not yet fixed): `RootView.resolvePostCaptureMoment` guards against
+      presenting a milestone while the camera or paywall is showing (`guard !showCamera,
+      !showPaywall, milestoneMoment == nil else { return }`), but has **no guard for
+      `rewardMoment != nil`**. If `streakSignal.reading` changes (the async streak arrives) while
+      Moku's reward `fullScreenCover` is still on screen, this function proceeds anyway and can set
+      `milestoneMoment`, so SwiftUI ends up asked to present two `fullScreenCover`s from the same
+      view at once — Day 1 is hit most often because it's the very first milestone anyone reaches,
+      right after the reward that always fires on a successful capture. Fix: add `rewardMoment ==
+      nil` to that guard (mirroring how milestone/paywall already defer to each other), and make
+      sure the deferred milestone still gets a chance to present from `rewardMoment`'s own
+      `onDismiss` (it already calls `resolvePendingPresentations`, so this may be all that's
+      needed) — verify with a real Day-1 capture in the Simulator, not just a unit test, since this
+      is a UIKit-presentation-timing bug that a pure logic test can miss.
 
 ### Iteration evidence
 
