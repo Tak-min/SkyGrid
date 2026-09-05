@@ -1042,13 +1042,51 @@ a separate session.
          -only-testing:SkyGridTests` — 266 Swift-Testing tests in 45 suites green (matches
          Codex's reported 270 including XCTest suites), Debug build succeeded. Not deployed
          (client-only, nothing to deploy).
-      3. **Give the "sealed until you post" reveal-gate state real visual weight** (per-person
-         color, a photo silhouette, or a subtle glow/motion cue) instead of a flat gray circle +
-         padlock, on both Today's buddy strip and the Buddies tab rows — this is the product's
-         core emotional mechanic and currently has the least design attention of any surface.
-         *Antislop: R-13 dose cap if glow is the chosen device (max 1-2 elements, MOTION dial is
-         1 — a subtle one-time cue on state change, never a looping pulse, which would fail R-19
-         "Endless Pulses" against the declared MOTION 1).*
+      3. **DONE (2026-09-05, Codex + main-loop verify): give the "sealed until you post"
+         reveal-gate state real visual weight** on both `BuddyTile.swift` (Today strip) and
+         `BuddyNameRow` in `BuddiesView.swift` (Buddies tab rows).
+         Root problem confirmed by code read: `.sealed` and `.notYet` shared the exact same
+         `SGT.ghostFaint` fill token, differing only by a `lock.fill` overlay — so "buddy posted
+         but is hidden from you by the privacy gate" (the product's core emotional mechanic) and
+         "buddy simply hasn't woken up yet" (nothing to show) were visually indistinguishable,
+         which is what made the reveal-gate feel like a flat, generic gray circle.
+         Fix: `.notYet` now uses `SGT.ghost` — the token `Theme.swift` already documents as "the
+         quiet grey a blank Sky Grid cell renders as, for a day with no post" and that
+         `GridCanvas.swift` already uses for the identical semantic in the year-archive grid
+         (reuse of an established token, not a new one). `.sealed` keeps `SGT.ghostFaint` as its
+         base fill but gains exactly one new device — a second, larger, low-opacity
+         `Circle().strokeBorder(SGT.ink3.opacity(0.18), lineWidth: 2).padding(-4)` halo ring — so
+         it reads as more present/"something real is sealed here" than the genuinely-empty
+         `.notYet` state. No new color token was introduced (`SGT.ink3` already exists); the ring
+         rides the existing `.animation(reduceMotion ? nil : SGMotion.settle, value: revealState)`
+         one-time transition already wired on both views — no new looping/repeating animation was
+         added (MOTION 1 preserved, R-19 not triggered). Doc comments added at both `tileFill`
+         (`BuddyTile.swift`) and `avatarFill` (`BuddyNameRow`) stating the `.sealed`/`.notYet`
+         distinction so a future edit doesn't collapse the two cases back together.
+         **Antislop Delivery Gate (`.loop/antislop/antislop.md` + `antislop-ui/SKILL.md`), run
+         against this diff — all blocks PASS:** Hard Gate — no em dash/fabricated stat/dead
+         control/broken state introduced, build was actually run (not delivered unexercised).
+         Purpose-Gate — no new gradient/glow/shadow/icon/typeface; the one new device (the ring)
+         has its one-line purpose stated in-code, reuses an existing ink token, and does not
+         combine with any other new device (R-13 dose cap of 1 respected). Liveliness — dials
+         unchanged (ENERGY 1/RHYTHM 2/MOTION 1 per `DESIGN.md`), identity motif reinforced (reuses
+         the grid's own "no post" token instead of inventing a new one, per DESIGN.md's own
+         suggestion to extend the existing motif rather than add a new one). Craftsmanship — C-1
+         through C-5 all pass (reason is written, no dead element, no filler section, adaptive
+         light/dark token so no theme breaks, no fabricated claim); R-29 palette discipline holds
+         (zero new colors); R-31 one-line reason satisfied by the in-code doc comments above.
+         **swift-reviewer (sonnet): Approve, no CRITICAL/HIGH.** One LOW note: the new overlay
+         block is a third near-identical conditional duplicated between the two files, consistent
+         with the pair's existing "keep in sync" convention (not a new regression); a candidate
+         for extraction into a shared `RevealGateAvatar` view if the pair keeps growing, not done
+         now to stay scoped. Verified with real Simulator screenshots (iPhone 17,
+         `-SkyGridUIAudit`): `screenshots/ui-audit-sealed-visual-weight-today-after.jpg` (Today
+         strip, both `Mira`/`Ren` fixtures in `.sealed` show the halo ring) and
+         `screenshots/ui-audit-sealed-visual-weight-buddies-after.jpg` (Buddies tab, same ring on
+         the list-row avatars). Independently re-verified by the main loop, not just Codex's
+         self-report: `xcodebuild test -only-testing:SkyGridTests` — 266 Swift-Testing tests in
+         45 suites green; Release `xcodebuild build -configuration Release -destination
+         'generic/platform=iOS'` succeeded, 0 errors. Not deployed (client-only).
       4. **Settings: differentiate the Pro/paywall row visually from support/utility rows** — it
          currently has identical visual weight to "Contact us" despite being the primary revenue
          entry point. *Antislop: R-14 (identical-weight rows with no hierarchy reason).*

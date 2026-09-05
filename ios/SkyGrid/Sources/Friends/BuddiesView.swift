@@ -357,6 +357,13 @@ private struct BuddyNameRow: View {
                 .overlay(Circle().strokeBorder(avatarStrokeColor, lineWidth: 1))
                 .overlay {
                     if case .sealed = revealState {
+                        Circle()
+                            .strokeBorder(SGT.ink3.opacity(0.18), lineWidth: 2)
+                            .padding(-4)
+                    }
+                }
+                .overlay {
+                    if case .sealed = revealState {
                         Image(systemName: "lock.fill")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(SGT.ink3)
@@ -409,12 +416,15 @@ private struct BuddyNameRow: View {
         thumbnail = loaded
     }
 
+    /// `.sealed` retains a faint fill for hidden posted content, while `.notYet` uses the established empty-day token.
     private var avatarFill: AnyShapeStyle {
         switch revealState {
         case .posted(let post):
             AnyShapeStyle(post.skyColor.color)
-        case .sealed, .notYet:
+        case .sealed:
             AnyShapeStyle(SGT.ghostFaint)
+        case .notYet:
+            AnyShapeStyle(SGT.ghost)
         }
     }
 

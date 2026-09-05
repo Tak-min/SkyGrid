@@ -67,6 +67,13 @@ struct BuddyTile: View {
                 .overlay(Circle().strokeBorder(strokeColor, lineWidth: 1))
                 .overlay {
                     if case .sealed = revealState {
+                        Circle()
+                            .strokeBorder(SGT.ink3.opacity(0.18), lineWidth: 2)
+                            .padding(-4)
+                    }
+                }
+                .overlay {
+                    if case .sealed = revealState {
                         Image(systemName: "lock.fill")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(SGT.ink3)
@@ -126,12 +133,15 @@ struct BuddyTile: View {
     /// mid-load, App Check rejection). `post.skyColor` remains a real, server-verified
     /// fact about that exact morning even when the photo bytes cannot be shown, so it
     /// is a legitimate degrade rather than an invented placeholder.
+    /// `.sealed` retains a faint fill for hidden posted content, while `.notYet` uses the established empty-day token.
     private var tileFill: AnyShapeStyle {
         switch revealState {
         case .posted(let post):
             AnyShapeStyle(post.skyColor.color)
-        case .sealed, .notYet:
+        case .sealed:
             AnyShapeStyle(SGT.ghostFaint)
+        case .notYet:
+            AnyShapeStyle(SGT.ghost)
         }
     }
 
