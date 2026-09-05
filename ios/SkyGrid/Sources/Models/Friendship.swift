@@ -27,6 +27,11 @@ struct Friendship: Hashable, Sendable {
     let recipientHandle: Handle?
     let createdAt: Date
     let blockedBy: [String]
+    /// Pair-level values written only by `onPostCreatedUpdateBuddyStreaks`. These
+    /// deliberately live on the relationship rather than either user profile: a
+    /// personal streak would reveal a buddy's activity outside mutual-reveal days.
+    let streakCurrent: Int?
+    let streakLastMutualDate: LocalDate?
 
     init(
         pairId: String,
@@ -36,7 +41,9 @@ struct Friendship: Hashable, Sendable {
         requestedByHandle: Handle? = nil,
         recipientHandle: Handle? = nil,
         createdAt: Date,
-        blockedBy: [String]
+        blockedBy: [String],
+        streakCurrent: Int? = nil,
+        streakLastMutualDate: LocalDate? = nil
     ) {
         self.pairId = pairId
         self.members = members
@@ -46,6 +53,8 @@ struct Friendship: Hashable, Sendable {
         self.recipientHandle = recipientHandle
         self.createdAt = createdAt
         self.blockedBy = blockedBy
+        self.streakCurrent = streakCurrent
+        self.streakLastMutualDate = streakLastMutualDate
     }
 
     func otherMember(than uid: String) -> String? {

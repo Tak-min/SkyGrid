@@ -32,6 +32,7 @@ import UIKit
 struct BuddyTile: View {
     let displayName: String
     let revealState: TodayViewModel.BuddyRevealState
+    let streak: BuddyStreakDisplayPolicy.Display?
     let imageFetching: any ImageFetching
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var thumbnail: UIImage?
@@ -76,6 +77,12 @@ struct BuddyTile: View {
                 .font(SGFont.caption(11))
                 .foregroundStyle(SGT.ink3)
                 .lineLimit(1)
+            if let streak {
+                Text(streak.text)
+                    .font(SGFont.numeric(10, weight: .medium))
+                    .foregroundStyle(SGT.ink2)
+                    .lineLimit(1)
+            }
         }
         .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
         .accessibilityElement(children: .ignore)
@@ -147,7 +154,7 @@ struct BuddyTile: View {
     }
 
     private var accessibilityLabel: String {
-        switch revealState {
+        let revealLabel: String = switch revealState {
         case .posted:
             "\(displayName), sky revealed"
         case .sealed:
@@ -155,5 +162,6 @@ struct BuddyTile: View {
         case .notYet:
             "\(displayName), hasn't captured yet"
         }
+        return [revealLabel, streak?.accessibilityLabel].compactMap { $0 }.joined(separator: ". ")
     }
 }

@@ -7,13 +7,26 @@ import SwiftUI
 /// is purely layout — it no longer needs to know whether the viewer has posted.
 struct BuddyRow: View {
     let buddies: [TodayViewModel.BuddyStatus]
+    let today: LocalDate
     let imageFetching: any ImageFetching
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: SGSpacing.lg) {
                 ForEach(buddies.prefix(12)) { buddy in
-                    BuddyTile(displayName: buddy.displayName, revealState: buddy.revealState, imageFetching: imageFetching)
+                    BuddyTile(
+                        displayName: buddy.displayName,
+                        revealState: buddy.revealState,
+                        streak: FeatureFlags.buddyStreakVisible
+                            ? BuddyStreakDisplayPolicy.display(
+                                current: buddy.streakCurrent,
+                                lastMutualDate: buddy.streakLastMutualDate,
+                                today: today,
+                                buddyName: buddy.displayName
+                            )
+                            : nil,
+                        imageFetching: imageFetching
+                    )
                 }
             }
             .padding(.horizontal, 2)

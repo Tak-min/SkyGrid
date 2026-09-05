@@ -8,6 +8,10 @@ struct BuddiesView: View {
     private let contentSafetyRepository: any ContentSafetyRepository
     private let inviteRepository: any InviteRepository
     private let revealSignal: RevealSignal
+    /// The same injected source of local-day truth used by Today. Pair-streak
+    /// freshness must not drift around midnight just because this tab happened to
+    /// derive its own `Date()`.
+    private let clock: Clock
     @State private var safetyRoute: BuddySafetyRoute?
     @State private var relationshipRoute: BuddyRelationshipRoute?
 
@@ -17,7 +21,8 @@ struct BuddiesView: View {
         userRepository: any UserRepository,
         contentSafetyRepository: any ContentSafetyRepository,
         inviteRepository: any InviteRepository,
-        revealSignal: RevealSignal
+        revealSignal: RevealSignal,
+        clock: Clock
     ) {
         _viewModel = State(initialValue: FriendsViewModel(
             uid: uid,
@@ -27,6 +32,7 @@ struct BuddiesView: View {
         self.contentSafetyRepository = contentSafetyRepository
         self.inviteRepository = inviteRepository
         self.revealSignal = revealSignal
+        self.clock = clock
     }
 
     var body: some View {
@@ -214,7 +220,8 @@ struct BuddiesView: View {
                 revealState: route.revealState,
                 friendRepository: viewModel.friendRepository,
                 userRepository: viewModel.userRepository,
-                contentSafetyRepository: contentSafetyRepository
+                contentSafetyRepository: contentSafetyRepository,
+                today: clock.today()
             )
         }
         .task { viewModel.start() }
@@ -374,6 +381,7 @@ private struct BuddyRelationshipView: View {
     let friendRepository: any FriendRepository
     let userRepository: any UserRepository
     let contentSafetyRepository: any ContentSafetyRepository
+    let today: LocalDate
 
     @Environment(\.dismiss) private var dismiss
     @State private var profile: UserProfile?
@@ -418,6 +426,23 @@ private struct BuddyRelationshipView: View {
             }
             .listRowBackground(SGT.fill)
             .listRowSeparator(.hidden)
+
+            if FeatureFlags.buddyStreakVisible,
+               let streak = BuddyStreakDisplayPolicy.display(
+                   current: friendship.streakCurrent,
+                   lastMutualDate: friendship.streakLastMutualDate,
+                   today: today,
+                   buddyName: profile?.displayName ?? "your buddy"
+               ) {
+                Section("TOGETHER") {
+                    Text(streak.text)
+                        .font(SGFont.numeric(18, weight: .medium))
+                        .foregroundStyle(SGT.ink)
+                        .accessibilityLabel(streak.accessibilityLabel)
+                }
+                .listRowBackground(SGT.fill)
+                .listRowSeparator(.hidden)
+            }
 
             Section {
                 NavigationLink {

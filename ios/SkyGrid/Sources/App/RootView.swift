@@ -153,7 +153,8 @@ struct RootView: View {
                     userRepository: services.userRepository,
                     contentSafetyRepository: services.contentSafetyRepository,
                     inviteRepository: services.inviteRepository,
-                    revealSignal: revealSignal
+                    revealSignal: revealSignal,
+                    clock: services.clock
                 )
                 .tag(HomeTab.buddies)
                 .tabItem { Label("Buddies", systemImage: "person.2.fill") }

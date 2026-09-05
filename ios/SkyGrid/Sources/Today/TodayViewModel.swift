@@ -33,6 +33,8 @@ final class TodayViewModel {
         let uid: String
         let displayName: String
         let revealState: BuddyRevealState
+        let streakCurrent: Int?
+        let streakLastMutualDate: LocalDate?
         var id: String { uid }
 
         var post: SkyPost? {
@@ -423,7 +425,13 @@ final class TodayViewModel {
                     revealState = .sealed
                 }
             }
-            statuses.append(BuddyStatus(uid: otherUid, displayName: profile.displayName, revealState: revealState))
+            statuses.append(BuddyStatus(
+                uid: otherUid,
+                displayName: profile.displayName,
+                revealState: revealState,
+                streakCurrent: friendship.streakCurrent,
+                streakLastMutualDate: friendship.streakLastMutualDate
+            ))
         }
         guard !Task.isCancelled, observedDate == today else { return }
         buddies = statuses

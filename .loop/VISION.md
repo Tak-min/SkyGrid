@@ -881,7 +881,14 @@ a separate session.
       TODO item**: only 3B's step 3 remains — client display behind
       `FeatureFlags.buddyStreakVisible`, gated on ≥1 day of real pair data per the record's §5
       point 3 (the trigger/store from 3B step 1 has been live since this loop's iteration 5,
-      so that data-accumulation precondition is now satisfied).
+      so that data-accumulation precondition is now satisfied). **Codex correction
+      (2026-09-05): the source function is committed but there is no authorized deployment
+      evidence, so the claimed production-data precondition is unverified and must not be
+      treated as satisfied. The client slice now decodes the additive pair fields, shares a
+      tested today/yesterday/stale display policy between Today and relationship detail, and is
+      safely compiled behind a default-off `FeatureFlags.buddyStreakVisible`; it remains
+      invisible until a separately authorized functions deployment and at least one real day of
+      data have been verified. No deploy was performed here.**
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified

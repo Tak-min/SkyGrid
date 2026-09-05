@@ -334,7 +334,7 @@ struct TodayView: View {
         } else {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
                 sectionLabel(viewModel.streak.hasPostedToday ? "THIS MORNING, TOGETHER" : "SEALED UNTIL YOU POST")
-                BuddyRow(buddies: viewModel.buddies, imageFetching: imageFetching)
+                BuddyRow(buddies: viewModel.buddies, today: observedDate, imageFetching: imageFetching)
             }
             .skyAnimation(SGMotion.settle, value: viewModel.streak.hasPostedToday)
         }

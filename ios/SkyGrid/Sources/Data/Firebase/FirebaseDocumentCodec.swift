@@ -82,7 +82,9 @@ enum FirebaseDocumentCodec {
             requestedByHandle: (data["requestedByHandle"] as? String).flatMap(Handle.init(raw:)),
             recipientHandle: (data["recipientHandle"] as? String).flatMap(Handle.init(raw:)),
             createdAt: createdAt,
-            blockedBy: (data["blockedBy"] as? [String]) ?? []
+            blockedBy: (data["blockedBy"] as? [String]) ?? [],
+            streakCurrent: optionalInteger(from: data["streakCurrent"]),
+            streakLastMutualDate: (data["streakLastMutualDate"] as? String).flatMap(LocalDate.init(docID:))
         )
     }
 
@@ -105,6 +107,17 @@ enum FirebaseDocumentCodec {
             value.intValue
         default:
             0
+        }
+    }
+
+    static func optionalInteger(from value: Any?) -> Int? {
+        switch value {
+        case let value as Int:
+            value
+        case let value as NSNumber:
+            value.intValue
+        default:
+            nil
         }
     }
 }

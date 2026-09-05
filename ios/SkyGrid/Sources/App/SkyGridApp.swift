@@ -212,7 +212,8 @@ private struct UIAuditRoot: View {
                         userRepository: auditUserRepository,
                         contentSafetyRepository: UIAuditSafetyRepository(),
                         inviteRepository: UIAuditInviteRepository(),
-                        revealSignal: RevealSignal()
+                        revealSignal: RevealSignal(),
+                        clock: UIAuditData.fixedClock
                     )
                     .tag(UIAuditTab.buddies)
                     .tabItem { Label("Buddies", systemImage: "person.2.fill") }
