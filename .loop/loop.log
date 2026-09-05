@@ -327,3 +327,24 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 837:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 13:55:36] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 13:55:36] === iteration 6 / 40 ===
+Committed as `3349ee2`. No deploy, no `git add -A` — `.loop/driver.out`/`loop.log` left untouched for the concurrent driver session.
+
+## Summary
+
+**5C §2.5 — re-alarm loop wiring (final slice), done and committed.**
+
+- Wired the previously-built `MorningRealarmPolicy` into real call sites: `MorningAlarmStoppedIntent.perform()` (schedules on Stop when no capture yet), `MorningRitualCoordinator.captureCompleted` (cancels + resets on capture), and `disableImmediately()` (clears dangling reservations on disable).
+- **Caught a real design bug myself before committing**, not just trusting Codex's first pass: it chained re-alarms one Stop-tap at a time, but nothing re-invokes that intent when a plain notification later fires — so at most 1 of the spec'd 3 attempts would ever have fired. Sent it back with the fix (plan all 3 occurrences up front, replaying the existing pure policy).
+- `swift-reviewer` then caught **two real HIGH concurrency findings** in the redo (an un-awaited cleanup callback risking account-deletion teardown races, and a counter-persistence race vs. concurrent disable). Sent both back to Codex, fixed, re-verified.
+- Independently ran `xcodebuild test -only-testing:SkyGridTests` myself (not Codex's self-report) after each round: **261/261 green**, both times.
+- `.loop/verify.sh` correctly returns rc=1 — 5 VISION.md TODO items still open, not a false green.
+
+**Next step queued in VISION.md**: §2.6 (the exact approved alarm-copy block) — last remaining 5C sub-step, then 6C, then 3B's client display.
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+871:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 14:26:06] VERIFY failing (rc=1). Identical-failure streak: 1/3.
