@@ -31,7 +31,7 @@ struct OnboardingInviteView: View {
                         .tracking(1.3)
                         .foregroundStyle(SGT.ink3)
                     Text("Reveal your skies\ntogether.")
-                        .font(SGFont.serifTitle(38))
+                        .font(.system(size: 38, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
                     Text("Invite people you trust. Each sky stays sealed until you've each captured the same morning.")
                         .font(SGFont.body(16))

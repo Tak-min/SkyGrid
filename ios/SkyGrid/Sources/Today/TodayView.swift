@@ -42,8 +42,7 @@ struct TodayView: View {
 
     var body: some View {
         ZStack {
-            ambientBackground
-                .ignoresSafeArea()
+            PlayfulStageBackdrop(accent: accentColor.color)
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: SGSpacing.xxl) {
@@ -63,7 +62,7 @@ struct TodayView: View {
                     )
                 }
                 .padding(.horizontal, SGSpacing.xl)
-                .padding(.top, SGSpacing.sm)
+                .padding(.top, SGSpacing.lg)
                 .frame(maxWidth: .infinity)
             }
             // Reserve a small resting margin for the home indicator. The old 128pt
@@ -84,15 +83,6 @@ struct TodayView: View {
         .sheet(item: $shareImage) { card in
             ShareSheet(items: [card.image])
         }
-    }
-
-    private var ambientBackground: some View {
-        LinearGradient(
-            colors: [accentColor.color.opacity(0.18), SGT.background, SGT.background],
-            startPoint: .top,
-            endPoint: .center
-        )
-        .skyAnimation(SGMotion.drift, value: accentColor.hex)
     }
 
     private var heading: some View {
@@ -117,8 +107,11 @@ struct TodayView: View {
             Text(todayHeading)
                 .font(SGFont.caption(12))
                 .foregroundStyle(SGT.ink3)
-            Text("Sky Grid")
-                .font(SGFont.serifTitle(32))
+            HStack(alignment: .center, spacing: SGSpacing.sm) {
+                Text("Sky Grid")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                MokuScreenMark(state: viewModel.todayPost == nil ? .ready : .settled, side: 48)
+            }
                 .foregroundStyle(SGT.ink)
         }
     }
@@ -239,7 +232,7 @@ struct TodayView: View {
                             .foregroundStyle(.white.opacity(0.88))
                     } else {
                         Text("Day one")
-                            .font(SGFont.serifTitle(34))
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                         Text("your first sky is today")
                             .font(SGFont.caption(13))
@@ -303,7 +296,7 @@ struct TodayView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
         .padding(SGSpacing.xl)
-        .quietCard()
+        .playfulSurface(accent: SGT.accentSecondary)
     }
 
     private var mosaicEntry: some View {
@@ -328,7 +321,7 @@ struct TodayView: View {
             .foregroundStyle(SGT.ink2)
             .padding(.horizontal, SGSpacing.lg)
             .frame(minHeight: 62)
-            .quietCard()
+            .playfulSurface(accent: accentColor.color)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Your mosaic. See every sky become part of the year.")
@@ -360,7 +353,7 @@ struct TodayView: View {
                 .foregroundStyle(SGT.ink2)
                 .padding(.horizontal, SGSpacing.lg)
                 .frame(minHeight: 62)
-                .quietCard()
+                .playfulSurface(accent: SGT.accentSecondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Invite people you trust. Your skies unlock each other.")
@@ -407,7 +400,7 @@ struct TodayView: View {
                 .foregroundStyle(SGT.ink2)
                 .padding(.horizontal, SGSpacing.lg)
                 .frame(minHeight: 52)
-                .quietCard()
+                .playfulSurface(accent: SGT.accentSecondary)
             }
             .accessibilityLabel("Morning alarm, \(alarmTime)")
         }

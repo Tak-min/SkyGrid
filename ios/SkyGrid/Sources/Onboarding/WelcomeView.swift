@@ -8,14 +8,18 @@ struct WelcomeView: View {
             OnboardingProgress(step: 1, total: 9)
 
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
-                RitualGridMark()
-                    .frame(maxWidth: .infinity)
+                ZStack {
+                    RitualGridMark()
+                    MokuView(state: .ready, side: 118)
+                        .offset(y: 24)
+                }
+                .frame(maxWidth: .infinity)
 
                 Text("Keep one\nmorning sky.")
-                    .font(SGFont.serifTitle(42))
+                    .font(.system(size: 42, weight: .black, design: .rounded))
                     .foregroundStyle(SGT.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("It becomes one quiet day in your grid.")
+                Text("Moku turns each real morning into one bright tile in your grid.")
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink2)
 
@@ -28,5 +32,6 @@ struct WelcomeView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .padding(SGSpacing.xl)
+        .background(PlayfulStageBackdrop())
     }
 }

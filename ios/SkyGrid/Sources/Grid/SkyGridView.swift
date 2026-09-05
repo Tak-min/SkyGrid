@@ -28,12 +28,7 @@ struct SkyGridView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [SGT.fill.opacity(0.56), SGT.background, SGT.background],
-                startPoint: .top,
-                endPoint: .center
-            )
-            .ignoresSafeArea()
+            PlayfulStageBackdrop(accent: SGT.accentSecondary)
 
             ScrollViewReader { topProxy in
                 ScrollView(showsIndicators: false) {
@@ -133,8 +128,9 @@ struct SkyGridView: View {
                     yearButton(symbol: "chevron.left", label: "Show previous year", action: onSelectPreviousYear)
                 }
                 Text(String(year))
-                    .font(SGFont.serifTitle(52))
+                    .font(.system(size: 48, weight: .black, design: .rounded))
                     .foregroundStyle(SGT.ink)
+                MokuScreenMark(state: postedCount == 0 ? .waiting : .settled, side: 52)
                 if let onSelectNextYear {
                     yearButton(symbol: "chevron.right", label: "Show next year", action: onSelectNextYear)
                 }
@@ -223,7 +219,7 @@ struct SkyGridView: View {
                         .tracking(1.2)
                         .foregroundStyle(SGT.ink3)
                     Text("\(monthName(for: selectedMonth)) skies")
-                        .font(SGFont.serifTitle(27))
+                        .font(.system(size: 27, weight: .bold, design: .rounded))
                         .foregroundStyle(SGT.ink)
                 }
                 Spacer()
@@ -242,7 +238,7 @@ struct SkyGridView: View {
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, SGSpacing.xl)
-                .background(SGT.fill.opacity(0.5), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .playfulSurface(accent: SGT.accent)
             } else {
                 MonthlyPhotoGrid(
                     year: year,

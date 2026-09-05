@@ -104,7 +104,7 @@ struct SettingsView: View {
             }
             .padding(SGSpacing.xl)
         }
-        .background(SGT.background)
+        .background(PlayfulStageBackdrop(accent: SGT.accent))
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPaywall) {
@@ -196,10 +196,13 @@ struct SettingsView: View {
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
             } else {
-                Text("A calmer morning,\nmanaged your way.")
-                    .font(SGFont.serifTitle(32))
+                HStack(alignment: .top, spacing: SGSpacing.md) {
+                    Text("Your morning,\nyour controls.")
+                        .font(.system(size: 32, weight: .black, design: .rounded))
+                    MokuScreenMark(state: .settled, side: 64)
+                }
                     .foregroundStyle(SGT.ink)
-                Text("Alarm, archive, privacy, and support all stay easy to find here.")
+                Text("Alarm, archive, privacy, and support stay within reach.")
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
             }
@@ -220,10 +223,10 @@ struct SettingsView: View {
                 content()
             }
             .padding(.horizontal, SGSpacing.lg)
-            .background(SGT.fill, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(SGT.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(SGT.rule, lineWidth: 1)
+                    .strokeBorder(SGT.accentSecondary.opacity(0.34), lineWidth: 1)
             }
         }
     }

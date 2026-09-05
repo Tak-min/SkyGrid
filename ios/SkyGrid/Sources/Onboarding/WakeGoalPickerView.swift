@@ -27,7 +27,7 @@ struct WakeGoalPickerView: View {
                 OnboardingProgress(step: 7, total: 9)
 
                 Text("The time your\nmorning begins")
-                    .font(SGFont.serifTitle(38))
+                    .font(.system(size: 38, weight: .black, design: .rounded))
                     .foregroundStyle(SGT.ink)
                 Text("QUESTION 6 OF 6 · A time is enough for now. You can always change it.")
                     .font(SGFont.body(16))

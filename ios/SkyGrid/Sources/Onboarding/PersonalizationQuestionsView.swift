@@ -17,7 +17,7 @@ struct PersonalizationQuestionsView: View {
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text("What would make\nmornings easier?")
-                        .font(SGFont.serifTitle(38))
+                        .font(.system(size: 38, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
                     Text("QUESTION 1 OF 6 · Choose a direction. This stays on your device.")
                         .font(SGFont.body(16))
@@ -92,7 +92,7 @@ private struct SingleQuestionPage<Content: View>: View {
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text(heading)
-                        .font(SGFont.serifTitle(38))
+                        .font(.system(size: 38, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
                     Text(subheading)
                         .font(SGFont.body(16))

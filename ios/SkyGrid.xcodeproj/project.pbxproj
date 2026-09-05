@@ -125,6 +125,7 @@
 		805B9D2D3F41C2C5B93D4C5B /* PersonalizationProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E5ACAA6CDFDDC103E40761 /* PersonalizationProfile.swift */; };
 		833F269B76A024546360D8D3 /* SkyGridApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B877BE3CFC484D9D98406261 /* SkyGridApp.swift */; };
 		83CF699A774D52C1BE8E651A /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64724AE9311BCBE64D785927 /* AppServices.swift */; };
+		8409FDF2FC5ECE24B2F92892 /* PlayfulStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = B015AC827F07FC7CB7028EC1 /* PlayfulStage.swift */; };
 		84A19B44782BDBDF99C98866 /* RewardAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9A93A11701B359A225ECCDD /* RewardAnalytics.swift */; };
 		850C2AB52D7199C0772067D3 /* MorningShareAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64EF84342454008AD295D027 /* MorningShareAnalytics.swift */; };
 		8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00B7411DDB73640F9BBBDBC4 /* PostDraft.swift */; };
@@ -455,6 +456,7 @@
 		AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualPolicyTests.swift; sourceTree = "<group>"; };
 		AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryError.swift; sourceTree = "<group>"; };
 		AE78E41FB4C4D3379CF5B611 /* LivePreviewSampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePreviewSampler.swift; sourceTree = "<group>"; };
+		B015AC827F07FC7CB7028EC1 /* PlayfulStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayfulStage.swift; sourceTree = "<group>"; };
 		B0B3F1244F36C7A3929F0AE5 /* RewardOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardOverlayView.swift; sourceTree = "<group>"; };
 		B0C06D7AD160C0956C2C73E8 /* UploadQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadQueue.swift; sourceTree = "<group>"; };
 		B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinatorView.swift; sourceTree = "<group>"; };
@@ -905,6 +907,7 @@
 				BDDF0EFC39A3F8C431B83C92 /* IdentityColor.swift */,
 				D3DD7839BDCF230A7AE8F936 /* Layout.swift */,
 				4E6FD8E3FFC8ABB516CC96B2 /* MokuView.swift */,
+				B015AC827F07FC7CB7028EC1 /* PlayfulStage.swift */,
 				7F8226F41E37D81F38B2EA3D /* QRCodeGenerator.swift */,
 				531084A1F75F338E4A45CC85 /* ShareSheet.swift */,
 				5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */,
@@ -1338,6 +1341,7 @@
 				E87922CD54E95934223F2841 /* PersonalizationQuestionsView.swift in Sources */,
 				ED281546431F7E899784C3CD /* PersonalizedPlanView.swift in Sources */,
 				F42A00483CA3C3C8BACECE45 /* PixelSkyTile.swift in Sources */,
+				8409FDF2FC5ECE24B2F92892 /* PlayfulStage.swift in Sources */,
 				9C14252D573F94B51704D976 /* PostCaptureMomentPolicy.swift in Sources */,
 				2AFFA576038DB77880A6AE70 /* PostCreateWindowPolicy.swift in Sources */,
 				8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */,

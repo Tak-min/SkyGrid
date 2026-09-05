@@ -185,6 +185,17 @@ struct OnboardingCoordinatorView: View {
                 )
             }
         }
+        .background(PlayfulStageBackdrop())
+        .overlay(alignment: .topTrailing) {
+            if viewModel.step != .welcome {
+                MokuScreenMark(
+                    state: viewModel.step == .invite ? .delight : .ready,
+                    side: 52
+                )
+                .padding(.top, 54)
+                .padding(.trailing, SGSpacing.xl)
+            }
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(SGT.background)
         .id(viewModel.step)

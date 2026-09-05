@@ -88,9 +88,10 @@ Removing the general-purpose tab bar never authorizes removing these routes.
 The photograph supplies most color. Fixed UI colors provide contrast and character:
 
 - **Night Stage** `#080A0F`: camera and reward ground.
-- **Morning Paper** `#FFF8EE`: settled mosaic and utility ground.
-- **Ink** `#17181B`: primary text on light ground.
-- **Cloud** `#F4F1EA`: quiet controls and empty slots.
+- **Night Stage** is also the settled mosaic and utility ground. There is no
+  light-mode or paper-mode product shell; real sky tiles provide the changing
+  color inside the world.
+- **Cloud** `#F4F1EA`: high-contrast ink and quiet controls on the night stage.
 - **Dawn Spark** `#FF6846`: primary playful accent and Moku's pre-capture spark; never a substitute
   for real sky content.
 - **Open Sky** `#58C7F3`: secondary active state.
@@ -99,9 +100,9 @@ Do not introduce Locket yellow or generic purple/blue product gradients. A gradi
 when sampled from a real captured sky or when representing a transition between two real sky tiles.
 All text and controls must meet WCAG AA contrast in their rendered state.
 
-Use the system rounded/sans family for actions, numbers, captions, and functional screens. The New
-York serif is limited to rare artifact headlines after the sky has been captured. It does not appear
-inside the camera controls or as decorative editorial copy above forms.
+Use the system rounded/sans family for actions, numbers, captions, and every persistent screen
+headline. The New York serif is retained only for fixed exported photo artifacts after capture; it
+does not appear in interactive UI.
 
 ## Pixel-art contract
 

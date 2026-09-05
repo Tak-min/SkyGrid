@@ -1,13 +1,12 @@
 import SwiftUI
 
-/// The one shared "quiet card" surface used everywhere a grouped panel is needed
-/// (buddy rows, settings sections, the week-rhythm strip). Centralized so hairline
-/// stroke opacity / corner radius never drifts between screens — see this machine's
-/// iOS UI Design Quality rule against copy-pasted glass/card styling.
+/// A restrained boundary for dense utility rows. Hero objects use
+/// `playfulSurface()` instead; this keeps lists legible without turning every
+/// sentence into a card.
 struct QuietCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .background(SGT.fill, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(SGT.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .strokeBorder(SGT.rule, lineWidth: 1)
@@ -54,9 +53,9 @@ struct SkyPrimaryButtonStyle: ButtonStyle {
             // instead of "you haven't filled this in yet" (seen on Add Buddy's
             // "Send request" before a handle is entered).
             .foregroundStyle(isEnabled ? SGT.background : SGT.ink3)
-            .frame(maxWidth: .infinity, minHeight: 54)
+            .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, SGSpacing.lg)
-            .background(isEnabled ? SGT.ink : SGT.fill, in: Capsule())
+            .background(isEnabled ? SGT.accent : SGT.fill, in: Capsule())
             .overlay {
                 if !isEnabled {
                     Capsule().strokeBorder(SGT.rule, lineWidth: 1)
@@ -64,9 +63,9 @@ struct SkyPrimaryButtonStyle: ButtonStyle {
             }
             .frame(maxWidth: 340)
             .frame(maxWidth: .infinity)
-            .opacity(isEnabled && configuration.isPressed ? 0.72 : 1)
-            .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .offset(y: isEnabled && configuration.isPressed ? 2 : 0)
+            .scaleEffect(isEnabled && configuration.isPressed ? 0.96 : 1)
+            .animation(.spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }
 
@@ -80,14 +79,14 @@ struct SkySecondaryButtonStyle: ButtonStyle {
             // unfilled, stroked capsule and lower the label to ink3 rather
             // than dimming the whole control into a muddy grey.
             .foregroundStyle(isEnabled ? SGT.ink : SGT.ink3)
-            .frame(maxWidth: .infinity, minHeight: 52)
+            .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, SGSpacing.lg)
-            .background(SGT.fill, in: Capsule())
-            .overlay(Capsule().strokeBorder(SGT.rule, lineWidth: 1))
+            .background(SGT.surface, in: Capsule())
+            .overlay(Capsule().strokeBorder(SGT.accentSecondary.opacity(0.55), lineWidth: 1))
             .frame(maxWidth: 340)
             .frame(maxWidth: .infinity)
-            .opacity(isEnabled && configuration.isPressed ? 0.72 : 1)
-            .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .offset(y: isEnabled && configuration.isPressed ? 2 : 0)
+            .scaleEffect(isEnabled && configuration.isPressed ? 0.96 : 1)
+            .animation(.spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }

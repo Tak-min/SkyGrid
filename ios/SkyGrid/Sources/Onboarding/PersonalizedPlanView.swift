@@ -37,7 +37,7 @@ struct PersonalizedPlanView: View {
                         .tracking(1.5)
                         .foregroundStyle(SGT.ink3)
                     Text(plan.headline)
-                        .font(SGFont.serifTitle(36))
+                        .font(.system(size: 36, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(plan.recommendation)

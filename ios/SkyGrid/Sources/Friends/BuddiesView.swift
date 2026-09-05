@@ -43,6 +43,22 @@ struct BuddiesView: View {
     var body: some View {
         List {
             Section {
+                MokuScreenMark(
+                    state: viewModel.accepted.isEmpty ? .ready : .settled,
+                    side: 70,
+                    caption: viewModel.accepted.isEmpty
+                        ? "Moku is saving a spot for your first sky buddy."
+                        : "Your circle opens one real morning at a time."
+                )
+                .padding(.vertical, SGSpacing.sm)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .playfulSurface(accent: SGT.accentSecondary)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+            }
+
+            Section {
                 if viewModel.friendshipState == .checking, viewModel.accepted.isEmpty {
                     HStack(spacing: SGSpacing.sm) {
                         ProgressView()
@@ -211,12 +227,10 @@ struct BuddiesView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(SGT.background)
+        .background(PlayfulStageBackdrop(accent: SGT.accentSecondary))
         .contentMargins(.top, SGSpacing.sm, for: .scrollContent)
         .listSectionSpacing(.custom(SGSpacing.xl))
-        // Matches Today/Sky Grid's 128pt clearance: the floating tab bar otherwise
-        // covers the final buddy row (see those views for the same fix).
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 128) }
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: SGSpacing.xl) }
         .navigationTitle("Buddies")
         // This view is one tab inside the root NavigationStack. An inline title
         // avoids List reserving a large-title gap when tab selection changes.
