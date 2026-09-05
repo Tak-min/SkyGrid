@@ -348,3 +348,22 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 871:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 14:26:06] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 14:26:06] === iteration 7 / 40 ===
+## 完了報告
+
+**5C §2.6（アラーム再通知の承認済みコピー文）を実装・検証・コミット済み**（`9ab05a8`）。
+
+- 決定記録の承認文言をそのまま2箇所に追加: `MorningAlarmSettingsView.swift`（systemAlarm分岐）と `WakeGoalPickerView.swift`（`.scheduledAlarm`選択時）。通知フォールバック側（再アラームなし）には出ない条件分岐を確認済み。
+- 実装はCodexに委譲、差分は自分で直接読んで確認(要約だけ信用せず)。
+- `xcodebuild build` / `xcodebuild test`を自分で独立実行 → **ビルド成功、テスト261/261green**（変更前と同数、コピーのみの変更として想定通り）。
+- **実機画面の確認は今回ブロックされた**: シミュレータで実アプリを起動し「アカウントなしで開始」まで進めたが、その先で"Sky Grid couldn't connect"（おそらくApp Checkデバッグトークン未設定によるFirebase接続失敗、シェル自体のネットワークは疎通確認済み）で先に進めなかった。これは今回の変更のバグではなく環境側の制約。既存のUI-Audit用DEBUGホストも設定/オンボーディング画面をカバーしていないため代替不可。VISION.mdに次の担当者向けの具体的な対応案を明記した。
+- 副次的な発見: **6Cは別実装不要**（決定記録§3でCoreMotionゲート案は却下済み、6Cの実体はまさに今回完了した再アラームループ）。これで残りは3Bのステップ3（buddyStreak表示、フラグ解放）のみ。
+- `.loop/verify.sh`は正しくrc=1（未チェック項目5件のまま、false-greenなし）。
+- `.loop/driver.out`/`.loop/loop.log`（並行セッション用）には触れず、`git add -A`は使用せず明示パスのみコミット。`firebase deploy`・pushは実行なし。
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+909:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 14:34:40] VERIFY failing (rc=1). Identical-failure streak: 1/3.
