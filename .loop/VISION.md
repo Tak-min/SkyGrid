@@ -757,6 +757,31 @@ a separate session.
       into `enable()`/`resyncIfNeeded()` (replacing the single-alarm `scheduleAlarmKit(minutes:)`
       call), then §2.5 (re-alarm loop) and §2.6 (UI/copy) — in that order per the decision
       record's build order.
+      **§2.10 step 3 completed (2026-09-05, Codex + main-loop verify): `scheduleAlarmKit(schedules:)`
+      is now wired into `enable(wakeGoalMinutes:)`'s iOS-26 branch** via a new
+      `alarmKitSchedulingInput(wakeGoalMinutes:)` selector mirroring the reminder side's
+      `reminderFallbackSchedulingInput` (both now share one `persistedSchedulesApplyingWakeGoalMinutes`
+      helper after a review-driven dedup, so the two backends can't silently diverge on how the
+      settings wake time gets applied/persisted). An empty `LocalDefaults.morningAlarmSchedules`
+      keeps the exact legacy single-alarm call; a non-empty store applies
+      `applyingWakeGoalMinutes` and calls the schedule-set path plus the schedule-aware
+      follow-up-window refresh. `resyncIfNeeded()` gets this for free through `enable()` (verified
+      by reading the call chain, not asserted). `alarmKitState()` also fixed to require **every
+      enabled** schedule ID present among live AlarmKit alarms (not "any"), matching the reminder
+      side's semantics and closing a HIGH found by swift-reviewer (sonnet) before commit: the
+      first Codex pass's "any ID matches" check would have misreported `.scheduled` on a partial
+      multi-schedule reconcile failure once schedule editing ships more than one entry (not
+      reachable today — the UI only ever produces 0 or 1 schedule — but wrong for the wiring this
+      step exists to enable). swift-reviewer also caught two MEDIUMs, both fixed same iteration:
+      duplicated selector logic between the reminder/AlarmKit paths (collapsed to the shared
+      helper above) and the new `enable()` dispatch switch having no test exercising the real
+      entry point (added `enableUpdatesPersistedAlarmKitScheduleTimes`, calling `enable()` itself
+      rather than only the pure selector, mirroring the reminder side's existing
+      `enableReminderFallbackUpdatesPersistedScheduleTimes`). Independently re-verified by the main
+      loop, not just Codex's self-report: `xcodebuild test -only-testing:SkyGridTests` run directly
+      by the main loop, 253/253 green (up from 245). Not deployed (client-only, nothing to
+      deploy). **Still open for 5C**: §2.5 (the re-alarm loop) and §2.6 (UI/copy, exact approved
+      copy block from the decision record) — in that order, then 6C, then 3B's client display step.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified

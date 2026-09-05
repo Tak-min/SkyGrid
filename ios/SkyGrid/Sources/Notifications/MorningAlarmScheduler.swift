@@ -6,6 +6,11 @@ enum MorningReminderFallbackSchedulingInput: Equatable, Sendable {
     case schedules([MorningAlarmSchedule])
 }
 
+enum MorningAlarmKitSchedulingInput: Equatable, Sendable {
+    case legacy(Int)
+    case schedules([MorningAlarmSchedule])
+}
+
 extension Array where Element == MorningAlarmSchedule {
     /// Until schedule editing is exposed, the single wake-time setting remains
     /// authoritative. Disabled schedules retain their stored time so re-enabling
@@ -242,11 +247,18 @@ enum MorningAlarmScheduler {
         let state: MorningAlarmState
         if #available(iOS 26.0, *) {
             LocalDefaults.morningAlarmBackend = "automatic"
-            state = await scheduleAlarmKit(minutes: normalizedMinutes)
+            switch alarmKitSchedulingInput(wakeGoalMinutes: normalizedMinutes) {
+            case .legacy(let minutes):
+                state = await scheduleAlarmKit(minutes: minutes)
+                await refreshMorningRitualFollowUps(minutes: minutes)
+            case .schedules(let schedules):
+                state = await scheduleAlarmKit(schedules: schedules)
+                await refreshMorningRitualFollowUps(minutes: normalizedMinutes, schedules: schedules)
+            }
         } else {
             state = await scheduleReminder(minutes: normalizedMinutes)
+            await refreshMorningRitualFollowUps(minutes: normalizedMinutes)
         }
-        await refreshMorningRitualFollowUps(minutes: normalizedMinutes)
         return state
     }
 
@@ -313,12 +325,33 @@ enum MorningAlarmScheduler {
     /// Uses schedule-set reconciliation once migration has persisted schedules.
     /// An empty store keeps the direct pre-migration caller behavior unchanged.
     static func reminderFallbackSchedulingInput(wakeGoalMinutes: Int) -> MorningReminderFallbackSchedulingInput {
+        guard let schedules = persistedSchedulesApplyingWakeGoalMinutes(wakeGoalMinutes) else {
+            return .legacy(wakeGoalMinutes)
+        }
+        return .schedules(schedules)
+    }
+
+    /// Uses AlarmKit schedule-set reconciliation once migration has persisted schedules.
+    /// An empty store keeps the direct pre-migration caller behavior unchanged.
+    static func alarmKitSchedulingInput(wakeGoalMinutes: Int) -> MorningAlarmKitSchedulingInput {
+        guard let schedules = persistedSchedulesApplyingWakeGoalMinutes(wakeGoalMinutes) else {
+            return .legacy(wakeGoalMinutes)
+        }
+        return .schedules(schedules)
+    }
+
+    /// Applies the settings wake time to a persisted schedule set before either
+    /// backend reconciles it. `nil` deliberately preserves the legacy empty-store
+    /// path for callers that still schedule one all-days wake alarm directly.
+    private static func persistedSchedulesApplyingWakeGoalMinutes(
+        _ wakeGoalMinutes: Int
+    ) -> [MorningAlarmSchedule]? {
         let schedules = LocalDefaults.morningAlarmSchedules
-        guard !schedules.isEmpty else { return .legacy(wakeGoalMinutes) }
+        guard !schedules.isEmpty else { return nil }
 
         let updatedSchedules = schedules.applyingWakeGoalMinutes(wakeGoalMinutes)
         LocalDefaults.morningAlarmSchedules = updatedSchedules
-        return .schedules(updatedSchedules)
+        return updatedSchedules
     }
 
     private static func scheduleReminderFallback(wakeGoalMinutes: Int) async -> MorningAlarmState {
@@ -675,8 +708,14 @@ private extension MorningAlarmScheduler {
         case .denied:
             return .denied(.systemAlarm)
         case .authorized:
-            let hasMorningAlarm = (try? manager.alarms.contains(where: { $0.id == alarmIdentifier })) ?? false
-            return hasMorningAlarm ? .scheduled(.systemAlarm) : .off(.systemAlarm)
+            let schedules = LocalDefaults.morningAlarmSchedules
+            let enabledIDs = Set(schedules.filter(\.isEnabled).map(\.id))
+            let requiredIDs = schedules.isEmpty ? Set([alarmIdentifier]) : enabledIDs
+            guard !requiredIDs.isEmpty else { return .off(.systemAlarm) }
+            let scheduledIDs = try? Set(manager.alarms.map(\.id))
+            return scheduledIDs?.isSuperset(of: requiredIDs) == true
+                ? .scheduled(.systemAlarm)
+                : .off(.systemAlarm)
         @unknown default:
             return .failed(.systemAlarm)
         }
