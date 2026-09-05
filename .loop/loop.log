@@ -239,3 +239,25 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 720:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 13:00:25] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 13:00:25] === iteration 2 / 40 ===
+## 結果
+
+**5C step 3の2枚目のスライス**(リマインダーフォールバックの呼び出し元配線)を実装・検証・コミット済み(`f5ddc29`)。
+
+- `enableReminderFallback`/`resyncIfNeeded`が、永続化済みスケジュール集合がある場合`scheduleReminders(schedules:)`とスケジュール認識followupへ実際に配線された(AlarmKit側は対象外、別スライス)
+- Codexに実装委譲 → diffをRead確認 → swift-reviewer(sonnet)へ独立レビュー投入
+- **メインループの独立検証で2件の実バグを発見**(Codex自身の報告は鵜呑みにせず):
+  1. 前回スライスで追加された`MorningAlarmSchedulerTests.swift`が`project.pbxproj`に一度も登録されておらず、そのテストスイート全体(前回のCRITICAL検出テスト含む)がずっと黙ってスキップされていた — `xcodegen generate`で修正
+  2. swift-reviewerが検出したCRITICAL: スケジュール集合が存在する場合、新しい`wakeGoalMinutes`を無視して古い永続化済み時刻のまま通知していた — 既に移行済みの全ユーザーの時刻変更が無視される実害バグ。`applyingWakeGoalMinutes(_:)`で修正、実際の呼び出し経路を叩く回帰テストを追加
+- 修正後、メインループ自身が`xcodebuild test`を実行して245/245 green確認(Codexのサンドボックスはシミュレータに到達できず未実行だった)
+- `firebase deploy`・`git add -A`は未使用。触ったパスのみ明示コミット
+- VISION.mdのチェックリストに詳細追記。次は5C残り(AlarmKit側の多重スケジュール対応)
+
+`.loop/verify.sh`は他の未完了TODO項目(Buddies tab redesign等)が残っているため想定通りrc=1です。
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+759:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 13:14:57] VERIFY failing (rc=1). Identical-failure streak: 1/3.
