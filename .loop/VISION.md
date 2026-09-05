@@ -995,18 +995,33 @@ a separate session.
          invite-link-code card currently stacked with no divider or priority) into one clear
          primary path with the other demoted/secondary, and give buddy rows a photo or
          initials-avatar instead of a bare lock icon — the circle list currently has zero visual
-         differentiation between people.
+         differentiation between people. *Antislop: R-20 (no visual identity between rows),
+         R-05/RHYTHM (this screen is the clearest "uniform card-stack template" instance in the
+         app — see `DESIGN.md`'s identity-motif note: borrow the tile-grid language instead of
+         inventing a new avatar treatment).*
       3. **Give the "sealed until you post" reveal-gate state real visual weight** (per-person
          color, a photo silhouette, or a subtle glow/motion cue) instead of a flat gray circle +
          padlock, on both Today's buddy strip and the Buddies tab rows — this is the product's
          core emotional mechanic and currently has the least design attention of any surface.
+         *Antislop: R-13 dose cap if glow is the chosen device (max 1-2 elements, MOTION dial is
+         1 — a subtle one-time cue on state change, never a looping pulse, which would fail R-19
+         "Endless Pulses" against the declared MOTION 1).*
       4. **Settings: differentiate the Pro/paywall row visually from support/utility rows** — it
          currently has identical visual weight to "Contact us" despite being the primary revenue
-         entry point.
+         entry point. *Antislop: R-14 (identical-weight rows with no hierarchy reason).*
       5. **Share-year card: fix the Jan→Dec activity-dot timeline's contrast** (dark gray dots on
          near-black — likely illegible at actual Story-share render size), the one real defect on
-         the strongest screen in the app.
-      Each fix: implement via Codex (routing per RE-PIVOT above), verify with a fresh
+         the strongest screen in the app. *Antislop: R-25 (WCAG AA contrast — treat this as a
+         Hard Gate item, not a taste call).*
+      **Each fix now also runs the antislop Delivery Gate** (`.loop/antislop/antislop.md` +
+      `.loop/antislop/skills/antislop-ui/SKILL.md`, both fetched 2026-09-05 from
+      github.com/miqdadbadjuber/anti-slop, MIT-licensed — owner-directed adoption after
+      confirming the content is a legitimate, safe design-critique framework, not just a URL
+      taken on faith) as a PASS/FAIL report in the VISION.md status note, per `.loop/PROMPT.md`
+      step 3. Read `DESIGN.md` first — it explains why the sky-gradient palette itself is
+      purpose-justified (R-31) and should NOT be genericized away; the real antislop violations
+      here are R-05/R-20 (connective-tissue screens defaulting to an undifferentiated template),
+      not palette choice. Implement via Codex (routing per RE-PIVOT above), verify with a fresh
       `-SkyGridUIAudit` screenshot of the affected scenario before/after, independently re-run
       `xcodebuild test` (not Codex's self-report), commit explicit paths only. Do not attempt a
       full visual redesign in one pass — these 5 are deliberately the smallest concrete,
