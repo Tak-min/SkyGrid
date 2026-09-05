@@ -1,44 +1,49 @@
 import SwiftUI
 import UIKit
 
-/// Sky Grid design tokens. Values are pulled verbatim from
-/// `design/screens-mockup.html` (the founder-approved visual reference; see
-/// VISION.md §6) — do not re-derive these from prose descriptions elsewhere.
+/// Sky Grid design tokens.
 ///
-/// The app itself has no fixed brand color: the day's extracted `SkyColor` is the
-/// dynamic accent everywhere. `SGT` only defines the neutral surface/ink tokens that
-/// the sky color sits on top of.
+/// 2026-09-06 owner directive: the calm/quiet "warm paper" theme is retired for
+/// every screen, not only the camera. The camera composition (`CameraStage`,
+/// `CameraStageColor`) and Moku's reward moment were the part of the playful
+/// redesign that actually landed — a near-black stage, high-contrast white
+/// controls, and one warm accent — and the owner asked for that exact language
+/// (ground, ink, accent, and Moku's presence) to be the app's single visual
+/// identity everywhere, not a mode confined to capture. `SGT` is therefore no
+/// longer light/dark-adaptive: one dark ground, always, matching
+/// `CameraStageColor.background`.
+///
+/// The day's extracted `SkyColor` remains an additional, secondary accent inside
+/// content that legitimately represents a real sky (grid tiles, the live swatch).
+/// `SGT.accent`/`accentSecondary` are the two fixed playful accents from
+/// `DESIGN.md` (Dawn Spark / Open Sky) used for actions, active states, and Moku.
 enum SGT {
-    /// Warm white background (light) / pre-dawn deep navy (dark) — never pure black.
-    static let background = adaptive(light: "#FAF7F2", dark: "#12141A")
-    static let ink = adaptive(light: "#1A1A18", dark: "#F2F3F5")
-    static let ink2 = adaptive(light: "#6E6A62", dark: "#8B919C")
-    static let ink3 = adaptive(light: "#A8A399", dark: "#565C68")
-    static let rule = adaptive(light: "#E6E0D6", dark: "#21242C")
-    static let fill = adaptive(light: "#EFEAE1", dark: "#191C23")
+    /// The one ground color for every screen — identical to the camera stage's,
+    /// so the capture screen no longer looks like a different app.
+    static let background = Color(hex: "#080A0F")
+    /// A very slightly lifted surface for cards/sheets sitting on `background`,
+    /// so content doesn't disappear into pure black.
+    static let surface = Color(hex: "#14171F")
+    static let ink = Color(hex: "#F5F6F8")
+    static let ink2 = Color.white.opacity(0.62)
+    static let ink3 = Color.white.opacity(0.42)
+    static let rule = Color.white.opacity(0.14)
+    static let fill = Color.white.opacity(0.08)
+
+    /// Dawn Spark — the primary playful accent (`DESIGN.md`). Used for the one
+    /// dominant action per screen (capture, primary CTA, active tab/selection)
+    /// and Moku's spark. Never a substitute for real sky color.
+    static let accent = Color(hex: "#FF6846")
+    /// Open Sky — secondary active/selected state, used more sparingly than
+    /// `accent` so the app keeps one dominant color per screen.
+    static let accentSecondary = Color(hex: "#58C7F3")
 
     /// The "quiet grey" a blank Sky Grid cell renders as — for a day with no post.
-    static let ghost = adaptive(
-        light: Color(hex: "#1A1A18").opacity(0.075),
-        dark: Color(hex: "#E4E9F0").opacity(0.24)
-    )
-    static let ghostFaint = adaptive(
-        light: Color(hex: "#1A1A18").opacity(0.032),
-        dark: Color(hex: "#E4E9F0").opacity(0.075)
-    )
-
-    private static func adaptive(light lightHex: String, dark darkHex: String) -> Color {
-        adaptive(light: Color(hex: lightHex), dark: Color(hex: darkHex))
-    }
-
-    private static func adaptive(light: Color, dark: Color) -> Color {
-        Color(UIColor { traits in
-            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
-        })
-    }
+    static let ghost = Color.white.opacity(0.10)
+    static let ghostFaint = Color.white.opacity(0.05)
 }
 
-private extension Color {
+extension Color {
     /// Trusted-input hex initializer for compile-time-known design tokens only —
     /// never for parsing user-facing sky-color data (that's `SkyColor`).
     init(hex: String) {
