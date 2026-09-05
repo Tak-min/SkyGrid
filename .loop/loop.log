@@ -206,3 +206,36 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 683:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 01:30:45] VERIFY failing (rc=1). Identical-failure streak: 2/3.
+[loop-engine 01:30:45] === iteration 5 / 40 ===
+You've hit your session limit · resets 4:40am (Asia/Tokyo)
+[loop-engine 01:30:49] claude -p returned non-zero on iteration 5 (continuing to verify).
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+683:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 01:30:49] VERIFY failing (rc=1). Identical-failure streak: 3/3.
+[loop-engine 01:30:49] HALT (1): no progress: identical verify result 3 iterations in a row — agent is stuck.
+[loop-engine 12:42:47] Starting loop. MAX_ITER=40 MODEL=sonnet VERIFY='bash .loop/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 12:42:47] === iteration 1 / 40 ===
+## 結果
+
+**5C step 3の最初のスライス**（`MorningAlarmScheduler`のリマインダーフォールバック側reconcile + `MorningFollowUpScheduler`の曜日認識）を実装・検証・コミット済み（`19fab1f`）。
+
+- 対象: 決定記録`dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md` §2.4/§2.10 step 3のうち、AlarmKit側・再アラームループ・UI文言は対象外、pre-AlarmKitのリマインダー通知のreconcileロジックのみ
+- Codexに実装委譲 → 自分でdiffをRead/Grepで確認 → swift-reviewer（sonnet）を独立レビューに投入
+- **swift-reviewerがCRITICAL 1件・HIGH 1件を検出**（時刻だけ変更した既存スケジュールが黙って古い通知のまま残り続けるバグ、および部分失敗時に代替なしで古い通知を消してしまうバグ）— Codexへ再依頼して両方修正、修正後のdiffも再度Read確認
+- メインループ側で`xcodebuild test`を独立実行（234/234 green）、Codex自身の報告（238件)を鵜呑みにせず確認
+- `firebase deploy`・`git add -A`は未使用。触ったパスのみ明示コミット
+- VISION.mdのチェックリストに詳細追記、次のステップ（reconcile APIの実call site配線、AlarmKit側の多重スケジュール化）を明記
+- `.loop/verify.sh`はVISION.mdに未完了項目が残っているため想定通りrc=1（正常）
+
+次イテレーションは5C step 3の残り（呼び出し元への配線、AlarmKit側の多重スケジュール対応）から継続可能な状態です。
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+720:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 13:00:25] VERIFY failing (rc=1). Identical-failure streak: 1/3.
