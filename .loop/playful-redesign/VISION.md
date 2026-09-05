@@ -31,7 +31,7 @@ The loop succeeds only when all are objectively true:
 
 - [x] `DESIGN.md` records the new owner-approved playful direction and explicitly supersedes the
       old mascot/confetti prohibition without deleting its history.
-- [ ] The general-purpose home `TabView` is removed from the primary daily flow; archive, buddies,
+- [x] The general-purpose home `TabView` is removed from the primary daily flow; archive, buddies,
       alarm, and required settings/safety actions remain reachable contextually.
 - [ ] The camera uses the latest downloaded Locket-style reference
       (`/Users/taku8/Downloads/refero.design Locket Widget.jpg`): black stage, large inset rounded
@@ -96,7 +96,7 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 3: rebuild camera composition from the downloaded inset-viewfinder reference.
 - [x] Iteration 4: implement the bounded daily reward state machine, confetti, haptic, and analytics.
 - [x] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
-- [ ] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
+- [x] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
       preserving contextual access to archive, buddies, alarm, settings, and safety.
 - [ ] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
 - [ ] Iteration 8: add/refresh audit scenarios and screenshots.
@@ -189,3 +189,17 @@ The loop succeeds only when all are objectively true:
   `PixelSkyTileRendererTests` passed (2 tests), and Debug `xcodebuild build` succeeded. The
   closed gate was run and is red only because 12 broader Definition-of-Done / later-iteration
   checklist items remain; it did not run builds by design after finding those unchecked items.
+- Iteration 6: removed the production and DEBUG UI-audit `TabView` shells. `RootView` now keeps
+  its existing single `NavigationStack` and all full-screen-cover/sheet arbitration intact, with
+  `TodayView` as the only root and an explicit `HomeDestination` push for the archive or buddies.
+  The daily page adds an accessible "Your mosaic" route and the toolbar adds the same two routes;
+  the existing direct Morning Alarm `NavigationLink` remains in Today, and the existing Settings
+  push still contains purchase restore, Community & Safety/unblock, Apple account backup, support,
+  and account deletion. `BuddiesView` itself is unchanged, preserving its relationship, report,
+  and block paths. Camera and buddy-push routes now pop those contextual destinations back to the
+  daily root, preserving the former selected-Today behavior without inferring a buddy reveal. The
+  `-SkyGridLaunchGrid` audit/deep-launch flag remains a one-shot archive push. Removed the old tab
+  bar's 128pt bottom gaps. Verified on 2026-09-06: source contains no `TabView`, `git diff --check`
+  passes, and Debug `xcodebuild build` succeeds. A first run failed only because the DEBUG audit
+  host's `.tint` modifier was attached to an `if` result after the TabView removal; moving it to its
+  `NavigationStack` made the next build green.

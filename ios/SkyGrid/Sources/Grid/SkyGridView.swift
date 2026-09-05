@@ -60,21 +60,14 @@ struct SkyGridView: View {
                     .padding(.horizontal, SGSpacing.xl)
                     .padding(.top, SGSpacing.lg)
                 }
-                // A fixed `.padding(.bottom, 128)` on the *content* was not enough:
-                // it scrolls with the content, so the trailing archive notice and its
-                // "Unlock the full archive" button still came to rest underneath the
-                // floating tab bar. `safeAreaInset` reserves the space on the scroll
-                // container instead, so the resting position accounts for it — the
-                // same approach `BuddiesView` already uses without being reported
-                // clipped.
+                // Reserve resting clearance on the scroll container. Content padding
+                // scrolls with the archive, while this leaves its final control above
+                // the home indicator without the former tab bar's 128pt void.
                 .safeAreaInset(edge: .bottom) {
-                    Color.clear.frame(height: 128)
+                    Color.clear.frame(height: SGSpacing.xl)
                 }
-                // The TabView keeps this screen alive when a sibling NavigationLink
-                // (e.g. Buddies) covers it, so a scroll position from an earlier visit
-                // otherwise survives and reappears already scrolled — leaving "SKY
-                // GRID" clipped under the status bar instead of at rest. Force back to
-                // the top on every appearance so the header is always fully visible.
+                // An archive revisit should always begin at its header rather than
+                // retain a prior detail scroll position.
                 .onAppear { topProxy.scrollTo(Self.topAnchorID, anchor: .top) }
             }
         }

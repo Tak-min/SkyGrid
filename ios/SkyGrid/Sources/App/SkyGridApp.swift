@@ -75,7 +75,6 @@ private enum UIAuditScenario: String {
 @MainActor
 private struct UIAuditRoot: View {
     let scenario: UIAuditScenario
-    @State private var selectedTab: UIAuditTab
     @State private var auditEntitlements: EntitlementStore
     private let auditPostRepository: UIAuditPostRepository
     private let auditFriendRepository: UIAuditFriendRepository
@@ -83,7 +82,6 @@ private struct UIAuditRoot: View {
 
     init(scenario: UIAuditScenario) {
         self.scenario = scenario
-        _selectedTab = State(initialValue: UIAuditTab(scenario: scenario))
         _auditEntitlements = State(initialValue: EntitlementStore(purchases: UIAuditPurchases()))
         auditPostRepository = UIAuditPostRepository(
             posts: UIAuditData.posts,
@@ -183,38 +181,21 @@ private struct UIAuditRoot: View {
             CameraFailureAuditView()
         } else {
             NavigationStack {
-                TabView(selection: $selectedTab) {
-                    TodayView(
-                        viewModel: scenario == .todayUnavailable
-                            ? UIAuditData.recoveringTodayViewModel()
-                            : UIAuditData.todayViewModel(),
-                        imageFetching: UIAuditImageFetcher(),
-                        observedDate: UIAuditData.today,
-                        onOpenCamera: {},
-                        subscriptionPlan: .free,
-                        onOpenBuddies: { selectedTab = .buddies }
-                    )
-                    .tag(UIAuditTab.today)
-                    .tabItem { Label("Today", systemImage: "sun.horizon") }
-
-                    Group {
-                        if scenario == .gridUnavailable {
-                            GridArchiveView(
-                                uid: UIAuditData.currentUID,
-                                year: 2026,
-                                postRepository: auditPostRepository,
-                                imageFetching: UIAuditImageFetcher(),
-                                isPro: true,
-                                today: UIAuditData.today,
-                                onUpgrade: {}
-                            )
-                        } else {
-                            UIAuditGridScreen()
-                        }
+                if scenario == .grid || scenario == .gridUnavailable {
+                    if scenario == .gridUnavailable {
+                        GridArchiveView(
+                            uid: UIAuditData.currentUID,
+                            year: 2026,
+                            postRepository: auditPostRepository,
+                            imageFetching: UIAuditImageFetcher(),
+                            isPro: true,
+                            today: UIAuditData.today,
+                            onUpgrade: {}
+                        )
+                    } else {
+                        UIAuditGridScreen()
                     }
-                        .tag(UIAuditTab.grid)
-                        .tabItem { Label("Sky Grid", systemImage: "square.grid.3x3.fill") }
-
+                } else if scenario == .buddies || scenario == .buddiesUnavailable || scenario == .buddiesProfileUnavailable || scenario == .buddiesNoHandle || scenario == .buddiesRequestFlow {
                     BuddiesView(
                         uid: UIAuditData.currentUID,
                         friendRepository: auditFriendRepository,
@@ -225,31 +206,27 @@ private struct UIAuditRoot: View {
                         imageFetching: UIAuditImageFetcher(),
                         clock: UIAuditData.fixedClock
                     )
-                    .tag(UIAuditTab.buddies)
-                    .tabItem { Label("Buddies", systemImage: "person.2.fill") }
-                }
-                .tint(SGT.ink)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Image(systemName: "gearshape")
-                            .accessibilityLabel("Open settings")
-                    }
+                } else {
+                    TodayView(
+                        viewModel: scenario == .todayUnavailable
+                            ? UIAuditData.recoveringTodayViewModel()
+                            : UIAuditData.todayViewModel(),
+                        imageFetching: UIAuditImageFetcher(),
+                        observedDate: UIAuditData.today,
+                        onOpenCamera: {},
+                        subscriptionPlan: .free,
+                        onOpenGrid: {},
+                        onOpenBuddies: {}
+                    )
                 }
             }
-        }
-    }
-}
-
-private enum UIAuditTab: Hashable {
-    case today
-    case grid
-    case buddies
-
-    init(scenario: UIAuditScenario) {
-        switch scenario {
-        case .onboarding, .today, .todayUnavailable, .paywall, .paywallPlan, .settings, .settingsBlockedUnavailable, .cameraLive, .cameraReview, .cameraFailure, .shareYear, .shareMorning, .liveActivity, .milestone, .milestoneDayOne, .moku: self = .today
-        case .grid, .gridUnavailable: self = .grid
-        case .buddies, .buddiesUnavailable, .buddiesProfileUnavailable, .buddiesNoHandle, .buddiesRequestFlow: self = .buddies
+            .tint(SGT.ink)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Image(systemName: "gearshape")
+                        .accessibilityLabel("Open settings")
+                }
+            }
         }
     }
 }

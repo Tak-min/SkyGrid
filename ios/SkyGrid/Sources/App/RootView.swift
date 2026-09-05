@@ -52,7 +52,11 @@ struct RootView: View {
     /// already happens: presenting a new full-screen cover from the same runloop as
     /// this one's dismissal animation can swallow it.
     @State private var pendingReward: RewardMoment?
-    @State private var selectedTab: HomeTab = ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") ? .grid : .today
+    /// Secondary places remain reachable from the daily record, but are not peer
+    /// destinations in a general-purpose tab bar. This keeps the morning action and
+    /// its growing mosaic in one causal home while retaining every existing screen.
+    @State private var homeDestination: HomeDestination?
+    @State private var hasHandledInitialHomeRoute = false
     let onAccountDeleted: () -> Void
 
     var body: some View {
@@ -123,57 +127,65 @@ struct RootView: View {
     private func todayFlow(services: AppServices) -> some View {
         let today = observedLocalDate ?? services.clock.today()
         NavigationStack {
-            TabView(selection: $selectedTab) {
-                TodayView(
-                    viewModel: TodayViewModel(
-                        uid: services.currentUid,
-                        postRepository: services.postRepository,
-                        userRepository: services.userRepository,
-                        friendRepository: services.friendRepository,
-                        uploadQueue: services.uploadQueue,
-                        orphanedPostRecovery: services.orphanedPostRecovery,
-                        clock: services.clock,
-                        streakSignal: streakSignal,
-                        revealSignal: revealSignal
-                    ),
-                    imageFetching: services.imageFetching,
-                    observedDate: today,
-                    onOpenCamera: { showCamera = true },
-                    subscriptionPlan: services.entitlements.plan,
-                    onOpenBuddies: { selectedTab = .buddies },
-                    buddyRefreshToken: buddyRefreshToken
-                )
-                .tag(HomeTab.today)
-                .tabItem { Label("Today", systemImage: "sun.horizon") }
-
-                SkyGridArchiveTab(
+            TodayView(
+                viewModel: TodayViewModel(
                     uid: services.currentUid,
-                    currentYear: services.clock.today().year,
                     postRepository: services.postRepository,
-                    imageFetching: services.imageFetching,
-                    uploadQueue: services.uploadQueue,
-                    isPro: services.entitlements.isPro,
-                    today: services.clock.today(),
-                    onUpgrade: { presentPaywall(from: .archive) }
-                )
-                .tag(HomeTab.grid)
-                .tabItem { Label("Sky Grid", systemImage: "square.grid.3x3.fill") }
-
-                BuddiesView(
-                    uid: services.currentUid,
-                    friendRepository: services.friendRepository,
                     userRepository: services.userRepository,
-                    contentSafetyRepository: services.contentSafetyRepository,
-                    inviteRepository: services.inviteRepository,
-                    revealSignal: revealSignal,
-                    imageFetching: services.imageFetching,
-                    clock: services.clock
-                )
-                .tag(HomeTab.buddies)
-                .tabItem { Label("Buddies", systemImage: "person.2.fill") }
-            }
+                    friendRepository: services.friendRepository,
+                    uploadQueue: services.uploadQueue,
+                    orphanedPostRecovery: services.orphanedPostRecovery,
+                    clock: services.clock,
+                    streakSignal: streakSignal,
+                    revealSignal: revealSignal
+                ),
+                imageFetching: services.imageFetching,
+                observedDate: today,
+                onOpenCamera: { showCamera = true },
+                subscriptionPlan: services.entitlements.plan,
+                onOpenGrid: { homeDestination = .archive },
+                onOpenBuddies: { homeDestination = .buddies },
+                buddyRefreshToken: buddyRefreshToken
+            )
             .tint(SGT.ink)
+            .navigationDestination(item: $homeDestination) { destination in
+                switch destination {
+                case .archive:
+                    SkyGridArchiveTab(
+                        uid: services.currentUid,
+                        currentYear: services.clock.today().year,
+                        postRepository: services.postRepository,
+                        imageFetching: services.imageFetching,
+                        uploadQueue: services.uploadQueue,
+                        isPro: services.entitlements.isPro,
+                        today: services.clock.today(),
+                        onUpgrade: { presentPaywall(from: .archive) }
+                    )
+                case .buddies:
+                    BuddiesView(
+                        uid: services.currentUid,
+                        friendRepository: services.friendRepository,
+                        userRepository: services.userRepository,
+                        contentSafetyRepository: services.contentSafetyRepository,
+                        inviteRepository: services.inviteRepository,
+                        revealSignal: revealSignal,
+                        imageFetching: services.imageFetching,
+                        clock: services.clock
+                    )
+                }
+            }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu("Explore", systemImage: "square.grid.3x3") {
+                        Button("Sky Grid", systemImage: "square.grid.3x3.fill") {
+                            homeDestination = .archive
+                        }
+                        Button("Buddies", systemImage: "person.2.fill") {
+                            homeDestination = .buddies
+                        }
+                    }
+                    .accessibilityLabel("Explore Sky Grid and Buddies")
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         SettingsView(
@@ -290,6 +302,7 @@ struct RootView: View {
         }
         .task { consumePendingCameraRequestIfNeeded() }
         .task { consumePendingBuddyRevealIfNeeded() }
+        .task { openInitialHomeRouteIfNeeded() }
         .onChange(of: router.buddyRevealRefreshTicks) { _, _ in
             // A buddy-post push that arrived while this app was already foregrounded
             // is not a tap — nobody navigated — but the strip should still catch up.
@@ -689,7 +702,7 @@ struct RootView: View {
             case .value(nil):
                 if wantsCameraFromNotification { router.pendingRoute = nil }
                 if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
-                selectedTab = .today
+                homeDestination = nil
                 showCamera = true
             case .value(.some):
                 // This is a stale notification/Island tap after a completed
@@ -718,8 +731,21 @@ struct RootView: View {
     private func consumePendingBuddyRevealIfNeeded() {
         guard destination == .today, router.pendingBuddyRevealRoute else { return }
         router.pendingBuddyRevealRoute = false
-        selectedTab = .today
+        // This notification historically selected the Today tab. Pop a contextual
+        // destination back to the same daily root before refreshing the only
+        // server-authoritative reveal reader; never infer a reveal from this route.
+        homeDestination = nil
         buddyRefreshToken += 1
+    }
+
+    /// Retains the UI-audit/deep-launch compatibility flag from the former tab
+    /// shell. It is deliberately one-shot so a body/lifecycle re-evaluation can
+    /// never pull a person back into the archive after they navigate elsewhere.
+    private func openInitialHomeRouteIfNeeded() {
+        guard !hasHandledInitialHomeRoute else { return }
+        hasHandledInitialHomeRoute = true
+        guard ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") else { return }
+        homeDestination = .archive
     }
 
     /// The single entry point every lifecycle hook and modal-dismissal callback calls
@@ -775,8 +801,9 @@ struct RootView: View {
     }
 }
 
-private enum HomeTab: Hashable {
-    case today
-    case grid
+private enum HomeDestination: Hashable, Identifiable {
+    case archive
     case buddies
+
+    var id: Self { self }
 }

@@ -12,8 +12,9 @@ struct TodayView: View {
     let observedDate: LocalDate
     let onOpenCamera: () -> Void
     let subscriptionPlan: SubscriptionPlan
-    /// Switches to the Buddies tab. Owned by the parent because the tab selection
-    /// lives there; Today only knows that it wants to send someone to invite.
+    /// Secondary destinations are owned by the parent navigation stack, leaving the
+    /// daily capture and its mosaic as one primary flow rather than peer tabs.
+    let onOpenGrid: () -> Void
     let onOpenBuddies: () -> Void
     /// Bumped by `RootView` whenever a buddy-post push notification arrives (tapped
     /// or merely delivered while foregrounded) — see `RootView.buddyRefreshToken`.
@@ -25,6 +26,7 @@ struct TodayView: View {
         observedDate: LocalDate,
         onOpenCamera: @escaping () -> Void,
         subscriptionPlan: SubscriptionPlan,
+        onOpenGrid: @escaping () -> Void,
         onOpenBuddies: @escaping () -> Void,
         buddyRefreshToken: Int = 0
     ) {
@@ -33,6 +35,7 @@ struct TodayView: View {
         self.observedDate = observedDate
         self.onOpenCamera = onOpenCamera
         self.subscriptionPlan = subscriptionPlan
+        self.onOpenGrid = onOpenGrid
         self.onOpenBuddies = onOpenBuddies
         self.buddyRefreshToken = buddyRefreshToken
     }
@@ -47,6 +50,7 @@ struct TodayView: View {
                     heading
                     morningRecord
                         .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
+                    mosaicEntry
                     buddySection
                     rhythmSection
                     PostStatusBanner(
@@ -62,12 +66,10 @@ struct TodayView: View {
                 .padding(.top, SGSpacing.sm)
                 .frame(maxWidth: .infinity)
             }
-            // Reserve clearance on the scroll container, rather than in its content.
-            // Content padding scrolls underneath the floating tab bar; a safe-area
-            // inset changes the scroll view's resting viewport so its final row
-            // remains reachable above the bar.
+            // Reserve a small resting margin for the home indicator. The old 128pt
+            // reserve was solely for the removed floating tab bar.
             .safeAreaInset(edge: .bottom) {
-                Color.clear.frame(height: 128)
+                Color.clear.frame(height: SGSpacing.xl)
             }
         }
         .task(id: observedDate) { viewModel.start(for: observedDate) }
@@ -302,6 +304,34 @@ struct TodayView: View {
         .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
         .padding(SGSpacing.xl)
         .quietCard()
+    }
+
+    private var mosaicEntry: some View {
+        Button(action: onOpenGrid) {
+            HStack(spacing: SGSpacing.md) {
+                Image(systemName: "square.grid.3x3.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(accentColor.color)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("YOUR MOSAIC")
+                        .font(SGFont.caption(11))
+                        .tracking(1.1)
+                    Text("See every sky become part of the year")
+                        .font(SGFont.body(15))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(SGT.ink2)
+            .padding(.horizontal, SGSpacing.lg)
+            .frame(minHeight: 62)
+            .quietCard()
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Your mosaic. See every sky become part of the year.")
     }
 
     /// The buddy strip sits between the morning record and the week rhythm: below
