@@ -57,12 +57,8 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
         }
     }
 
-    static var background: some View {
-        LinearGradient(
-            colors: [SGT.accent.opacity(0.18), SGT.background, SGT.background],
-            startPoint: .top,
-            endPoint: .center
-        )
+    static var background: Color {
+        SGT.background
     }
 }
 

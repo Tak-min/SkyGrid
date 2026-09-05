@@ -128,5 +128,7 @@ struct RewardOverlayView: View {
 }
 
 private enum RewardStageColor {
-    static let background = Color(red: 8 / 255, green: 10 / 255, blue: 15 / 255)
+    /// Reward is a settled product surface, so it follows the system appearance.
+    /// The camera itself remains the intentionally physical dark stage.
+    static let background = SGT.background
 }
