@@ -46,7 +46,7 @@ The loop succeeds only when all are objectively true:
       the existing reveal gate permits it.
 - [x] Analytics can distinguish reward started/completed/reduced-motion without PII, and the
       existing capture event remains exactly-once per successful publish.
-- [ ] Fresh UI-audit screenshots cover the main pre-capture, framed camera/review, reward, mosaic,
+- [x] Fresh UI-audit screenshots cover the main pre-capture, framed camera/review, reward, mosaic,
       and buddy-reveal states at iPhone 17 size.
 - [ ] Focused tests, full `SkyGridTests`, Debug build, and Release build pass; independent root review
       finds no CRITICAL/HIGH issue.
@@ -99,7 +99,7 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
       preserving contextual access to archive, buddies, alarm, settings, and safety.
 - [x] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
-- [ ] Iteration 8: add/refresh audit scenarios and screenshots.
+- [x] Iteration 8: add/refresh audit scenarios and screenshots.
 - [ ] Iteration 9: run full validation, resolve review findings, and write the dev-note.
 
 ### Iteration evidence
@@ -233,3 +233,13 @@ The loop succeeds only when all are objectively true:
   `RewardAnalytics`'s two no-PII events) before checking, not just deferring to the sub-iteration
   checkbox. Remaining before `verify.sh` goes green: Iteration 8 (refresh UI-audit screenshots for
   the reward/mosaic states) and Iteration 9 (full validation pass + dev-note).
+- Iteration 8: added five deterministic, DEBUG-only `UIAuditScenario` reward fixtures — one for
+  each `RewardBeat` — instead of racing the production 1.6-second controller. They compose the
+  production pixel/mosaic/Moku/buddy views, hold the confetti burst at its deterministic seeded
+  starting layout, never publish, and never emit analytics or haptics. The settled fixture supplies
+  only a fixture `RevealSignal` with already-`.posted` statuses, so it exercises the same private
+  `BuddyTile` gate rather than creating a second reveal decision. Added iPhone 17 UI tests which
+  retain real Simulator attachments for all five reward beats plus today, live/review camera, grid,
+  and buddies. On 2026-09-06 the two focused UI tests passed on iPhone 17 and their 1206×2622
+  captures were saved as `screenshots/ui-audit-{today-home,camera-live,camera-review,grid,buddies}-playful-redesign-after.png`
+  and `screenshots/ui-audit-reward-{capture,pixel,landing,peak,settle}-after.png`.

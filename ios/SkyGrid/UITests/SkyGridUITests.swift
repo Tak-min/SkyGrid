@@ -96,6 +96,58 @@ final class SkyGridUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Share this morning"].isHittable)
     }
 
+    /// The live reward finishes in 1.6 seconds, so its causal states need fixed
+    /// audit hosts rather than timing a test around animation. These attachments
+    /// are the source images refreshed in `screenshots/` by the redesign closeout.
+    func testRewardAuditFramesRenderDeterministically() {
+        let scenarios = [
+            ("reward-capture", "CAPTURE CONFIRMED"),
+            ("reward-pixel", "PIXEL DERIVATION"),
+            ("reward-landing", "MOSAIC LANDING"),
+            ("reward-peak", "REWARD PEAK"),
+            ("reward-settle", "SETTLED — BUDDIES REVEALED"),
+        ]
+
+        for (scenario, expectedTitle) in scenarios {
+            let app = XCUIApplication()
+            app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", scenario]
+            app.launch()
+
+            XCTAssertTrue(app.staticTexts[expectedTitle].waitForExistence(timeout: 8), scenario)
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = "ui-audit-\(scenario)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            app.terminate()
+        }
+    }
+
+    /// Fresh iPhone-sized evidence for the surrounding causal loop. The reward
+    /// beats above have their own fixed frames; these are the real audit hosts for
+    /// pre-capture, capture/review, archive mosaic, and buddy context.
+    func testPlayfulRedesignContextAuditScreensRender() {
+        let scenarios = [
+            ("today", "Capture the sky"),
+            ("camera-live", "THIS MORNING"),
+            ("camera-review", "KEEP THIS SKY"),
+            ("grid", "2026"),
+            ("buddies", "MORNING TOGETHER"),
+        ]
+
+        for (scenario, expectedText) in scenarios {
+            let app = XCUIApplication()
+            app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", scenario]
+            app.launch()
+
+            XCTAssertTrue(app.staticTexts[expectedText].waitForExistence(timeout: 8), scenario)
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = "ui-audit-\(scenario)-playful-redesign"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            app.terminate()
+        }
+    }
+
     func testLiveActivityStartsForTheDynamicIsland() {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "live-activity"]

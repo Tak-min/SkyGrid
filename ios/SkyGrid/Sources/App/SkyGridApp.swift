@@ -61,6 +61,11 @@ private enum UIAuditScenario: String {
     case milestone
     case milestoneDayOne = "milestone-day-one"
     case moku
+    case rewardCapture = "reward-capture"
+    case rewardPixel = "reward-pixel"
+    case rewardLanding = "reward-landing"
+    case rewardPeak = "reward-peak"
+    case rewardSettle = "reward-settle"
 
     static var current: Self? {
         let arguments = ProcessInfo.processInfo.arguments
@@ -179,6 +184,11 @@ private struct UIAuditRoot: View {
             CameraReviewAuditView()
         } else if scenario == .cameraFailure {
             CameraFailureAuditView()
+        } else if let rewardBeat = scenario.rewardAuditBeat {
+            // The live reward is deliberately brief. This fixed-beat host makes
+            // each causal frame screenshot-able without timing a capture, publishing
+            // a post, or fabricating a new privacy decision.
+            RewardAuditView(beat: rewardBeat)
         } else {
             NavigationStack {
                 if scenario == .grid || scenario == .gridUnavailable {
@@ -227,6 +237,101 @@ private struct UIAuditRoot: View {
                         .accessibilityLabel("Open settings")
                 }
             }
+        }
+    }
+}
+
+private extension UIAuditScenario {
+    var rewardAuditBeat: RewardBeat? {
+        switch self {
+        case .rewardCapture: .captureConfirmation
+        case .rewardPixel: .pixelDerivation
+        case .rewardLanding: .mosaicLanding
+        case .rewardPeak: .rewardPeak
+        case .rewardSettle: .settle
+        default: nil
+        }
+    }
+}
+
+/// Deterministic still-frame counterpart to `RewardOverlayView`. Unlike the live
+/// overlay, this never starts its timed controller or produces analytics/haptics.
+/// Its settled buddy strip is fed only a fixture `RevealSignal` whose `.posted`
+/// states model values already permitted by the normal `TodayViewModel` path.
+@MainActor
+private struct RewardAuditView: View {
+    let beat: RewardBeat
+
+    private let moment = UIAuditData.rewardMoment
+    private let revealSignal = UIAuditData.rewardRevealSignal
+
+    var body: some View {
+        VStack(spacing: SGSpacing.lg) {
+            ZStack {
+                RewardMosaicLandingView(
+                    sourceThumbnail: UIImage(data: moment.thumbnailData ?? Data()),
+                    tile: PixelSkyTileRenderer.makeTile(from: moment.thumbnailData),
+                    fallbackColor: moment.skyColor.color,
+                    localDate: moment.localDate,
+                    beat: beat
+                )
+                .frame(width: 252, height: 250)
+
+                if beat == .rewardPeak {
+                    ConfettiView(
+                        palette: [moment.skyColor.color, MokuColor.dawnSpark, MokuColor.cloud],
+                        seed: 0x534B5947,
+                        isStatic: true
+                    )
+                    .frame(width: 220, height: 220)
+                }
+
+                MokuView(
+                    state: mokuState,
+                    side: 128,
+                    capturedSkyPalette: [moment.skyColor.color]
+                )
+                .offset(y: 116)
+            }
+            .frame(height: 310)
+
+            Text(beatTitle)
+                .font(SGFont.caption(12))
+                .foregroundStyle(.white.opacity(0.7))
+
+            if beat == .settle {
+                RewardBuddyRevealStrip(
+                    statuses: revealSignal.reading?.buddyStatuses ?? [],
+                    localDate: moment.localDate,
+                    imageFetching: UIAuditImageFetcher()
+                )
+                .accessibilityHidden(true)
+            }
+
+            Spacer()
+        }
+        .padding(.top, SGSpacing.xxl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(red: 8 / 255, green: 10 / 255, blue: 15 / 255))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Reward audit: \(beatTitle)")
+    }
+
+    private var mokuState: MokuState {
+        switch beat {
+        case .captureConfirmation, .pixelDerivation, .mosaicLanding: .bracing
+        case .rewardPeak: .delight
+        case .settle: .settled
+        }
+    }
+
+    private var beatTitle: String {
+        switch beat {
+        case .captureConfirmation: "CAPTURE CONFIRMED"
+        case .pixelDerivation: "PIXEL DERIVATION"
+        case .mosaicLanding: "MOSAIC LANDING"
+        case .rewardPeak: "REWARD PEAK"
+        case .settle: "SETTLED — BUDDIES REVEALED"
         }
     }
 }
@@ -356,6 +461,37 @@ private enum UIAuditData {
         uploader: UIAuditImageUploader()
     )
     static let orphanedPostRecovery = UIAuditOrphanedPostRecovery()
+    static let rewardMoment = RewardMoment(
+        localDate: today,
+        skyColor: posts[17].skyColor,
+        thumbnailData: thumbnails[today]?.pngData()
+    )
+
+    static let rewardRevealSignal: RevealSignal = {
+        let signal = RevealSignal()
+        let mira = SkyPost(
+            ownerUid: "mira", localDate: today, capturedAt: fixedClock.now,
+            uploadedAt: fixedClock.now, imagePath: "ui-audit/mira.jpg",
+            thumbPath: "ui-audit/mira_thumb.jpg", skyColor: SkyColor(uncheckedHex: "#91B6C8"),
+            minutesFromGoal: -4, reactions: [:]
+        )
+        let ren = SkyPost(
+            ownerUid: "ren", localDate: today, capturedAt: fixedClock.now,
+            uploadedAt: fixedClock.now, imagePath: "ui-audit/ren.jpg",
+            thumbPath: "ui-audit/ren_thumb.jpg", skyColor: SkyColor(uncheckedHex: "#D89B76"),
+            minutesFromGoal: -2, reactions: [:]
+        )
+        signal.record(RevealReading(
+            localDate: today,
+            mutuallyUnlockedBuddyCount: 2,
+            acceptedBuddyCount: 2,
+            buddyStatuses: [
+                .init(uid: "mira", displayName: "Mira", revealState: .posted(mira), streakCurrent: 3, streakLastMutualDate: today.adding(days: -1)),
+                .init(uid: "ren", displayName: "Ren", revealState: .posted(ren), streakCurrent: 7, streakLastMutualDate: today.adding(days: -1)),
+            ]
+        ))
+        return signal
+    }()
 
     static func todayViewModel() -> TodayViewModel {
         TodayViewModel(

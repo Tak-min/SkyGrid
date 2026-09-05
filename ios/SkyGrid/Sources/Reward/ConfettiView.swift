@@ -10,6 +10,9 @@ import SwiftUI
 struct ConfettiView: View {
     let palette: [Color]
     let seed: UInt64
+    /// UI-audit fixtures use the pre-flight layout as a still image. Production
+    /// always uses the default animated burst.
+    var isStatic: Bool = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hasLaunched = false
@@ -43,6 +46,7 @@ struct ConfettiView: View {
             .allowsHitTesting(false)
             .accessibilityHidden(true)
             .onAppear {
+                guard !isStatic else { return }
                 // Falls once, then the whole burst opacity-fades to nothing — there
                 // is no repeating emitter to stop later.
                 withAnimation(.easeOut(duration: 0.7)) {
