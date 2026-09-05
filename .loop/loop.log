@@ -409,3 +409,27 @@ VISION.md still has 3 unchecked TODO item(s):
 970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
 1016:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 19:34:20] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 19:36:24] Starting loop. MAX_ITER=40 MODEL=sonnet VERIFY='bash .loop/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 19:36:24] === iteration 1 / 40 ===
+## このイテレーションの結果
+
+**やったこと**: 継続デザイン監査リストの項目2/5「Buddies画面: 2つの招待導線の統合 + バディ行のアバター化」を実装・検証・コミットしました。
+
+- **招待導線の統一**: `InviteLinkCard`（招待リンク）と`AddBuddyView`（ハンドル指定招待）が同じ重みで2枚重なって表示されていた問題を修正。`InviteLinkCard`を唯一の主導線にし、`AddBuddyView`は「Know their exact handle?」の折りたたみ下に格下げ。
+- **バディ行のアバター化**: これまで裸のSFシンボル（鍵アイコンのみ）で全員同じ見た目だった行を、Today画面の`BuddyTile`と同じパターン（実写真/skyColor/sealed状態）を流用した42ptの円形アバターに変更。DESIGN.mdの指示通り新しい表現を発明せず既存モチーフを再利用。
+
+**レビューで見つかった問題（すべて修正済み、独自に再検証済み）**:
+- HIGH: 鍵アイコンが`.notYet`（まだ投稿していないだけ）にも誤表示され、隣接テキスト「Not yet today」と矛盾 → `.sealed`のみに修正
+- MEDIUM: リクエスト送信中/結果表示中でも折りたたみを閉じられてしまう → 強制展開バインディングで修正
+- MEDIUM: `BuddyTile`とのロジック重複 → 抽出はリスクと判断し見送り、同期を促すコメントを追加
+
+**検証**: `xcodebuild test`が266件グリーン、Debugビルド成功、実機シミュレータでの`-SkyGridUIAudit`スクリーンショットで視覚確認済み（`screenshots/ui-audit-buddies-invite-avatar-after.png`）。antislopのUI Skill Checklistは全項目PASS。
+
+**コミット**: `57a72d4`（プッシュ・デプロイなし、指示通り）。
+
+**未完了**: 監査リストの項目3-5（sealed状態の視覚的重み付け、Pro行の差別化、share-yearカードのコントラスト）と、オンボーディング頻度カット・最終テストパスは引き続きブロック中/未着手のまま。ループは継続します。
+VISION.md still has 3 unchecked TODO item(s):
+505:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
+1074:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 19:51:48] VERIFY failing (rc=1). Identical-failure streak: 1/3.
