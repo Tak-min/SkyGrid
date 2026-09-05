@@ -60,11 +60,14 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, SGSpacing.xl)
                 .padding(.top, SGSpacing.sm)
-                // The floating three-tab bar occupies significantly more vertical
-                // space than the former two-tab bar. Keep the alarm row and upload
-                // status fully reachable above it.
-                .padding(.bottom, 128)
                 .frame(maxWidth: .infinity)
+            }
+            // Reserve clearance on the scroll container, rather than in its content.
+            // Content padding scrolls underneath the floating tab bar; a safe-area
+            // inset changes the scroll view's resting viewport so its final row
+            // remains reachable above the bar.
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 128)
             }
         }
         .task(id: observedDate) { viewModel.start(for: observedDate) }

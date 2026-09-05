@@ -1,1 +1,1 @@
-{"iteration": 9, "status": "checked off Buddies-tab redesign item (436) after re-verifying all 4 sub-items complete in tree, incl. flagged-off streak display; 263/263 tests green; 3 unchecked TODO items remain", "verify_rc": 1, "same_count": 0}
+{"iteration": 1, "status": "critical-design-audit item 1/5 (Today This Week strip clipped behind tab bar) fixed via Codex, verified with before/after screenshots + swift-reviewer + independent xcodebuild test/Release build; 4 sub-items (2-5) of that TODO plus 2 other TODO items remain unchecked", "verify_rc": 1, "same_count": 0}

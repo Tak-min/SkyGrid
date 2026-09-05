@@ -970,9 +970,27 @@ a separate session.
 - [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
       `dev-notes/critical-design-audit_2026-09-05.md`) — 5 concrete visual/UX fixes, in
       priority order:**
-      1. **Today: fix the "This Week" strip actually being clipped behind the tab bar** —
-         a real layout bug (not taste), highest priority because it's the cheapest fix with
-         the most damage to perceived polish in a minimalist-styled app. Screenshot before/after.
+      1. **DONE (2026-09-05, Codex + main-loop verify): Today: fix the "This Week" strip
+         actually being clipped behind the tab bar.** Root cause confirmed via real
+         screenshot (`screenshots/ui-audit-today-clipping-before.png`, iPhone 17
+         `-SkyGridUIAudit` host): the old `.padding(.bottom, 128)` lived on the ScrollView's
+         *content* VStack, so it scrolled away with the content instead of reserving
+         permanent clearance — the alarm-settings row ended up genuinely hidden under the
+         iOS 26 floating/Liquid-Glass tab bar, not just a screenshot artifact. Fixed in
+         `TodayView.swift` by moving the 128pt reservation to
+         `.safeAreaInset(edge: .bottom) { Color.clear.frame(height: 128) }` on the ScrollView
+         itself — this is not a novel pattern, `SkyGridView.swift`/`BuddiesView.swift` already
+         ship the identical fix (confirmed by swift-reviewer), so Today was the one tab left
+         behind. After-screenshot
+         (`screenshots/ui-audit-today-clipping-after.png`) confirms the "THIS WEEK" strip and
+         "Morning alarm · 06:00" row both fully clear the tab bar. swift-reviewer (sonnet):
+         Approve, no CRITICAL/HIGH; one MEDIUM noted (the `128` literal is now duplicated
+         across 3 files — extract to a shared named constant next time any of the three is
+         touched, not done now to stay scoped to this one bug). Independently re-verified by
+         the main loop, not just Codex's report: `xcodebuild test -only-testing:SkyGridTests`
+         266 Swift-Testing + 4 XCTest = 270 green (Codex's own claimed count, matched); Release
+         `xcodebuild build -configuration Release -destination 'generic/platform=iOS'`
+         succeeded, 0 errors. Not deployed (client-only, nothing to deploy).
       2. **Buddies: unify the two simultaneous invite surfaces** (handle-request card and
          invite-link-code card currently stacked with no divider or priority) into one clear
          primary path with the other demoted/secondary, and give buddy rows a photo or
