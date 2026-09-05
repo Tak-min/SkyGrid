@@ -377,3 +377,14 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 909:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 14:36:06] VERIFY failing (rc=1). Identical-failure streak: 2/3.
+[loop-engine 14:36:06] === iteration 9 / 40 ===
+You've hit your session limit · resets 5:40pm (Asia/Tokyo)
+[loop-engine 14:36:10] claude -p returned non-zero on iteration 9 (continuing to verify).
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+909:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 14:36:10] VERIFY failing (rc=1). Identical-failure streak: 3/3.
+[loop-engine 14:36:10] HALT (1): no progress: identical verify result 3 iterations in a row — agent is stuck.

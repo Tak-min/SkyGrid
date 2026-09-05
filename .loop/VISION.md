@@ -566,7 +566,7 @@ a separate session.
       emulator tests, 38 Rules tests, and iOS Debug build passed. This is intentionally
       still undeployed because existing App Store builds use direct writes; see
       `dev-notes/hard-circle-cap-authority_2026-09-04.md` for mandatory staged rollout.
-- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+- [x] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
       (owner-confirmed Q1-Q5, no further design questions open).** Supersedes both bullets this
       replaces — old "multi-alarm-time" bullet is 5C, old "Erly-style motion-gated dismissal"
       bullet is **cancelled and replaced** by the re-alarm loop (decision record §3.2 — a
@@ -889,6 +889,14 @@ a separate session.
       safely compiled behind a default-off `FeatureFlags.buddyStreakVisible`; it remains
       invisible until a separately authorized functions deployment and at least one real day of
       data have been verified. No deploy was performed here.**
+      **Checked off (2026-09-05, main loop, after a Claude-side rate-limit gap during which the
+      owner's own interactive Codex session picked this item up and finished it — see
+      `9afb70f`/`8fa20b3`):** independently re-ran `xcodebuild test -only-testing:SkyGridTests`
+      myself (not trusting Codex's self-report) — 263/263 green, matching the claimed count.
+      3B is functions+client (dark behind the flag, correctly not flipped without a deploy). 5C
+      is fully wired end-to-end (schedule model, both scheduler backends, re-alarm loop, approved
+      copy). 6C needed no separate work per record §3. All sub-items of this TODO are genuinely
+      done; this is not a false-green checkoff.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
