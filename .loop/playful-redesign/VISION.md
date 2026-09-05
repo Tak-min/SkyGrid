@@ -48,7 +48,7 @@ The loop succeeds only when all are objectively true:
       existing capture event remains exactly-once per successful publish.
 - [x] Fresh UI-audit screenshots cover the main pre-capture, framed camera/review, reward, mosaic,
       and buddy-reveal states at iPhone 17 size.
-- [ ] Focused tests, full `SkyGridTests`, Debug build, and Release build pass; independent root review
+- [x] Focused tests, full `SkyGridTests`, Debug build, and Release build pass; independent root review
       finds no CRITICAL/HIGH issue.
 
 ## Constraints / guardrails
@@ -100,7 +100,7 @@ The loop succeeds only when all are objectively true:
       preserving contextual access to archive, buddies, alarm, settings, and safety.
 - [x] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
 - [x] Iteration 8: add/refresh audit scenarios and screenshots.
-- [ ] Iteration 9: run full validation, resolve review findings, and write the dev-note.
+- [x] Iteration 9: run full validation, resolve review findings, and write the dev-note.
 
 ### Iteration evidence
 
@@ -243,3 +243,11 @@ The loop succeeds only when all are objectively true:
   and buddies. On 2026-09-06 the two focused UI tests passed on iPhone 17 and their 1206×2622
   captures were saved as `screenshots/ui-audit-{today-home,camera-live,camera-review,grid,buddies}-playful-redesign-after.png`
   and `screenshots/ui-audit-reward-{capture,pixel,landing,peak,settle}-after.png`.
+- Iteration 9: full `SkyGridTests` passed (284 tests / 51 suites) and the Release build succeeded.
+  Independent review initially found two HIGH issues: two legacy UI tests still asserted the removed
+  tab bar, and the reward could dismiss its settled state before Reduce Motion/VoiceOver users could
+  perceive it. The tests now assert the contextual Buddies destination and its current Copy code
+  action without a tab bar; the reward now holds its settled state for 400 ms, posts its explicit
+  VoiceOver announcement, and resolves an interrupted overlay to settled without replay. The
+  replacement focused UI tests passed. `dev-notes/playful-redesign-closeout_2026-09-06.md` records
+  scope, evidence, and the still-unmeasured wake-to-capture completion metric.

@@ -179,16 +179,14 @@ final class SkyGridUITests: XCTestCase {
         add(attachment)
     }
 
-    func testBuddiesIsAPrimaryTab() {
+    func testBuddiesContextualDestinationRendersWithoutATabBar() {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
         app.launch()
 
-        XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.tabBars.buttons["Sky Grid"].exists)
-        XCTAssertTrue(app.tabBars.buttons["Buddies"].exists)
         XCTAssertTrue(app.staticTexts["MORNING TOGETHER"].waitForExistence(timeout: 8))
-        XCTAssertFalse(app.buttons["Send request"].isEnabled)
+        XCTAssertTrue(app.staticTexts["INVITE A BUDDY"].waitForExistence(timeout: 8))
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
     }
 
     func testBuddyRitualHeaderIsCentered() {
@@ -220,16 +218,17 @@ final class SkyGridUITests: XCTestCase {
         add(attachment)
     }
 
-    func testBuddiesInviteActionClearsFloatingTabBar() {
+    func testBuddiesInviteActionsRemainReachableWithoutATabBar() {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
         app.launch()
 
-        let sendRequest = app.buttons["Send request"]
-        XCTAssertTrue(sendRequest.waitForExistence(timeout: 8))
-        let tabBar = app.tabBars.firstMatch
-        XCTAssertTrue(tabBar.exists)
-        XCTAssertLessThanOrEqual(sendRequest.frame.maxY, tabBar.frame.minY)
+        let copyCode = app.buttons["Copy code"]
+        XCTAssertTrue(copyCode.waitForExistence(timeout: 8))
+        XCTAssertTrue(copyCode.isHittable)
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        copyCode.tap()
+        XCTAssertTrue(app.buttons["Copied"].waitForExistence(timeout: 3))
     }
 
     func testBuddiesReadFailureNeverMasqueradesAsAnEmptyList() {

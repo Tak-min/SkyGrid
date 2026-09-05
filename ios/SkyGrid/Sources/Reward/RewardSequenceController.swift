@@ -16,6 +16,7 @@ final class RewardSequenceController {
 
     private let reducedMotion: Bool
     private var playbackTask: Task<Void, Never>?
+    private var completion: (() -> Void)?
 
     init(reducedMotion: Bool) {
         self.reducedMotion = reducedMotion
@@ -25,6 +26,8 @@ final class RewardSequenceController {
     /// view — cancelling any previous playback first means a view re-appearance
     /// can never leave two timelines racing to fire `onComplete` twice.
     func start(onComplete: @escaping () -> Void) {
+        guard playbackTask == nil, !isFinished else { return }
+        completion = onComplete
         playbackTask?.cancel()
         beat = .captureConfirmation
         isFinished = false
@@ -60,9 +63,11 @@ final class RewardSequenceController {
                 guard !Task.isCancelled else { return }
             }
 
-            RewardAnalytics.record(.rewardCompleted, reducedMotion: reducedMotion)
-            isFinished = true
-            onComplete()
+            // Leave the settled mosaic and its VoiceOver result on screen long
+            // enough to be rendered/read before its cover closes.
+            try? await Task.sleep(for: .seconds(0.4))
+            guard !Task.isCancelled else { return }
+            finish()
         }
     }
 
@@ -72,5 +77,16 @@ final class RewardSequenceController {
     func cancel() {
         playbackTask?.cancel()
         playbackTask = nil
+        // An interrupted reward never restarts from a capture confirmation. Its
+        // only truthful next state is the already-earned settled result.
+        beat = .settle
+        isFinished = true
+    }
+
+    private func finish() {
+        guard !isFinished else { return }
+        RewardAnalytics.record(.rewardCompleted, reducedMotion: reducedMotion)
+        isFinished = true
+        completion?()
     }
 }

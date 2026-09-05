@@ -17,6 +17,7 @@ struct RewardOverlayView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var controller: RewardSequenceController?
+    @State private var started = false
 
     var body: some View {
         ZStack {
@@ -27,6 +28,8 @@ struct RewardOverlayView: View {
             }
         }
         .task {
+            guard !started else { return }
+            started = true
             let controller = RewardSequenceController(reducedMotion: reduceMotion)
             self.controller = controller
             controller.start(onComplete: onDone)
@@ -36,6 +39,19 @@ struct RewardOverlayView: View {
             // truthful settled state without replaying the reward or claiming a
             // completion that never happened — DESIGN.md's interruption rule.
             controller?.cancel()
+        }
+        .onChange(of: controller?.beat) { _, beat in
+            guard beat == .settle else { return }
+            UIAccessibility.post(
+                notification: .announcement,
+                argument: accessibilityAnnouncement(
+                    for: .settle,
+                    revealedCount: RewardRevealPolicy.verifiedUnlockedCount(
+                        for: moment.localDate,
+                        reading: revealSignal.reading
+                    )
+                )
+            )
         }
     }
 
