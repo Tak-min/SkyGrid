@@ -1,15 +1,14 @@
 import SwiftUI
+import UIKit
 
 /// The bounded, at-most-once-per-day celebration for a successful capture —
 /// DESIGN.md's "Daily reward motion contract". Plays Moku's bracing → delight →
 /// settled arc, one confetti burst at the reward-peak beat, and one success haptic;
 /// dismisses itself on completion via `onDone`.
 ///
-/// Beats `.pixelDerivation` and `.mosaicLanding` are timed here but render nothing
-/// of their own yet — the real photo-to-pixel-tile transform and mosaic landing
-/// motion are VISION.md Iteration 5's job. This view only owns the parts DESIGN.md
-/// assigns to Iteration 4: the state machine, the reward-peak confetti/haptic, the
-/// completion analytics, and Reduce Motion parity.
+/// The real local thumbnail visibly resolves into a 24×24 derived tile and lands in
+/// its date-derived mosaic slot before the reward peak. The original is not changed
+/// or exposed beyond this already-authorized, post-publish local reward surface.
 struct RewardOverlayView: View {
     let moment: RewardMoment
     let onDone: () -> Void
@@ -41,9 +40,17 @@ struct RewardOverlayView: View {
     @ViewBuilder
     private func content(controller: RewardSequenceController) -> some View {
         let beat = controller.beat
-        VStack(spacing: SGSpacing.xl) {
-            Spacer()
+        VStack(spacing: SGSpacing.lg) {
             ZStack {
+                RewardMosaicLandingView(
+                    sourceThumbnail: moment.thumbnailData.flatMap(UIImage.init(data:)),
+                    tile: PixelSkyTileRenderer.makeTile(from: moment.thumbnailData),
+                    fallbackColor: moment.skyColor.color,
+                    localDate: moment.localDate,
+                    beat: beat
+                )
+                .frame(width: 252, height: 250)
+
                 if beat == .rewardPeak, !reduceMotion {
                     ConfettiView(
                         palette: [
@@ -63,8 +70,9 @@ struct RewardOverlayView: View {
                         .frame(width: 160, height: 160)
                 }
                 MokuView(state: mokuState(for: beat), side: 128, capturedSkyPalette: [moment.skyColor.color])
+                    .offset(y: 116)
             }
-            .frame(height: 220)
+            .frame(height: 310)
             Spacer()
         }
         .accessibilityElement(children: .ignore)

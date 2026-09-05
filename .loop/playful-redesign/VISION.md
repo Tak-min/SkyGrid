@@ -40,7 +40,7 @@ The loop succeeds only when all are objectively true:
       pre-capture and post-capture states; it does not copy PostHog's hedgehog or another app IP.
 - [ ] Every successful capture triggers one bounded celebration sequence with mascot motion,
       confetti, success haptic, and a Reduce Motion equivalent.
-- [ ] The captured photo visibly transforms into a deliberately pixelated tile and lands in the
+- [x] The captured photo visibly transforms into a deliberately pixelated tile and lands in the
       current mosaic before the reward sequence completes.
 - [ ] Buddy reveal remains server-authoritative and private; no animation exposes a photo before
       the existing reveal gate permits it.
@@ -95,7 +95,7 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 2: add the original mascot implementation and deterministic preview states.
 - [x] Iteration 3: rebuild camera composition from the downloaded inset-viewfinder reference.
 - [x] Iteration 4: implement the bounded daily reward state machine, confetti, haptic, and analytics.
-- [ ] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
+- [x] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
 - [ ] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
       preserving contextual access to archive, buddies, alarm, settings, and safety.
 - [ ] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
@@ -176,3 +176,16 @@ The loop succeeds only when all are objectively true:
   UI-audit fixture or screenshot yet — deliberately deferred to Iteration 8, since the reward's
   two placeholder beats would otherwise need a second screenshot pass once Iteration 5 fills
   them in.
+- Iteration 5: the reward now freezes the already-persisted local square thumbnail at the same
+  successful-publish truth gate and derives a disposable 24×24 logical-pixel `UIImage` from it.
+  `RewardMosaicLandingView` first renders that real crop, switches to nearest-neighbour pixel
+  samples at the pixel-derivation beat, and moves the tile into its stable local-date mosaic slot
+  before the haptic/confetti peak. Its other cells remain neutral rather than fabricating prior
+  skies; the raw full photo, thumbnail file, Storage path, and all buddy reveal/read rules remain
+  untouched. When local thumbnail bytes are unexpectedly unavailable, the landing remains visibly
+  marked with the already-recorded sky color but never invents an image. Reduce Motion reaches the
+  same landed tile via the existing 200 ms controller path without spatial travel. Verified on
+  2026-09-06: `xcodegen generate` registered both new Swift files, focused
+  `PixelSkyTileRendererTests` passed (2 tests), and Debug `xcodebuild build` succeeded. The
+  closed gate was run and is red only because 12 broader Definition-of-Done / later-iteration
+  checklist items remain; it did not run builds by design after finding those unchecked items.

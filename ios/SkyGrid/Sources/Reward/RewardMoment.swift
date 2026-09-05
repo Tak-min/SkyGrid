@@ -11,4 +11,8 @@ struct RewardMoment: Identifiable, Equatable {
     let id = UUID()
     let localDate: LocalDate
     let skyColor: SkyColor
+    /// Ephemeral local thumbnail bytes captured after the publish-success gate. The
+    /// reward derives its 24×24 tile from these bytes only; the original file and
+    /// its access-controlled Storage representation remain unchanged.
+    let thumbnailData: Data?
 }

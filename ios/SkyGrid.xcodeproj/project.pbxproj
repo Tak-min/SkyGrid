@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00240275C869CE04748F0DC2 /* InviteCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92090403C33C793F6B63D46B /* InviteCode.swift */; };
 		0036C159EA737E8650E27D79 /* GridLayoutMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE39B2D2D1B78B2B5EC4B614 /* GridLayoutMath.swift */; };
+		02293975A97A7A3645BA5E06 /* PixelSkyTileRendererTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5991089F12DE0C4F23D2AB /* PixelSkyTileRendererTests.swift */; };
 		02F0F9BCA12B7F1E853EB43B /* InviteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580229AE918B81178280320B /* InviteModels.swift */; };
 		02F15D5DECC20256F678B3AE /* ATTRIBUTION.md in Resources */ = {isa = PBXBuildFile; fileRef = F09395274920B285E51BAB84 /* ATTRIBUTION.md */; };
 		03B5D7D34E491DAA8C82B861 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531084A1F75F338E4A45CC85 /* ShareSheet.swift */; };
@@ -234,6 +235,7 @@
 		F0255DD0D8C569F2B1BF892D /* CaptureAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FEC1CD55E9BB2FD248A7187 /* CaptureAnalytics.swift */; };
 		F35ACD21DBA2EC1AA156C4F2 /* RitualGridMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B5D7C1B6464998C35306B26 /* RitualGridMark.swift */; };
 		F3B83571F3DFC0124517F154 /* RetryPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */; };
+		F42A00483CA3C3C8BACECE45 /* PixelSkyTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADCEE965C2E724808C3F64B /* PixelSkyTile.swift */; };
 		F4351425D10C31CF3CCFE2A0 /* UploadState.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB78CDB872AA9BFD7CA228B1 /* UploadState.swift */; };
 		F46CEF08F53E6A1DCE6E4E4D /* RetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */; };
 		F5750D43D5F807D1E59E967A /* TimeZonePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABE9214A14000FFD1A8CDCB /* TimeZonePolicyTests.swift */; };
@@ -320,6 +322,7 @@
 		28A371182E1C9D56C7820C6F /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		29616E74D33131D97D03C4A6 /* LocalDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDefaults.swift; sourceTree = "<group>"; };
 		2ABE9214A14000FFD1A8CDCB /* TimeZonePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZonePolicyTests.swift; sourceTree = "<group>"; };
+		2ADCEE965C2E724808C3F64B /* PixelSkyTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelSkyTile.swift; sourceTree = "<group>"; };
 		2ADD269C003226844C3BBB5B /* HandleClaimView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandleClaimView.swift; sourceTree = "<group>"; };
 		2B3AD0FDB72D81461B58527B /* GridCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridCanvas.swift; sourceTree = "<group>"; };
 		2BE9E5B2ED0BD36473AC853F /* FirstUnlockPaywallPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstUnlockPaywallPolicy.swift; sourceTree = "<group>"; };
@@ -443,6 +446,7 @@
 		AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
 		AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRepository.swift; sourceTree = "<group>"; };
 		ABC3AF4F93BC6DE3214FC33B /* ContactSheetLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactSheetLayout.swift; sourceTree = "<group>"; };
+		AD5991089F12DE0C4F23D2AB /* PixelSkyTileRendererTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelSkyTileRendererTests.swift; sourceTree = "<group>"; };
 		AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualPolicyTests.swift; sourceTree = "<group>"; };
 		AE53FCF8B344D4140ACFD83D /* RepositoryError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryError.swift; sourceTree = "<group>"; };
 		AE78E41FB4C4D3379CF5B611 /* LivePreviewSampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePreviewSampler.swift; sourceTree = "<group>"; };
@@ -591,6 +595,7 @@
 			children = (
 				DF8BC19068174465D0930FA9 /* ConfettiView.swift */,
 				8D876AAE44C3BD844038BD3F /* DailyRewardPolicy.swift */,
+				2ADCEE965C2E724808C3F64B /* PixelSkyTile.swift */,
 				E9A93A11701B359A225ECCDD /* RewardAnalytics.swift */,
 				62BC2AEDD6034318B8D2E42D /* RewardBeat.swift */,
 				15CC0F0447BD504E5D676CE2 /* RewardMoment.swift */,
@@ -989,6 +994,7 @@
 				FE2A2882ADF140C0BD62770C /* PaywallFlowTests.swift */,
 				3DE535718E8F305008C110CE /* PendingCellStateTests.swift */,
 				BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */,
+				AD5991089F12DE0C4F23D2AB /* PixelSkyTileRendererTests.swift */,
 				C0A3E28C33210B0166319703 /* PostCaptureMomentPolicyTests.swift */,
 				05A2E7BB4F115A3D42C4B46D /* PostCreateWindowPolicyTests.swift */,
 				165570757A55F9BFB6931185 /* PostIntegrityPolicyTests.swift */,
@@ -1322,6 +1328,7 @@
 				805B9D2D3F41C2C5B93D4C5B /* PersonalizationProfile.swift in Sources */,
 				E87922CD54E95934223F2841 /* PersonalizationQuestionsView.swift in Sources */,
 				ED281546431F7E899784C3CD /* PersonalizedPlanView.swift in Sources */,
+				F42A00483CA3C3C8BACECE45 /* PixelSkyTile.swift in Sources */,
 				9C14252D573F94B51704D976 /* PostCaptureMomentPolicy.swift in Sources */,
 				2AFFA576038DB77880A6AE70 /* PostCreateWindowPolicy.swift in Sources */,
 				8530D450B1584EC1D3292BA7 /* PostDraft.swift in Sources */,
@@ -1430,6 +1437,7 @@
 				5B1ADCD16515E93BF000C3EE /* PaywallFlowTests.swift in Sources */,
 				06CA68D5ABBF09AED97E528D /* PendingCellStateTests.swift in Sources */,
 				8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */,
+				02293975A97A7A3645BA5E06 /* PixelSkyTileRendererTests.swift in Sources */,
 				BCABB8A620F0C9DDC2BD07E8 /* PostCaptureMomentPolicyTests.swift in Sources */,
 				0BC13706EAC24250D7F8A7CC /* PostCreateWindowPolicyTests.swift in Sources */,
 				DB73F085B9551FE23C4F6816 /* PostIntegrityPolicyTests.swift in Sources */,

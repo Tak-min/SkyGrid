@@ -349,7 +349,7 @@ struct RootView: View {
     /// every re-ask instead of freezing it into the arming.
     private func recordCompletedCapture(_ draft: PostDraft, services: AppServices) async {
         prepareAutomaticPaywallState(for: draft.ownerUid)
-        armDailyReward(localDate: draft.localDate, skyColor: draft.skyColor)
+        armDailyReward(draft: draft)
         guard LocalDefaults.lastCompletedCaptureLocalDate != draft.localDate.docID else { return }
 
         LocalDefaults.lastCompletedCaptureLocalDate = draft.localDate.docID
@@ -372,14 +372,18 @@ struct RootView: View {
     /// answers a separate milestone/paywall question. `DailyRewardPolicy` bounds it
     /// to at most once per successful post, matching the "plays at most once for
     /// that successful post" rule in the daily reward motion contract.
-    private func armDailyReward(localDate: LocalDate, skyColor: SkyColor) {
+    private func armDailyReward(draft: PostDraft) {
         guard DailyRewardPolicy.shouldPlay(
-            for: localDate,
+            for: draft.localDate,
             lastPlayedLocalDate: LocalDefaults.lastRewardPlayedLocalDate
         ) else { return }
 
-        LocalDefaults.lastRewardPlayedLocalDate = localDate.docID
-        pendingReward = RewardMoment(localDate: localDate, skyColor: skyColor)
+        LocalDefaults.lastRewardPlayedLocalDate = draft.localDate.docID
+        pendingReward = RewardMoment(
+            localDate: draft.localDate,
+            skyColor: draft.skyColor,
+            thumbnailData: try? Data(contentsOf: draft.localThumbImageURL)
+        )
     }
 
     /// Records a completed capture so the milestone/paywall/review question can be
