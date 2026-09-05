@@ -4,15 +4,13 @@ import SwiftUI
 /// moment. Deliberately a *separate* namespace from `SGT`, because they encode the
 /// opposite intent.
 ///
-/// `SGT` is the quiet ritual surface: warm, low-contrast, appropriate for a
-/// half-awake 6am capture. `SGExport` is the loud surface: a fixed dark ground so
-/// the user's own sky colours are the only chroma, and so the card survives being
-/// rendered ~120px wide in an Instagram/TikTok Story tray.
+/// `SGT` is the in-app night stage. `SGExport` is its fixed, artifact-safe sibling:
+/// a dark ground so the user's own sky colours are the only chroma and the card
+/// survives being rendered ~120px wide in an Instagram/TikTok Story tray.
 ///
 /// **Boundary rule:** `SGExport` may only be referenced from `Grid/*ExportView.swift`,
 /// `Grid/ShareCardRenderer.swift`, and `Milestone/*`. It must never reach the
-/// Today/Camera/Grid screens — that is what keeps the ritual calm while the artifact
-/// is loud.
+/// Today/Camera/Grid screens — exported artifacts need a pinned rendering palette.
 ///
 /// Check it (from `ios/SkyGrid`; comment-only mentions are excluded):
 ///

@@ -17,7 +17,7 @@ struct PaywallFeaturesStepView: View {
         PaywallStepScaffold(flow: flow, step: .features) {
             if showsHeadline {
                 Text(entryPoint.headline)
-                    .font(SGFont.serifTitle(30))
+                    .font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(SGT.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }

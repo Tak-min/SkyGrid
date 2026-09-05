@@ -35,7 +35,7 @@ struct PaywallValueStepView: View {
                 .tracking(1.5)
                 .foregroundStyle(SGT.ink3)
             Text(entryPoint.headline)
-                .font(SGFont.serifTitle(entryPoint.isAutomaticReminder ? 30 : 34))
+                .font(.system(size: entryPoint.isAutomaticReminder ? 30 : 34, weight: .black, design: .rounded))
                 .foregroundStyle(SGT.ink)
                 .fixedSize(horizontal: false, vertical: true)
             Text("Keep the newest 30 days free. Upgrade only when you want the long view.")

@@ -20,7 +20,7 @@ struct MilestoneView: View {
 
     var body: some View {
         ZStack {
-            SGExport.ground.ignoresSafeArea()
+            PlayfulStageBackdrop(accent: moment.post.skyColor.color)
 
             VStack(spacing: SGSpacing.xl) {
                 headline
@@ -53,8 +53,11 @@ struct MilestoneView: View {
             Text(moment.milestone.title)
                 .font(SGFont.display(64))
                 .foregroundStyle(SGExport.ink)
-            Text(moment.milestone.headline)
-                .font(SGFont.serifTitle(20))
+            HStack(spacing: SGSpacing.sm) {
+                Text(moment.milestone.headline)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                MokuScreenMark(state: .delight, side: 54)
+            }
                 .foregroundStyle(SGExport.ink2)
                 .multilineTextAlignment(.center)
         }

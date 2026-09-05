@@ -77,6 +77,7 @@ struct CameraView: View {
                 }
                 .foregroundStyle(.white)
                 Spacer()
+                MokuScreenMark(state: .settled, side: 42)
                 closeButton
             }
         } viewfinder: {
@@ -119,6 +120,7 @@ struct CameraView: View {
                 }
                 .foregroundStyle(.white)
                 Spacer()
+                MokuScreenMark(state: .settled, side: 42)
                 closeButton
             }
         } viewfinder: {
@@ -226,15 +228,11 @@ struct CameraFailureContent: View {
         GeometryReader { proxy in
             ScrollView(showsIndicators: false) {
                 VStack(spacing: SGSpacing.xl) {
-                    Image(systemName: failure.symbol)
-                        .font(.system(size: 38, weight: .light))
-                        .frame(width: 82, height: 82)
-                        .background(.white.opacity(0.1), in: Circle())
-                        .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 1))
+                    MokuView(state: .error, side: 100)
 
                     VStack(spacing: SGSpacing.sm) {
                         Text(failure.title)
-                            .font(SGFont.serifTitle(30))
+                            .font(.system(size: 30, weight: .black, design: .rounded))
                         Text(failure.message)
                             .font(SGFont.body(15))
                             .foregroundStyle(.white.opacity(0.74))

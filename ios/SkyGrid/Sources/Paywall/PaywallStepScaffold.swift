@@ -30,6 +30,11 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
             }
         }
         .background(PaywallStepScaffold.background.ignoresSafeArea())
+        .overlay(alignment: .topTrailing) {
+            MokuScreenMark(state: .ready, side: 50)
+                .padding(.top, 54)
+                .padding(.trailing, SGSpacing.xl)
+        }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: SGSpacing.md) {
                 if flow.steps.count > 1 {
@@ -46,7 +51,7 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
 
     static var background: some View {
         LinearGradient(
-            colors: [SGT.fill, SGT.background, SGT.background],
+            colors: [SGT.accent.opacity(0.18), SGT.background, SGT.background],
             startPoint: .top,
             endPoint: .center
         )

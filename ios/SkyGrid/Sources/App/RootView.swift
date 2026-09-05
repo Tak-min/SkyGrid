@@ -453,7 +453,11 @@ struct RootView: View {
         guard let arming = postCaptureArming else { return }
         // Never stack one of these on top of another modal. The camera in particular:
         // presenting while it is dismissing races iOS's own animation.
-        guard !showCamera, !showPaywall, milestoneMoment == nil else { return }
+        // The reward owns the full-screen presentation slot until its own dismissal
+        // callback re-asks this resolver. In particular, the first asynchronous
+        // streak reading for a Day-1 capture can arrive during the reward; without
+        // this guard SwiftUI is asked to present reward and milestone covers at once.
+        guard !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil else { return }
 
         prepareUnlockPaywallState(for: services.currentUid)
         let isFirstUnlockEligible = FirstUnlockPaywallPolicy.shouldPresent(
@@ -555,7 +559,7 @@ struct RootView: View {
     /// that path also has to weigh a milestone against it — this one has nothing to
     /// arbitrate against, so it can act the moment eligibility is true.
     private func resolveFirstUnlockPaywall(services: AppServices) {
-        guard !showCamera, !showPaywall, milestoneMoment == nil, inviteMoment == nil else { return }
+        guard !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil, inviteMoment == nil else { return }
         // A capture is currently being arbitrated — that path owns this decision so
         // a milestone can still outrank the paywall; this resolver only ever handles
         // the case where there is nothing else in flight to arbitrate against.
@@ -580,7 +584,7 @@ struct RootView: View {
     /// today otherwise; see that property's write site for why "today" is not
     /// always the right day to re-ask against.
     private func resolveSoloPaywall(services: AppServices) {
-        guard !showCamera, !showPaywall, milestoneMoment == nil, inviteMoment == nil else { return }
+        guard !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil, inviteMoment == nil else { return }
         // A capture is currently being arbitrated — that path owns this decision so
         // a milestone can still outrank the paywall; this resolver only ever handles
         // the case where there is nothing else in flight to arbitrate against.
@@ -774,7 +778,7 @@ struct RootView: View {
     private func resolvePendingInvite() {
         guard destination == .today,
               inviteMoment == nil,
-              !showCamera, !showPaywall, milestoneMoment == nil,
+              !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil,
               let code = router.pendingInviteCode
         else { return }
         inviteMoment = code
