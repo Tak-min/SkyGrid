@@ -64,6 +64,7 @@ struct TodayView: View {
                 .padding(.horizontal, SGSpacing.xl)
                 .padding(.top, SGSpacing.lg)
                 .frame(maxWidth: .infinity)
+                .playfulEntrance()
             }
             // Reserve a small resting margin for the home indicator. The old 128pt
             // reserve was solely for the removed floating tab bar.

@@ -79,3 +79,31 @@ extension View {
         modifier(PlayfulSurfaceModifier(accent: accent))
     }
 }
+
+/// A single screen-entry gesture used by settled screens. It is intentionally
+/// modest: Moku supplies character; content should not fly around independently.
+struct PlayfulEntranceModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var appeared = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(appeared ? 1 : 0)
+            .offset(y: reduceMotion || appeared ? 0 : 14)
+            .onAppear {
+                if reduceMotion {
+                    appeared = true
+                } else {
+                    withAnimation(.spring(response: 0.52, dampingFraction: 0.84)) {
+                        appeared = true
+                    }
+                }
+            }
+    }
+}
+
+extension View {
+    func playfulEntrance() -> some View {
+        modifier(PlayfulEntranceModifier())
+    }
+}

@@ -103,6 +103,7 @@ struct SettingsView: View {
                 }
             }
             .padding(SGSpacing.xl)
+            .playfulEntrance()
         }
         .background(PlayfulStageBackdrop(accent: SGT.accent))
         .navigationTitle("Settings")

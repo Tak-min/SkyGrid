@@ -54,6 +54,7 @@ struct SkyGridView: View {
                     }
                     .padding(.horizontal, SGSpacing.xl)
                     .padding(.top, SGSpacing.lg)
+                    .playfulEntrance()
                 }
                 // Reserve resting clearance on the scroll container. Content padding
                 // scrolls with the archive, while this leaves its final control above

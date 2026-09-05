@@ -186,6 +186,7 @@ struct OnboardingCoordinatorView: View {
             }
         }
         .background(PlayfulStageBackdrop())
+        .playfulEntrance()
         .overlay(alignment: .topTrailing) {
             if viewModel.step != .welcome {
                 MokuScreenMark(

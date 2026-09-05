@@ -230,6 +230,7 @@ struct BuddiesView: View {
         .background(PlayfulStageBackdrop(accent: SGT.accentSecondary))
         .contentMargins(.top, SGSpacing.sm, for: .scrollContent)
         .listSectionSpacing(.custom(SGSpacing.xl))
+        .playfulEntrance()
         .safeAreaInset(edge: .bottom) { Color.clear.frame(height: SGSpacing.xl) }
         .navigationTitle("Buddies")
         // This view is one tab inside the root NavigationStack. An inline title
