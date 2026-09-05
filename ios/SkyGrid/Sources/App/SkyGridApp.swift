@@ -297,7 +297,7 @@ private struct RewardAuditView: View {
 
             Text(beatTitle)
                 .font(SGFont.caption(12))
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(SGT.ink2)
 
             if beat == .settle {
                 RewardBuddyRevealStrip(
@@ -312,7 +312,7 @@ private struct RewardAuditView: View {
         }
         .padding(.top, SGSpacing.xxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 8 / 255, green: 10 / 255, blue: 15 / 255))
+        .background(SGT.background)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Reward audit: \(beatTitle)")
     }
@@ -346,7 +346,7 @@ private struct LiveActivityAuditView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(SGT.ink2)
             Text("Dynamic Island audit")
-                .font(SGFont.serifTitle(30))
+                .font(.system(size: 30, weight: .black, design: .rounded))
             Text(result)
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
