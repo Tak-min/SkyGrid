@@ -33,18 +33,18 @@ The loop succeeds only when all are objectively true:
       old mascot/confetti prohibition without deleting its history.
 - [x] The general-purpose home `TabView` is removed from the primary daily flow; archive, buddies,
       alarm, and required settings/safety actions remain reachable contextually.
-- [ ] The camera uses the latest downloaded Locket-style reference
+- [x] The camera uses the latest downloaded Locket-style reference
       (`/Users/taku8/Downloads/refero.design Locket Widget.jpg`): black stage, large inset rounded
       viewfinder, prominent shutter, compact surrounding controls. It is not a full-screen preview.
-- [ ] SkyGrid has one original sky/pixel mascot with a coherent visual role across at least the
+- [x] SkyGrid has one original sky/pixel mascot with a coherent visual role across at least the
       pre-capture and post-capture states; it does not copy PostHog's hedgehog or another app IP.
-- [ ] Every successful capture triggers one bounded celebration sequence with mascot motion,
+- [x] Every successful capture triggers one bounded celebration sequence with mascot motion,
       confetti, success haptic, and a Reduce Motion equivalent.
 - [x] The captured photo visibly transforms into a deliberately pixelated tile and lands in the
       current mosaic before the reward sequence completes.
 - [x] Buddy reveal remains server-authoritative and private; no animation exposes a photo before
       the existing reveal gate permits it.
-- [ ] Analytics can distinguish reward started/completed/reduced-motion without PII, and the
+- [x] Analytics can distinguish reward started/completed/reduced-motion without PII, and the
       existing capture event remains exactly-once per successful publish.
 - [ ] Fresh UI-audit screenshots cover the main pre-capture, framed camera/review, reward, mosaic,
       and buddy-reveal states at iPhone 17 size.
@@ -215,3 +215,21 @@ The loop succeeds only when all are objectively true:
   focused `RewardRevealPolicyTests` passed (2 tests). The first focused run had one compile error
   from omitting `BuddyStreakDisplayPolicy`'s required `buddyName`; after passing the existing
   display name and fixed capture date, the next run was green.
+- Independent re-verification (2026-09-06, Claude, after handing Iterations 5-7 to a separate
+  Codex `exec` session per owner instruction): re-ran `xcodebuild build` (Debug) and
+  `xcodebuild test` from clean, independently of Codex's own reports — build succeeded, all 284
+  `SkyGridTests` passed (280 prior + 4 new: `PixelSkyTileRendererTests`, `RewardRevealPolicyTests`).
+  Read the `RootView`/`TodayView`/`Reward*` diffs for commits `ff9f405`, `9b43799`, `7f0024f`
+  directly rather than trusting the commit messages: the TabView removal preserves every exit path
+  (archive/buddies via an "Explore" toolbar menu, Settings/alarm/purchase-restore/account-deletion/
+  report-block unchanged), and the buddy-reveal reward strip reuses `BuddyTile`'s existing
+  `.posted`-gated rendering and a same-day-only `RewardRevealPolicy` check rather than inventing a
+  new visibility decision — no privacy regression found. Took a real iPhone 17 Simulator screenshot
+  of the new Today home (`-SkyGridUIAuditScenario today`) confirming the tab bar is gone and the
+  "YOUR MOSAIC" entry point renders correctly. Checked off the four Definition-of-Done items
+  (camera reference, mascot, celebration sequence, analytics) that Codex's iterations had already
+  satisfied in substance but left unchecked at the top-level checklist — confirmed each in code
+  (`CameraStage.swift`, `MokuView.swift`, `RewardSequenceController`'s Reduce Motion branches,
+  `RewardAnalytics`'s two no-PII events) before checking, not just deferring to the sub-iteration
+  checkbox. Remaining before `verify.sh` goes green: Iteration 8 (refresh UI-audit screenshots for
+  the reward/mosaic states) and Iteration 9 (full validation pass + dev-note).
