@@ -205,6 +205,17 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "morningAlarmScheduleModelVersion", defaultValue: 0)
     static var morningAlarmScheduleModelVersion: Int
 
+    /// Number of one-shot re-alarms already scheduled for `morningRealarmWakeDayID`.
+    /// Keeping the count separately makes the three-attempt cap survive process death.
+    @UserDefaultBacked(key: "morningRealarmAttemptCount", defaultValue: 0)
+    static var morningRealarmAttemptCount: Int
+
+    /// `LocalDate.docID` of the wake day that owns the current re-alarm loop.
+    /// Stored as a string (Firestore/`UserDefaults`-safe), parsed back to
+    /// `LocalDate` at the scheduling boundary — mirrors `lastCapturedLocalDateID`.
+    @UserDefaultBacked(key: "morningRealarmWakeDayID", defaultValue: nil)
+    static var morningRealarmWakeDayID: String?
+
     /// Set by the AlarmKit stop intent. The app consumes it once the scene becomes
     /// active, which makes the system alarm's dismissal lead straight to capture.
     @UserDefaultBacked(key: "openCameraAfterMorningAlarm", defaultValue: false)
@@ -260,6 +271,8 @@ enum LocalDefaults {
         morningAlarmBackend = "automatic"
         morningAlarmSchedules = []
         morningAlarmScheduleModelVersion = 0
+        morningRealarmAttemptCount = 0
+        morningRealarmWakeDayID = nil
         openCameraAfterMorningAlarm = false
         lastCapturedLocalDateID = nil
     }

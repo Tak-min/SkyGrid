@@ -10,6 +10,13 @@ struct NotificationRouterTests {
         #expect(NotificationRouter.isMorningNotificationIdentifier(identifier))
     }
 
+    @Test("routes one-shot re-alarm identifiers to the morning flow")
+    func recognizesRealarmIdentifier() {
+        let identifier = MorningAlarmScheduler.realarmIdentifierPrefix + "2026-09-05.1"
+
+        #expect(NotificationRouter.isMorningNotificationIdentifier(identifier))
+    }
+
     @Test("continues routing the legacy bare morning reminder identifier")
     func recognizesLegacyMorningReminderIdentifier() {
         #expect(NotificationRouter.isMorningNotificationIdentifier(MorningAlarmScheduler.notificationIdentifier))

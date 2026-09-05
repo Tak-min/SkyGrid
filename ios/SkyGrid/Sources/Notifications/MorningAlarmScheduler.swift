@@ -212,6 +212,8 @@ enum MorningAlarmScheduler {
     /// Reserved namespace for the future multi-schedule reminder fallback requests.
     /// The trailing dot keeps it distinct from the legacy bare identifier above.
     static let multiScheduleIdentifierPrefix = "com.takmin.skygrid.morning-reminder."
+    /// Reserved namespace for one-shot re-alarms after a morning alarm is stopped.
+    static let realarmIdentifierPrefix = "com.takmin.skygrid.morning-realarm."
     static let alarmIdentifier = UUID(uuidString: "8A9A5E2E-4B4A-4E8B-9382-FA8E3F3EF1CB")!
 
     static func reminderIdentifier(scheduleID: UUID, weekday: Int) -> String {

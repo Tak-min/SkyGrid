@@ -17,6 +17,7 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     nonisolated static func isMorningNotificationIdentifier(_ identifier: String) -> Bool {
         identifier == MorningAlarmScheduler.notificationIdentifier
             || identifier.hasPrefix(MorningAlarmScheduler.multiScheduleIdentifierPrefix)
+            || identifier.hasPrefix(MorningAlarmScheduler.realarmIdentifierPrefix)
             || identifier.hasPrefix(MorningFollowUpScheduler.identifierPrefix)
     }
 

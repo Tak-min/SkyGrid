@@ -782,6 +782,34 @@ a separate session.
       by the main loop, 253/253 green (up from 245). Not deployed (client-only, nothing to
       deploy). **Still open for 5C**: §2.5 (the re-alarm loop) and §2.6 (UI/copy, exact approved
       copy block from the decision record) — in that order, then 6C, then 3B's client display step.
+      **5C §2.5 first slice (re-alarm pure decision logic + persisted attempt-counter model, dead
+      code by design, done and committed 2026-09-05, Codex + main-loop verify).** New
+      `MorningRealarmPolicy` (`ios/SkyGrid/Sources/Notifications/MorningRealarmPolicy.swift`): a
+      pure `decide(attemptCount:originalWakeDay:now:timeZone:) -> Decision` implementing the
+      decision record's exact §2.5 parameters — 5-minute interval, max 3 attempts (attempt 1 at
+      +5min, 2 at +10, 3 at +15, never a 4th), and a stop-on-local-date-rollover check computed
+      against the *candidate next fire date* (not just `now`), which is the stricter, correct
+      reading of "never fire into the next morning." New `LocalDefaults.morningRealarmAttemptCount`
+      / `morningRealarmWakeDayID` (mirrors the existing `lastCapturedLocalDateID` string-encoded
+      `LocalDate` pattern), added to `resetAccountScopedValues()`. New reserved identifier prefix
+      `MorningAlarmScheduler.realarmIdentifierPrefix = "com.takmin.skygrid.morning-realarm."`
+      (verified distinct from the other 3 existing identifier spaces), wired into
+      `NotificationRouter.isMorningNotificationIdentifier`'s existing 3-way OR (now 4-way) so a
+      re-alarm notification tap also routes to camera. **Deliberately not wired into
+      `MorningAlarmStoppedIntent.perform()` or `MorningRitualCoordinator.captureCompleted()` yet**
+      — no AlarmKit `schedule()`/`UNUserNotificationCenter.add()` call exists for this yet, same
+      incremental "pure function first, dead code, wire later" discipline as every other 5C
+      sub-step; that wiring (plus resetting the attempt counter/wake-day-ID at the *first* stop of
+      a given day, and excluding live re-alarm reservations from `resyncIfNeeded()`'s reconcile
+      per §2.4) is the next step. swift-reviewer (sonnet): **Approve, no CRITICAL/HIGH/MEDIUM** —
+      confirmed interval/max-attempts/rollover/prefix all match the decision record exactly; two
+      LOW forward-looking notes for the wiring step (reset the counter/day at first stop; add a
+      test for the fire-date-lands-exactly-on-midnight edge case) logged, not blocking. Main loop
+      independently ran the real suite (not just Codex's report): 256/256 green (`xcodebuild test
+      -only-testing:SkyGridTests`, up from 253). Not deployed (client-only). **Still open for 5C**:
+      wire the re-alarm loop into `MorningAlarmStoppedIntent`/`captureCompleted` (actual scheduling
+      + cancellation + counter reset), then §2.6 (UI/copy, exact approved copy block) — in that
+      order, then 6C, then 3B's client display step.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
