@@ -91,6 +91,20 @@ no-progress detector actually keys on (see the RE-PIVOT section's account of the
 false-halt). A genuinely idle iteration that changes nothing on disk is itself a signal something
 is wrong; do not let two of those pass silently.
 
+**Re-activated for a daytime session too (2026-09-05, human) — both remaining explicit TODOs are
+externally blocked right now, do not re-litigate them.** As of this note only two unchecked
+items remain: (1) onboarding pace/frequency cut, blocked on real analytics data that has not
+accumulated yet (`OnboardingAnalytics` was only just instrumented — there is nothing new to
+conclude by re-reading the same code again); (2) the final test/build/screenshot/dev-note pass,
+blocked on a Firebase-side `exchangeDebugToken` outage confirmed independent of this app's code
+(see `dev-notes/app-check-debug-token-investigation_2026-09-05.md` — production Release/App
+Attest is unaffected, this only blocks taking fresh onboarding/settings screenshots from a real
+Debug launch). **Do not spend an iteration re-deriving either conclusion** — check the two
+dev-notes above first; if nothing has changed, move straight to the holistic visual audit this
+section describes (Today/Buddies/Share/Grid, which the App Check issue does not block — only
+onboarding/settings via the real launch flow are affected) and find a new concrete improvement
+instead of stalling on either blocked item.
+
 ## Why this loop exists
 
 The 2026-08-21 collabstr influencer shortlist is **paused**. Before spending on influencer
