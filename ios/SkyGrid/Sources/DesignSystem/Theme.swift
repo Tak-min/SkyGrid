@@ -3,8 +3,8 @@ import UIKit
 
 /// Sky Grid design tokens.
 ///
-/// The settled app follows the system's light or dark appearance while the camera
-/// and reward retain their purposeful near-black stage. Neither appearance revives
+/// The app follows the system's light or dark appearance; only the physical camera
+/// viewfinder retains its purposeful near-black stage. Neither appearance revives
 /// the old warm-paper/editorial UI.
 ///
 /// The day's extracted `SkyColor` remains an additional, secondary accent inside

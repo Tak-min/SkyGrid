@@ -64,6 +64,7 @@ struct AppStartupView: View {
 /// available for a low-friction first photo, but it can later be linked from
 /// Settings without changing its Firebase UID or splitting its archive.
 private struct AccountAccessView: View {
+    @Environment(\.colorScheme) private var colorScheme
     let errorMessage: String?
     let onAppleAuthorization: (ASAuthorizationAppleIDCredential, String) -> Void
     let onAppleAuthorizationFailure: (Error) -> Void
@@ -80,7 +81,7 @@ private struct AccountAccessView: View {
                     .tracking(1.6)
                     .foregroundStyle(SGT.ink3)
                 Text("Your mornings,\nkept together.")
-                    .font(SGFont.serifTitle(32))
+                    .font(.system(size: 32, weight: .black, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(SGT.ink)
                 Text("Sign in with Apple to restore your archive whenever you return to Sky Grid.")
@@ -111,7 +112,7 @@ private struct AccountAccessView: View {
                         onAppleAuthorizationFailure(error)
                     }
                 }
-                .signInWithAppleButtonStyle(.black)
+                .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
