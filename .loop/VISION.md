@@ -533,7 +533,7 @@ a separate session.
       emit no impossible back/advance event. DEBUG simulator build succeeds. This creates the
       cheapest valid test; retain `pace`/`frequency` until real cohorts establish whether their
       drop-off cost exceeds the personalized-plan value.
-- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+- [x] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
       see cancelled-escalation note above): copy changes wherever "one person" is asserted
       (`TodayView.swift:310-313`, `BuddiesView.swift:212-224`, onboarding), server-side circle
       cap (~8) enforced in `claimInviteCode`, bound buddy-refresh read fan-out to the same 12 the
@@ -585,6 +585,19 @@ a separate session.
       emulator tests, 38 Rules tests, and iOS Debug build passed. This is intentionally
       still undeployed because existing App Store builds use direct writes; see
       `dev-notes/hard-circle-cap-authority_2026-09-04.md` for mandatory staged rollout.
+      **Resolved (2026-09-05, Codex, parallel track):** re-assessed whether the read fan-out
+      bound flagged in the correction above is still needed now that both creation paths are
+      cap-authoritative (Partial 4). Conclusion: no bound is needed or safe to add — the
+      server-enforced circle cap (8) is already below Today's display limit (12), so fetching
+      every accepted buddy and only *rendering* 12 is correct and cannot regress once the cap is
+      live; truncating the read itself was the actual risk the correction identified, not a
+      requirement. Renamed the misleading "read-cost bounded to 12" comment in `BuddyRow.swift`
+      to describe the real invariant (`displayLimit`, a render cap, not a read cap) and added 3
+      regression tests locking in tri-state correctness at the 8-member cap, including a late
+      post from the 8th member still producing a correct mutual-unlock signal for both Today and
+      the Buddies tab. Independently re-verified by the main loop (not Codex's self-report):
+      read the actual diff, then re-ran `xcodebuild test -only-testing:SkyGridTests` myself on a
+      second simulator device — 266/266 green, matching Codex's reported count.
 - [x] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
       (owner-confirmed Q1-Q5, no further design questions open).** Supersedes both bullets this
       replaces — old "multi-alarm-time" bullet is 5C, old "Erly-style motion-gated dismissal"
