@@ -94,7 +94,7 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 1: freeze the new design system and mascot/reward motion contract in `DESIGN.md`.
 - [x] Iteration 2: add the original mascot implementation and deterministic preview states.
 - [x] Iteration 3: rebuild camera composition from the downloaded inset-viewfinder reference.
-- [ ] Iteration 4: implement the bounded daily reward state machine, confetti, haptic, and analytics.
+- [x] Iteration 4: implement the bounded daily reward state machine, confetti, haptic, and analytics.
 - [ ] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
 - [ ] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
       preserving contextual access to archive, buddies, alarm, settings, and safety.
@@ -136,3 +136,43 @@ The loop succeeds only when all are objectively true:
   `.easeOut`). Note for later iterations: Moku at 64pt in the capture controls reads as a
   minimal pixel-grid mark, not yet a legible "creature" — acceptable for this composition step,
   but worth a second look once the reward-sequence work (Iteration 4) puts Moku in motion.
+- Iteration 4: resolved the "known risk" left by Iteration 3's note without reusing
+  `PostCaptureArming`/`StreakReading` — that pattern answers a different, genuinely-async
+  question (does a milestone/paywall apply), which is why it needs an observe-and-re-ask
+  listener. The reward's truth gate is simpler and already exists: `RootView.cameraSheet`'s
+  `onConfirmed` closure already `await`s `services.postPublisher.publish(draft)` and only then
+  calls `Haptics.postCompleted()`/`CaptureAnalytics.record` — i.e. publish success is already
+  known synchronously at that call site, not behind a second async listener. `armDailyReward`
+  hooks there directly: `DailyRewardPolicy.shouldPlay` (new, pure, tested) bounds it to at most
+  once per successful post via a new `LocalDefaults.lastRewardPlayedLocalDate` guard (folded
+  into `resetAutomaticPaywallState()` so an account switch on the same calendar day can't
+  inherit another account's played-reward flag), then arms `pendingReward`. `pendingReward` is
+  presented as `rewardMoment` from `showCamera`'s own `onDismiss` — mirroring the
+  milestone/paywall pattern's reason for deferring to `onDismiss` (presenting a new full-screen
+  cover from the same runloop as this one's dismissal animation can swallow it) — and takes
+  that slot ahead of `resolvePendingPresentations`, so the reward can never be dropped or race a
+  second competing full-screen celebration; `resolvePendingPresentations` (milestone/paywall)
+  now runs from the reward cover's own `onDismiss` instead, deferred but never lost.
+  New: `RewardBeat` (the five-beat timeline from DESIGN.md's motion contract, pure and tested —
+  beats `.pixelDerivation`/`.mosaicLanding` are correctly sequenced but intentionally render
+  nothing of their own yet; their visual transform is Iteration 5's job), `RewardSequenceController`
+  (an `@Observable` state machine that fires `RewardAnalytics.record(.rewardStarted/.rewardCompleted,
+  reducedMotion:)` and `Haptics.rewardLanded()` exactly once each per playback, and cancels
+  cleanly without claiming completion if the view disappears mid-sequence), `ConfettiView` (a
+  deterministic, seeded, one-shot burst of 24 squares sampled from the capture's `SkyColor` plus
+  the existing `MokuColor.dawnSpark`/`.cloud` tokens — widened from `private` to internal rather
+  than duplicating their hex values), and `RewardOverlayView` (composes Moku's existing
+  bracing/delight/settled poses with the confetti burst, a static-halo Reduce Motion equivalent
+  per DESIGN.md's accessibility section, and one settled-state VoiceOver announcement). Added
+  `Haptics.rewardLanded()` with a doc-comment update clarifying it must never stack with
+  `postCompleted`'s press feedback, per the motion contract's "do not stack multiple success
+  haptics" rule. Buddy-reveal count is not yet wired into the VoiceOver announcement or the
+  settle beat — that connection is explicitly Iteration 7's job, so the announcement only
+  claims what this iteration can verify ("Sky saved").
+  Verified: `xcodebuild build` succeeds (Debug and Release/`generic/platform=iOS`), `xcodebuild
+  test` passes all 280 `SkyGridTests` (272 pre-existing + 3 new `DailyRewardPolicyTests` + 5 new
+  `RewardBeatTests`), and `xcodegen generate` was re-run after adding the new source and test
+  files so `project.pbxproj` registration didn't repeat Iteration 3's build-breaking gap. No new
+  UI-audit fixture or screenshot yet — deliberately deferred to Iteration 8, since the reward's
+  two placeholder beats would otherwise need a second screenshot pass once Iteration 5 fills
+  them in.

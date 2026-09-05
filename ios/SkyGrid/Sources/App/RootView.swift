@@ -40,6 +40,18 @@ struct RootView: View {
     /// passed down as a plain value rather than left for the view model to own,
     /// since `TodayViewModel` is reconstructed on every body evaluation.
     @State private var buddyRefreshToken = 0
+    /// Set the instant `PostPublisher.publish` succeeds — the same truth gate
+    /// `Haptics.postCompleted()` and `recordCompletedCapture` already use. Unlike
+    /// `postCaptureArming`, this never waits on `streakSignal`: DESIGN.md's daily
+    /// reward only needs "did the capture durably save", which is already known
+    /// synchronously in `cameraSheet`'s `onConfirmed` closure.
+    @State private var rewardMoment: RewardMoment?
+    /// Armed by `recordCompletedCapture`, while the camera is still on screen, and
+    /// claimed by `showCamera`'s own `onDismiss` — mirrors why `onDismiss` (not the
+    /// `onConfirmed` closure itself) is where `milestoneMoment`/paywall presentation
+    /// already happens: presenting a new full-screen cover from the same runloop as
+    /// this one's dismissal animation can swallow it.
+    @State private var pendingReward: RewardMoment?
     @State private var selectedTab: HomeTab = ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") ? .grid : .today
     let onAccountDeleted: () -> Void
 
@@ -184,9 +196,29 @@ struct RootView: View {
             // The camera is actually gone by the time this runs, so anything the
             // capture earned can be presented from here without racing iOS's own
             // dismissal animation — the reason this is a callback and not a timer.
-            resolvePendingPresentations(services: services)
+            //
+            // A pending reward always takes this slot instead of the milestone/
+            // paywall arbitration: DESIGN.md requires the reward to play for
+            // every successful capture, and forbids it competing with a second
+            // full-screen celebration. `resolvePendingPresentations` still runs,
+            // just deferred to the reward cover's own `onDismiss` below, so a
+            // milestone/paywall earned by the same capture is never dropped —
+            // only ever delayed until the reward has finished.
+            if let pendingReward {
+                rewardMoment = pendingReward
+                self.pendingReward = nil
+            } else {
+                resolvePendingPresentations(services: services)
+            }
         }) {
             cameraSheet(services: services)
+        }
+        .fullScreenCover(item: $rewardMoment, onDismiss: {
+            resolvePendingPresentations(services: services)
+        }) { moment in
+            RewardOverlayView(moment: moment) {
+                rewardMoment = nil
+            }
         }
         .fullScreenCover(item: $milestoneMoment, onDismiss: {
             // A milestone that outranked an eligible first-unlock or solo paywall
@@ -317,6 +349,7 @@ struct RootView: View {
     /// every re-ask instead of freezing it into the arming.
     private func recordCompletedCapture(_ draft: PostDraft, services: AppServices) async {
         prepareAutomaticPaywallState(for: draft.ownerUid)
+        armDailyReward(localDate: draft.localDate, skyColor: draft.skyColor)
         guard LocalDefaults.lastCompletedCaptureLocalDate != draft.localDate.docID else { return }
 
         LocalDefaults.lastCompletedCaptureLocalDate = draft.localDate.docID
@@ -330,6 +363,23 @@ struct RootView: View {
             uid: draft.ownerUid,
             services: services
         )
+    }
+
+    /// Arms the daily reward the instant `PostPublisher.publish` succeeds — the same
+    /// durable-local-write success `Haptics.postCompleted()` already reacts to.
+    /// Unlike `armPostCaptureMoment`, this never waits on `streakSignal`: DESIGN.md's
+    /// truth gate for the reward is publish success itself, not the streak that
+    /// answers a separate milestone/paywall question. `DailyRewardPolicy` bounds it
+    /// to at most once per successful post, matching the "plays at most once for
+    /// that successful post" rule in the daily reward motion contract.
+    private func armDailyReward(localDate: LocalDate, skyColor: SkyColor) {
+        guard DailyRewardPolicy.shouldPlay(
+            for: localDate,
+            lastPlayedLocalDate: LocalDefaults.lastRewardPlayedLocalDate
+        ) else { return }
+
+        LocalDefaults.lastRewardPlayedLocalDate = localDate.docID
+        pendingReward = RewardMoment(localDate: localDate, skyColor: skyColor)
     }
 
     /// Records a completed capture so the milestone/paywall/review question can be

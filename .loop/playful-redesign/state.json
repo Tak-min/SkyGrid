@@ -1,9 +1,9 @@
 {
-  "iteration": 3,
+  "iteration": 4,
   "max_iterations": 20,
   "no_progress_limit": 3,
   "same_failure_count": 0,
-  "last_action": "Resumed Codex's interrupted camera-composition rebuild: registered CameraStage.swift/CameraStageLayoutTests.swift in project.pbxproj (they existed on disk but were not build-target members, so the app failed to build), removed a stray orphaned comment, wired the CameraStage component into the live/review camera and both UI-audit fixtures.",
-  "last_verify": "green: xcodebuild build succeeded; xcodebuild test passed all 272 SkyGridTests (269 pre-existing + 3 new CameraStageLayoutTests); real iPhone 17 Simulator screenshot of the camera-live UI-audit scenario confirms the inset-viewfinder composition.",
+  "last_action": "Implemented Iteration 4: the bounded daily reward state machine, confetti, haptic, and analytics. Added Reward/DailyRewardPolicy.swift (pure, one-per-day), Reward/RewardBeat.swift (the five-beat timeline from DESIGN.md's motion contract), Reward/RewardSequenceController.swift (@Observable state machine driving the timeline, firing RewardAnalytics/Haptics.rewardLanded exactly once), Reward/ConfettiView.swift (deterministic 24-square one-shot burst), Reward/RewardOverlayView.swift (Moku + confetti + Reduce Motion equivalent + VoiceOver announcement), Reward/RewardMoment.swift, Reward/RewardAnalytics.swift, and Haptics.rewardLanded(). Wired into RootView: armDailyReward fires from cameraSheet's onConfirmed closure at the existing publish-success truth gate (no new async listener needed), presented via a new rewardMoment fullScreenCover that claims showCamera's onDismiss slot ahead of resolvePendingPresentations so the reward can never be dropped or race the milestone/paywall arbitration. Added LocalDefaults.lastRewardPlayedLocalDate, folded into resetAutomaticPaywallState(). Widened MokuColor from private to internal for confetti's palette. Beats .pixelDerivation/.mosaicLanding are sequenced but intentionally render nothing yet -- that visual transform is Iteration 5's job.",
+  "last_verify": "green: xcodebuild build (Debug) succeeded; xcodebuild test passed all 280 SkyGridTests (272 pre-existing + 3 new DailyRewardPolicyTests + 5 new RewardBeatTests); xcodebuild build (Release, generic/platform=iOS) succeeded. xcodegen generate re-run after adding new files so project.pbxproj registration didn't repeat Iteration 3's build-breaking gap. No new UI-audit screenshot this iteration -- deliberately deferred to Iteration 8 per VISION.md evidence.",
   "status": "active"
 }

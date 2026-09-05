@@ -79,6 +79,13 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "lastCompletedCaptureLocalDate", defaultValue: nil)
     static var lastCompletedCaptureLocalDate: String?
 
+    /// The local calendar day the daily reward last played, as a `LocalDate.docID`
+    /// string — mirrors `lastCompletedCaptureLocalDate`'s same-day guard shape. Read
+    /// by `DailyRewardPolicy.shouldPlay` to bound the reward to at most once per
+    /// successful post (DESIGN.md's daily reward motion contract).
+    @UserDefaultBacked(key: "lastRewardPlayedLocalDate", defaultValue: nil)
+    static var lastRewardPlayedLocalDate: String?
+
     /// Set the first time `AppReviewPromptPolicy` decides a completed capture is
     /// a good moment to call SwiftUI's `requestReview` environment action. Not
     /// reset by `resetAutomaticPaywallState()` — an unrelated paywall-state reset
@@ -109,6 +116,10 @@ enum LocalDefaults {
         automaticPaywallAccountID = nil
         completedCaptureCount = 0
         lastCompletedCaptureLocalDate = nil
+        // Same-day guard, same account switch: without this, signing into a new
+        // account on the same calendar day a previous account already played its
+        // reward would silently skip the new account's first reward too.
+        lastRewardPlayedLocalDate = nil
     }
 
     /// Scopes the one-shot first-unlock paywall to an account, kept separate from

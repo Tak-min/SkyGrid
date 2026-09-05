@@ -302,7 +302,9 @@ private struct MokuLimbPose {
     var rightLegLift: CGFloat = 0
 }
 
-private enum MokuColor {
+/// Internal (not `private`) so `ConfettiView` can sample the same Dawn Spark/Cloud
+/// tokens DESIGN.md's confetti rule names, rather than duplicating their hex values.
+enum MokuColor {
     static let nightStage = Color(red: 8 / 255, green: 10 / 255, blue: 15 / 255)
     static let cloud = Color(red: 244 / 255, green: 241 / 255, blue: 234 / 255)
     static let ink = Color(red: 23 / 255, green: 24 / 255, blue: 27 / 255)
