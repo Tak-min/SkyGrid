@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UserNotifications
 @testable import SkyGrid
 
 @Suite("Morning reminder reconcile plan")
@@ -26,6 +27,102 @@ struct MorningAlarmSchedulerTests {
         MorningReminderPendingOccurrence(identifier: identifier, hour: hour, minute: minute)
     }
 
+    @Test("a persisted schedule set selects the schedule-aware reminder fallback")
+    func persistedSchedulesSelectScheduleAwareFallback() {
+        let schedules = [
+            schedule(minutesAfterMidnight: 390, weekdays: [2, 4]),
+            schedule(minutesAfterMidnight: 450, weekdays: [6])
+        ]
+        let originalSchedules = LocalDefaults.morningAlarmSchedules
+        defer { LocalDefaults.morningAlarmSchedules = originalSchedules }
+        LocalDefaults.morningAlarmSchedules = schedules
+
+        #expect(MorningAlarmScheduler.reminderFallbackSchedulingInput(wakeGoalMinutes: 360) == .schedules(
+            schedules.applyingWakeGoalMinutes(360)
+        ))
+    }
+
+    @Test("enabling reminder fallback updates persisted enabled schedules before reconciling")
+    func enableReminderFallbackUpdatesPersistedScheduleTimes() async {
+        let enabled = schedule(minutesAfterMidnight: 390, weekdays: [2, 4])
+        let disabled = schedule(minutesAfterMidnight: 510, weekdays: [6], isEnabled: false)
+        let originalEnabled = LocalDefaults.morningAlarmEnabled
+        let originalBackend = LocalDefaults.morningAlarmBackend
+        let originalSchedules = LocalDefaults.morningAlarmSchedules
+        defer {
+            LocalDefaults.morningAlarmEnabled = originalEnabled
+            LocalDefaults.morningAlarmBackend = originalBackend
+            LocalDefaults.morningAlarmSchedules = originalSchedules
+        }
+        LocalDefaults.morningAlarmEnabled = true
+        LocalDefaults.morningAlarmSchedules = [enabled, disabled]
+
+        _ = await MorningAlarmScheduler.enableReminderFallback(wakeGoalMinutes: 435)
+
+        #expect(LocalDefaults.morningAlarmSchedules == [
+            schedule(id: enabled.id, minutesAfterMidnight: 435, weekdays: [2, 4]),
+            disabled
+        ])
+
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: enabled.weekdays.map {
+            MorningAlarmScheduler.reminderIdentifier(scheduleID: enabled.id, weekday: $0)
+        })
+        await MorningFollowUpScheduler.cancelAll()
+    }
+
+    @Test("applying a new wake time leaves disabled schedules unchanged")
+    func applyingWakeGoalMinutesLeavesDisabledSchedulesUnchanged() {
+        let enabled = schedule(minutesAfterMidnight: 390)
+        let disabled = schedule(minutesAfterMidnight: 510, isEnabled: false)
+
+        #expect([enabled, disabled].applyingWakeGoalMinutes(435) == [
+            schedule(id: enabled.id, minutesAfterMidnight: 435),
+            disabled
+        ])
+    }
+
+    @Test("the migrated every-day schedule selects the schedule-aware fallback without changing its follow-up window")
+    @MainActor
+    func migratedEveryDaySchedulePreservesLegacyFallbackBehavior() {
+        let originalEnabled = LocalDefaults.morningAlarmEnabled
+        let originalMinutes = LocalDefaults.wakeGoalMinutes
+        let originalSchedules = LocalDefaults.morningAlarmSchedules
+        let originalVersion = LocalDefaults.morningAlarmScheduleModelVersion
+        defer {
+            LocalDefaults.morningAlarmEnabled = originalEnabled
+            LocalDefaults.wakeGoalMinutes = originalMinutes
+            LocalDefaults.morningAlarmSchedules = originalSchedules
+            LocalDefaults.morningAlarmScheduleModelVersion = originalVersion
+        }
+
+        LocalDefaults.morningAlarmEnabled = true
+        LocalDefaults.wakeGoalMinutes = 390
+        LocalDefaults.morningAlarmSchedules = []
+        LocalDefaults.morningAlarmScheduleModelVersion = 0
+        MorningAlarmScheduler.migrateScheduleModelIfNeeded()
+
+        let expected = MorningAlarmSchedule.migrate(morningAlarmEnabled: true, wakeGoalMinutes: 390)
+        #expect(MorningAlarmScheduler.reminderFallbackSchedulingInput(wakeGoalMinutes: 390) == .schedules(expected))
+
+        // Tuple arrays aren't Equatable, so compare the fields that actually
+        // determine a follow-up's identity and fire time.
+        func fingerprint(_ planned: [(wakeDay: LocalDate, deliveryDay: LocalDate, fireComponents: DateComponents)]) -> [String] {
+            planned.map { "\($0.wakeDay.docID)|\($0.deliveryDay.docID)|\($0.fireComponents.hour ?? -1):\($0.fireComponents.minute ?? -1)" }
+        }
+        let scheduleAware = MorningFollowUpScheduler.plannedFollowUps(
+            wakeGoalMinutes: 390,
+            schedules: expected,
+            startingFrom: LocalDate(year: 2026, month: 8, day: 2),
+            dayCount: 3
+        )
+        let legacy = MorningFollowUpScheduler.plannedFollowUps(
+            wakeGoalMinutes: 390,
+            startingFrom: LocalDate(year: 2026, month: 8, day: 2),
+            dayCount: 3
+        )
+        #expect(fingerprint(scheduleAware) == fingerprint(legacy))
+    }
+
     @Test("no enabled schedules cancel every legacy or multi-schedule request")
     func noSchedulesCancelsEverything() {
         let pending = [
@@ -44,7 +141,7 @@ struct MorningAlarmSchedulerTests {
         let entry = schedule()
         let pending = entry.weekdays.map {
             self.pending(MorningAlarmScheduler.reminderIdentifier(scheduleID: entry.id, weekday: $0))
-        })
+        }
 
         let plan = morningReminderReconcilePlan(schedules: [entry], currentPendingOccurrences: pending)
 

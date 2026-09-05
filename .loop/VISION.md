@@ -691,6 +691,45 @@ a separate session.
       nothing to deploy). **Still open for step 3**: wiring `scheduleReminders`/the
       schedule-aware follow-up refresh into real call sites (`enable`/`enableReminderFallback`/
       `resyncIfNeeded`), and the equivalent AlarmKit-side multi-schedule reconcile (currently
+      **5C step 3, second slice (call-site wiring, done and committed 2026-09-05, Codex + main-loop
+      verify).** `enableReminderFallback`/`resyncIfNeeded`'s reminder-backend branch now call
+      `scheduleReminders(schedules:)` + the schedule-aware `MorningFollowUpScheduler.refreshWindow`
+      overload whenever `LocalDefaults.morningAlarmSchedules` is non-empty (post-migration), via a
+      new `reminderFallbackSchedulingInput(wakeGoalMinutes:)` selector; an empty store (only
+      possible pre-migration) keeps the exact legacy single-value path. AlarmKit's own path
+      (`enable`'s `#available(iOS 26.0, *)` branch, `scheduleAlarmKit`) deliberately untouched —
+      still single-alarm-only, tracked separately. **Two real bugs caught before commit by the
+      main loop's own verification, not Codex's self-report:**
+      (1) **A test-registration bug pre-dating this slice**: `MorningAlarmSchedulerTests.swift`
+      (added in the *first* 5C-step-3 slice, `19fab1f`) was never added to
+      `SkyGrid.xcodeproj/project.pbxproj` — its whole suite, including the CRITICAL-catching
+      reconcile-plan tests from the first slice, had been silently skipped by every `xcodebuild
+      test` run since, so the previously reported "234/234 green" never actually included it.
+      Caught by noticing the suite name never appeared in the real xcodebuild log; fixed by
+      re-running `xcodegen generate` from `ios/project.yml` (this project generates its pbxproj,
+      confirmed via `find`), which picked the file up — diff limited to the expected 4-line
+      build-file/target-membership addition. (2) **swift-reviewer (sonnet) caught a genuine
+      CRITICAL in Codex's call-site wiring**: `scheduleReminderFallback`'s schedule-set branch
+      scheduled every enabled schedule at its own *persisted* `minutesAfterMidnight`, ignoring the
+      `wakeGoalMinutes` parameter just passed in from the caller — since `morningAlarmSchedules` is
+      only ever written once by the one-shot migration, every already-migrated user's changed wake
+      time in Settings was silently dropped (the reminder kept firing at the stale migrated time
+      while the follow-up nudge correctly used the new one, permanently desyncing the two). Fixed
+      via a new `Array<MorningAlarmSchedule>.applyingWakeGoalMinutes(_:)` (enabled schedules only,
+      disabled ones keep their stored time) called before scheduling, persisting the update back to
+      `LocalDefaults.morningAlarmSchedules`. Also fixed the accompanying HIGH (new tests only
+      exercised the pure selector, not the actual regression) with a real
+      `enableReminderFallback(wakeGoalMinutes:)` call against a pre-populated, differently-timed
+      schedule set, asserting the persisted schedules end up at the new time; and both MEDIUM nits
+      (`MorningReminderFallbackSchedulingInput` now `Sendable`; the `0...23:59` minute clamp
+      deduped into one `normalizeWakeGoalMinutes` helper used in all 3 call sites). A missing
+      `import UserNotifications` in the new test (caught by the main loop's own build, not
+      Codex's) was the only remaining compile error. **Test results, main loop's own run, not
+      Codex's claim** (Codex's sandbox could not reach CoreSimulator either pass): 245/245 green
+      (`xcodebuild test -only-testing:SkyGridTests`), up from 234 once the pbxproj fix alone made
+      the skipped suite's original tests run for the first time, then +11 for this slice's new
+      tests. Not deployed (client-only). **Still open**: the equivalent AlarmKit-side multi-schedule
+      reconcile (currently
       still single-alarm-only) — deferred as a separate slice per this loop's smallest-step
       discipline, same reasoning as every earlier 5C step.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —

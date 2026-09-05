@@ -1,6 +1,25 @@
 import Foundation
 import UserNotifications
 
+enum MorningReminderFallbackSchedulingInput: Equatable, Sendable {
+    case legacy(Int)
+    case schedules([MorningAlarmSchedule])
+}
+
+extension Array where Element == MorningAlarmSchedule {
+    /// Until schedule editing is exposed, the single wake-time setting remains
+    /// authoritative. Disabled schedules retain their stored time so re-enabling
+    /// one later does not change it as a side effect of another schedule update.
+    func applyingWakeGoalMinutes(_ minutes: Int) -> [MorningAlarmSchedule] {
+        map { schedule in
+            guard schedule.isEnabled else { return schedule }
+            var updated = schedule
+            updated.minutesAfterMidnight = minutes
+            return updated
+        }
+    }
+}
+
 #if canImport(AlarmKit)
 import AlarmKit
 import AppIntents
@@ -172,7 +191,7 @@ enum MorningAlarmScheduler {
     /// Requests only the authorization relevant to the current OS and schedules
     /// one all-days wake alarm at the supplied local wall-clock time.
     static func enable(wakeGoalMinutes: Int) async -> MorningAlarmState {
-        let normalizedMinutes = min(max(wakeGoalMinutes, 0), 23 * 60 + 59)
+        let normalizedMinutes = normalizeWakeGoalMinutes(wakeGoalMinutes)
         let state: MorningAlarmState
         if #available(iOS 26.0, *) {
             LocalDefaults.morningAlarmBackend = "automatic"
@@ -189,10 +208,8 @@ enum MorningAlarmScheduler {
     /// substitute for a system alarm.
     static func enableReminderFallback(wakeGoalMinutes: Int) async -> MorningAlarmState {
         LocalDefaults.morningAlarmBackend = "reminder"
-        let normalizedMinutes = min(max(wakeGoalMinutes, 0), 23 * 60 + 59)
-        let state = await scheduleReminder(minutes: normalizedMinutes)
-        await refreshMorningRitualFollowUps(minutes: normalizedMinutes)
-        return state
+        let normalizedMinutes = normalizeWakeGoalMinutes(wakeGoalMinutes)
+        return await scheduleReminderFallback(wakeGoalMinutes: normalizedMinutes)
     }
 
     static func disable() async {
@@ -234,6 +251,42 @@ enum MorningAlarmScheduler {
         await MorningFollowUpScheduler.refreshWindow(wakeGoalMinutes: minutes, today: today)
     }
 
+    private static func refreshMorningRitualFollowUps(
+        minutes: Int,
+        schedules: [MorningAlarmSchedule]
+    ) async {
+        let today = LocalDate(date: Date(), timeZone: .current)
+        await MorningFollowUpScheduler.refreshWindow(
+            wakeGoalMinutes: minutes,
+            schedules: schedules,
+            today: today
+        )
+    }
+
+    /// Uses schedule-set reconciliation once migration has persisted schedules.
+    /// An empty store keeps the direct pre-migration caller behavior unchanged.
+    static func reminderFallbackSchedulingInput(wakeGoalMinutes: Int) -> MorningReminderFallbackSchedulingInput {
+        let schedules = LocalDefaults.morningAlarmSchedules
+        guard !schedules.isEmpty else { return .legacy(wakeGoalMinutes) }
+
+        let updatedSchedules = schedules.applyingWakeGoalMinutes(wakeGoalMinutes)
+        LocalDefaults.morningAlarmSchedules = updatedSchedules
+        return .schedules(updatedSchedules)
+    }
+
+    private static func scheduleReminderFallback(wakeGoalMinutes: Int) async -> MorningAlarmState {
+        switch reminderFallbackSchedulingInput(wakeGoalMinutes: wakeGoalMinutes) {
+        case .legacy(let minutes):
+            let state = await scheduleReminder(minutes: minutes)
+            await refreshMorningRitualFollowUps(minutes: minutes)
+            return state
+        case .schedules(let schedules):
+            let state = await scheduleReminders(schedules: schedules)
+            await refreshMorningRitualFollowUps(minutes: wakeGoalMinutes, schedules: schedules)
+            return state
+        }
+    }
+
     /// Re-issues `AlarmManager.shared.schedule(id:configuration:)` for the current
     /// wake time on every launch, while an alarm is enabled. AlarmKit persists a
     /// schedule's bound `secondaryIntent` at the moment `schedule` is called; a later
@@ -251,13 +304,18 @@ enum MorningAlarmScheduler {
         guard LocalDefaults.morningAlarmEnabled else { return }
         let minutes = LocalDefaults.wakeGoalMinutes
         if LocalDefaults.morningAlarmBackend == "reminder" {
-            _ = await enableReminderFallback(wakeGoalMinutes: minutes)
+            let normalizedMinutes = normalizeWakeGoalMinutes(minutes)
+            _ = await scheduleReminderFallback(wakeGoalMinutes: normalizedMinutes)
         } else {
             _ = await enable(wakeGoalMinutes: minutes)
         }
         // enable/enableReminderFallback already refresh the follow-up window as
         // part of scheduling, which is what keeps it rolling forward on every
         // cold launch.
+    }
+
+    private static func normalizeWakeGoalMinutes(_ minutes: Int) -> Int {
+        min(max(minutes, 0), 23 * 60 + 59)
     }
 
     /// Reconciles the pre-AlarmKit fallback as one weekly local notification per
