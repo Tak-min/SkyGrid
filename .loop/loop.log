@@ -282,3 +282,24 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 784:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 13:30:38] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 13:30:38] === iteration 4 / 40 ===
+## この反復での結果
+
+**やったこと**: SkyGridの5C（複数起床時刻アラーム）作業を1ステップ進めた。既存の`scheduleAlarmKit(schedules:)`（前回まで配線されていない死んだコード）を`enable(wakeGoalMinutes:)`と`resyncIfNeeded()`に接続した。Codexに実装を委譲し、diffを自分で読んで確認、swift-reviewerでレビュー。
+
+**見つかった問題と対応**:
+- HIGH: `alarmKitState()`が「いずれか1つのスケジュールIDが一致すれば`.scheduled`」と誤判定しうる（部分的な再調整失敗を隠す）バグ → 「有効な全スケジュールIDが揃っていること」を要求するよう修正
+- MEDIUM×2: リマインダー側とAlarmKit側のセレクタロジックが完全重複 → 共通ヘルパーに統合。`enable()`の新しい分岐にテストが無い → 実エントリポイントを呼ぶテストを追加
+
+**検証**: `xcodebuild test -only-testing:SkyGridTests`を自分で実行し、253/253件グリーンを確認（Codexの自己申告ではなく独立確認）。`.loop/verify.sh`はチェックリストに未完了項目が残っているため想定通りrc=1（false-greenではない）。
+
+**更新・コミット済み**: `.loop/VISION.md`のTODO記述を更新、`.loop/state.json`更新、`MorningAlarmScheduler.swift`/`MorningAlarmSchedulerTests.swift`/VISION.md/state.jsonをexplicit pathでコミット（`5d36672`）。デプロイなし、`git add -A`なし。
+
+**残っている作業**（5Cの続き）: 再アラームループ（§2.5）とUI/コピー（§2.6）、その後6C、3Bのクライアント表示。他にBuddies/Onboardingの2項目はいずれもproduct-owner判断待ちまたは未計測ベットとして意図的に保留中。
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+809:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 13:46:32] VERIFY failing (rc=1). Identical-failure streak: 1/3.
