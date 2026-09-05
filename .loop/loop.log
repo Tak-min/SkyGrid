@@ -473,3 +473,18 @@ VISION.md still has 3 unchecked TODO item(s):
 970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
 1154:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 20:13:28] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 20:13:28] === iteration 4 / 40 ===
+Committed. Iteration summary for the loop driver:
+
+**This iteration**: Fixed the last open sub-item of the "Critical design audit" TODO — the share-year card's Jan→Dec guide-dot contrast (`SGExport.guide` #39485B → #60748C in `ExportTheme.swift`), which was failing WCAG's 3:1 non-text contrast minimum (~1.9–2.2:1) against the card's dark gradient background.
+
+- Implemented via Codex (per repo routing policy); read the diff myself — only the intended token and its doc comment changed.
+- Independent `swift-reviewer` pass: no CRITICAL/HIGH/MEDIUM/LOW findings; independently recomputed the WCAG math (new value clears 3:1 with margin).
+- Verified with a real iPhone 17 Simulator screenshot (`-SkyGridUIAudit -SkyGridUIAuditScenario share-year`), not just code — dots are now clearly legible.
+- All 5 critical-design-audit sub-items are now done; checked off the parent TODO item too.
+- `.loop/verify.sh` still exits 1 (expected) — 2 TODO items remain, both externally blocked (onboarding pace/frequency cut needs analytics data that hasn't accumulated; final full test/build/screenshot pass needs the Firebase App Check debug-token outage to clear).
+- Committed explicit paths only (`ExportTheme.swift`, `VISION.md`, `state.json`, the new screenshot) — no `git add -A`, no deploy, no push.
+VISION.md still has 2 unchecked TODO item(s):
+505:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+1179:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 20:18:05] VERIFY failing (rc=1). Identical-failure streak: 1/3.
