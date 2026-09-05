@@ -130,6 +130,16 @@ struct MorningAlarmSettingsView: View {
                             .foregroundStyle(SGT.ink)
                             .frame(minHeight: 44)
                     }
+
+                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
+                        Text("Stop doesn't end your morning.")
+                            .font(SGFont.body(14))
+                            .fontWeight(.bold)
+                            .foregroundStyle(SGT.ink2)
+                        Text("If you don't capture the sky, Sky Grid brings the alarm back every 5 minutes, up to 3 times. iPhone always silences the alarm the moment you tap Stop — Sky Grid can only ask again, not keep it sounding.")
+                            .font(SGFont.caption())
+                            .foregroundStyle(SGT.ink3)
+                    }
                 }
             }
         case .needsAuthorization:

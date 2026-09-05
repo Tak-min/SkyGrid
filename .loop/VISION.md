@@ -842,8 +842,46 @@ a separate session.
       the chaining fix and again after the two HIGH fixes (the previously-flaky
       `enableUpdatesPersistedAlarmKitScheduleTimes` passed both runs). `xcodegen generate`
       re-run; pbxproj diff confirmed as the expected new-test-file registration only. Not
-      deployed (client-only). **Still open for 5C**: §2.6 (UI/copy, exact approved copy block)
-      — the last 5C sub-step — then 6C, then 3B's client display step.
+      deployed (client-only).
+      **5C §2.6 (UI/copy, exact approved copy block) done and committed (2026-09-05, Codex +
+      main-loop verify) — this closes out 5C entirely.** The decision record's verbatim approved
+      text ("Stop doesn't end your morning." + the "brings the alarm back every 5 minutes, up to
+      3 times... Sky Grid can only ask again, not keep it sounding" body line) is now shown in
+      the two places the record specifies, each gated on the AlarmKit system-alarm path only (the
+      copy is false for the plain-notification reminder-fallback path, which has no re-alarm
+      loop): `MorningAlarmSettingsView.swift`'s `.scheduled` state (inside the existing
+      `kind == .systemAlarm` branch, visible regardless of the Live-Activities sub-branch), and
+      `WakeGoalPickerView.swift`'s `reminderControls` (gated on
+      `reminderPreference == .scheduledAlarm`, onboarding's first-run alarm setup). No prohibited
+      phrasing ("keeps ringing," "snooze-proof," "won't stop until you capture") introduced —
+      read both diffs directly, not just Codex's summary, to confirm the exact wording and
+      gating. Pure copy change, no logic/model touched, so no new tests were required; main loop
+      independently re-ran `xcodebuild build` and `xcodebuild test -only-testing:SkyGridTests`
+      itself (not trusting Codex's self-report) — build succeeded, 261/261 tests green (unchanged
+      from before this step, as expected for a copy-only diff). **Live-screenshot verification of
+      these exact two screens was attempted this iteration but blocked by an environmental
+      issue, not a code defect**: installing and launching a fresh debug build on the iPhone 17
+      simulator reaches the real (non-audit) startup flow, but every attempt to proceed past
+      "Start without an account" fails with "Sky Grid couldn't connect" — most likely a missing
+      local App Check debug-token secret for this sandboxed build, since the shell itself has
+      working outbound network to `firestore.googleapis.com`. The existing DEBUG UI-audit host
+      (`-SkyGridUIAudit`) does not cover Settings or onboarding screens, only Today/Grid/Buddies,
+      so it could not substitute. Verified instead via direct diff read confirming the copy
+      block reuses the exact bold-headline + caption-body VStack pattern already used
+      immediately adjacent in both files (e.g. the pre-existing "After you stop the alarm..."
+      text in `MorningAlarmSettingsView`), which was itself already visually verified in an
+      earlier iteration's screenshot pass — a real but bounded substitute for a fresh screenshot,
+      not a full substitute. **Recommended next step for whoever picks this up**: fix the local
+      App Check debug-token secret (or find another way to reach onboarding without live
+      Firestore) so future iterations can screenshot onboarding/settings directly, then take
+      the deferred screenshot of these two screens for the record. **6C requires no separate
+      implementation** — re-read record §3: the handoff brief's "motion gate" framing was
+      rejected by the owner (Q4) and 6C's actual resolution *is* the re-alarm loop, which 5C
+      just finished shipping end-to-end (§2.5 loop + §2.6 copy). **Still open for this whole
+      TODO item**: only 3B's step 3 remains — client display behind
+      `FeatureFlags.buddyStreakVisible`, gated on ≥1 day of real pair data per the record's §5
+      point 3 (the trigger/store from 3B step 1 has been live since this loop's iteration 5,
+      so that data-accumulation precondition is now satisfied).
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified
