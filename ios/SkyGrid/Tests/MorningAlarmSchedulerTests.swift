@@ -39,6 +39,83 @@ struct MorningAlarmSchedulerTests {
         MorningAlarmKitScheduledAlarm(id: id, hour: hour, minute: minute, weekdays: weekdays)
     }
 
+    private func instant(
+        hour: Int,
+        minute: Int,
+        on day: LocalDate,
+        timeZone: TimeZone
+    ) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar.date(from: DateComponents(
+            year: day.year,
+            month: day.month,
+            day: day.day,
+            hour: hour,
+            minute: minute
+        ))!
+    }
+
+    @Test("a persisted re-alarm count resets when a new wake day begins")
+    func realarmAttemptCountResetsForNewWakeDay() {
+        let originalAttemptCount = LocalDefaults.morningRealarmAttemptCount
+        let originalWakeDayID = LocalDefaults.morningRealarmWakeDayID
+        defer {
+            LocalDefaults.morningRealarmAttemptCount = originalAttemptCount
+            LocalDefaults.morningRealarmWakeDayID = originalWakeDayID
+        }
+        let wakeDay = LocalDate(year: 2026, month: 9, day: 5)
+        LocalDefaults.morningRealarmAttemptCount = 2
+        LocalDefaults.morningRealarmWakeDayID = "2026-09-04"
+
+        #expect(MorningAlarmScheduler.prepareRealarmAttemptCount(for: wakeDay) == 0)
+        #expect(LocalDefaults.morningRealarmAttemptCount == 0)
+        #expect(LocalDefaults.morningRealarmWakeDayID == "2026-09-04")
+    }
+
+    @Test("a re-alarm identifier namespaces its wake day and attempt")
+    func realarmIdentifierIncludesWakeDayAndAttempt() {
+        #expect(MorningAlarmScheduler.realarmIdentifier(
+            wakeDay: LocalDate(year: 2026, month: 9, day: 5),
+            attempt: 2
+        ) == "com.takmin.skygrid.morning-realarm.2026-09-05.2")
+    }
+
+    @Test("one stop plans all three re-alarms at five-minute intervals")
+    func realarmOccurrencesPlanThreeAttemptsUpFront() {
+        let timeZone = TimeZone(identifier: "Asia/Tokyo")!
+        let wakeDay = LocalDate(year: 2026, month: 9, day: 5)
+        let stopTime = instant(hour: 6, minute: 0, on: wakeDay, timeZone: timeZone)
+
+        #expect(morningRealarmOccurrences(
+            attemptCount: 0,
+            originalWakeDay: wakeDay,
+            now: stopTime,
+            timeZone: timeZone
+        ) == [
+            MorningRealarmOccurrence(attempt: 1, fireDate: instant(hour: 6, minute: 5, on: wakeDay, timeZone: timeZone)),
+            MorningRealarmOccurrence(attempt: 2, fireDate: instant(hour: 6, minute: 10, on: wakeDay, timeZone: timeZone)),
+            MorningRealarmOccurrence(attempt: 3, fireDate: instant(hour: 6, minute: 15, on: wakeDay, timeZone: timeZone))
+        ])
+    }
+
+    @Test("a midnight boundary truncates the up-front re-alarm plan")
+    func realarmOccurrencesStopAtLocalDateRollover() {
+        let timeZone = TimeZone(identifier: "Asia/Tokyo")!
+        let wakeDay = LocalDate(year: 2026, month: 9, day: 5)
+        let stopTime = instant(hour: 23, minute: 48, on: wakeDay, timeZone: timeZone)
+
+        #expect(morningRealarmOccurrences(
+            attemptCount: 0,
+            originalWakeDay: wakeDay,
+            now: stopTime,
+            timeZone: timeZone
+        ) == [
+            MorningRealarmOccurrence(attempt: 1, fireDate: instant(hour: 23, minute: 53, on: wakeDay, timeZone: timeZone)),
+            MorningRealarmOccurrence(attempt: 2, fireDate: instant(hour: 23, minute: 58, on: wakeDay, timeZone: timeZone))
+        ])
+    }
+
     @Test("a persisted schedule set selects the schedule-aware reminder fallback")
     func persistedSchedulesSelectScheduleAwareFallback() {
         let schedules = [

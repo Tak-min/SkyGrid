@@ -132,6 +132,41 @@ struct MorningAlarmKitReconcilePlan: Equatable, Sendable {
     let cancellations: Set<UUID>
 }
 
+/// A one-shot re-alarm occurrence derived by repeatedly applying the policy at
+/// its prior fire time. All occurrences are planned up front because delivery
+/// of a local notification cannot run the app to schedule a later occurrence.
+struct MorningRealarmOccurrence: Equatable, Sendable {
+    let attempt: Int
+    let fireDate: Date
+}
+
+func morningRealarmOccurrences(
+    attemptCount: Int,
+    originalWakeDay: LocalDate,
+    now: Date,
+    timeZone: TimeZone
+) -> [MorningRealarmOccurrence] {
+    var attemptCount = attemptCount
+    var decisionTime = now
+    var occurrences: [MorningRealarmOccurrence] = []
+
+    while true {
+        switch MorningRealarmPolicy.decide(
+            attemptCount: attemptCount,
+            originalWakeDay: originalWakeDay,
+            now: decisionTime,
+            timeZone: timeZone
+        ) {
+        case .schedule(let attempt, let fireDate):
+            occurrences.append(MorningRealarmOccurrence(attempt: attempt, fireDate: fireDate))
+            attemptCount = attempt
+            decisionTime = fireDate
+        case .stop:
+            return occurrences
+        }
+    }
+}
+
 /// Computes the desired AlarmKit schedule set from the caller's already-scoped
 /// multi-schedule AlarmKit alarms. Matching IDs are insufficient: an alarm whose
 /// wall-clock time or selected weekdays changed must be scheduled again.
@@ -220,6 +255,94 @@ enum MorningAlarmScheduler {
         "\(multiScheduleIdentifierPrefix)\(scheduleID.uuidString).\(weekday)"
     }
 
+    static func realarmIdentifier(wakeDay: LocalDate, attempt: Int) -> String {
+        "\(realarmIdentifierPrefix)\(wakeDay.docID).\(attempt)"
+    }
+
+    /// Establishes which persisted attempt count belongs to `wakeDay`. A count
+    /// from another day must never consume this morning's bounded retry budget.
+    @discardableResult
+    static func prepareRealarmAttemptCount(for wakeDay: LocalDate) -> Int {
+        guard LocalDefaults.morningRealarmWakeDayID == wakeDay.docID else {
+            LocalDefaults.morningRealarmAttemptCount = 0
+            return 0
+        }
+        return LocalDefaults.morningRealarmAttemptCount
+    }
+
+    /// Schedules every still-valid local-notification re-alarm after AlarmKit's
+    /// Stop action. They are all reserved now because a later local-notification
+    /// delivery cannot invoke app code to extend the loop.
+    /// This deliberately has no reminder-fallback caller: a local notification
+    /// is not equivalent to an AlarmKit alarm on earlier iOS versions.
+    @available(iOS 26.0, *)
+    static func scheduleNextRealarmIfNeeded(
+        originalWakeDay: LocalDate,
+        now: Date,
+        timeZone: TimeZone
+    ) async {
+        let attemptCount = prepareRealarmAttemptCount(for: originalWakeDay)
+        let occurrences = morningRealarmOccurrences(
+            attemptCount: attemptCount,
+            originalWakeDay: originalWakeDay,
+            now: now,
+            timeZone: timeZone
+        )
+        guard !occurrences.isEmpty else { return }
+
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        let authorized = [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus)
+        guard authorized else { return }
+
+        var highestScheduledAttempt: Int?
+        for occurrence in occurrences {
+            let content = UNMutableNotificationContent()
+            content.title = "Still asleep?"
+            content.body = "Capture the sky to end this morning's ritual."
+            content.sound = .default
+            let interval = max(1, occurrence.fireDate.timeIntervalSince(now))
+            let request = UNNotificationRequest(
+                identifier: realarmIdentifier(wakeDay: originalWakeDay, attempt: occurrence.attempt),
+                content: content,
+                trigger: UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
+            )
+            do {
+                try await center.add(request)
+                highestScheduledAttempt = occurrence.attempt
+            } catch {
+                // A failed re-alarm remains a quiet handoff to the existing
+                // follow-up notification; do not block later valid attempts.
+            }
+        }
+        if let highestScheduledAttempt {
+            guard LocalDefaults.morningAlarmEnabled else {
+                // Disabling can race this background scheduling work. Remove
+                // any request added after disable began, and never restore its
+                // cleared retry state.
+                await cancelAllRealarmNotifications()
+                return
+            }
+            LocalDefaults.morningRealarmAttemptCount = highestScheduledAttempt
+            LocalDefaults.morningRealarmWakeDayID = originalWakeDay.docID
+        }
+    }
+
+    /// A completed capture applies to the whole wake-day loop, whose request
+    /// identifiers include a dynamic attempt number.
+    static func cancelAllRealarmNotifications() async {
+        let center = UNUserNotificationCenter.current()
+        let pendingIDs = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix(realarmIdentifierPrefix) }
+        center.removePendingNotificationRequests(withIdentifiers: pendingIDs)
+
+        let deliveredIDs = await center.deliveredNotifications()
+            .map(\.request.identifier)
+            .filter { $0.hasPrefix(realarmIdentifierPrefix) }
+        center.removeDeliveredNotifications(withIdentifiers: deliveredIDs)
+    }
+
     static var preferredKind: MorningAlarmKind {
         if #available(iOS 26.0, *), LocalDefaults.morningAlarmBackend != "reminder" { return .systemAlarm }
         return .reminder
@@ -274,7 +397,8 @@ enum MorningAlarmScheduler {
     }
 
     static func disable() async {
-        disableImmediately()
+        disableSynchronously()
+        await disableImmediately()
         await finishDisabling()
     }
 
@@ -284,19 +408,29 @@ enum MorningAlarmScheduler {
     /// never keep the person on a destructive-action spinner after the server
     /// has already confirmed deletion.
     static func disableForAccountDeletion() {
-        disableImmediately()
+        disableSynchronously()
         Task {
+            await disableImmediately()
             await finishDisabling()
         }
     }
 
-    private static func disableImmediately() {
+    /// State that callers depend on before any asynchronous cleanup begins.
+    private static func disableSynchronously() {
         if #available(iOS 26.0, *) {
             try? AlarmManager.shared.cancel(id: alarmIdentifier)
         }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
         LocalDefaults.morningAlarmEnabled = false
         LocalDefaults.morningAlarmBackend = "automatic"
+    }
+
+    /// Awaits dynamic re-alarm cleanup so account deletion cannot outlive its
+    /// pending notification cancellation.
+    private static func disableImmediately() async {
+        await cancelAllRealarmNotifications()
+        LocalDefaults.morningRealarmAttemptCount = 0
+        LocalDefaults.morningRealarmWakeDayID = nil
     }
 
     private static func finishDisabling() async {
@@ -847,14 +981,22 @@ struct MorningAlarmStoppedIntent: LiveActivityIntent {
     // must NOT bring the app forward — the person chose not to open it.
 
     func perform() async throws -> some IntentResult {
-        let today = LocalDate(date: Date(), timeZone: .current)
+        let now = Date()
+        let today = LocalDate(date: now, timeZone: .current)
         let hasPostToday = LocalDefaults.lastCapturedLocalDateID == today.docID
         await MorningRitualCoordinator.reconcile(
             today: today,
             hasPostToday: hasPostToday,
-            now: Date(),
+            now: now,
             timeZone: .current
         )
+        if !hasPostToday {
+            await MorningAlarmScheduler.scheduleNextRealarmIfNeeded(
+                originalWakeDay: today,
+                now: now,
+                timeZone: .current
+            )
+        }
         return .result()
     }
 }

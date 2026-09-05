@@ -806,10 +806,44 @@ a separate session.
       LOW forward-looking notes for the wiring step (reset the counter/day at first stop; add a
       test for the fire-date-lands-exactly-on-midnight edge case) logged, not blocking. Main loop
       independently ran the real suite (not just Codex's report): 256/256 green (`xcodebuild test
-      -only-testing:SkyGridTests`, up from 253). Not deployed (client-only). **Still open for 5C**:
-      wire the re-alarm loop into `MorningAlarmStoppedIntent`/`captureCompleted` (actual scheduling
-      + cancellation + counter reset), then §2.6 (UI/copy, exact approved copy block) — in that
-      order, then 6C, then 3B's client display step.
+      -only-testing:SkyGridTests`, up from 253). Not deployed (client-only).
+      **5C §2.5 wiring (final slice, done and committed 2026-09-05, Codex + main-loop verify +
+      one correction round).** `scheduleNextRealarmIfNeeded(originalWakeDay:now:timeZone:)`
+      wired into `MorningAlarmStoppedIntent.perform()` (fires only when no photo captured yet
+      today); `MorningRitualCoordinator.captureCompleted(localDate:)` cancels every pending +
+      delivered re-alarm notification and resets both persisted counters;
+      `disableImmediately()`/`disableForAccountDeletion()` also clear dangling re-alarm
+      reservations when the whole feature is disabled. **A real design bug was caught by the
+      main loop itself, not by Codex or the reviewer, before the first commit**: Codex's first
+      pass chained re-alarms one-at-a-time off repeated `MorningAlarmStoppedIntent.perform()`
+      calls — but that intent only fires once per original AlarmKit Stop tap, and a plain
+      `UNNotificationRequest` firing later cannot invoke app code to schedule the *next* attempt
+      (no silent-wake path for local notifications), so at most one re-alarm would ever have
+      fired in practice, never the spec'd three. Fixed by having one `MorningAlarmStoppedIntent`
+      call plan and schedule all three still-valid `+5/+10/+15`-minute occurrences up front (new
+      pure `morningRealarmOccurrences`, which replays `MorningRealarmPolicy.decide` feeding each
+      computed fire date back in as the next `now` — reproduces the exact same sequence the
+      spec describes without inventing new policy logic), truncating naturally at a local-date
+      rollover. `swift-reviewer` (sonnet) then caught **two real HIGH findings** in the same
+      diff, both fixed same iteration: (1) `disableImmediately()`'s new re-alarm cleanup used a
+      callback-based `getPendingNotificationRequests` from a synchronous function that returned
+      before the callback ran — on the account-deletion path specifically, a still-in-flight
+      `scheduleNextRealarmIfNeeded` call's notifications could survive past teardown; fixed by
+      splitting into a synchronous `disableSynchronously()` (flag flips, AlarmKit cancel, legacy
+      notification cancel — unchanged ordering) and an `async` `disableImmediately()` that both
+      callers now properly `await`. (2) An ordering race where `scheduleNextRealarmIfNeeded`'s
+      own end-of-loop counter persistence could overwrite a concurrent disable's just-cleared
+      state with stale non-zero values; fixed by re-checking `LocalDefaults.morningAlarmEnabled`
+      immediately before that persistence and cancelling+bailing instead of writing stale state
+      if a disable raced in. New/extended tests cover the up-front 3-occurrence plan, rollover
+      truncation, and capture-completed's counter reset. Independently re-verified by the main
+      loop twice (not Codex's own claims, which never got a clean CoreSimulator run after either
+      fix round): `xcodebuild test -only-testing:SkyGridTests` — 261/261 green, both right after
+      the chaining fix and again after the two HIGH fixes (the previously-flaky
+      `enableUpdatesPersistedAlarmKitScheduleTimes` passed both runs). `xcodegen generate`
+      re-run; pbxproj diff confirmed as the expected new-test-file registration only. Not
+      deployed (client-only). **Still open for 5C**: §2.6 (UI/copy, exact approved copy block)
+      — the last 5C sub-step — then 6C, then 3B's client display step.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified

@@ -1,13 +1,13 @@
 import Foundation
 
-/// The two entry points where the Live Activity and follow-up notification must
-/// move together — one façade so a future call site can't remember one and
+/// The two entry points where the Live Activity and morning-notification cleanup
+/// must move together — one façade so a future call site can't remember one and
 /// forget the other.
 @MainActor
 enum MorningRitualCoordinator {
     /// Call once a post is confirmed committed (Firestore + local outbox both
     /// written). Ends today's Live Activity and cancels today's follow-up in one
-    /// place.
+    /// place, including every one-shot re-alarm.
     static func captureCompleted(localDate: LocalDate) async {
         LocalDefaults.lastCapturedLocalDateID = localDate.docID
         // A capture wins over an alarm/notification tap that happened moments
@@ -16,6 +16,9 @@ enum MorningRitualCoordinator {
         LocalDefaults.openCameraAfterMorningAlarm = false
         await MorningRitualActivity.end(status: .captured)
         MorningFollowUpScheduler.cancel(for: localDate)
+        await MorningAlarmScheduler.cancelAllRealarmNotifications()
+        LocalDefaults.morningRealarmAttemptCount = 0
+        LocalDefaults.morningRealarmWakeDayID = nil
     }
 
     /// Call from every relevant foreground lifecycle hook (appear, scenePhase
