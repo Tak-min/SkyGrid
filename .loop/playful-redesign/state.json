@@ -1,9 +1,9 @@
 {
-  "iteration": 2,
+  "iteration": 3,
   "max_iterations": 20,
   "no_progress_limit": 3,
   "same_failure_count": 0,
-  "last_action": "Added the code-native Moku mascot with six causal states, success-only captured-sky palette adoption, a deterministic debug gallery, and a UI-audit route",
-  "last_verify": "green: full SkyGridTests passed including 3 Moku tests; Debug simulator build and iPhone 17 Moku screenshot passed; git diff --check passed",
+  "last_action": "Resumed Codex's interrupted camera-composition rebuild: registered CameraStage.swift/CameraStageLayoutTests.swift in project.pbxproj (they existed on disk but were not build-target members, so the app failed to build), removed a stray orphaned comment, wired the CameraStage component into the live/review camera and both UI-audit fixtures.",
+  "last_verify": "green: xcodebuild build succeeded; xcodebuild test passed all 272 SkyGridTests (269 pre-existing + 3 new CameraStageLayoutTests); real iPhone 17 Simulator screenshot of the camera-live UI-audit scenario confirms the inset-viewfinder composition.",
   "status": "active"
 }

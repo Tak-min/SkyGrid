@@ -93,7 +93,7 @@ The loop succeeds only when all are objectively true:
 
 - [x] Iteration 1: freeze the new design system and mascot/reward motion contract in `DESIGN.md`.
 - [x] Iteration 2: add the original mascot implementation and deterministic preview states.
-- [ ] Iteration 3: rebuild camera composition from the downloaded inset-viewfinder reference.
+- [x] Iteration 3: rebuild camera composition from the downloaded inset-viewfinder reference.
 - [ ] Iteration 4: implement the bounded daily reward state machine, confetti, haptic, and analytics.
 - [ ] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
 - [ ] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
@@ -114,3 +114,25 @@ The loop succeeds only when all are objectively true:
   UI-audit route. Verified on 2026-09-05 with all `SkyGridTests` passing, including the three
   `MokuViewTests`, a successful Debug simulator build, `git diff --check`, and an iPhone 17
   simulator screenshot of all six rendered states.
+- Iteration 3: this iteration was left uncommitted by the prior Codex session when it hit its
+  usage-limit wall (`CameraStage.swift`, the `CameraStageLayoutTests.swift` file, and a
+  `CameraView.swift`/`ShutterButton.swift`/`SkyGridApp.swift` rework existed on disk but the new
+  files were **not registered in `project.pbxproj`**, so the app did not build:
+  `xcodebuild build` failed with "cannot find 'CameraStage' in scope"). Resumed by Claude:
+  added the missing `PBXFileReference`/`PBXBuildFile` entries and group/Sources-phase membership
+  for both new files (mirroring the existing `MokuView.swift`/`MokuViewTests.swift` pattern),
+  removed one stray orphaned rationale comment left mid-file, and independently re-verified
+  rather than trusting the prior session's uncommitted state. `CameraStage` extracts the shared
+  black-stage/inset-viewfinder/centered-shutter geometry (`CameraStageLayout`, capped at 430pt
+  wide, 54% of safe height) used by the live viewfinder, the review screen, and both UI-audit
+  fixtures (`camera-live`, `camera-review`), replacing the old full-screen edge-to-edge preview.
+  Verified: `xcodebuild build` succeeds, `xcodebuild test` passes all 272 `SkyGridTests`
+  (269 pre-existing + 3 new `CameraStageLayoutTests`), and a real iPhone 17 Simulator screenshot
+  of the `camera-live` UI-audit scenario
+  (`screenshots/ui-audit-camera-live-inset-viewfinder-after.png`) confirms the black stage, inset
+  rounded viewfinder, and centered shutter with Moku/live-swatch flanking it, matching the
+  reference geometry (not its Locket branding). Reduce Motion is respected on both the shutter
+  and review-choice press animations (`accessibilityReduceMotion` gates `SGMotion.press` /
+  `.easeOut`). Note for later iterations: Moku at 64pt in the capture controls reads as a
+  minimal pixel-grid mark, not yet a legible "creature" — acceptable for this composition step,
+  but worth a second look once the reward-sequence work (Iteration 4) puts Moku in motion.

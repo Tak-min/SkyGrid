@@ -1,7 +1,7 @@
 import AVFoundation
 import SwiftUI
 
-/// Full-screen live viewfinder, one shutter button, and — after capture — exactly
+/// Inset live viewfinder, one shutter button, and — after capture — exactly
 /// two choices ("retake" / "use this"). No gallery picker, no filters, nothing else.
 /// Goal: wake-to-posted in ~5 seconds (VISION.md §6).
 struct CameraView: View {
@@ -30,7 +30,7 @@ struct CameraView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            CameraStageColor.background.ignoresSafeArea()
             content
                 .skyAnimation(SGMotion.exchange, value: viewModel.phase)
         }
@@ -65,95 +65,86 @@ struct CameraView: View {
     }
 
     private var liveViewfinder: some View {
-        ZStack {
-            CameraPreviewView(session: liveSession)
-                .ignoresSafeArea()
-
-            LinearGradient(colors: [.black.opacity(0.44), .clear, .black.opacity(0.55)], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
-
-            VStack {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("SKY GRID")
-                            .font(SGFont.caption(12))
-                            .tracking(1.8)
-                        Text("THIS MORNING")
-                            .font(SGFont.caption(12))
-                            .foregroundStyle(.white.opacity(0.72))
-                    }
-                    .foregroundStyle(.white)
-                    Spacer()
-                    Circle()
-                        .fill((viewModel.liveSkyColor?.color ?? Color.white).opacity(0.88))
-                        .frame(width: 18, height: 18)
-                        .overlay(Circle().strokeBorder(.white.opacity(0.7), lineWidth: 1))
-                        .skyAnimation(SGMotion.exchange, value: viewModel.liveSkyColor?.hex)
-                        .accessibilityLabel("Current sky color")
-                    closeButton
+        CameraStage {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("SKY GRID")
+                        .font(SGFont.caption(12))
+                        .tracking(1.8)
+                    Text("THIS MORNING")
+                        .font(SGFont.caption(11))
+                        .foregroundStyle(.white.opacity(0.62))
                 }
-                .padding(.horizontal, SGSpacing.xl)
-                .padding(.top, 14)
+                .foregroundStyle(.white)
                 Spacer()
-                VStack(spacing: SGSpacing.md) {
-                    Text("ONE SKY")
-                        .font(SGFont.caption(13))
-                        .foregroundStyle(.white.opacity(0.82))
-                    ShutterButton(liveColor: viewModel.liveSkyColor, isWorking: isCapturing) {
-                        guard !isCapturing else { return }
-                        isCapturing = true
-                        Task {
-                            await viewModel.capture()
-                            isCapturing = false
-                        }
-                    }
-                }
-                .padding(.bottom, 42)
+                closeButton
             }
+        } viewfinder: {
+            CameraPreviewView(session: liveSession)
+                .overlay {
+                    LinearGradient(
+                        colors: [.black.opacity(0.12), .clear, .black.opacity(0.2)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+        } controls: {
+            CameraCaptureControls(
+                liveColor: viewModel.liveSkyColor,
+                isCapturing: isCapturing,
+                onCapture: capture
+            )
+        }
+    }
+
+    private func capture() {
+        guard !isCapturing else { return }
+        isCapturing = true
+        Task {
+            await viewModel.capture()
+            isCapturing = false
         }
     }
 
     private func reviewScreen(image: UIImage) -> some View {
-        ZStack(alignment: .bottom) {
+        CameraStage {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("SKY GRID")
+                        .font(SGFont.caption(12))
+                        .tracking(1.8)
+                    Text("CAPTURED")
+                        .font(SGFont.caption(11))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
+                .foregroundStyle(.white)
+                Spacer()
+                closeButton
+            }
+        } viewfinder: {
             Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
-
-            LinearGradient(colors: [.clear, .black.opacity(0.78)], startPoint: .center, endPoint: .bottom)
-                .ignoresSafeArea()
-
-            VStack(spacing: SGSpacing.md) {
+        } controls: {
+            VStack(spacing: SGSpacing.sm) {
                 Text("KEEP THIS SKY")
-                    .font(SGFont.caption(13))
-                    .foregroundStyle(.white.opacity(0.82))
+                    .font(SGFont.caption(12))
+                    .tracking(1.4)
+                    .foregroundStyle(.white.opacity(0.72))
 
                 CameraReviewActions(
                     isConfirming: isConfirming,
                     onRetake: viewModel.retake,
                     onUse: { confirm(image: image) }
                 )
-            }
-            .padding(.horizontal, SGSpacing.xl)
-            .padding(.bottom, confirmationError == nil ? 42 : 72)
 
-            if let confirmationError {
-                Text(confirmationError)
-                    .font(SGFont.caption())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 28)
-            }
-
-            VStack {
-                HStack {
-                    Spacer()
-                    closeButton
+                if let confirmationError {
+                    Text(confirmationError)
+                        .font(SGFont.caption())
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
                 }
-                Spacer()
             }
-            .padding(.horizontal, SGSpacing.lg)
-            .padding(.top, SGSpacing.sm)
         }
     }
 
@@ -375,14 +366,18 @@ struct CameraReviewActions: View {
 /// hardware or writing an image to Firebase.
 struct CameraReviewAuditView: View {
     var body: some View {
-        ZStack(alignment: .bottom) {
+        CameraStage {
+            CameraAuditHeader()
+        } viewfinder: {
             LinearGradient(
-                colors: [Color(red: 0.34, green: 0.56, blue: 0.72), Color(red: 0.06, green: 0.10, blue: 0.16)],
+                colors: [
+                    Color(red: 0.34, green: 0.56, blue: 0.72),
+                    Color(red: 0.76, green: 0.65, blue: 0.56),
+                ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea()
-
+        } controls: {
             VStack(spacing: SGSpacing.md) {
                 Text("KEEP THIS SKY")
                     .font(SGFont.caption(13))
@@ -393,8 +388,64 @@ struct CameraReviewAuditView: View {
                     onUse: {}
                 )
             }
-            .padding(.horizontal, SGSpacing.xl)
-            .padding(.bottom, 42)
+        }
+    }
+}
+
+/// Simulator-only fixture for the approved live composition. It renders the real
+/// stage, Moku, swatch, and shutter around a clearly synthetic sky field without
+/// constructing camera hardware.
+struct CameraLiveAuditView: View {
+    private let fixtureColor = SkyColor(uncheckedHex: "#72BCE4")
+
+    var body: some View {
+        CameraStage {
+            CameraAuditHeader()
+        } viewfinder: {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.24, green: 0.58, blue: 0.83),
+                        Color(red: 0.91, green: 0.67, blue: 0.5),
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Circle()
+                    .fill(.white.opacity(0.6))
+                    .frame(width: 86, height: 86)
+                    .blur(radius: 12)
+                    .offset(x: 92, y: -96)
+            }
+        } controls: {
+            CameraCaptureControls(
+                liveColor: fixtureColor,
+                isCapturing: false,
+                onCapture: {}
+            )
+        }
+    }
+}
+
+private struct CameraAuditHeader: View {
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("SKY GRID")
+                    .font(SGFont.caption(12))
+                    .tracking(1.8)
+                Text("THIS MORNING")
+                    .font(SGFont.caption(11))
+                    .foregroundStyle(.white.opacity(0.62))
+            }
+            .foregroundStyle(.white)
+            Spacer()
+            Image(systemName: "xmark")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(.white.opacity(0.1), in: Circle())
+                .accessibilityLabel("Close camera")
         }
     }
 }
@@ -424,6 +475,7 @@ struct CameraFailureAuditView: View {
 
 private struct CameraChoiceButtonStyle: ButtonStyle {
     let emphasized: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -440,6 +492,6 @@ private struct CameraChoiceButtonStyle: ButtonStyle {
             }
             .opacity(configuration.isPressed ? 0.72 : 1)
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }

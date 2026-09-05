@@ -36,9 +36,11 @@ struct ShutterButton: View {
 }
 
 private struct ShutterButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .animation(SGMotion.press, value: configuration.isPressed)
+            .animation(reduceMotion ? nil : SGMotion.press, value: configuration.isPressed)
     }
 }

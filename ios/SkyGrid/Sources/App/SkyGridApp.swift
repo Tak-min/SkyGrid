@@ -53,6 +53,7 @@ private enum UIAuditScenario: String {
     case settings
     case settingsBlockedUnavailable = "settings-blocked-unavailable"
     case cameraReview = "camera-review"
+    case cameraLive = "camera-live"
     case cameraFailure = "camera-failure"
     case shareYear = "share-year"
     case shareMorning = "share-morning"
@@ -174,6 +175,8 @@ private struct UIAuditRoot: View {
                 inviteRepository: UIAuditInviteRepository(),
                 onDone: {}
             )
+        } else if scenario == .cameraLive {
+            CameraLiveAuditView()
         } else if scenario == .cameraReview {
             CameraReviewAuditView()
         } else if scenario == .cameraFailure {
@@ -244,7 +247,7 @@ private enum UIAuditTab: Hashable {
 
     init(scenario: UIAuditScenario) {
         switch scenario {
-        case .onboarding, .today, .todayUnavailable, .paywall, .paywallPlan, .settings, .settingsBlockedUnavailable, .cameraReview, .cameraFailure, .shareYear, .shareMorning, .liveActivity, .milestone, .milestoneDayOne, .moku: self = .today
+        case .onboarding, .today, .todayUnavailable, .paywall, .paywallPlan, .settings, .settingsBlockedUnavailable, .cameraLive, .cameraReview, .cameraFailure, .shareYear, .shareMorning, .liveActivity, .milestone, .milestoneDayOne, .moku: self = .today
         case .grid, .gridUnavailable: self = .grid
         case .buddies, .buddiesUnavailable, .buddiesProfileUnavailable, .buddiesNoHandle, .buddiesRequestFlow: self = .buddies
         }
