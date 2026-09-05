@@ -213,6 +213,7 @@ private struct UIAuditRoot: View {
                         contentSafetyRepository: UIAuditSafetyRepository(),
                         inviteRepository: UIAuditInviteRepository(),
                         revealSignal: RevealSignal(),
+                        imageFetching: UIAuditImageFetcher(),
                         clock: UIAuditData.fixedClock
                     )
                     .tag(UIAuditTab.buddies)

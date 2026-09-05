@@ -991,14 +991,57 @@ a separate session.
          266 Swift-Testing + 4 XCTest = 270 green (Codex's own claimed count, matched); Release
          `xcodebuild build -configuration Release -destination 'generic/platform=iOS'`
          succeeded, 0 errors. Not deployed (client-only, nothing to deploy).
-      2. **Buddies: unify the two simultaneous invite surfaces** (handle-request card and
-         invite-link-code card currently stacked with no divider or priority) into one clear
-         primary path with the other demoted/secondary, and give buddy rows a photo or
-         initials-avatar instead of a bare lock icon — the circle list currently has zero visual
-         differentiation between people. *Antislop: R-20 (no visual identity between rows),
-         R-05/RHYTHM (this screen is the clearest "uniform card-stack template" instance in the
-         app — see `DESIGN.md`'s identity-motif note: borrow the tile-grid language instead of
-         inventing a new avatar treatment).*
+      2. **DONE (2026-09-05, Codex + main-loop verify, one review-driven fix round): Buddies:
+         unify the two simultaneous invite surfaces, and give buddy rows a real per-person
+         avatar instead of a bare lock icon.**
+         `ios/SkyGrid/Sources/Friends/BuddiesView.swift` previously showed `InviteLinkCard` in
+         one branch and, independently, `AddBuddyView` (handle-request card) plus a *second*
+         `InviteLinkCard` in another branch whenever `hasHandle == true` — a brand-new user with
+         zero buddies saw two full-weight, equally-styled invite cards stacked with no divider or
+         priority. Fixed to exactly one always-visible `InviteLinkCard` (the primary path)
+         whenever `hasHandle == true`, with `AddBuddyView` demoted behind a collapsed
+         `DisclosureGroup("Know their exact handle?")`. `BuddyNameRow` (the accepted-buddy list
+         row) previously rendered only a bare SF Symbol (`lock.fill`/`checkmark.circle.fill`/
+         `clock`) with zero visual differentiation between people — replaced with a 42pt circle
+         avatar reusing `BuddyTile.swift`'s existing pattern (Today tab's buddy strip): the
+         buddy's real morning photo once `.posted` (async, cancellable, same `ThumbnailLoader`),
+         the server-verified `skyColor` fill while loading/on failure, ghost-fill + lock only
+         when `.sealed`. Per DESIGN.md's identity-motif note, this borrows the app's existing
+         tile-grid/sky-color language rather than inventing a new avatar treatment.
+         `imageFetching` threaded into `BuddiesView`'s init and both call sites
+         (`RootView.swift`, `SkyGridApp.swift`'s UI-audit host).
+         **swift-reviewer (sonnet) found 1 HIGH + 2 MEDIUM before this was accepted, all
+         addressed in a second Codex pass, independently re-verified by the main loop — not
+         just Codex's self-report:** HIGH — the first pass's lock overlay was gated on
+         `!isPosted`, covering both `.sealed` AND `.notYet`, which put a padlock next to the
+         adjacent "Not yet today" text and misrepresented a known fact (buddy hasn't captured
+         yet) as an unresolved privacy gate; fixed to gate on `case .sealed` only, matching
+         `BuddyTile`'s existing correct semantics exactly. MEDIUM — the new `DisclosureGroup`
+         could be manually collapsed by the user while a handle-request was sending or while
+         its result was showing, hiding that state with no cue; fixed with a computed `Binding`
+         that forces expansion (and blocks manual collapse) whenever
+         `viewModel.isSendingRequest` or `viewModel.requestFeedback != nil`. MEDIUM (extraction
+         vs. doc-comment tradeoff) — resolved by leaving `BuddyTile.swift`'s already-shipped,
+         already-reviewed Today-tab implementation untouched (extraction risk judged not worth
+         it for this pass) and adding an explicit cross-reference doc-comment on
+         `BuddyNameRow`'s copied members so the two are kept in sync deliberately, not silently.
+         Antislop UI Skill Checklist run against this diff: **PASS** — palette derived from
+         `DESIGN.md`/real data only (`skyColor`, no new accent colors), no decorative emoji,
+         MOTION 1 respected (`SGMotion.settle`, one-time transition, no new loop), no glass/glow/
+         shadow/radius added, every element has a real destination (ShareLink, Copy code,
+         DisclosureGroup reveal), no invented metrics/placeholder data, accessibility label/
+         `children: .ignore` preserved. Verified with a real Simulator screenshot, not just code
+         read: `-SkyGridUIAudit -SkyGridUIAuditScenario buddies` on iPhone 17
+         (`screenshots/ui-audit-buddies-invite-avatar-after.png`) confirms one `InviteLinkCard`,
+         the collapsed "Know their exact handle?" disclosure below the buddy list, and both
+         fixture buddies (`Mira`, `Ren`) rendering the new lock+ghost-fill circle avatar instead
+         of the old bare icon (fixture only exercises the `.sealed` state; `.posted`/photo
+         rendering was verified by code read against `BuddyTile`'s identical, already-shipped
+         pattern, not a fresh screenshot — no `.posted` fixture scenario exists yet for Buddies).
+         Independently re-verified by the main loop, not just Codex's report: `xcodebuild test
+         -only-testing:SkyGridTests` — 266 Swift-Testing tests in 45 suites green (matches
+         Codex's reported 270 including XCTest suites), Debug build succeeded. Not deployed
+         (client-only, nothing to deploy).
       3. **Give the "sealed until you post" reveal-gate state real visual weight** (per-person
          color, a photo silhouette, or a subtle glow/motion cue) instead of a flat gray circle +
          padlock, on both Today's buddy strip and the Buddies tab rows — this is the product's

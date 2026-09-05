@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The complete buddy surface remains intentionally small: add by handle, accept a
 /// request, or open the two safety actions for an existing relationship. It is not a
@@ -8,12 +9,14 @@ struct BuddiesView: View {
     private let contentSafetyRepository: any ContentSafetyRepository
     private let inviteRepository: any InviteRepository
     private let revealSignal: RevealSignal
+    private let imageFetching: any ImageFetching
     /// The same injected source of local-day truth used by Today. Pair-streak
     /// freshness must not drift around midnight just because this tab happened to
     /// derive its own `Date()`.
     private let clock: Clock
     @State private var safetyRoute: BuddySafetyRoute?
     @State private var relationshipRoute: BuddyRelationshipRoute?
+    @State private var isHandleRequestExpanded = false
 
     init(
         uid: String,
@@ -22,6 +25,7 @@ struct BuddiesView: View {
         contentSafetyRepository: any ContentSafetyRepository,
         inviteRepository: any InviteRepository,
         revealSignal: RevealSignal,
+        imageFetching: any ImageFetching,
         clock: Clock
     ) {
         _viewModel = State(initialValue: FriendsViewModel(
@@ -32,6 +36,7 @@ struct BuddiesView: View {
         self.contentSafetyRepository = contentSafetyRepository
         self.inviteRepository = inviteRepository
         self.revealSignal = revealSignal
+        self.imageFetching = imageFetching
         self.clock = clock
     }
 
@@ -47,11 +52,7 @@ struct BuddiesView: View {
                     .listRowBackground(SGT.fill)
                     .listRowSeparator(.hidden)
                 } else if viewModel.friendshipState == .available, viewModel.accepted.isEmpty {
-                    if viewModel.hasHandle == true {
-                        InviteLinkCard(inviteRepository: inviteRepository)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(EdgeInsets())
-                    } else if viewModel.hasHandle == false {
+                    if viewModel.hasHandle == false {
                         HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
                             viewModel.markHandleClaimed(handle)
                         }
@@ -62,6 +63,12 @@ struct BuddiesView: View {
                             .listRowBackground(SGT.fill)
                             .listRowSeparator(.hidden)
                     }
+                }
+
+                if viewModel.hasHandle == true {
+                    InviteLinkCard(inviteRepository: inviteRepository)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
                 }
 
                 ForEach(viewModel.accepted, id: \.pairId) { friendship in
@@ -76,7 +83,8 @@ struct BuddiesView: View {
                             BuddyNameRow(
                                 uid: otherUid,
                                 userRepository: viewModel.userRepository,
-                                revealState: revealState(for: otherUid)
+                                revealState: revealState(for: otherUid),
+                                imageFetching: imageFetching
                             )
                         }
                         .buttonStyle(.plain)
@@ -174,15 +182,24 @@ struct BuddiesView: View {
 
             if viewModel.hasHandle == true {
                 Section {
-                    AddBuddyView(viewModel: viewModel)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
-                }
-                if !viewModel.accepted.isEmpty {
-                    Section {
-                        InviteLinkCard(inviteRepository: inviteRepository)
-                            .listRowBackground(Color.clear)
-                            .listRowInsets(EdgeInsets())
+                    DisclosureGroup("Know their exact handle?", isExpanded: handleRequestExpansion) {
+                        AddBuddyView(viewModel: viewModel)
+                            .padding(.top, SGSpacing.sm)
+                    }
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+                    .tint(SGT.ink3)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .onChange(of: viewModel.isSendingRequest) { _, isSendingRequest in
+                        if isSendingRequest {
+                            isHandleRequestExpanded = true
+                        }
+                    }
+                    .onChange(of: viewModel.requestFeedback != nil) { _, hasFeedback in
+                        if hasFeedback {
+                            isHandleRequestExpanded = true
+                        }
                     }
                 }
             }
@@ -230,6 +247,23 @@ struct BuddiesView: View {
 
     private func revealState(for uid: String) -> TodayViewModel.BuddyRevealState {
         revealSignal.reading?.buddyStatuses.first(where: { $0.uid == uid })?.revealState ?? .sealed
+    }
+
+    /// A request in progress or its result must remain visible; the setter also
+    /// prevents a manual collapse during either state between observation updates.
+    private var handleRequestExpansion: Binding<Bool> {
+        Binding(
+            get: {
+                isHandleRequestExpanded
+                    || viewModel.isSendingRequest
+                    || viewModel.requestFeedback != nil
+            },
+            set: { requestedExpansion in
+                isHandleRequestExpanded = requestedExpansion
+                    || viewModel.isSendingRequest
+                    || viewModel.requestFeedback != nil
+            }
+        )
     }
 }
 
@@ -296,13 +330,39 @@ private struct BuddyNameRow: View {
     let uid: String
     let userRepository: any UserRepository
     let revealState: TodayViewModel.BuddyRevealState
+    let imageFetching: any ImageFetching
     @State private var profile: UserProfile?
+    @State private var thumbnail: UIImage?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isPosted: Bool {
+        if case .posted = revealState { return true }
+        return false
+    }
 
     var body: some View {
         HStack(spacing: SGSpacing.sm) {
-            Image(systemName: statusIcon)
-                .foregroundStyle(statusColor)
-                .frame(width: 20)
+            Circle()
+                .fill(avatarFill)
+                .frame(width: 42, height: 42)
+                .overlay {
+                    if isPosted, let thumbnail {
+                        Image(uiImage: thumbnail)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 42, height: 42)
+                            .clipShape(Circle())
+                    }
+                }
+                .overlay(Circle().strokeBorder(avatarStrokeColor, lineWidth: 1))
+                .overlay {
+                    if case .sealed = revealState {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(SGT.ink3)
+                    }
+                }
+                .scaleEffect(isPosted ? 1 : 0.92)
             VStack(alignment: .leading, spacing: 3) {
                 Text(profile?.displayName ?? "Buddy")
                     .font(SGFont.body(16))
@@ -320,6 +380,8 @@ private struct BuddyNameRow: View {
         .frame(minHeight: 56)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(profile?.displayName ?? "Buddy"), \(profile?.handle.map { "at " + $0.value } ?? "handle loading"), \(statusText)")
+        .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
+        .task(id: photoIdentity) { await loadThumbnail(for: photoIdentity) }
             .task {
                 for await observation in userRepository.observeProfile(uid: uid) {
                     if case .value(let profile) = observation {
@@ -330,19 +392,38 @@ private struct BuddyNameRow: View {
             }
     }
 
-    private var statusIcon: String {
+    /// This mirrors BuddyTile's photo identity, cancellable thumbnail fetch, and
+    /// sky-colour fallback. Keep all three state mappings aligned with BuddyTile.swift.
+    private var photoIdentity: String? {
+        guard case .posted(let post) = revealState else { return nil }
+        return post.thumbPath
+    }
+
+    private func loadThumbnail(for identity: String?) async {
+        guard let identity else {
+            thumbnail = nil
+            return
+        }
+        let loaded = await ThumbnailLoader.loadThumbnail(forRemotePath: identity, imageFetching: imageFetching)
+        guard !Task.isCancelled else { return }
+        thumbnail = loaded
+    }
+
+    private var avatarFill: AnyShapeStyle {
         switch revealState {
-        case .sealed: "lock.fill"
-        case .posted: "checkmark.circle.fill"
-        case .notYet: "clock"
+        case .posted(let post):
+            AnyShapeStyle(post.skyColor.color)
+        case .sealed, .notYet:
+            AnyShapeStyle(SGT.ghostFaint)
         }
     }
 
-    private var statusColor: Color {
+    private var avatarStrokeColor: Color {
         switch revealState {
-        case .sealed: SGT.ink3
-        case .posted: SGT.ink
-        case .notYet: SGT.ink2
+        case .posted:
+            SGT.ink.opacity(0.14)
+        case .sealed, .notYet:
+            SGT.rule
         }
     }
 

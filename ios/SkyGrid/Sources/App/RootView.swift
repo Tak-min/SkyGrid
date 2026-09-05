@@ -154,6 +154,7 @@ struct RootView: View {
                     contentSafetyRepository: services.contentSafetyRepository,
                     inviteRepository: services.inviteRepository,
                     revealSignal: revealSignal,
+                    imageFetching: services.imageFetching,
                     clock: services.clock
                 )
                 .tag(HomeTab.buddies)
