@@ -433,3 +433,24 @@ VISION.md still has 3 unchecked TODO item(s):
 970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
 1074:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 19:51:48] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 19:51:48] === iteration 2 / 40 ===
+Not a blocker — the app remaining running in the simulator doesn't affect anything. Iteration complete.
+
+## Summary
+
+**このイテレーションでやったこと**: `.loop/VISION.md`のcritical design audit項目3/5「sealed reveal-gate状態への実質的なビジュアルウェイト付与」を実装・検証・コミット。
+
+- **原因**: `BuddyTile.swift`/`BuddyNameRow`両方で`.sealed`（投稿済みだがプライバシーゲートで隠されている＝本アプリの核心的な感情メカニクス）と`.notYet`（まだ何もない）が全く同じ`SGT.ghostFaint`塗りを共有し、鍵アイコンの有無でしか区別できていなかった。
+- **修正**（Codexに委譲、差分は自分で読んで確認）: `.notYet`は既存の`SGT.ghost`トークン（グリッドの「未投稿日」と同一トークン、流用であり新規発明ではない）に変更。`.sealed`は低不透明度の外周リング（既存の`SGT.ink3`トークン使用、新色なし）を1つだけ追加し、既存の一回限りの`.animation(value: revealState)`に乗せた（ループ・パルスなし、MOTION 1準拠）。
+- **独立レビュー**: swift-reviewer(sonnet) → Approve、CRITICAL/HIGHなし。
+- **antislop Delivery Gate**: Hard Gate/Purpose-Gate/Liveliness/Craftsmanshipの全ブロックPASS(詳細をVISION.mdに記載)。
+- **自分で独立検証**(Codexの自己申告を信用せず): `xcodebuild test` 266件グリーン、Release build成功。実機シミュレータでToday/Buddies両画面のスクリーンショットも取得し目視確認済み。
+
+`.loop/VISION.md`のTODOチェックリスト更新、`.loop/state.json`更新、明示パスのみでコミット(`80cddb3`)。push・deployなし。
+
+**残作業**: design audit項目4-5(Settings ProローとShare-yearドットコントラスト)、および外部要因でブロック中の2項目(オンボーディング頻度カット、最終テスト/ビルド/dev-noteパス)。ループは継続します。
+VISION.md still has 3 unchecked TODO item(s):
+505:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
+1112:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 20:04:09] VERIFY failing (rc=1). Identical-failure streak: 1/3.
