@@ -101,7 +101,7 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
 - [x] Iteration 8: add/refresh audit scenarios and screenshots.
 - [x] Iteration 9: run full validation, resolve review findings, and write the dev-note.
-- [ ] **Bug (owner-reported 2026-09-06): Day-1 capture freeze — Moku's reward overlay races the
+- [x] **Bug (owner-reported 2026-09-06): Day-1 capture freeze — Moku's reward overlay races the
       Day-1 milestone cover and the app becomes stuck, unable to proceed.** Root cause found by a
       Claude Code session (not yet fixed): `RootView.resolvePostCaptureMoment` guards against
       presenting a milestone while the camera or paywall is showing (`guard !showCamera,
@@ -266,3 +266,30 @@ The loop succeeds only when all are objectively true:
   VoiceOver announcement, and resolves an interrupted overlay to settled without replay. The
   replacement focused UI tests passed. `dev-notes/playful-redesign-closeout_2026-09-06.md` records
   scope, evidence, and the still-unmeasured wake-to-capture completion metric.
+- **Post-owner-review round (2026-09-06 night, owner asleep, Claude supervising Codex with full
+  autonomy):** the owner rejected the initial "done" state as a reskin, not a redesign — the new
+  `Dawn Spark` accent and dark camera stage existed in only 3 files, `SGT` was still the frozen
+  pre-redesign warm-paper theme, and the Today headline used the serif the redesign's own spec
+  forbade there. Delegated a large-latitude rebuild to Codex (`.loop/playful-redesign/
+  codex-handoff-prompt.md`, superseded twice as direction refined): (1) made `SGT` the single
+  source of truth for background/ink/accent everywhere so the camera's dark-stage/white-control
+  language cascaded through Today/Grid/Buddies/Settings/onboarding/milestone/paywall via the
+  existing shared button/card modifiers (commits `4002db9`, `90810b5`, `3082473`); (2) fixed the
+  owner-reported Day-1 freeze by adding a missing `rewardMoment == nil` guard to
+  `RootView.resolvePostCaptureMoment` and its sibling resolvers (commit `9cae699`); (3) fixed a
+  leftover light-gray strip on the paywall's bottom action bar (commit `67a289a`); (4) on further
+  owner feedback that pure-dark read as "trying too hard" rather than native Apple polish, made
+  `SGT` light/dark-adaptive again — but in the new visual language, not the old warm-paper one —
+  and removed purely decorative ambient blur circles in favor of restraint (commits `60a9946`,
+  `fd28709`, `606e92c`, `c93530a`). Independently verified at every step rather than trusting
+  Codex's self-report: `xcodebuild build`/`test` (284/284 `SkyGridTests` green throughout), and
+  real iPhone 17 Simulator screenshots taken by Claude directly (not supplied by Codex) in **both**
+  light and dark appearance (`xcrun simctl ui <device> appearance light|dark`) for Today, Grid,
+  Buddies, Settings, Paywall, and onboarding — all six read as a coherent, restrained, native-feeling
+  system in both appearances, with Moku present and the two accent colors consistent across modes.
+  Also checked camera live/review and milestone in light appearance: the camera intentionally
+  stays a fixed near-black physical stage in both appearances (correct — a camera viewfinder
+  should not go white-on-white), and milestone/its share-card thumbnail render cleanly in light
+  mode, with the share-card artifact itself correctly staying a fixed dark export regardless of
+  system appearance (it's a rendered image people see outside the app, not live UI). No further
+  gaps found this round.
