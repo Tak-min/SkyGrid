@@ -93,6 +93,7 @@
 		6211FA6EAECA6C92CD4A11CD /* HandleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CF6408E55C637CB12A7C79 /* HandleTests.swift */; };
 		62D371902E633F9E431148A7 /* TimeZonePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */; };
 		633B92B960D7D1F46F7ED371 /* LocalStoreContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F125065E951B193C7012001 /* LocalStoreContainer.swift */; };
+		6473B8F12A00EF0A1D9D6E6F /* MokuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E6FD8E3FFC8ABB516CC96B2 /* MokuView.swift */; };
 		649F11771B729B477C677F69 /* MorningCardExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0480073CD95A74D4E826811 /* MorningCardExportView.swift */; };
 		657DB87FDB4CFF80E29D6E78 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A5C1EF18ACF9C35C82483C1B /* FirebaseStorage */; };
 		6606BC580DD84DE6675D8C98 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2221ED6CBEAF25D9207FA231 /* FeatureFlags.swift */; };
@@ -152,6 +153,7 @@
 		A9AECCE519AD72DE12470FFD /* AppStoreIdentityExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2D214A3D439287791AB534 /* AppStoreIdentityExportView.swift */; };
 		AA8BC5A9E132FEA6EA1F344D /* FirebaseImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6D0279C14098DA1757C0A1 /* FirebaseImageStore.swift */; };
 		AB2B0E119BF9C3478B4B03E8 /* FirebaseUserRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */; };
+		ABB331796DB1F956CF568760 /* MokuViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FEA04A5805CF72F95C4E00 /* MokuViewTests.swift */; };
 		AC6D5CF00AFA32E554B4FED3 /* WeekRhythm.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0891E1A60B6C28DB901200 /* WeekRhythm.swift */; };
 		AC951EAC9D1AC1FEA36DC492 /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */; };
 		AF74222FD76218E35029352C /* BuddyPushPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B381BF0CE8B026844084B43 /* BuddyPushPayloadTests.swift */; };
@@ -301,6 +303,7 @@
 		223D04A8062F9444EF6C7083 /* RevealSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealSignal.swift; sourceTree = "<group>"; };
 		2285E46741780075D5553D8C /* PendingCellState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingCellState.swift; sourceTree = "<group>"; };
 		24CD4632F0E1C7B923E6B77D /* PostCaptureMomentPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCaptureMomentPolicy.swift; sourceTree = "<group>"; };
+		24FEA04A5805CF72F95C4E00 /* MokuViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MokuViewTests.swift; sourceTree = "<group>"; };
 		2736F19C390C6A1B75861584 /* StreakWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakWindow.swift; sourceTree = "<group>"; };
 		28A371182E1C9D56C7820C6F /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		29616E74D33131D97D03C4A6 /* LocalDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDefaults.swift; sourceTree = "<group>"; };
@@ -334,6 +337,7 @@
 		4AEB43A82C094CA46F04D5BD /* MilestoneLoudButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneLoudButtonStyle.swift; sourceTree = "<group>"; };
 		4CED1196E56E4C621B48F448 /* ImageFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFileStore.swift; sourceTree = "<group>"; };
 		4CF7B0FB03E7C1A4AF7B6B57 /* ExportTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportTheme.swift; sourceTree = "<group>"; };
+		4E6FD8E3FFC8ABB516CC96B2 /* MokuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MokuView.swift; sourceTree = "<group>"; };
 		51E7DB5261372B33FD7508EA /* PersonalizedPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizedPlanView.swift; sourceTree = "<group>"; };
 		531084A1F75F338E4A45CC85 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorDisplay.swift; sourceTree = "<group>"; };
@@ -850,6 +854,7 @@
 				8E9E89B3BC61DAD003FF5FB7 /* Haptics.swift */,
 				BDDF0EFC39A3F8C431B83C92 /* IdentityColor.swift */,
 				D3DD7839BDCF230A7AE8F936 /* Layout.swift */,
+				4E6FD8E3FFC8ABB516CC96B2 /* MokuView.swift */,
 				7F8226F41E37D81F38B2EA3D /* QRCodeGenerator.swift */,
 				531084A1F75F338E4A45CC85 /* ShareSheet.swift */,
 				5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */,
@@ -931,6 +936,7 @@
 				D5E04A3EBA32F5CB4180A33A /* InviteLinkParserTests.swift */,
 				6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */,
 				BD23650166A18C5BF4671015 /* LocalDateTests.swift */,
+				24FEA04A5805CF72F95C4E00 /* MokuViewTests.swift */,
 				898942EB213A9B8ACBDFDA47 /* MorningAlarmSchedulerTests.swift */,
 				C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */,
 				F80275CA399B3382985AACD9 /* MorningFollowUpSchedulerTests.swift */,
@@ -1240,6 +1246,7 @@
 				469FD0B5717D8F2C6CB264CC /* MilestoneLoudButtonStyle.swift in Sources */,
 				176C5ADC14947459EC3A4833 /* MilestoneMoment.swift in Sources */,
 				47B98544EC63B418A73C3A25 /* MilestoneView.swift in Sources */,
+				6473B8F12A00EF0A1D9D6E6F /* MokuView.swift in Sources */,
 				212238C56C8C82E2950DCEA7 /* MorningAlarmSchedule.swift in Sources */,
 				29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */,
 				5E231E656EEA92440D8DD0F6 /* MorningAlarmSettingsView.swift in Sources */,
@@ -1359,6 +1366,7 @@
 				4D18633E8DC5D3E5398355E7 /* InviteLinkParserTests.swift in Sources */,
 				E8A87BDA1A437D2740E1C528 /* LaunchGateTests.swift in Sources */,
 				E5768E9031FE2B5AE0CBB959 /* LocalDateTests.swift in Sources */,
+				ABB331796DB1F956CF568760 /* MokuViewTests.swift in Sources */,
 				05B359A0F28C91CC0B5695D8 /* MorningAlarmScheduleTests.swift in Sources */,
 				E9BEB26CA7366FC2A034E15E /* MorningAlarmSchedulerTests.swift in Sources */,
 				EC95088712901C8CACF695EB /* MorningFollowUpSchedulerTests.swift in Sources */,

@@ -59,6 +59,7 @@ private enum UIAuditScenario: String {
     case liveActivity = "live-activity"
     case milestone
     case milestoneDayOne = "milestone-day-one"
+    case moku
 
     static var current: Self? {
         let arguments = ProcessInfo.processInfo.arguments
@@ -99,7 +100,12 @@ private struct UIAuditRoot: View {
     }
 
     var body: some View {
-        if scenario == .onboarding {
+        if scenario == .moku {
+            // Debug-only deterministic host: this verifies every mascot state
+            // without wiring Moku into the shipped daily flow before its reward
+            // state machine exists.
+            MokuPreviewGallery()
+        } else if scenario == .onboarding {
             OnboardingCoordinatorView(
                 purchases: UIAuditPurchases(),
                 entitlements: auditEntitlements,
@@ -238,7 +244,7 @@ private enum UIAuditTab: Hashable {
 
     init(scenario: UIAuditScenario) {
         switch scenario {
-        case .onboarding, .today, .todayUnavailable, .paywall, .paywallPlan, .settings, .settingsBlockedUnavailable, .cameraReview, .cameraFailure, .shareYear, .shareMorning, .liveActivity, .milestone, .milestoneDayOne: self = .today
+        case .onboarding, .today, .todayUnavailable, .paywall, .paywallPlan, .settings, .settingsBlockedUnavailable, .cameraReview, .cameraFailure, .shareYear, .shareMorning, .liveActivity, .milestone, .milestoneDayOne, .moku: self = .today
         case .grid, .gridUnavailable: self = .grid
         case .buddies, .buddiesUnavailable, .buddiesProfileUnavailable, .buddiesNoHandle, .buddiesRequestFlow: self = .buddies
         }

@@ -1,0 +1,9 @@
+{
+  "iteration": 2,
+  "max_iterations": 20,
+  "no_progress_limit": 3,
+  "same_failure_count": 0,
+  "last_action": "Added the code-native Moku mascot with six causal states, success-only captured-sky palette adoption, a deterministic debug gallery, and a UI-audit route",
+  "last_verify": "green: full SkyGridTests passed including 3 Moku tests; Debug simulator build and iPhone 17 Moku screenshot passed; git diff --check passed",
+  "status": "active"
+}

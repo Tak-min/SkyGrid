@@ -1,4 +1,215 @@
-# SkyGrid — Design Direction
+# SkyGrid — Playful Reward Design System
+
+**Status:** owner-approved current direction, 2026-09-05.
+
+This section supersedes the earlier calm-capture and no-mascot/no-confetti rules for the playful
+redesign. The earlier direction is preserved verbatim below as decision history; it is not an
+implementation constraint where it conflicts with this section. Privacy, honest capture, raw-photo
+preservation, accessibility, and non-competitive social boundaries remain in force.
+
+## Product promise
+
+Wake up, catch the real sky, and watch that morning become a playable piece of a world shared with
+people who also showed up.
+
+The interface must make one causal loop legible without explanation:
+
+`alarm -> framed camera -> capture -> Moku reacts -> photo becomes a pixel tile -> tile lands in the mosaic -> permitted buddy skies reveal`
+
+The captured sky is always the cause and the content. Mascot motion, confetti, streaks, and spring
+physics are feedback for that action; none may become a separate reward economy.
+
+## Reference policy
+
+References are behavioral ingredients, not visual templates:
+
+- From Brilliant: one unmistakable next action, large tactile controls, and success feedback that
+  changes visible progress immediately.
+- From Noom: one decision per step during first-run setup only. Repeated alarm setting must remain a
+  one-tap confirmation or direct time edit, never a nightly questionnaire.
+- From PostHog: a character may carry state and humor. Do not copy its hedgehog, silhouette, pose,
+  line style, palette, copy voice, or developer-tool layout.
+- From the downloaded Locket camera reference: use a black stage, a large inset rounded viewfinder,
+  a prominent centered shutter, and compact surrounding controls. Do not copy its branding, yellow
+  accent, social counters, or exact icon arrangement.
+
+No learning-path nodes, generic achievement dashboards, bento grids, decorative card stacks,
+levels, coins, leaderboards, or points.
+
+## Experience dials
+
+- **ENERGY 4 / 5 — expressive:** capture success is visibly joyful, including every-morning
+  confetti. Utility and safety surfaces stay direct rather than decorative.
+- **RHYTHM 4 / 5 — staged:** calm anticipation, one decisive capture, a short reward peak, then a
+  settled mosaic. The product should breathe between beats instead of moving continuously.
+- **MOTION 4 / 5 — causal:** spatial motion is a core explanatory layer. It is bounded, cancellable,
+  deterministic, and never idle spectacle.
+- **DENSITY 2 / 5 — focused:** one dominant object and one dominant action per state. Playfulness
+  comes from character and physics, not more controls.
+
+## Information architecture
+
+The primary daily experience is a stateful world, not a tab collection:
+
+1. **Pre-capture:** today's empty mosaic slot, Moku, alarm status, sealed buddy presence, and one
+   capture action.
+2. **Camera:** black stage with an inset live viewfinder and central shutter. Permission, failure,
+   retake, and cancel paths remain reachable.
+3. **Reward:** the successful photo pixelates and lands in today's slot; Moku celebrates; confetti
+   marks the landing; only server-authorized buddy photos may reveal.
+4. **Settled mosaic:** the growing photo mosaic is home. A day opens its own morning detail rather
+   than navigating to a generic feed.
+5. **Night:** the same world shows tomorrow's empty slot and a direct alarm-time action; it is a
+   visual state, not a repeated onboarding flow.
+
+Archive, invite/buddies, alarm editing, purchases, restore, settings, account deletion, report, and
+block remain reachable contextually through sheets, day details, and explicit utility affordances.
+Removing the general-purpose tab bar never authorizes removing these routes.
+
+## Shape and layout
+
+- **Camera stage:** near-black edge-to-edge ground. The viewfinder is inset on all sides, vertically
+  dominant, and uses a 32 pt continuous corner radius. It must read as a physical window, not a card.
+- **Primary controls:** minimum 56 pt height; the shutter is 76-84 pt. Press feedback uses a brief
+  0.96 scale plus a 2 pt downward translation, returning with a spring. Controls maintain at least
+  a 44x44 pt accessibility target.
+- **Mosaic tiles:** square, tightly related, and allowed to touch. Empty, captured, sealed, and
+  revealed states differ by content and edge treatment, not by unrelated card containers.
+- **Corners:** 18-24 pt for action surfaces, 32 pt for the camera window, and 8-12 pt for individual
+  mosaic tiles shown at detail scale. Avoid applying one radius to every object.
+- **Spacing:** use an 8 pt base rhythm. Default screen gutters are 20 pt; reward staging may use the
+  full black canvas. Large empty space must frame the active object, not compensate for missing
+  content.
+- **Cards:** use only when an actual object has a boundary, such as the live viewfinder or a day
+  detail. Do not wrap headings, explanatory copy, rows, or groups in cards by default.
+
+## Color and type
+
+The photograph supplies most color. Fixed UI colors provide contrast and character:
+
+- **Night Stage** `#080A0F`: camera and reward ground.
+- **Morning Paper** `#FFF8EE`: settled mosaic and utility ground.
+- **Ink** `#17181B`: primary text on light ground.
+- **Cloud** `#F4F1EA`: quiet controls and empty slots.
+- **Dawn Spark** `#FF6846`: primary playful accent and Moku's pre-capture spark; never a substitute
+  for real sky content.
+- **Open Sky** `#58C7F3`: secondary active state.
+
+Do not introduce Locket yellow or generic purple/blue product gradients. A gradient is allowed only
+when sampled from a real captured sky or when representing a transition between two real sky tiles.
+All text and controls must meet WCAG AA contrast in their rendered state.
+
+Use the system rounded/sans family for actions, numbers, captions, and functional screens. The New
+York serif is limited to rare artifact headlines after the sky has been captured. It does not appear
+inside the camera controls or as decorative editorial copy above forms.
+
+## Pixel-art contract
+
+- The original photograph remains intact for the user's day detail and authorized buddy viewing.
+- The mosaic uses a derived square tile, initially **24x24 logical color samples**, upscaled with
+  nearest-neighbor interpolation. This is intentionally more legible as pixel art than 100x100 at
+  phone scale.
+- The implementation may compare 16, 24, and 32 samples in audit fixtures, but it must choose one
+  resolution consistently before release. Never mix arbitrary resolutions in the same mosaic.
+- Pixelation is revealed as a transformation from the actual crop; do not replace the image with a
+  random palette, generated illustration, or average-color placeholder.
+- Missing and failed images stay visibly absent. Never fabricate a sky for visual completeness.
+
+## Mascot contract — Moku
+
+**Moku** is SkyGrid's original tile spirit. The name is a working product name, but the following
+visual and behavioral identity is binding until explicitly revised.
+
+- **Silhouette:** an asymmetric rounded 4x4-pixel cluster with one offset corner, two square ink
+  eyes, and short line-free pixel limbs. It is neither an animal nor a cloud outline and has no
+  spikes, fur, snout, clothing, or PostHog-like hedgehog traits.
+- **Material:** before capture, Moku is mostly Night Stage/Cloud with one Dawn Spark pixel. After
+  capture, its body briefly accepts colors sampled from today's derived sky tile.
+- **Role:** before capture, Moku points attention toward today's empty slot or shutter. During
+  processing, it watches the real transformation. After landing, it jumps once and settles beside
+  the new tile. It never obscures the sky or becomes the primary navigation control.
+- **Emotion set:** waiting, ready, bracing, delight, settled, and recoverable error. Avoid shame,
+  sadness, anger, pleading, streak-loss guilt, or manipulative disappointment.
+- **Voice:** optional and sparse. One short sentence maximum, concrete and morning-specific. No
+  generic coaching, praise inflation, baby talk, or constant speech bubbles.
+- **State truth:** Moku may react only to observed state. It cannot celebrate before publish success,
+  imply a buddy posted when reads are denied, or present an upload failure as completion.
+
+## Daily reward motion contract
+
+The reward begins only after the app has a successfully saved capture. It plays at most once for that
+successful post and has a target duration of **1.4-1.8 seconds**:
+
+| Beat | Target time | Required meaning |
+|---|---:|---|
+| Capture confirmation | 0-180 ms | Viewfinder compresses once; Moku braces. No success claim yet. |
+| Pixel derivation | 180-560 ms | The real photo resolves into the derived tile. Moku follows it. |
+| Mosaic landing | 560-1,050 ms | The tile travels to the actual current-day slot and snaps into place. |
+| Reward peak | 900-1,350 ms | One success haptic, Moku's single jump, and 18-28 square confetti pieces mark the landing. |
+| Buddy reveal / settle | 1,200-1,800 ms | Authorized buddy tiles unseal; otherwise sealed/not-yet states remain truthful. Controls settle. |
+
+Rules:
+
+- Confetti uses squares sampled from today's tile plus Dawn Spark/Cloud, emits from the landing slot,
+  falls once, and is removed. No endless emitters, fireworks, coins, stars, or emoji particles.
+- The capture-to-tile path is visually dominant. Confetti and Moku must not cover the transformation,
+  shutter recovery, error actions, or buddy photos.
+- One success haptic occurs at landing. Button press haptics are separate light feedback; do not stack
+  multiple success haptics.
+- A milestone may extend the settled state, but it must not replay the daily transformation or
+  trigger a second competing full-screen celebration.
+- Interruption, backgrounding, or view recreation must resolve to the truthful settled state without
+  replaying the reward or losing the saved post.
+- Upload/publish failure stops before the reward peak and presents a recoverable action. Confetti is
+  evidence of success and must never fire speculatively.
+
+## Reduce Motion and accessibility
+
+With Reduce Motion enabled:
+
+- Replace spatial travel, bounce, particle movement, and scale springs with a 200 ms opacity/content
+  transition into the completed mosaic state.
+- Show a static square-pixel halo for up to 500 ms instead of moving confetti; switch Moku directly
+  from bracing to settled delight.
+- Preserve the same causal order and success haptic unless system haptics are disabled.
+- Announce one concise VoiceOver result after settlement, including capture saved and the number of
+  buddy skies revealed when nonzero. Decorative mascot/confetti elements are hidden from VoiceOver.
+
+Dynamic Type must not move the shutter off-screen or cover the live viewfinder. State must never be
+communicated by color or motion alone. All animated controls retain stable accessibility labels and
+identifiers across transitions.
+
+## Social and privacy boundary
+
+- Raw buddy photos render only after the existing server-authoritative read succeeds. Animation may
+  consume `sealed`, `posted`, and `notYet`; it may not infer permission from local capture state.
+- A denied read remains sealed and visually distinct from a verified "not yet" response.
+- Moku and copy never name, count, or celebrate a buddy whose state has not been authorized.
+- The social surface stays a closed circle, not an infinite public feed. No ranking, comparative
+  streak, public discovery, or pressure copy.
+
+## Validation criteria
+
+A design-system implementation is conforming only when:
+
+- A muted video makes the capture -> pixel tile -> mosaic causal chain understandable without copy.
+- The reward starts only after saved-capture success and completes in under 1.8 seconds in the normal
+  path.
+- Reduce Motion reaches the same settled state without translation, bounce, or moving particles.
+- Fresh audit captures exist for pre-capture, camera/review, reward, mosaic, and each buddy reveal
+  state; synthetic photos are clearly identified as fixtures.
+- At iPhone 17 size, the viewfinder remains visibly inset, the shutter target is at least 76 pt, no
+  primary content is hidden by system insets, and all text/control contrast passes AA.
+- Privacy tests continue to prove that no buddy image bytes are available before the read gate.
+
+---
+
+# Historical direction — superseded where it conflicts above
+
+The following 2026-09-05 agent draft is preserved for decision lineage. It was not owner-approved.
+Its quiet-capture, low-motion, no-mascot, and no-confetti implications are explicitly superseded by
+the owner-approved playful reward direction above. Its honest-photo, private-sharing, restrained
+competition, and sky-as-content principles still apply where compatible.
 
 **Authorship note (R-37 disclosure, per `.loop/antislop/antislop.md`):** this file was drafted
 by the agent from what is already established in the shipped app and prior dev-notes
