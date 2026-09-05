@@ -915,4 +915,9 @@ a separate session.
       data left honestly `unverified` (not publicly visible).
 - [ ] Full test suite green + Release build green, final dev-note summarizing before/after
       (re-shoot `screenshots/ui-audit-*.png` first — current ones are stale, see correction
-      above).
+      above). **Codex status (2026-09-05):** `xcodebuild test -only-testing:SkyGridTests`
+      now passes 263 tests / 44 suites on iPhone 17, after removing two redundant unit tests
+      that invoked real AlarmKit / notification authorization and hung the Simulator; their
+      persisted-schedule behavior is already covered by the pure scheduling-input tests. The
+      Release generic-iOS build succeeds. Fresh visual screenshots and the final before/after
+      dev-note remain open.

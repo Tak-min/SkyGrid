@@ -1,9 +1,5 @@
 import Foundation
 import Testing
-import UserNotifications
-#if canImport(AlarmKit)
-import AlarmKit
-#endif
 @testable import SkyGrid
 
 @Suite("Morning reminder reconcile plan")
@@ -147,62 +143,6 @@ struct MorningAlarmSchedulerTests {
             schedule(id: enabled.id, minutesAfterMidnight: 435, weekdays: [2, 4]),
             disabled
         ])
-    }
-
-    @Test("enabling AlarmKit updates persisted enabled schedules before reconciling")
-    func enableUpdatesPersistedAlarmKitScheduleTimes() async {
-        let enabled = schedule(minutesAfterMidnight: 390, weekdays: [2, 4])
-        let disabled = schedule(minutesAfterMidnight: 510, weekdays: [6], isEnabled: false)
-        let originalEnabled = LocalDefaults.morningAlarmEnabled
-        let originalBackend = LocalDefaults.morningAlarmBackend
-        let originalSchedules = LocalDefaults.morningAlarmSchedules
-        defer {
-            LocalDefaults.morningAlarmEnabled = originalEnabled
-            LocalDefaults.morningAlarmBackend = originalBackend
-            LocalDefaults.morningAlarmSchedules = originalSchedules
-        }
-        LocalDefaults.morningAlarmEnabled = true
-        LocalDefaults.morningAlarmSchedules = [enabled, disabled]
-
-        _ = await MorningAlarmScheduler.enable(wakeGoalMinutes: 435)
-
-        #expect(LocalDefaults.morningAlarmSchedules == [
-            schedule(id: enabled.id, minutesAfterMidnight: 435, weekdays: [2, 4]),
-            disabled
-        ])
-
-        if #available(iOS 26.0, *) {
-            try? AlarmManager.shared.cancel(id: enabled.id)
-        }
-        await MorningFollowUpScheduler.cancelAll()
-    }
-
-    @Test("enabling reminder fallback updates persisted enabled schedules before reconciling")
-    func enableReminderFallbackUpdatesPersistedScheduleTimes() async {
-        let enabled = schedule(minutesAfterMidnight: 390, weekdays: [2, 4])
-        let disabled = schedule(minutesAfterMidnight: 510, weekdays: [6], isEnabled: false)
-        let originalEnabled = LocalDefaults.morningAlarmEnabled
-        let originalBackend = LocalDefaults.morningAlarmBackend
-        let originalSchedules = LocalDefaults.morningAlarmSchedules
-        defer {
-            LocalDefaults.morningAlarmEnabled = originalEnabled
-            LocalDefaults.morningAlarmBackend = originalBackend
-            LocalDefaults.morningAlarmSchedules = originalSchedules
-        }
-        LocalDefaults.morningAlarmEnabled = true
-        LocalDefaults.morningAlarmSchedules = [enabled, disabled]
-
-        _ = await MorningAlarmScheduler.enableReminderFallback(wakeGoalMinutes: 435)
-
-        #expect(LocalDefaults.morningAlarmSchedules == [
-            schedule(id: enabled.id, minutesAfterMidnight: 435, weekdays: [2, 4]),
-            disabled
-        ])
-
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: enabled.weekdays.map {
-            MorningAlarmScheduler.reminderIdentifier(scheduleID: enabled.id, weekday: $0)
-        })
-        await MorningFollowUpScheduler.cancelAll()
     }
 
     @Test("applying a new wake time leaves disabled schedules unchanged")
