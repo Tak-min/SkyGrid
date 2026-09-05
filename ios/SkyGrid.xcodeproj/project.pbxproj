@@ -18,6 +18,7 @@
 		05B359A0F28C91CC0B5695D8 /* MorningAlarmScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */; };
 		064AE3B73A3EC2D38CAE4BF1 /* OnboardingInviteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FB553030C359619542B5B54 /* OnboardingInviteView.swift */; };
 		06CA68D5ABBF09AED97E528D /* PendingCellStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE535718E8F305008C110CE /* PendingCellStateTests.swift */; };
+		07982C27546087192B944519 /* RewardRevealPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 634CC1F8B52CD414E1E8274B /* RewardRevealPolicyTests.swift */; };
 		09420A7F5E15A84F20BC404A /* SkyGridUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */; };
 		0999E1B3F926013D1FC47ED8 /* FriendsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6A3B5CC0ADD2C9D6F8F4CDF /* FriendsViewModel.swift */; };
 		0A3B444EFC749E0E946DAF5D /* PostRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */; };
@@ -63,6 +64,7 @@
 		3C7786DD975353D2A9EC9DDC /* StreakMilestoneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3866D3B5A0B65B9D4FCAFAB4 /* StreakMilestoneTests.swift */; };
 		3D6BA32B8F08E6380CDFF0E1 /* FirstUnlockPaywallPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75CD56B996E0488D246831AE /* FirstUnlockPaywallPolicyTests.swift */; };
 		3F1C1221C32E6A4754A7F7A6 /* BuddyTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB41B2F732D5C25821B6051 /* BuddyTile.swift */; };
+		40E5C3D9513BE6C3AFCFBBF7 /* RewardBuddyRevealStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 605EA4A1F57CB4BF69E45A28 /* RewardBuddyRevealStrip.swift */; };
 		421E3E0F6C109A03B8E28E43 /* StartupFailureMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B807172FF977F014E4488CB /* StartupFailureMessageTests.swift */; };
 		4262808CDCBD5509575509FB /* OnboardingAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E0907AF5694D836BC9375E /* OnboardingAnalytics.swift */; };
 		42A36B412EDA3EE668831FE5 /* StreakSignal.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF610064E6D532BA32BC680 /* StreakSignal.swift */; };
@@ -196,6 +198,7 @@
 		C96012A1E8A27AFEFEDD7EBD /* EntitlementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8505967AF27F6734DB422A85 /* EntitlementStore.swift */; };
 		C9E66D6FE70A5B5724C60993 /* UploadTriggers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69D70E24F9606F52435C88DA /* UploadTriggers.swift */; };
 		CC87E8CE349B0172118A31C0 /* FirstUnlockPaywallPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE9E5B2ED0BD36473AC853F /* FirstUnlockPaywallPolicy.swift */; };
+		CFCCAE3F8E158FC390D7A1F9 /* RewardRevealPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84B10FE9E65371493F98A96 /* RewardRevealPolicy.swift */; };
 		D1DAF0FCBD24BD57B71BF22D /* UploadQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8A106169F1B40CFAEFB8BC4 /* UploadQueueTests.swift */; };
 		D20CD19BB38111C343CB95DF /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */; };
 		D2807C74B9D828D28AA7E25F /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = A76C924028AB2BEDD7BC40F1 /* FirebaseAnalytics */; };
@@ -363,10 +366,12 @@
 		5D9ED01CECCEFC13BBAD319C /* RevenueCatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatService.swift; sourceTree = "<group>"; };
 		5DE08F2693E2014B6F411183 /* PersonalizationQuestionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationQuestionsView.swift; sourceTree = "<group>"; };
 		5F31A3EBFDABDD5BEE8F1761 /* SkyGridUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridUITests.swift; sourceTree = "<group>"; };
+		605EA4A1F57CB4BF69E45A28 /* RewardBuddyRevealStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardBuddyRevealStrip.swift; sourceTree = "<group>"; };
 		61F7C7F523E9A76536E689A8 /* RewardBeatTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardBeatTests.swift; sourceTree = "<group>"; };
 		62BC2AEDD6034318B8D2E42D /* RewardBeat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardBeat.swift; sourceTree = "<group>"; };
 		631F582E35EE45934978586B /* AccountDeletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDeletedView.swift; sourceTree = "<group>"; };
 		632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigTimeView.swift; sourceTree = "<group>"; };
+		634CC1F8B52CD414E1E8274B /* RewardRevealPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardRevealPolicyTests.swift; sourceTree = "<group>"; };
 		64724AE9311BCBE64D785927 /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
 		64EF84342454008AD295D027 /* MorningShareAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningShareAnalytics.swift; sourceTree = "<group>"; };
 		65AF3064CFC242AF9B70D522 /* GridLayoutMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridLayoutMathTests.swift; sourceTree = "<group>"; };
@@ -502,6 +507,7 @@
 		E1B4AE5E7BA49A92C1C962AD /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		E4D4885634D10DFD9629310C /* clear_sky.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = clear_sky.png; sourceTree = "<group>"; };
+		E84B10FE9E65371493F98A96 /* RewardRevealPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardRevealPolicy.swift; sourceTree = "<group>"; };
 		E9A93A11701B359A225ECCDD /* RewardAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardAnalytics.swift; sourceTree = "<group>"; };
 		EA734E93CF42C8AD1AB11848 /* real_overcast_sky.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = real_overcast_sky.jpg; sourceTree = "<group>"; };
 		EB826926C08B938D939A15C8 /* InviteLinkParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteLinkParser.swift; sourceTree = "<group>"; };
@@ -598,8 +604,10 @@
 				2ADCEE965C2E724808C3F64B /* PixelSkyTile.swift */,
 				E9A93A11701B359A225ECCDD /* RewardAnalytics.swift */,
 				62BC2AEDD6034318B8D2E42D /* RewardBeat.swift */,
+				605EA4A1F57CB4BF69E45A28 /* RewardBuddyRevealStrip.swift */,
 				15CC0F0447BD504E5D676CE2 /* RewardMoment.swift */,
 				B0B3F1244F36C7A3929F0AE5 /* RewardOverlayView.swift */,
+				E84B10FE9E65371493F98A96 /* RewardRevealPolicy.swift */,
 				E012770F5A7724DFE405C9D4 /* RewardSequenceController.swift */,
 			);
 			path = Reward;
@@ -1001,6 +1009,7 @@
 				DBC5F504FA4E5293BCA860B0 /* RetryPolicyTests.swift */,
 				B464F1444E53D886E4F974E1 /* RevenueCatServiceTests.swift */,
 				61F7C7F523E9A76536E689A8 /* RewardBeatTests.swift */,
+				634CC1F8B52CD414E1E8274B /* RewardRevealPolicyTests.swift */,
 				E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */,
 				6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */,
 				4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */,
@@ -1348,8 +1357,10 @@
 				DA7F362CB6B55F49E23DF687 /* RevenueCatService.swift in Sources */,
 				84A19B44782BDBDF99C98866 /* RewardAnalytics.swift in Sources */,
 				9F36B1FA37815232F3CD374C /* RewardBeat.swift in Sources */,
+				40E5C3D9513BE6C3AFCFBBF7 /* RewardBuddyRevealStrip.swift in Sources */,
 				2E4E16DB1B5C62B6FB04811C /* RewardMoment.swift in Sources */,
 				AFEB8287D072E597539090B0 /* RewardOverlayView.swift in Sources */,
+				CFCCAE3F8E158FC390D7A1F9 /* RewardRevealPolicy.swift in Sources */,
 				C5395118C4A327277ECD2144 /* RewardSequenceController.swift in Sources */,
 				F35ACD21DBA2EC1AA156C4F2 /* RitualGridMark.swift in Sources */,
 				2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */,
@@ -1444,6 +1455,7 @@
 				F3B83571F3DFC0124517F154 /* RetryPolicyTests.swift in Sources */,
 				EAD14BEF648B531FC044E7BE /* RevenueCatServiceTests.swift in Sources */,
 				AD1B5443B51963B905F4111F /* RewardBeatTests.swift in Sources */,
+				07982C27546087192B944519 /* RewardRevealPolicyTests.swift in Sources */,
 				F9F04A8B066CD6D489EECB79 /* SkyColorExtractorTests.swift in Sources */,
 				69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */,
 				680FFFAAE8CFF9A53425D69B /* SoloMorningPaywallPolicyTests.swift in Sources */,

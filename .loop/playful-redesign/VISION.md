@@ -42,7 +42,7 @@ The loop succeeds only when all are objectively true:
       confetti, success haptic, and a Reduce Motion equivalent.
 - [x] The captured photo visibly transforms into a deliberately pixelated tile and lands in the
       current mosaic before the reward sequence completes.
-- [ ] Buddy reveal remains server-authoritative and private; no animation exposes a photo before
+- [x] Buddy reveal remains server-authoritative and private; no animation exposes a photo before
       the existing reveal gate permits it.
 - [ ] Analytics can distinguish reward started/completed/reduced-motion without PII, and the
       existing capture event remains exactly-once per successful publish.
@@ -98,7 +98,7 @@ The loop succeeds only when all are objectively true:
 - [x] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
 - [x] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
       preserving contextual access to archive, buddies, alarm, settings, and safety.
-- [ ] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
+- [x] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
 - [ ] Iteration 8: add/refresh audit scenarios and screenshots.
 - [ ] Iteration 9: run full validation, resolve review findings, and write the dev-note.
 
@@ -203,3 +203,15 @@ The loop succeeds only when all are objectively true:
   passes, and Debug `xcodebuild build` succeeds. A first run failed only because the DEBUG audit
   host's `.tint` modifier was attached to an `if` result after the TabView removal; moving it to its
   `NavigationStack` made the next build green.
+- Iteration 7: `RewardOverlayView` now receives the existing `RevealSignal` and reads a new pure
+  `RewardRevealPolicy`, which returns a nonzero count only when the reading's local date exactly
+  matches the just-saved capture. That source count is produced only by `TodayViewModel` statuses
+  whose `.posted` post read was already permitted by Firestore rules; a stale date, absent reading,
+  notification, local capture, or failed read remains zero. At settlement, only those existing
+  `.posted` statuses appear via the existing `BuddyTile` (which independently gates thumbnail bytes
+  on `.posted`), and VoiceOver names the verified count only when nonzero. Sealed/not-yet statuses
+  and photo-fetch failure stay truthful; no new image fetch or reveal decision exists in Reward.
+  Verified on 2026-09-06: `xcodegen generate` registered the two new source and test files, and
+  focused `RewardRevealPolicyTests` passed (2 tests). The first focused run had one compile error
+  from omitting `BuddyStreakDisplayPolicy`'s required `buddyName`; after passing the existing
+  display name and fixed capture date, the next run was green.

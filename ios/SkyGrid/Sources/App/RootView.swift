@@ -228,7 +228,11 @@ struct RootView: View {
         .fullScreenCover(item: $rewardMoment, onDismiss: {
             resolvePendingPresentations(services: services)
         }) { moment in
-            RewardOverlayView(moment: moment) {
+            RewardOverlayView(
+                moment: moment,
+                revealSignal: revealSignal,
+                imageFetching: services.imageFetching
+            ) {
                 rewardMoment = nil
             }
         }

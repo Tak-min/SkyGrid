@@ -11,6 +11,8 @@ import UIKit
 /// or exposed beyond this already-authorized, post-publish local reward surface.
 struct RewardOverlayView: View {
     let moment: RewardMoment
+    let revealSignal: RevealSignal
+    let imageFetching: any ImageFetching
     let onDone: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -40,6 +42,10 @@ struct RewardOverlayView: View {
     @ViewBuilder
     private func content(controller: RewardSequenceController) -> some View {
         let beat = controller.beat
+        let revealedCount = RewardRevealPolicy.verifiedUnlockedCount(
+            for: moment.localDate,
+            reading: revealSignal.reading
+        )
         VStack(spacing: SGSpacing.lg) {
             ZStack {
                 RewardMosaicLandingView(
@@ -73,10 +79,18 @@ struct RewardOverlayView: View {
                     .offset(y: 116)
             }
             .frame(height: 310)
+            if beat == .settle, revealedCount > 0 {
+                RewardBuddyRevealStrip(
+                    statuses: revealSignal.reading?.buddyStatuses ?? [],
+                    localDate: moment.localDate,
+                    imageFetching: imageFetching
+                )
+                .accessibilityHidden(true)
+            }
             Spacer()
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityAnnouncement(for: beat))
+        .accessibilityLabel(accessibilityAnnouncement(for: beat, revealedCount: revealedCount))
     }
 
     private func mokuState(for beat: RewardBeat) -> MokuState {
@@ -88,12 +102,12 @@ struct RewardOverlayView: View {
         }
     }
 
-    /// One concise VoiceOver result once settlement is reached, per DESIGN.md's
-    /// accessibility section. Buddy-reveal count is not yet wired to this overlay
-    /// (VISION.md Iteration 7), so this only announces the capture-saved result for
-    /// now — no buddy count is claimed here that this view cannot yet verify.
-    private func accessibilityAnnouncement(for beat: RewardBeat) -> String {
-        beat == .settle ? "Sky saved." : ""
+    /// One concise VoiceOver result once settlement is reached. The number comes
+    /// only from `RewardRevealPolicy`'s same-day server-authoritative reading.
+    private func accessibilityAnnouncement(for beat: RewardBeat, revealedCount: Int) -> String {
+        guard beat == .settle else { return "" }
+        guard revealedCount > 0 else { return "Sky saved." }
+        return "Sky saved. \(revealedCount) buddy \(revealedCount == 1 ? "sky is" : "skies are") revealed."
     }
 }
 
