@@ -388,3 +388,24 @@ VISION.md still has 5 unchecked TODO item(s):
 909:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 14:36:10] VERIFY failing (rc=1). Identical-failure streak: 3/3.
 [loop-engine 14:36:10] HALT (1): no progress: identical verify result 3 iterations in a row — agent is stuck.
+[loop-engine 19:20:22] Starting loop. MAX_ITER=40 MODEL=sonnet VERIFY='bash .loop/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 19:20:22] === iteration 1 / 40 ===
+## 完了報告
+
+**このイテレーションでやったこと**: `.loop/VISION.md`に溜まっていた「critical design audit」の5項目のうち最優先(#1: TodayタブのThis Weekストリップがタブバーに隠れて見切れる)を実装・検証・コミットしました。
+
+- **原因**: `TodayView.swift`のScrollView内側コンテンツに付いていた`.padding(.bottom, 128)`はスクロールと一緒に流れてしまうため、実際にはアラーム設定行がiOS 26のフロー ティングタブバーの裏に隠れていた(実機相当シミュレータのスクリーンショットで確認済み、taste の話ではなく実バグ)。
+- **修正**: 128ptの確保をScrollView自体の`.safeAreaInset(edge: .bottom)`に移動。同じ修正は`SkyGridView`/`BuddiesView`に既に入っており、Todayタブだけ取り残されていた形。
+- **実装はCodexに委譲**(方針通り)、差分は自分で直接読んで確認。
+- 独立レビュー: swift-reviewer(sonnet) → Approve、CRITICAL/HIGHなし(MEDIUM1件: `128`が3ファイルに重複=マジックナンバー、次回そのファイルを触るときに定数化すればよい、今回はスコープ外)。
+- **自分で独立して再実行**(Codexの自己申告を信用せず): `xcodebuild test` 270green、Release `xcodebuild build` 0エラー。
+- 前後スクリーンショット(`screenshots/ui-audit-today-clipping-{before,after}.png`)で目視確認済み。
+
+`.loop/VISION.md`のTODOチェックリストと`.loop/state.json`を更新し、明示パスのみ(`git add -A`なし)でコミット(`8d49253`)。`firebase deploy`は未実行、push もしていません。
+
+**未検証・残作業**: design audit の残り4項目(Buddiesの招待導線統一、reveal-gateの視覚強化、Settings のPro行差別化、Share-yearのドットコントラスト)、およびonboardingのpace/frequency削減(計測待ちで意図的に保留)、最終テスト/ビルド/スクリーンショットまとめのdev-note。次イテレーションで継続予定です。
+VISION.md still has 3 unchecked TODO item(s):
+505:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
+1016:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 19:34:20] VERIFY failing (rc=1). Identical-failure streak: 1/3.

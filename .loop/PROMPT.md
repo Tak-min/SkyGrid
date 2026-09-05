@@ -39,14 +39,28 @@ iteration left off.
      Firestore-rules/buddy-model migration specifically, also consider `security-reviewer` on
      **opus** once, given it's a privacy-boundary change.
 
-3. Implement the step. Never invent unverifiable claims (a fake source, a fake metric, a
+3. **If this step touches anything user-visible (colors, layout, components, copy tone,
+   composition): load `.loop/antislop/antislop.md` and `.loop/antislop/skills/antislop-ui/
+   SKILL.md` and `DESIGN.md` first (owner instruction, 2026-09-05).** `DESIGN.md` gives the
+   dials (ENERGY 1 / RHYTHM 2 / MOTION 1) and why the sky-gradient palette is purpose-justified,
+   not a slop tell — do not "fix" the palette itself; the audit's actual finding is inconsistent
+   execution and connective-tissue screens defaulting to a generic card-stack template with no
+   second identity device. Pass the relevant excerpt of both files into the Codex delegation
+   prompt (Codex does not read your VISION.md context automatically). Before this step's commit,
+   run the **UI Skill Checklist** (end of `antislop-ui/SKILL.md`) and the core **Delivery Gate**'s
+   Purpose-Gate + Liveliness + Craftsmanship blocks (skip the web-only items: navbar links,
+   pricing tiers, keyboard-Tab order does not apply the same way to a touch UI but focus/contrast
+   still does) as a PASS/FAIL report in this iteration's VISION.md status note. A FAIL means fix
+   it in the same iteration before committing, not ship-and-note.
+
+4. Implement the step. Never invent unverifiable claims (a fake source, a fake metric, a
    "users will love this" line with no evidence) — if something is genuinely unmeasured, write
    `unmeasured` and say what the cheapest test would be, per the kernel's claim/bet discipline.
 
-4. If the step touches real logic, dispatch the review agent from step 2 before trusting it.
+5. If the step touches real logic, dispatch the review agent from step 2 before trusting it.
    Address CRITICAL and HIGH findings now, in this same iteration.
 
-5. Run `.loop/verify.sh` from the repo root (this is also the headless driver's `LOOP_VERIFY_CMD`
+6. Run `.loop/verify.sh` from the repo root (this is also the headless driver's `LOOP_VERIFY_CMD`
    — it fails while any VISION.md TODO item is unchecked, and only then runs the real
    `xcodebuild test` + Release `xcodebuild build`, both with explicit `-project`/`-scheme`, never
    piped through anything that could mask their exit code). Note: **the headless driver exits the
@@ -54,11 +68,11 @@ iteration left off.
    checklist all-checked, unless the work behind it is genuinely done; a false-green here stops
    the loop early on unfinished work, which already happened twice before this script existed.
 
-6. Update `.loop/VISION.md`'s TODO checklist (check off what's done, add anything newly
+7. Update `.loop/VISION.md`'s TODO checklist (check off what's done, add anything newly
    discovered — e.g. a sub-step the recon revealed) and write a one-line status to
    `.loop/state.json` (`{"iteration": N, "status": "...", "verify_rc": ..., "same_count": ...}`).
 
-7. `git add <explicit paths you touched>` — **never `git add -A`**, this repo has a concurrent
+8. `git add <explicit paths you touched>` — **never `git add -A`**, this repo has a concurrent
    unrelated session writing to `videos/joespov-skygrid-remix/`. Commit with a clear message
    (pre-authorized this session — do not push).
 
@@ -71,7 +85,7 @@ iteration left off.
    App Store Connect listing fix) — it is plain bullets, not checklist items, specifically so it
    can never block `.loop/verify.sh`'s Definition-of-Done check; leave it exactly as-is.
 
-8. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
+9. Stop. The driver handles checkpoints, the next iteration, and stop conditions.
 
 If you believe every item in the Definition of Done (`.loop/VISION.md`) is fully and verifiably
 met, **first re-read OVERNIGHT CONTINUOUS-DESIGN MODE at the top of VISION.md** — while it is in
