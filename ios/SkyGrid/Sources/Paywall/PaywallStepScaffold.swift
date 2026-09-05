@@ -45,7 +45,15 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
             .padding(.horizontal, SGSpacing.xl)
             .padding(.top, SGSpacing.md)
             .padding(.bottom, SGSpacing.sm)
-            .background(.ultraThinMaterial)
+            // Material resolves from the system appearance and was the last
+            // light-gray strip in the dark paywall. This fixed stage surface keeps
+            // the purchase controls visually continuous with the screen beneath.
+            .background(SGT.surface)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(SGT.accentSecondary.opacity(0.32))
+                    .frame(height: 1)
+            }
         }
     }
 
