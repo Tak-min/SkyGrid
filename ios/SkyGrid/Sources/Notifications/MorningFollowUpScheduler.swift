@@ -34,6 +34,23 @@ enum MorningFollowUpScheduler {
         startingFrom today: LocalDate,
         dayCount: Int = MorningRitualPolicy.followUpWindowDays
     ) -> [(wakeDay: LocalDate, deliveryDay: LocalDate, fireComponents: DateComponents)] {
+        plannedFollowUps(
+            wakeGoalMinutes: wakeGoalMinutes,
+            schedules: MorningAlarmSchedule.migrate(morningAlarmEnabled: true, wakeGoalMinutes: wakeGoalMinutes),
+            startingFrom: today,
+            dayCount: dayCount
+        )
+    }
+
+    /// The schedule-set form filters wake days before computing their one-shot
+    /// follow-up. The legacy overload above deliberately supplies one every-day
+    /// schedule so existing single-alarm callers retain their current behavior.
+    static func plannedFollowUps(
+        wakeGoalMinutes: Int,
+        schedules: [MorningAlarmSchedule],
+        startingFrom today: LocalDate,
+        dayCount: Int = MorningRitualPolicy.followUpWindowDays
+    ) -> [(wakeDay: LocalDate, deliveryDay: LocalDate, fireComponents: DateComponents)] {
         (0..<dayCount).map { offset in
             let wakeDay = today.adding(days: offset)
             let components = fireComponents(wakeGoalMinutes: wakeGoalMinutes, wakeDay: wakeDay)
@@ -43,6 +60,9 @@ enum MorningFollowUpScheduler {
                 fireComponents: components
             )
         }
+        .filter { planned in
+            schedules.contains { $0.isEnabled && $0.weekdays.contains(planned.wakeDay.weekday) }
+        }
     }
 
     /// Idempotent: clears every pending/delivered follow-up, then re-arms the
@@ -51,6 +71,18 @@ enum MorningFollowUpScheduler {
     /// cancel-then-reschedule discipline. No-ops silently if notifications were
     /// never authorized — this is a soft nudge, not the primary alarm.
     static func refreshWindow(wakeGoalMinutes: Int, today: LocalDate) async {
+        await refreshWindow(
+            wakeGoalMinutes: wakeGoalMinutes,
+            schedules: MorningAlarmSchedule.migrate(morningAlarmEnabled: true, wakeGoalMinutes: wakeGoalMinutes),
+            today: today
+        )
+    }
+
+    static func refreshWindow(
+        wakeGoalMinutes: Int,
+        schedules: [MorningAlarmSchedule],
+        today: LocalDate
+    ) async {
         await cancelAll()
         guard LocalDefaults.morningAlarmEnabled else { return }
 
@@ -59,7 +91,11 @@ enum MorningFollowUpScheduler {
         let authorized = [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus)
         guard authorized else { return }
 
-        for (_, deliveryDay, components) in plannedFollowUps(wakeGoalMinutes: wakeGoalMinutes, startingFrom: today) {
+        for (_, deliveryDay, components) in plannedFollowUps(
+            wakeGoalMinutes: wakeGoalMinutes,
+            schedules: schedules,
+            startingFrom: today
+        ) {
             guard deliveryDay.docID != LocalDefaults.lastCapturedLocalDateID else { continue }
             let content = UNMutableNotificationContent()
             content.title = "Today's sky"

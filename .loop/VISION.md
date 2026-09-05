@@ -656,6 +656,43 @@ a separate session.
       (registers the new test file only). Not deployed (client-only, nothing to deploy). **Next
       step**: §2.10 step 3, scheduler reconcile (§2.4) — the scheduler actually emitting
       prefixed identifiers, now that the router recognizes them ahead of time.
+      **5C step 3, first slice (reminder-fallback reconcile + follow-up weekday-awareness, §2.4
+      + §2.10 step 3) done and committed (2026-09-05, Codex + main-loop verify).** Scoped
+      deliberately to the pre-AlarmKit reminder path only — AlarmKit's own multi-schedule
+      rework, the re-alarm loop (§2.5), and UI/copy (§2.6) remain open, in that order. Added a
+      pure `morningReminderReconcilePlan(schedules:currentPendingOccurrences:)` (testable, no
+      `UNUserNotificationCenter` dependency) that computes which `(schedule, weekday)`
+      occurrences under `multiScheduleIdentifierPrefix` need adding/cancelling, plus
+      `MorningAlarmScheduler.scheduleReminders(schedules:)` wiring it to real pending requests —
+      additive beside the existing single-value `enable`/`enableReminderFallback` entry points,
+      not yet wired into any call site (still dead code by design, matching the step-by-step
+      migration this loop has used for every 5C slice so far). `MorningFollowUpScheduler` gained
+      a schedule-set overload of `plannedFollowUps`/`refreshWindow` that skips a wake day whose
+      weekday isn't covered by any enabled schedule; the legacy single-value overloads delegate
+      to it via `MorningAlarmSchedule.migrate(morningAlarmEnabled: true, ...)` and stay
+      byte-for-byte behavior-preserving for the existing everyday-schedule case (asserted by a
+      dedicated test). **swift-reviewer (sonnet) caught one real CRITICAL and one related HIGH
+      before commit, both fixed in a second Codex pass, independently re-verified by the main
+      loop, not just Codex's own report:** (1) CRITICAL — the first pass's reconcile plan
+      compared occurrences by identifier only (scheduleID+weekday), so editing an existing
+      schedule's `minutesAfterMidnight` with its weekday set unchanged was silently treated as
+      already-satisfied and the stale-time notification kept firing forever; fixed by having
+      `scheduleReminders` read each pending request's actual `UNCalendarNotificationTrigger`
+      hour/minute and having the reconcile plan compare on content match, not just identifier
+      match. (2) HIGH — the partial-failure guard against a zero-alarm gap only special-cased
+      the legacy bare identifier; generalized via
+      `morningReminderCancellationsAfterAdding(plan:successfullyAddedIdentifiers:)`, which now
+      cancels nothing at all in a pass where any intended addition failed (conservative: stale
+      requests are retained and cleaned up on the next successful reconcile, never silently
+      dropped with no replacement). New/extended Swift Testing coverage for both fixes (same-id
+      time-change-triggers-replacement case, partial-failure-retains-old-occurrence case). Main
+      loop independently re-ran `xcodebuild test -only-testing:SkyGridTests` after the fix
+      (234/234 green, not just trusting Codex's reported 238) — not deployed (client-only,
+      nothing to deploy). **Still open for step 3**: wiring `scheduleReminders`/the
+      schedule-aware follow-up refresh into real call sites (`enable`/`enableReminderFallback`/
+      `resyncIfNeeded`), and the equivalent AlarmKit-side multi-schedule reconcile (currently
+      still single-alarm-only) — deferred as a separate slice per this loop's smallest-step
+      discipline, same reasoning as every earlier 5C step.
 - [x] Share artifact: day-1 artifact + thumbnail-legible design are **already fixed** (C1/C2) —
       do not redesign the cards; only close the *access-path* gap (see the Today share-button
       item above) and re-verify thumbnail legibility empirically if touched. **Re-verified

@@ -52,6 +52,87 @@ enum MorningAlarmState: Equatable, Sendable {
     }
 }
 
+/// A single repeating local-notification occurrence in the reminder fallback.
+/// Keeping this value separate from `UNNotificationRequest` makes the reconcile
+/// decision deterministic and independently testable.
+struct MorningReminderOccurrence: Equatable, Sendable {
+    let schedule: MorningAlarmSchedule
+    let weekday: Int
+
+    var identifier: String {
+        MorningAlarmScheduler.reminderIdentifier(scheduleID: schedule.id, weekday: weekday)
+    }
+}
+
+/// The parts of a currently pending fallback request that determine whether its
+/// identifier still represents the desired weekly notification. A missing time
+/// is deliberately treated as stale: a malformed/non-calendar request must not
+/// block the correctly configured replacement from being installed.
+struct MorningReminderPendingOccurrence: Equatable, Sendable {
+    let identifier: String
+    let hour: Int?
+    let minute: Int?
+
+    func matches(_ occurrence: MorningReminderOccurrence) -> Bool {
+        hour == occurrence.schedule.minutesAfterMidnight / 60
+            && minute == occurrence.schedule.minutesAfterMidnight % 60
+    }
+}
+
+struct MorningReminderReconcilePlan: Equatable, Sendable {
+    let additions: [MorningReminderOccurrence]
+    let cancellations: Set<String>
+}
+
+/// Computes the desired reminder-fallback set without consulting notification
+/// authorization or `UNUserNotificationCenter`. A time mismatch for an otherwise
+/// matching identifier is a replacement, not a no-op. `currentPendingOccurrences`
+/// is intentionally restricted by the caller to the legacy/multi-schedule namespace.
+func morningReminderReconcilePlan(
+    schedules: [MorningAlarmSchedule],
+    currentPendingOccurrences: [MorningReminderPendingOccurrence]
+) -> MorningReminderReconcilePlan {
+    let desired = schedules
+        .filter(\.isEnabled)
+        .flatMap { schedule in
+            schedule.weekdays
+                .filter { (1...7).contains($0) }
+                .sorted()
+                .map { MorningReminderOccurrence(schedule: schedule, weekday: $0) }
+        }
+    let pending = currentPendingOccurrences.filter {
+        $0.identifier == MorningAlarmScheduler.notificationIdentifier
+            || $0.identifier.hasPrefix(MorningAlarmScheduler.multiScheduleIdentifierPrefix)
+    }
+    let pendingByIdentifier = Dictionary(uniqueKeysWithValues: pending.map { ($0.identifier, $0) })
+
+    return MorningReminderReconcilePlan(
+        additions: desired.filter { occurrence in
+            guard let pendingOccurrence = pendingByIdentifier[occurrence.identifier] else { return true }
+            return !pendingOccurrence.matches(occurrence)
+        },
+        cancellations: Set(pending.compactMap { pendingOccurrence in
+            guard let desiredOccurrence = desired.first(where: { $0.identifier == pendingOccurrence.identifier }) else {
+                return pendingOccurrence.identifier
+            }
+            return pendingOccurrence.matches(desiredOccurrence) ? nil : pendingOccurrence.identifier
+        })
+    )
+}
+
+/// A failed add must never create a zero-alarm gap by removing an older request
+/// in the same reconcile pass. Retaining all stale requests is conservative, and
+/// the next successful reconcile removes them. A successful add with the same
+/// identifier already replaced its old request, so it must not be removed again.
+func morningReminderCancellationsAfterAdding(
+    plan: MorningReminderReconcilePlan,
+    successfullyAddedIdentifiers: Set<String>
+) -> Set<String> {
+    let additionIdentifiers = Set(plan.additions.map(\.identifier))
+    guard additionIdentifiers.isSubset(of: successfullyAddedIdentifiers) else { return [] }
+    return plan.cancellations.subtracting(successfullyAddedIdentifiers)
+}
+
 /// One stable, idempotent morning wake schedule. A fixed UUID means updating the
 /// selected time replaces the existing AlarmKit schedule instead of accumulating
 /// alarms. The notification identifier remains public for NotificationRouter.
@@ -61,6 +142,10 @@ enum MorningAlarmScheduler {
     /// The trailing dot keeps it distinct from the legacy bare identifier above.
     static let multiScheduleIdentifierPrefix = "com.takmin.skygrid.morning-reminder."
     static let alarmIdentifier = UUID(uuidString: "8A9A5E2E-4B4A-4E8B-9382-FA8E3F3EF1CB")!
+
+    static func reminderIdentifier(scheduleID: UUID, weekday: Int) -> String {
+        "\(multiScheduleIdentifierPrefix)\(scheduleID.uuidString).\(weekday)"
+    }
 
     static var preferredKind: MorningAlarmKind {
         if #available(iOS 26.0, *), LocalDefaults.morningAlarmBackend != "reminder" { return .systemAlarm }
@@ -175,6 +260,89 @@ enum MorningAlarmScheduler {
         // cold launch.
     }
 
+    /// Reconciles the pre-AlarmKit fallback as one weekly local notification per
+    /// enabled schedule weekday. This is deliberately additive beside the legacy
+    /// single-value entry points until their callers migrate to schedule sets.
+    static func scheduleReminders(schedules: [MorningAlarmSchedule]) async -> MorningAlarmState {
+        let center = UNUserNotificationCenter.current()
+        let requests = await center.pendingNotificationRequests()
+        let pendingOccurrences: [MorningReminderPendingOccurrence] = requests.compactMap { request -> MorningReminderPendingOccurrence? in
+            guard request.identifier == notificationIdentifier
+                    || request.identifier.hasPrefix(multiScheduleIdentifierPrefix)
+            else { return nil }
+            let trigger = request.trigger as? UNCalendarNotificationTrigger
+            return MorningReminderPendingOccurrence(
+                identifier: request.identifier,
+                hour: trigger?.dateComponents.hour,
+                minute: trigger?.dateComponents.minute
+            )
+        }
+        let plan = morningReminderReconcilePlan(
+            schedules: schedules,
+            currentPendingOccurrences: pendingOccurrences
+        )
+
+        guard schedules.contains(where: \.isEnabled) else {
+            center.removePendingNotificationRequests(withIdentifiers: Array(plan.cancellations))
+            LocalDefaults.morningAlarmEnabled = false
+            return .off(.reminder)
+        }
+
+        let settings = await center.notificationSettings()
+        let authorization: UNAuthorizationStatus
+        switch settings.authorizationStatus {
+        case .notDetermined:
+            do {
+                let granted = try await center.requestAuthorization(options: [.alert, .sound])
+                authorization = granted ? .authorized : .denied
+            } catch {
+                return .failed(.reminder)
+            }
+        default:
+            authorization = settings.authorizationStatus
+        }
+
+        guard authorization != .denied else { return .denied(.reminder) }
+        guard authorization == .authorized || authorization == .provisional || authorization == .ephemeral else {
+            return .failed(.reminder)
+        }
+
+        guard !plan.additions.isEmpty || !plan.cancellations.isEmpty else {
+            return .scheduled(.reminder)
+        }
+
+        var addedIdentifiers = Set<String>()
+        var didFail = false
+        for occurrence in plan.additions {
+            let content = reminderContent()
+            var components = DateComponents()
+            components.weekday = occurrence.weekday
+            components.hour = occurrence.schedule.minutesAfterMidnight / 60
+            components.minute = occurrence.schedule.minutesAfterMidnight % 60
+            let request = UNNotificationRequest(
+                identifier: occurrence.identifier,
+                content: content,
+                trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            )
+            do {
+                try await center.add(request)
+                addedIdentifiers.insert(occurrence.identifier)
+            } catch {
+                didFail = true
+            }
+        }
+
+        let cancellations = morningReminderCancellationsAfterAdding(
+            plan: plan,
+            successfullyAddedIdentifiers: addedIdentifiers
+        )
+        center.removePendingNotificationRequests(withIdentifiers: Array(cancellations))
+
+        if didFail { return .failed(.reminder) }
+        LocalDefaults.morningAlarmEnabled = true
+        return .scheduled(.reminder)
+    }
+
     private static func reminderState() async -> MorningAlarmState {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
@@ -185,7 +353,10 @@ enum MorningAlarmScheduler {
             return .denied(.reminder)
         case .authorized, .provisional, .ephemeral:
             let requests = await center.pendingNotificationRequests()
-            return requests.contains(where: { $0.identifier == notificationIdentifier })
+            return requests.contains(where: {
+                $0.identifier == notificationIdentifier
+                    || $0.identifier.hasPrefix(multiScheduleIdentifierPrefix)
+            })
                 ? .scheduled(.reminder)
                 : .off(.reminder)
         @unknown default:
@@ -215,11 +386,7 @@ enum MorningAlarmScheduler {
         }
 
         center.removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
-        let content = UNMutableNotificationContent()
-        content.title = "Capture the sky"
-        content.body = ""
-        content.sound = .default
-        content.categoryIdentifier = notificationIdentifier
+        let content = reminderContent()
 
         var components = DateComponents()
         components.hour = minutes / 60
@@ -236,6 +403,15 @@ enum MorningAlarmScheduler {
         } catch {
             return .failed(.reminder)
         }
+    }
+
+    private static func reminderContent() -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        content.title = "Capture the sky"
+        content.body = ""
+        content.sound = .default
+        content.categoryIdentifier = notificationIdentifier
+        return content
     }
 }
 

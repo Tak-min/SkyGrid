@@ -23,6 +23,51 @@ struct MorningFollowUpSchedulerTests {
         #expect(planned[0].fireComponents.day == today.day)
     }
 
+    @Test("does not plan a follow-up on a weekday no enabled alarm covers")
+    func excludesUnscheduledWeekdays() {
+        // 2026-08-02 is Sunday (weekday 1); this schedule only covers Monday.
+        let mondayOnly = MorningAlarmSchedule(
+            id: UUID(),
+            minutesAfterMidnight: 360,
+            weekdays: [2],
+            isEnabled: true
+        )
+
+        let planned = MorningFollowUpScheduler.plannedFollowUps(
+            wakeGoalMinutes: 360,
+            schedules: [mondayOnly],
+            startingFrom: today,
+            dayCount: 2
+        )
+
+        #expect(planned.map(\.wakeDay) == [today.adding(days: 1)])
+    }
+
+    @Test("an every-day schedule preserves the legacy every-day window")
+    func everyDaySchedulePreservesLegacyBehavior() {
+        let everyDay = MorningAlarmSchedule(
+            id: UUID(),
+            minutesAfterMidnight: 360,
+            weekdays: Set(1...7),
+            isEnabled: true
+        )
+        let legacy = MorningFollowUpScheduler.plannedFollowUps(
+            wakeGoalMinutes: 360,
+            startingFrom: today,
+            dayCount: 3
+        )
+        let scheduleAware = MorningFollowUpScheduler.plannedFollowUps(
+            wakeGoalMinutes: 360,
+            schedules: [everyDay],
+            startingFrom: today,
+            dayCount: 3
+        )
+
+        #expect(scheduleAware.map(\.wakeDay) == legacy.map(\.wakeDay))
+        #expect(scheduleAware.map(\.deliveryDay) == legacy.map(\.deliveryDay))
+        #expect(scheduleAware.map(\.fireComponents) == legacy.map(\.fireComponents))
+    }
+
     @Test("a wake time within followUpDelayMinutes of midnight is keyed to its delivery day")
     func crossesMidnightAndUsesDeliveryDayIdentity() {
         let lateWake = 23 * 60 + 50 // 23:50

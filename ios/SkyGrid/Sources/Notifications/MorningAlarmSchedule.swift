@@ -1,6 +1,6 @@
 import Foundation
 
-struct MorningAlarmSchedule: Codable, Sendable, Identifiable {
+struct MorningAlarmSchedule: Codable, Sendable, Identifiable, Equatable {
     let id: UUID
     var minutesAfterMidnight: Int
     var weekdays: Set<Int>
