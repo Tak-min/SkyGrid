@@ -1,11 +1,15 @@
 import SwiftUI
 
-/// Read-cost bounded to 12 buddies shown here (blueprint §4 gotcha #9) — a full
-/// buddy list lives elsewhere.
+/// The strip displays at most `displayLimit` buddies. Status reads are deliberately
+/// not truncated here: the server-authoritative buddy circle cap (8) is below this
+/// display limit (12), and `RevealSignal` is also the Buddies tab's complete status
+/// source.
 ///
 /// Each tile's state already encodes the reveal gate (see `BuddyTile`), so this row
 /// is purely layout — it no longer needs to know whether the viewer has posted.
 struct BuddyRow: View {
+    static let displayLimit = 12
+
     let buddies: [TodayViewModel.BuddyStatus]
     let today: LocalDate
     let imageFetching: any ImageFetching
@@ -13,7 +17,7 @@ struct BuddyRow: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: SGSpacing.lg) {
-                ForEach(buddies.prefix(12)) { buddy in
+                ForEach(buddies.prefix(Self.displayLimit)) { buddy in
                     BuddyTile(
                         displayName: buddy.displayName,
                         revealState: buddy.revealState,
