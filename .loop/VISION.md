@@ -967,6 +967,34 @@ a separate session.
       copy should lean on what Erly lacks (year-long archive, buddy mutual-reveal) rather
       than the single-action framing. Keyword-field strings/promotional text/conversion
       data left honestly `unverified` (not publicly visible).
+- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
+      `dev-notes/critical-design-audit_2026-09-05.md`) — 5 concrete visual/UX fixes, in
+      priority order:**
+      1. **Today: fix the "This Week" strip actually being clipped behind the tab bar** —
+         a real layout bug (not taste), highest priority because it's the cheapest fix with
+         the most damage to perceived polish in a minimalist-styled app. Screenshot before/after.
+      2. **Buddies: unify the two simultaneous invite surfaces** (handle-request card and
+         invite-link-code card currently stacked with no divider or priority) into one clear
+         primary path with the other demoted/secondary, and give buddy rows a photo or
+         initials-avatar instead of a bare lock icon — the circle list currently has zero visual
+         differentiation between people.
+      3. **Give the "sealed until you post" reveal-gate state real visual weight** (per-person
+         color, a photo silhouette, or a subtle glow/motion cue) instead of a flat gray circle +
+         padlock, on both Today's buddy strip and the Buddies tab rows — this is the product's
+         core emotional mechanic and currently has the least design attention of any surface.
+      4. **Settings: differentiate the Pro/paywall row visually from support/utility rows** — it
+         currently has identical visual weight to "Contact us" despite being the primary revenue
+         entry point.
+      5. **Share-year card: fix the Jan→Dec activity-dot timeline's contrast** (dark gray dots on
+         near-black — likely illegible at actual Story-share render size), the one real defect on
+         the strongest screen in the app.
+      Each fix: implement via Codex (routing per RE-PIVOT above), verify with a fresh
+      `-SkyGridUIAudit` screenshot of the affected scenario before/after, independently re-run
+      `xcodebuild test` (not Codex's self-report), commit explicit paths only. Do not attempt a
+      full visual redesign in one pass — these 5 are deliberately the smallest concrete,
+      verifiable steps extracted from the audit; if the audit surfaces something bigger (e.g. a
+      genuine onboarding-length rework), record it as a new item rather than scope-creeping this
+      one.
 - [ ] Full test suite green + Release build green, final dev-note summarizing before/after
       (re-shoot `screenshots/ui-audit-*.png` first — current ones are stale, see correction
       above). **Codex status (2026-09-05):** `xcodebuild test -only-testing:SkyGridTests`
