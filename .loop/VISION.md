@@ -1184,3 +1184,26 @@ a separate session.
       persisted-schedule behavior is already covered by the pure scheduling-input tests. The
       Release generic-iOS build succeeds. Fresh visual screenshots and the final before/after
       dev-note remain open.
+- [ ] **Holistic audit finding (2026-09-05, main loop, real Simulator screenshots — both
+      remaining explicit TODOs above stayed externally blocked per the daytime re-activation
+      note, so per OVERNIGHT CONTINUOUS-DESIGN MODE this is the self-sourced next item):**
+      `WelcomeView.swift` (onboarding step 1/9, the very first screen every new user sees) has
+      an oversized, unstructured dead zone between the `RitualGridMark()` hero graphic and the
+      "Keep one morning sky." headline — roughly a quarter of the screen's vertical space is
+      blank. Root cause: two flexible `Spacer(minLength:)` calls (24pt and 16pt *minimums*, no
+      maximum) sit back-to-back in a top-level `VStack` that fills the full screen height, so
+      they absorb all leftover space instead of the intended small gaps — the `minLength`
+      numbers look deliberate in the source but do nothing to cap the actual rendered gap.
+      DESIGN.md's RHYTHM 2 dial explicitly wants hero screens (onboarding welcome named
+      directly) to have "real composition," not an accidental void — this reads as an
+      unfinished/placeholder layout on the highest-stakes first impression, not a calm
+      (ENERGY 1) intentional pause. Confirmed via `-SkyGridUIAudit -SkyGridUIAuditScenario
+      onboarding` on iPhone 17 (see `screenshots/ui-audit-welcome-deadspace-before.png`, not yet
+      captured — capture before implementing). Fix: replace the two flexible Spacers with fixed
+      `SGSpacing` token gaps (reuse existing tokens, no new ones) so the hero graphic and text
+      block sit in a single deliberately-composed group instead of being pushed apart by
+      leftover screen height; only `PersonalizationQuestionsView.swift` has a similar
+      `Spacer(minLength: 0)` and that one is a genuine 0-minimum bottom-anchor, not the same bug
+      — do not touch it. Implement via Codex, verify with a fresh before/after screenshot of the
+      `onboarding` scenario, independently re-run the affected onboarding UI/unit tests (not
+      Codex's self-report), commit explicit paths only.
