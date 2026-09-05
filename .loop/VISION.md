@@ -967,9 +967,10 @@ a separate session.
       copy should lean on what Erly lacks (year-long archive, buddy mutual-reveal) rather
       than the single-action framing. Keyword-field strings/promotional text/conversion
       data left honestly `unverified` (not publicly visible).
-- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
+- [x] **Critical design audit (2026-09-05, main loop, real screenshots — see
       `dev-notes/critical-design-audit_2026-09-05.md`) — 5 concrete visual/UX fixes, in
-      priority order:**
+      priority order. All 5 are DONE as of this iteration (item 5, the contrast fix, was the
+      last one open); see each numbered sub-item below for its own verification record.**
       1. **DONE (2026-09-05, Codex + main-loop verify): Today: fix the "This Week" strip
          actually being clipped behind the tab bar.** Root cause confirmed via real
          screenshot (`screenshots/ui-audit-today-clipping-before.png`, iPhone 17
@@ -1132,10 +1133,34 @@ a separate session.
          purchases", "Community & Safety", and "Contact us" directly below it, all of which keep
          their original plain-icon/regular-weight look. Not deployed (client-only, nothing to
          deploy).
-      5. **Share-year card: fix the Jan→Dec activity-dot timeline's contrast** (dark gray dots on
-         near-black — likely illegible at actual Story-share render size), the one real defect on
-         the strongest screen in the app. *Antislop: R-25 (WCAG AA contrast — treat this as a
-         Hard Gate item, not a taste call).*
+      5. **DONE (2026-09-05, Codex + main-loop verify): Share-year card: fix the Jan→Dec
+         activity-dot timeline's contrast** (dark gray dots on near-black — likely illegible at
+         actual Story-share render size), the one real defect on the strongest screen in the app.
+         *Antislop: R-25 (WCAG AA contrast — treated as a Hard Gate item, not a taste call).*
+         Root cause confirmed by hand-computed WCAG relative-luminance math, then independently
+         recomputed by swift-reviewer: `SGExport.guide` (`ExportTheme.swift`) — the un-captured-
+         day guide dots in `YearMapExportView` — was `#39485B`, giving ≈1.9-2.2:1 contrast against
+         both ends of `SGExport.groundGradient` (`#111A28`→`#0B0E14`), below the WCAG non-text
+         3:1 minimum (SC 1.4.11). Fixed by raising the same token's value only (no new token,
+         `guide` is a single-purpose token with exactly one consumer, confirmed by grep) to
+         `#60748C`, which clears 3:1 against both gradient ends (swift-reviewer's independent
+         recompute: ≈4.0:1 vs `ground`, ≈3.6:1 vs `groundTop`). Doc comment on the token updated
+         in-place to record why and cite R-25, per antislop's R-31 write-the-reason discipline.
+         Implemented via Codex (RE-PIVOT routing); diff independently read by the main loop
+         (confirmed only `ExportTheme.swift` touched, exact hex match, no other file). swift-
+         reviewer (sonnet): **no CRITICAL/HIGH/MEDIUM/LOW** — confirmed single consumer, confirmed
+         the `SGExport` boundary-rule allow-list (`Grid/*ExportView.swift`,
+         `Grid/ShareCardRenderer.swift`, `Milestone/*`) is untouched by a value-only edit, and
+         independently reproduced the contrast math. Antislop check: palette discipline holds (no
+         new color token, R-29); this fix *is* R-25 itself, not a competing consideration; R-31
+         reason is written in-code. Verified with a real Simulator screenshot, not just code read:
+         `-SkyGridUIAudit -SkyGridUIAuditScenario share-year` on iPhone 17
+         (`screenshots/ui-audit-share-year-contrast-after.jpg`) shows the Jan→Dec dot field now
+         clearly legible as a field of small dots with visible posted/un-posted contrast, where the
+         prior color was documented as illegible at this size. Debug build (this build_run_sim) and
+         the existing 270-test Debug/Release suite untouched by this value-only change (no logic
+         path exercises `SGExport.guide` besides SwiftUI rendering, no test asserts the hex).
+         **This closes item 5, the last item of the 5-item critical-design-audit list.**
       **Each fix now also runs the antislop Delivery Gate** (`.loop/antislop/antislop.md` +
       `.loop/antislop/skills/antislop-ui/SKILL.md`, both fetched 2026-09-05 from
       github.com/miqdadbadjuber/anti-slop, MIT-licensed — owner-directed adoption after

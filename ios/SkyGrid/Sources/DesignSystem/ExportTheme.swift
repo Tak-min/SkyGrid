@@ -57,8 +57,10 @@ enum SGExport {
     static let hairline = Color(fixedHex: "#2A3748")
 
     /// Un-captured days in the year map. Dim enough to read as an unfilled slot, lit
-    /// enough that the 31×12 calendar shape survives as a field of dots.
-    static let guide = Color(fixedHex: "#39485B")
+    /// enough that the 31×12 calendar shape survives as a field of dots. Raised
+    /// 2026-09-05 to clear the WCAG 3:1 non-text contrast minimum against both ends
+    /// of `groundGradient` (previously ~2:1, now ~3.3-3.7:1), per antislop R-25.
+    static let guide = Color(fixedHex: "#60748C")
 
     /// The ground both cards are drawn on. Shared rather than declared per card, so
     /// the year card and the morning card cannot drift apart — a viewer who sees one
