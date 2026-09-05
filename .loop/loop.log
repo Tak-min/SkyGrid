@@ -454,3 +454,22 @@ VISION.md still has 3 unchecked TODO item(s):
 970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
 1112:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 20:04:09] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 20:04:09] === iteration 3 / 40 ===
+## このイテレーションの結果
+
+**やったこと**: `.loop/VISION.md`の critical design audit 5項目中 4番目「Settings: Pro/paywall行を support/utility 行から視覚的に差別化」を実装・検証・コミット。
+
+- **原因**: `SettingsView.swift`の「Unlock the full archive」（唯一の収益導線）が「Contact us」等の純粋なユーティリティ行と全く同じ見た目（裸の22ptアイコン、通常ウェイト）だった（antislop R-14違反）。
+- **修正**（Codexに委譲、差分は自分で読んで確認・独自ビルド/テストで再検証）: `settingRow(...)`ヘルパーに`emphasized: Bool = false`を追加。この行だけ`BuddiesView.swift`の既存`BuddyRitualStep`パターンを流用した塗りつぶし円形バッジ（`SGT.ink`/`SGT.background`のみ、新色なし）＋セミボールドタイトルに。他の全行（Restore purchases含む）は無変更。
+- **レビュー**: swift-reviewer(sonnet) → Warning（CRITICAL/HIGHなし）。MEDIUM 2件（`///`コメントの誤った配置、装飾アイコンへの`accessibilityHidden`欠如）は自分で修正・再ビルド確認済み。
+- **検証**: `xcodebuild test`独自実行で266件グリーン確認（Codexの自己申告に依存せず）。実機シミュレータで`-SkyGridUIAuditScenario settings`のスクリーンショットを取得し、Pro行が他行から明確に視覚的に区別されることを目視確認（`screenshots/ui-audit-settings-pro-row-emphasis-after.jpg`）。
+- antislop UI Skill Checklist / Delivery Gateの適用ブロックは全てPASS（詳細をVISION.mdに記載）。
+
+**コミット**: `5e9fc37`（プッシュ・デプロイなし）。`.loop/driver.out`/`loop.log`は無関係な変更のため未add。
+
+**未完了**: 監査項目5（share-yearカードのコントラスト）、オンボーディング頻度カット、最終テスト/ビルドパスは引き続き未着手/ブロック中。`.loop/verify.sh`は想定通り rc=1（3項目未チェック）。ループは継続します。
+VISION.md still has 3 unchecked TODO item(s):
+505:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+970:- [ ] **Critical design audit (2026-09-05, main loop, real screenshots — see
+1154:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 20:13:28] VERIFY failing (rc=1). Identical-failure streak: 1/3.
