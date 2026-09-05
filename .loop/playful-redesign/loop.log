@@ -1,0 +1,41 @@
+[loop-engine 00:51:40] Starting loop. MAX_ITER=15 MODEL=sonnet VERIFY='bash .loop/playful-redesign/verify.sh' NO_PROGRESS_LIMIT=3 BUDGET_USD=0
+[loop-engine 00:51:40] === iteration 1 / 15 ===
+## Iteration 4 complete — one step, committed
+
+**Goal:** the loop's next TODO item, "implement the bounded daily reward state machine, confetti, haptic, and analytics" (`.loop/playful-redesign/VISION.md`).
+
+**What changed** (`ios/SkyGrid/Sources/Reward/` new module + small edits elsewhere):
+- `DailyRewardPolicy` — pure, tested, at-most-once-per-day gate.
+- `RewardBeat` — the five-beat timeline from DESIGN.md's motion contract (pixel-derivation/mosaic-landing beats are sequenced but intentionally render nothing yet — that's Iteration 5's job).
+- `RewardSequenceController` — `@Observable` state machine that fires the started/completed analytics and the landing haptic exactly once, cancels cleanly on interruption without claiming a false completion.
+- `ConfettiView` — deterministic, seeded, one-shot 24-square burst (no endless emitters).
+- `RewardOverlayView` — Moku bracing→delight→settled, confetti at the peak beat, Reduce Motion static-halo equivalent, one VoiceOver announcement at settle.
+- `Haptics.rewardLanded()`, `RewardAnalytics` (started/completed events, `reduced_motion` param, no PII).
+- Wired into `RootView`: resolved the "known risk" iteration 3 flagged — rather than reusing `PostCaptureArming`/`StreakReading` (which answers a different async question), the reward hooks the *already-synchronous* publish-success truth gate that `Haptics.postCompleted()`/`CaptureAnalytics` already use. It's presented via `showCamera`'s own `onDismiss`, ahead of the milestone/paywall arbitration, so it can never be dropped or race a second full-screen celebration.
+- `LocalDefaults.lastRewardPlayedLocalDate`, folded into the existing account-switch reset. `MokuColor` widened from `private` to internal for palette reuse.
+
+**Checks run:**
+- `xcodebuild build` (Debug) — succeeded.
+- `xcodebuild test` — all 280 `SkyGridTests` pass (272 pre-existing + 8 new: `DailyRewardPolicyTests`, `RewardBeatTests`).
+- `xcodebuild build -configuration Release -destination generic/platform=iOS` — succeeded.
+- `xcodegen generate` re-run after adding files, confirmed registered in `project.pbxproj` (iteration 3's exact failure mode, checked this time).
+
+**Not done / deferred on purpose:** no new UI-audit fixture or screenshot this iteration — the reward's placeholder beats would need a second screenshot pass once Iteration 5 fills in the real pixel/mosaic visuals, so that's left for Iteration 8 as planned. Buddy-reveal count isn't wired into the VoiceOver announcement yet (Iteration 7).
+
+Committed as `4113c74`, explicit paths only. `VISION.md`/`state.json` updated with checkbox + evidence. Not pushed (per guardrails).
+.loop/playful-redesign/VISION.md still has 14 unchecked TODO item(s):
+34:- [ ] The general-purpose home `TabView` is removed from the primary daily flow; archive, buddies,
+36:- [ ] The camera uses the latest downloaded Locket-style reference
+39:- [ ] SkyGrid has one original sky/pixel mascot with a coherent visual role across at least the
+41:- [ ] Every successful capture triggers one bounded celebration sequence with mascot motion,
+43:- [ ] The captured photo visibly transforms into a deliberately pixelated tile and lands in the
+45:- [ ] Buddy reveal remains server-authoritative and private; no animation exposes a photo before
+47:- [ ] Analytics can distinguish reward started/completed/reduced-motion without PII, and the
+49:- [ ] Fresh UI-audit screenshots cover the main pre-capture, framed camera/review, reward, mosaic,
+51:- [ ] Focused tests, full `SkyGridTests`, Debug build, and Release build pass; independent root review
+98:- [ ] Iteration 5: implement photo-to-pixel-tile transformation and mosaic landing motion.
+99:- [ ] Iteration 6: replace primary tab navigation with the unified daily/mosaic experience while
+101:- [ ] Iteration 7: connect server-authoritative buddy reveal to the reward sequence.
+102:- [ ] Iteration 8: add/refresh audit scenarios and screenshots.
+103:- [ ] Iteration 9: run full validation, resolve review findings, and write the dev-note.
+[loop-engine 01:04:26] VERIFY failing (rc=1). Identical-failure streak: 1/3.

@@ -504,3 +504,12 @@ VISION.md still has 3 unchecked TODO item(s):
 1179:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 1187:- [ ] **Holistic audit finding (2026-09-05, main loop, real Simulator screenshots — both
 [loop-engine 20:26:12] VERIFY failing (rc=1). Identical-failure streak: 2/3.
+[loop-engine 20:26:12] === iteration 7 / 40 ===
+You've hit your session limit · resets 11:20pm (Asia/Tokyo)
+[loop-engine 20:26:17] claude -p returned non-zero on iteration 7 (continuing to verify).
+VISION.md still has 3 unchecked TODO item(s):
+505:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+1179:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+1187:- [ ] **Holistic audit finding (2026-09-05, main loop, real Simulator screenshots — both
+[loop-engine 20:26:17] VERIFY failing (rc=1). Identical-failure streak: 3/3.
+[loop-engine 20:26:17] HALT (1): no progress: identical verify result 3 iterations in a row — agent is stuck.
