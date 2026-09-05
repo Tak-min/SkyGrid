@@ -1087,9 +1087,51 @@ a separate session.
          self-report: `xcodebuild test -only-testing:SkyGridTests` — 266 Swift-Testing tests in
          45 suites green; Release `xcodebuild build -configuration Release -destination
          'generic/platform=iOS'` succeeded, 0 errors. Not deployed (client-only).
-      4. **Settings: differentiate the Pro/paywall row visually from support/utility rows** — it
-         currently has identical visual weight to "Contact us" despite being the primary revenue
-         entry point. *Antislop: R-14 (identical-weight rows with no hierarchy reason).*
+      4. **DONE (2026-09-05, Codex + main-loop verify): Settings: differentiate the Pro/paywall
+         row visually from support/utility rows** — it previously had identical visual weight to
+         "Contact us" (bare 22pt SF Symbol, regular-weight title) despite being the app's single
+         primary revenue entry point. *Antislop: R-14 (identical-weight rows with no hierarchy
+         reason).*
+         Fix, confined to `ios/SkyGrid/Sources/Settings/SettingsView.swift` only: the private
+         `settingRow(...)` helper gained one new `emphasized: Bool = false` parameter (default
+         `false`, every other call site — Archive Protection, Morning, Safety, Support, Account,
+         and the already-Pro state — untouched). When `true` (only the "Unlock the full archive"
+         CTA passes it), the leading icon renders inside a filled 30pt circle badge — reusing the
+         exact filled-circle-icon device already shipped in `BuddiesView.swift`'s
+         `BuddyRitualStep` (`SGT.ink` fill, `SGT.background` icon tint, both pre-existing
+         tokens, no new color) — and the row title gets `.fontWeight(.semibold)`. A `//` comment
+         states the reason (R-31 discipline): this is the app's single revenue entry point,
+         distinct from the utility rows below it.
+         **swift-reviewer (sonnet), run over the actual diff, not Codex's self-report:**
+         Warning-level, no CRITICAL/HIGH. Two MEDIUM notes, both fixed in the same iteration by
+         the main loop: (1) the initial `///` comment was placed inside the parameter list where
+         it isn't a valid Swift doc-comment attachment point (misleading, functions as a dead
+         comment) — changed to a plain `//` matching this file's own convention for
+         implementation-rationale comments; (2) neither icon branch had
+         `.accessibilityHidden(true)`, so VoiceOver would announce the decorative SF Symbol
+         name ("square grid 3x3") ahead of the row's actual title/detail text — added to both
+         the emphasized and plain icon branches (scoped to this one helper, not a codebase-wide
+         sweep).
+         **Antislop UI Skill Checklist + Delivery Gate, run by the main loop against the final
+         diff — all applicable blocks PASS:** palette — reuses only `SGT.ink`/`SGT.background`,
+         no new tokens (R-01/R-29); accent used at the one CTA moment only, not spread across
+         other rows (Part 3 discipline); R-04/R-09 icon/badge purpose stated inline; R-14 is the
+         rule this fix directly resolves, with the hierarchy reason now written in-code; R-20
+         identity — reuses an established device (`BuddyRitualStep`'s filled-circle badge)
+         rather than inventing a new one; R-25 contrast — `SGT.ink`-on-`SGT.background` is a
+         near-maximal adaptive light/dark contrast pair, both already-audited tokens; no new
+         glass/glow/shadow/radius; MOTION 1 untouched (no animation added).
+         **Independently re-verified by the main loop, not just Codex's report:** `xcodebuild
+         test -project SkyGrid.xcodeproj -scheme SkyGrid -only-testing:SkyGridTests -destination
+         'platform=iOS Simulator,name=iPhone 17'` — 266 Swift-Testing tests in 45 suites green
+         (re-run by the main loop after the reviewer-driven fixes, matching Codex's originally
+         reported 270-with-XCTest count). Verified with a real Simulator screenshot via the
+         `-SkyGridUIAudit -SkyGridUIAuditScenario settings` host on iPhone 17
+         (`screenshots/ui-audit-settings-pro-row-emphasis-after.jpg`): "Unlock the full archive"
+         now reads with a filled dark badge icon and bold title, visibly distinct from "Restore
+         purchases", "Community & Safety", and "Contact us" directly below it, all of which keep
+         their original plain-icon/regular-weight look. Not deployed (client-only, nothing to
+         deploy).
       5. **Share-year card: fix the Jan→Dec activity-dot timeline's contrast** (dark gray dots on
          near-black — likely illegible at actual Story-share render size), the one real defect on
          the strongest screen in the app. *Antislop: R-25 (WCAG AA contrast — treat this as a

@@ -36,7 +36,12 @@ struct SettingsView: View {
                         )
                     } else {
                         Button { showPaywall = true } label: {
-                            settingRow("Unlock the full archive", symbol: "square.grid.3x3", detail: "Keep more than your latest 30 days.")
+                            settingRow(
+                                "Unlock the full archive",
+                                symbol: "square.grid.3x3",
+                                detail: "Keep more than your latest 30 days.",
+                                emphasized: true
+                            )
                         }
                         .buttonStyle(.plain)
 
@@ -234,15 +239,29 @@ struct SettingsView: View {
         _ title: String,
         symbol: String,
         detail: String? = nil,
-        accessory: SettingAccessory = .disclosure
+        accessory: SettingAccessory = .disclosure,
+        // `emphasized` is the app's single primary revenue entry point, distinct from utility rows below it.
+        emphasized: Bool = false
     ) -> some View {
         HStack(spacing: SGSpacing.md) {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .medium))
-                .frame(width: 22)
+            if emphasized {
+                // The filled badge distinguishes the app's single revenue CTA from utility rows below.
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(SGT.background)
+                    .frame(width: 30, height: 30)
+                    .background(SGT.ink, in: Circle())
+                    .accessibilityHidden(true)
+            } else {
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .medium))
+                    .frame(width: 22)
+                    .accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(SGFont.body(16))
+                    .fontWeight(emphasized ? .semibold : .regular)
                 if let detail {
                     Text(detail)
                         .font(SGFont.caption(12))
