@@ -88,9 +88,9 @@ Removing the general-purpose tab bar never authorizes removing these routes.
 The photograph supplies most color. Fixed UI colors provide contrast and character:
 
 - **Night Stage** `#080A0F`: camera and reward ground.
-- **Night Stage** is also the settled mosaic and utility ground. There is no
-  light-mode or paper-mode product shell; real sky tiles provide the changing
-  color inside the world.
+- **Settled shell:** follows the system appearance: true white with dark ink in
+  Light Mode, Night Stage with Cloud ink in Dark Mode. It is never the former
+  cream paper. Real sky tiles provide the changing color inside the world.
 - **Cloud** `#F4F1EA`: high-contrast ink and quiet controls on the night stage.
 - **Dawn Spark** `#FF6846`: primary playful accent and Moku's pre-capture spark; never a substitute
   for real sky content.

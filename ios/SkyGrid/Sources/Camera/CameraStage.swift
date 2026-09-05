@@ -133,7 +133,6 @@ struct CameraCaptureControls: View {
 }
 
 enum CameraStageColor {
-    /// Identical to `SGT.background` — the camera stage is no longer a visually
-    /// separate mode, it's the same ground the whole app now uses.
-    static let background = SGT.background
+    /// Capture remains a physical near-black viewfinder in both system appearances.
+    static let background = Color(hex: "#080A0F")
 }

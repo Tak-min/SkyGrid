@@ -30,7 +30,6 @@ struct MilestoneView: View {
             .padding(.horizontal, SGSpacing.xl)
             .padding(.vertical, SGSpacing.xxl)
         }
-        .environment(\.colorScheme, .dark)
         .opacity(hasAppeared ? 1 : 0)
         .scaleEffect(hasAppeared ? 1 : 0.94)
         .task {
@@ -52,13 +51,13 @@ struct MilestoneView: View {
         VStack(spacing: SGSpacing.sm) {
             Text(moment.milestone.title)
                 .font(SGFont.display(64))
-                .foregroundStyle(SGExport.ink)
+                .foregroundStyle(SGT.ink)
             HStack(spacing: SGSpacing.sm) {
                 Text(moment.milestone.headline)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                 MokuScreenMark(state: .delight, side: 54)
             }
-                .foregroundStyle(SGExport.ink2)
+                .foregroundStyle(SGT.ink2)
                 .multilineTextAlignment(.center)
         }
         .accessibilityElement(children: .combine)
@@ -78,7 +77,7 @@ struct MilestoneView: View {
             .scaleEffect(scale, anchor: .center)
             .frame(width: proxy.size.width, height: proxy.size.height)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .shadow(color: .black.opacity(0.5), radius: 24, y: 12)
+            .shadow(color: .black.opacity(0.18), radius: 24, y: 12)
         }
         // The card restates the headline and the streak, so exposing its internals
         // would make VoiceOver read the same milestone three times.
@@ -88,7 +87,7 @@ struct MilestoneView: View {
     private var actions: some View {
         VStack(spacing: SGSpacing.md) {
             Button("Share this morning") { prepareShareImage() }
-                .buttonStyle(SkyLoudButtonStyle())
+                .buttonStyle(SkyPrimaryButtonStyle())
                 .accessibilityHint("Opens the share sheet with this card as an image")
 
             // Bet 3 (dev-note §7 P0): a person already excited enough to be looking at
@@ -105,7 +104,7 @@ struct MilestoneView: View {
 
             Button("Done", action: onDone)
                 .font(SGFont.body(16))
-                .foregroundStyle(SGExport.ink2)
+                .foregroundStyle(SGT.ink2)
         }
     }
 

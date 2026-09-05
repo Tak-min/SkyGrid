@@ -1,25 +1,12 @@
 import SwiftUI
 
-/// Shared material for the settled parts of Sky Grid.  This deliberately uses the
-/// same night stage and pixel spirit as capture, so an ordinary screen never falls
-/// back to the retired paper/editorial product.
+/// Shared material for settled screens. The canvas follows system appearance; Moku
+/// and the two brand accents supply character without ambient decoration.
 struct PlayfulStageBackdrop: View {
     var accent: Color = SGT.accent
 
     var body: some View {
-        ZStack {
-            SGT.background
-            Circle()
-                .fill(accent.opacity(0.16))
-                .frame(width: 330, height: 330)
-                .blur(radius: 70)
-                .offset(x: 130, y: -300)
-            Circle()
-                .fill(SGT.accentSecondary.opacity(0.09))
-                .frame(width: 250, height: 250)
-                .blur(radius: 60)
-                .offset(x: -145, y: 260)
-        }
+        SGT.background
         .ignoresSafeArea()
         .accessibilityHidden(true)
     }

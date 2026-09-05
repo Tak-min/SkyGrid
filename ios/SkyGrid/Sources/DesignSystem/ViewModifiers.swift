@@ -52,7 +52,7 @@ struct SkyPrimaryButtonStyle: ButtonStyle {
             // mid-grey-on-warm-fill, which reads as "already tapped" or "broken"
             // instead of "you haven't filled this in yet" (seen on Add Buddy's
             // "Send request" before a handle is entered).
-            .foregroundStyle(isEnabled ? SGT.background : SGT.ink3)
+            .foregroundStyle(isEnabled ? SGT.accentInk : SGT.ink3)
             .frame(maxWidth: .infinity, minHeight: 56)
             .padding(.horizontal, SGSpacing.lg)
             .background(isEnabled ? SGT.accent : SGT.fill, in: Capsule())
