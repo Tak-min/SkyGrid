@@ -261,3 +261,24 @@ VISION.md still has 5 unchecked TODO item(s):
 569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
 759:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
 [loop-engine 13:14:57] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 13:14:57] === iteration 3 / 40 ===
+## 結果
+
+**5C step 4**（AlarmKitマルチスケジュールreconcile、加算のみ・未配線）を実装・検証・コミット済み（`24ce158`）。
+
+- 既存のリマインダーフォールバック側reconcileパターンをAlarmKit側に鏡写し：純関数`morningAlarmKitReconcilePlan(schedules:currentAlarms:)` + `MorningAlarmScheduler.scheduleAlarmKit(schedules:)`。同一IDでも時刻/曜日が変われば再scheduleが必要と正しく判定（過去に一度実害バグとして検出済みのクラス）
+- 決定記録どおり `enable()`/`resyncIfNeeded()` には**意図的に未配線**（デッドコード、次スライスの対象）— これまでの5C各ステップと同じ最小ステップ主義
+- Codexに実装委譲 → diffをRead確認 → swift-reviewer（sonnet）へ独立レビュー投入 → CRITICAL/HIGHなし、MEDIUM1件（`Dictionary(uniqueKeysWithValues:)`がAlarmKit自身の`manager.alarms`という非制御の外部データに対してトラップしうる）を同一イテレーションでCodexに再依頼して修正
+- メインループ自身が独立して`xcodebuild test`実行（`MorningAlarmSchedulerTests`単体17/17、フルスイート`SkyGridTests`251/251、いずれもgreen — Codexの自己申告を鵜呑みにせず二重確認）
+- `firebase deploy`・`git add -A`は未使用。触ったパスのみ明示コミット
+- VISION.mdのチェックリストに詳細追記。次ステップ（`scheduleAlarmKit(schedules:)`を`enable()`/`resyncIfNeeded()`へ実配線 → §2.5再アラームループ → §2.6文言）を明記
+- `.loop/verify.sh`はVISION.mdに未完了TODOが5件残っているため想定通りrc=1（正常な継続状態）
+
+次イテレーションはAlarmKit側の呼び出し元配線から継続可能です。
+VISION.md still has 5 unchecked TODO item(s):
+436:- [ ] Buddies tab redesign: invert hierarchy so circle state (streak, posted-today tri-state,
+472:- [ ] Onboarding redesign: fix stale "color" promise in `WelcomeView.swift` (product is actual
+517:- [ ] Implement N-way buddy group (UI/copy/notifications/product-limit task, not a migration —
+569:- [ ] **3B/5C/6C — implement per `dev-notes/owner-selected-3b-5c-6c-decision-record_2026-09-05.md`
+784:- [ ] Full test suite green + Release build green, final dev-note summarizing before/after
+[loop-engine 13:30:38] VERIFY failing (rc=1). Identical-failure streak: 1/3.
