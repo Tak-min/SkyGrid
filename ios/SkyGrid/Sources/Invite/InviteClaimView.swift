@@ -88,7 +88,13 @@ struct InviteClaimView: View {
             }
             Button("Become buddies") { viewModel.beginClaim() }
                 .buttonStyle(.borderedProminent)
-                .tint(SGT.ink)
+                // `SGT.ink` is a TEXT token and adapts: near-black in light, near-white in
+                // dark. Using it as a prominent FILL therefore produced a white capsule
+                // with `borderedProminent`'s automatic white label in dark mode. The
+                // accent/accentInk pair is the app's primary-action fill and is fixed,
+                // so it reads the same in both appearances.
+                .tint(SGT.accent)
+                .foregroundStyle(SGT.accentInk)
                 .frame(minHeight: 44)
             Button("Not now") { onFinished() }
                 .font(SGFont.body(15))
@@ -224,7 +230,8 @@ struct InviteClaimView: View {
                 .multilineTextAlignment(.center)
             Button(primaryTitle, action: primaryAction)
                 .buttonStyle(.borderedProminent)
-                .tint(SGT.ink)
+                .tint(SGT.accent)
+                .foregroundStyle(SGT.accentInk)
                 .frame(minHeight: 44)
                 .padding(.top, SGSpacing.xs)
         }

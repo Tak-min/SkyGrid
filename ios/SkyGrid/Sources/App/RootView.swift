@@ -87,6 +87,7 @@ struct RootView: View {
                     .task(id: services.currentUid) {
                         refreshObservedLocalDate(services: services)
                         refreshDestination(services: services)
+                        await restorePendingRewardIfNeeded(services: services)
                         await services.entitlements.refresh()
                         resolvePendingPresentations(services: services)
                     }
@@ -399,21 +400,53 @@ struct RootView: View {
     /// answers a separate milestone/paywall question. `DailyRewardPolicy` bounds it
     /// to at most once per successful post, matching the "plays at most once for
     /// that successful post" rule in the daily reward motion contract.
+    /// Rebuilds a reward the process died holding. Bounded to today by
+    /// `PendingRewardStore.load(today:)` and to "not already shown" by the same
+    /// `DailyRewardPolicy` gate the arming path uses, so this can never manufacture a
+    /// second celebration for a morning that already had one.
+    private func restorePendingRewardIfNeeded(services: AppServices) async {
+        guard pendingReward == nil else { return }
+        let today = services.clock.today()
+        guard DailyRewardPolicy.shouldPlay(
+            for: today,
+            lastPlayedLocalDate: LocalDefaults.lastRewardPlayedLocalDate
+        ), let record = PendingRewardStore.standard.load(today: today) else { return }
+
+        // Off the main actor: this runs during launch, and the bytes are only ever a
+        // nicety — `RewardOverlayView` falls back to the recorded sky colour.
+        let path = record.thumbPath
+        let thumbnailData = await Task.detached(priority: .userInitiated) {
+            ImageFileStore.pendingImageData(forRemotePath: path)
+                ?? ImageFileStore.cachedThumbnailData(forRemotePath: path)
+        }.value
+        guard pendingReward == nil else { return }
+        pendingReward = RewardMoment(
+            localDate: record.localDate,
+            skyColor: record.skyColor,
+            thumbnailData: thumbnailData
+        )
+    }
+
     private func armDailyReward(draft: PostDraft) {
         guard DailyRewardPolicy.shouldPlay(
             for: draft.localDate,
             lastPlayedLocalDate: LocalDefaults.lastRewardPlayedLocalDate
         ) else { return }
 
-        // Deliberately NOT marked played here. The moment itself lives in volatile
-        // `@State`, so writing the flag at arming time meant a process death between
-        // the publish and the presentation permanently suppressed that day's reward:
-        // the flag said "played" while nothing ever played. The write now happens
-        // where the reward is actually put on screen, in `resolvePendingPresentations`.
+        // Deliberately NOT marked played here. Writing the flag at arming time meant a
+        // process death between the publish and the presentation permanently suppressed
+        // that day's reward: the flag said "played" while nothing ever played. The write
+        // happens where the reward reaches the screen, in `resolvePendingPresentations`.
         //
-        // Residual, knowingly unfixed: the moment is still lost if the process dies
-        // before it presents. Recovering that needs the moment persisted, not just
-        // the flag moved — out of scope for this pass.
+        // The moment itself is recorded durably for the same reason — see
+        // `PendingRewardStore` and `restorePendingRewardIfNeeded`.
+        PendingRewardStore.standard.save(
+            PendingRewardRecord(
+                localDate: draft.localDate,
+                skyColor: draft.skyColor,
+                thumbPath: draft.thumbPath
+            )
+        )
         pendingReward = RewardMoment(
             localDate: draft.localDate,
             skyColor: draft.skyColor,
@@ -796,6 +829,7 @@ struct RootView: View {
             // celebration outright.
             guard presentations.present(.reward(pendingReward)) else { return }
             LocalDefaults.lastRewardPlayedLocalDate = pendingReward.localDate.docID
+            PendingRewardStore.standard.clear()
             self.pendingReward = nil
             return
         }

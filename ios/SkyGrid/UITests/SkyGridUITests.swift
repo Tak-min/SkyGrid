@@ -49,6 +49,19 @@ final class SkyGridUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Continue"].waitForExistence(timeout: 5))
     }
 
+    /// Handle-based buddy requests moved behind a `DisclosureGroup`, so the field is
+    /// not in the hierarchy until it is opened.
+    private func expandHandleRequest(in app: XCUIApplication) {
+        let disclosure = app.buttons["Know their exact handle?"]
+        // Scenarios with pending requests push this below the fold, and a List does
+        // not realise rows it has not scrolled to, so waiting alone is not enough.
+        for _ in 0..<4 where !disclosure.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(disclosure.waitForExistence(timeout: 8))
+        disclosure.tap()
+    }
+
     private func requirePhysicalDevice(allowLiveBackendSimulator: Bool = false) throws {
         #if targetEnvironment(simulator)
         if allowLiveBackendSimulator {
@@ -234,9 +247,12 @@ final class SkyGridUITests: XCTestCase {
         XCTAssertFalse(app.tabBars.firstMatch.exists)
     }
 
+    /// `BuddyRitualCard` expands into its centred explainer only for an empty
+    /// circle — the state a new account opens on. With buddies present it collapses
+    /// to a left-aligned line, which is why this needs `buddies-empty`.
     func testBuddyRitualHeaderIsCentered() {
         let app = XCUIApplication()
-        app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
+        app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies-empty"]
         app.launch()
 
         let headline = app.staticTexts["Skies revealed together."]
@@ -252,7 +268,7 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
         app.launch()
 
-        let yourBuddies = app.staticTexts["YOUR BUDDIES"]
+        let yourBuddies = app.staticTexts["YOUR CIRCLE"]
         XCTAssertTrue(yourBuddies.waitForExistence(timeout: 8))
         app.swipeUp()
         app.swipeUp()
@@ -306,7 +322,10 @@ final class SkyGridUITests: XCTestCase {
         let retry = app.buttons["Check invite settings again"]
         XCTAssertTrue(retry.exists)
         retry.tap()
-        XCTAssertTrue(app.staticTexts["Invite a buddy"].waitForExistence(timeout: 8))
+        // The invite card, not `AddBuddyView`'s "Invite a buddy" heading: handle
+        // requests now live behind the "Know their exact handle?" disclosure, so that
+        // heading is not on screen until it is expanded.
+        XCTAssertTrue(app.staticTexts["INVITE A BUDDY"].waitForExistence(timeout: 8))
         XCTAssertFalse(app.staticTexts["We couldn't load your invite settings."].exists)
     }
 
@@ -323,8 +342,12 @@ final class SkyGridUITests: XCTestCase {
         XCTAssertTrue(save.isEnabled)
         save.tap()
 
-        XCTAssertTrue(app.staticTexts["Invite a buddy"].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["@new_morning"].exists)
+        // "Immediately used" is now shown by the two affordances that are gated on
+        // holding a handle appearing at once — the invite card and the handle-request
+        // disclosure. The handle itself is no longer echoed on this screen, so
+        // asserting on "@new_morning" here only tested a label that moved away.
+        XCTAssertTrue(app.staticTexts["INVITE A BUDDY"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["Know their exact handle?"].exists)
         XCTAssertFalse(app.staticTexts["Choose a handle to add a buddy"].exists)
     }
 
@@ -333,6 +356,7 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
         app.launch()
 
+        expandHandleRequest(in: app)
         let handleField = app.textFields["Their handle"]
         XCTAssertTrue(handleField.waitForExistence(timeout: 8))
         handleField.tap()
@@ -348,6 +372,7 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies-request-flow"]
         app.launch()
 
+        expandHandleRequest(in: app)
         let handleField = app.textFields["Their handle"]
         XCTAssertTrue(handleField.waitForExistence(timeout: 8))
         handleField.tap()
@@ -355,9 +380,14 @@ final class SkyGridUITests: XCTestCase {
         app.buttons["Send request"].tap()
         XCTAssertTrue(app.staticTexts["@luca_sky already invited you. Accept the request below."].waitForExistence(timeout: 8))
 
-        app.swipeUp()
-        app.swipeUp()
-        XCTAssertTrue(app.staticTexts["@luca_sky"].waitForExistence(timeout: 5))
+        // The requests section sits above the handle-request disclosure that
+        // `expandHandleRequest` scrolled down to, so come back up rather than
+        // scrolling further past it.
+        let incoming = app.staticTexts["@luca_sky"]
+        for _ in 0..<5 where !incoming.exists {
+            app.swipeDown()
+        }
+        XCTAssertTrue(incoming.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["@sora_sky"].exists)
         XCTAssertTrue(app.staticTexts["Waiting for them to accept"].exists)
         XCTAssertFalse(app.staticTexts["luca"].exists)
@@ -375,8 +405,11 @@ final class SkyGridUITests: XCTestCase {
         let retry = app.buttons["Check again"]
         XCTAssertTrue(retry.exists)
         retry.tap()
-        XCTAssertTrue(app.staticTexts["20 / 365"].waitForExistence(timeout: 8))
-        XCTAssertFalse(app.staticTexts["We couldn't refresh your archive."].exists)
+        // The header prints the count alone now; "Not checked" is the unavailable
+        // placeholder it replaces, so its disappearance is the recovery signal.
+        XCTAssertTrue(app.staticTexts["We couldn't refresh your archive."]
+            .waitForNonExistence(timeout: 8))
+        XCTAssertFalse(app.staticTexts["Not checked"].firstMatch.exists)
     }
 
     func testOnboardingMovesFromWelcomeIntoTheQuestionFlow() {

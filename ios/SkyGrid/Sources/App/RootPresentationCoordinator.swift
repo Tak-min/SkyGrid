@@ -1,4 +1,5 @@
 import Observation
+import OSLog
 import SwiftUI
 
 enum RootPresentation: Identifiable {
@@ -37,12 +38,25 @@ final class RootPresentationCoordinator {
 
     var isAvailable: Bool { active == nil && !childIsPresented }
 
+    /// A refusal is a dropped moment. Every caller today either checks the return
+    /// value or has already checked `isAvailable` in the same synchronous stretch, so
+    /// nothing is lost — but `RootView`'s binding-shaped setters (`showCamera`,
+    /// `rewardMoment`, …) cannot return a value, so a future edit that moves or
+    /// loosens one of those guards would drop a reward or a paywall in silence. This
+    /// makes that visible in the log rather than invisible.
     @discardableResult
     func present(_ presentation: RootPresentation) -> Bool {
-        guard isAvailable else { return false }
+        guard isAvailable else {
+            Self.log.warning(
+                "refused \(presentation.id, privacy: .public); active=\(self.active?.id ?? "none", privacy: .public) dismissing=\(self.isDismissing) child=\(self.childIsPresented)"
+            )
+            return false
+        }
         active = presentation
         return true
     }
+
+    private static let log = Logger(subsystem: "my.skygrid.app", category: "presentation")
 
     func dismiss() {
         guard active != nil else { return }

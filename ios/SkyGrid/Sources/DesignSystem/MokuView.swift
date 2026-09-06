@@ -43,7 +43,11 @@ struct MokuView: View {
     @State private var motionTrigger = 0
     @State private var isLeap = false
     @State private var hasEntered = false
-    @State private var lastPlayedInteraction = 0
+    /// `nil` until this view instance has seen its first interaction count. A
+    /// re-insertion (Today's overlay condition flickering, a parent rebuild) restores
+    /// this to `nil` while the parent's counter is already at, say, 3 — starting from
+    /// `0` therefore fired a jump and a haptic the user never asked for.
+    @State private var lastPlayedInteraction: Int?
 
     init(
         state: MokuState,
@@ -136,8 +140,12 @@ struct MokuView: View {
             motionTrigger += 1
         }
         .task(id: MokuInteractionTask(interaction: interaction, enabled: motionAllowed)) {
-            guard interaction > lastPlayedInteraction else {
-                lastPlayedInteraction = max(lastPlayedInteraction, interaction)
+            guard let lastPlayed = lastPlayedInteraction else {
+                lastPlayedInteraction = interaction
+                return
+            }
+            guard interaction > lastPlayed else {
+                lastPlayedInteraction = max(lastPlayed, interaction)
                 return
             }
             lastPlayedInteraction = interaction

@@ -88,7 +88,10 @@ struct InviteLinkCard: View {
                     .font(SGFont.body(15))
             }
             .buttonStyle(.borderedProminent)
-            .tint(SGT.ink)
+            // See `InviteClaimView`: `SGT.ink` adapts and is a text colour, so as a
+            // prominent fill it went white-on-white in dark mode.
+            .tint(SGT.accent)
+            .foregroundStyle(SGT.accentInk)
             .simultaneousGesture(TapGesture().onEnded {
                 // ShareLink has no completion callback, only this tap — recorded on
                 // the intent to share, not confirmed delivery.

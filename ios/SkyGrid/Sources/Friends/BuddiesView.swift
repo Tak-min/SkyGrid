@@ -74,11 +74,13 @@ struct BuddiesView: View {
                         }
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
-                    } else {
-                        ProgressView("Preparing your invite…")
-                            .listRowBackground(SGT.fill)
-                            .listRowSeparator(.hidden)
                     }
+                    // No placeholder row for the invite itself: `InviteLinkCard`
+                    // below is shown under the same `hasHandle == true` condition and
+                    // owns its own `.loading` state. A second spinner here rendered
+                    // *beside* the finished card — a brand-new account, which is the
+                    // only account that reaches this branch, saw "Preparing your
+                    // invite…" stacked on top of its already-usable invite code.
                 }
 
                 if viewModel.hasHandle == true {

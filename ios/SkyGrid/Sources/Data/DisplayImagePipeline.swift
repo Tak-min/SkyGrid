@@ -36,6 +36,13 @@ actor DisplayImagePipeline: ImageFetching {
         return data
     }
 
+    /// `nil` means "nothing to show": no local bytes and no usable remote ones, or
+    /// the caller was cancelled, or the account was revoked. Callers cannot tell these
+    /// apart, and today none needs to — both call sites (`BuddyTile`,
+    /// `GridArchiveViewModel`) re-check `Task.isCancelled` after the await, so a
+    /// cancelled `nil` never overwrites what is on screen. Give this a richer result
+    /// type the moment a caller actually has to distinguish them; inventing one now
+    /// would be a shape with no reader.
     func image(path: String, size: Size) async -> UIImage? {
         guard !invalidated, !Task.isCancelled else { return nil }
         let key = "\(size.rawValue):\(path)"
@@ -57,6 +64,10 @@ actor DisplayImagePipeline: ImageFetching {
         guard !invalidated else { return nil }
         let key = "\(size.rawValue):\(path)"
         if let cached = memory.object(forKey: key as NSString) { return cached }
+        // Join an existing flight rather than decoding the same file beside it. This
+        // deliberately does not *register* one: a local miss here must not answer a
+        // concurrent `image(path:size:)`, which is still entitled to its remote fetch.
+        if let flight = flights[key] { return await flight.value }
         guard let image = await Self.decodeLocal(path: path, size: size), !invalidated else { return nil }
         store(image, key: key)
         return image

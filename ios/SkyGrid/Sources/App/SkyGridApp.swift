@@ -46,6 +46,7 @@ private enum UIAuditScenario: String {
     case buddies
     case buddiesUnavailable = "buddies-unavailable"
     case buddiesProfileUnavailable = "buddies-profile-unavailable"
+    case buddiesEmpty = "buddies-empty"
     case buddiesNoHandle = "buddies-no-handle"
     case buddiesRequestFlow = "buddies-request-flow"
     case paywall
@@ -97,7 +98,11 @@ private struct UIAuditRoot: View {
         auditFriendRepository = UIAuditFriendRepository(
             failsFirstRead: scenario == .buddiesUnavailable,
             failsFirstBlockedRead: scenario == .settingsBlockedUnavailable,
-            includesRequestFlow: scenario == .buddiesRequestFlow
+            includesRequestFlow: scenario == .buddiesRequestFlow,
+            // `buddies-no-handle` must also be empty: `HandleClaimView` is only
+            // offered when the circle is empty, so the scenario could not otherwise
+            // render the screen it is named for.
+            isEmpty: scenario == .buddiesEmpty || scenario == .buddiesNoHandle
         )
         auditUserRepository = UIAuditUserRepository(
             failsFirstCurrentProfileRead: scenario == .buddiesProfileUnavailable,
@@ -209,7 +214,7 @@ private struct UIAuditRoot: View {
                     } else {
                         UIAuditGridScreen()
                     }
-                } else if scenario == .buddies || scenario == .buddiesUnavailable || scenario == .buddiesProfileUnavailable || scenario == .buddiesNoHandle || scenario == .buddiesRequestFlow {
+                } else if scenario == .buddies || scenario == .buddiesEmpty || scenario == .buddiesUnavailable || scenario == .buddiesProfileUnavailable || scenario == .buddiesNoHandle || scenario == .buddiesRequestFlow {
                     BuddiesView(
                         uid: UIAuditData.currentUID,
                         friendRepository: auditFriendRepository,
@@ -638,17 +643,23 @@ private final class UIAuditFriendRepository: FriendRepository {
     private let failsFirstRead: Bool
     private let failsFirstBlockedRead: Bool
     private let includesRequestFlow: Bool
+    /// The state a brand-new account actually opens on. `BuddyRitualCard` expands
+    /// into its centred three-step explainer only here, so without this scenario
+    /// that layout could not be rendered — or regressed against — at all.
+    private let isEmpty: Bool
     private var observationCount = 0
     private var blockedObservationCount = 0
 
     init(
         failsFirstRead: Bool = false,
         failsFirstBlockedRead: Bool = false,
-        includesRequestFlow: Bool = false
+        includesRequestFlow: Bool = false,
+        isEmpty: Bool = false
     ) {
         self.failsFirstRead = failsFirstRead
         self.failsFirstBlockedRead = failsFirstBlockedRead
         self.includesRequestFlow = includesRequestFlow
+        self.isEmpty = isEmpty
     }
 
     func observeFriendships(uid: String) -> AsyncStream<FriendshipCollectionObservation> {
@@ -661,7 +672,7 @@ private final class UIAuditFriendRepository: FriendRepository {
                 continuation.finish()
                 return
             }
-            var friendships = [
+            var friendships = isEmpty ? [] : [
                 Friendship(pairId: PairID.make(uid, "mira"), members: [uid, "mira"], status: .accepted, requestedBy: uid, createdAt: now, blockedBy: []),
                 Friendship(pairId: PairID.make(uid, "ren"), members: [uid, "ren"], status: .accepted, requestedBy: "ren", createdAt: now, blockedBy: [])
             ]

@@ -36,13 +36,41 @@ Definition of Done.
 - **Do not run a review agent's build against the same `-derivedDataPath` while your own
   test run is going.** It produced a phantom `** TEST FAILED **` with no failing test.
 
+## The buddies surface, second pass
+
+Seven UI tests were failing, identically on a clean worktree at HEAD. Chasing them by
+actually rendering the screens — rather than by reading the assertions — turned up three
+real defects that no test covered and no scenario could reach.
+
+- **The empty circle could not be rendered at all.** Every buddies audit scenario shipped
+  two accepted buddies, so `BuddyRitualCard`'s expanded three-step explainer — the state a
+  brand-new account opens on, and the one that has to sell the whole buddy loop — had never
+  been looked at. Added the `buddies-empty` scenario.
+- **A brand-new account saw "Preparing your invite…" stacked on top of its finished invite
+  card.** Two branches in the same `List` section were both true at once: an empty-circle
+  placeholder, and `InviteLinkCard`, which owns its own `.loading` state. Only an account
+  with an empty circle reached it, which is exactly the account nobody could render.
+- **The Share button was white-on-white in dark mode.** `.tint(SGT.ink)` on a
+  `.borderedProminent` control uses a *text* token as a *fill*: near-black in light,
+  near-white in dark, against `borderedProminent`'s automatic white label. Three sites had
+  it (`InviteLinkCard`, and both prominent buttons in `InviteClaimView`); all now use the
+  accent/accentInk pair every other primary action in the app uses.
+
+The tests themselves were stale in ways that mostly encoded design changes: the section
+header is "YOUR CIRCLE" not "YOUR BUDDIES"; handle requests moved behind a
+`DisclosureGroup` so their field is not in the hierarchy until expanded; the archive header
+prints a bare count, not "20 / 365"; the claimed handle is no longer echoed on this screen.
+Each assertion was retargeted at what the screen now actually guarantees.
+
+**Left as an open product question**: an account that has buddies but no handle is offered
+neither handle claiming nor an invite card — `HandleClaimView` is gated on the circle being
+empty, and both the invite card and the handle-request disclosure are gated on already
+holding a handle. That combination is a dead end. Whether it is reachable in production
+depends on whether a link-claimed buddy can precede a handle, which is a backend question,
+so the gating was left alone rather than guessed at.
+
 ## Pre-existing, deliberately not fixed
 
-- **7 UI tests fail, and they fail identically on a clean worktree at HEAD.** All on the
-  buddies surface (`testBuddyRitualHeaderIsCentered`, `testBuddiesListLastRowClears...`,
-  the handle/request tests, `testGridReadFailureNeverMasquerades...`). The expectations
-  drifted from the shipped copy. Unrelated surface; fixing them is its own decision.
-  Verify with `git worktree add /tmp/sg-baseline HEAD` before blaming a future change.
 - **Two Dynamic Type gaps.** `CameraStage`'s header is a fixed `.frame(height: 52)`
   holding uncapped `SGFont.caption` text plus a 44pt button, and the `Sky Grid` /
   `Day one` / `Keep one morning sky.` headlines use bare `.system(size: 34/42)` which
@@ -66,8 +94,12 @@ Definition of Done.
   moment itself lived in volatile `@State`. A process death in between permanently
   suppressed that day's reward: the flag said "played" when nothing had. The flag now
   writes only after the coordinator accepts the presentation. Residual and knowingly
-  unfixed: the moment is still lost if the process dies first — recovering that needs
-  the moment persisted, not just the flag moved.
+  unfixed at the time: the moment was still lost if the process died first. Closed in a
+  second pass — `PendingRewardStore` records the day, sky colour and thumbnail path (not
+  the bytes: `UserDefaults` is the wrong home for tens of kilobytes, and the overlay
+  already degrades to the recorded colour), and `restorePendingRewardIfNeeded` rebuilds it
+  on launch, bounded to today and to the same `DailyRewardPolicy` gate so it can never
+  manufacture a second celebration.
 - `DisplayImagePipeline` only inserted into its memory cache on the code path of the
   caller that happened to start the load, gated on that caller's cancellation. A
   scrolling grid cancels those constantly, so already-downloaded, already-decoded bytes
@@ -108,9 +140,10 @@ get it reviewed rather than trusting the tests.
 
 - `xcodebuild build` — green, no new warnings (`artwork(motion:)`/`pose` are `nonisolated`
   so the keyframe closure does not break Swift 6 isolation).
-- `SkyGridTests` — 296/296, including 3 new pipeline regression tests (cancelled starter
-  still caches; `cachedImage` never reaches the network; `cachedImage` respects revocation).
-- `SkyGridUITests` — 28 pass / 7 fail, the 7 being the pre-existing set above.
+- `SkyGridTests` — 301/301, including 3 new pipeline regression tests (cancelled starter
+  still caches; `cachedImage` never reaches the network; `cachedImage` respects revocation)
+  and 5 for `PendingRewardStore`.
+- `SkyGridUITests` — all green, including the seven that were failing at HEAD.
 - Real simulator screenshots in light, dark and Reduce Motion for onboarding, today and
   the live camera.
 
