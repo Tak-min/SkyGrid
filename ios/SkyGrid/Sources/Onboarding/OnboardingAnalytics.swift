@@ -18,6 +18,9 @@ enum OnboardingAnalytics {
         // The UI-audit harness deliberately has no Firebase app. Rendering a
         // screen must remain offline and must never manufacture analytics data.
         guard FirebaseApp.app() != nil else { return }
+        if event == .stepViewed, step == .welcome, FirstCaptureJourney.standard.start() {
+            Analytics.logEvent("skygrid_first_experience_started", parameters: ["schema_version": 1])
+        }
         Analytics.logEvent(event.rawValue, parameters: [
             "step": step.rawValue,
             "schema_version": 1,

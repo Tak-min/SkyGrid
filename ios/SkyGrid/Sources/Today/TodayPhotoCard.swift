@@ -10,6 +10,10 @@ struct TodayPhotoCard: View {
 
     @State private var image: UIImage?
     @State private var imageUnavailable = false
+    /// True while `image` holds the cached low-resolution thumbnail rather than the
+    /// promoted photo. Without it the preview silently replaced the waiting-to-sync
+    /// state and a blurred 320px tile stood in as the finished morning indefinitely.
+    @State private var isPreview = false
 
     var body: some View {
         // The definite frame lives on the `Rectangle`, not on a `Group` wrapping the
@@ -26,6 +30,20 @@ struct TodayPhotoCard: View {
                     Image(uiImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
+                        .overlay(alignment: .bottom) {
+                            if isPreview {
+                                Label("Photo is waiting to sync", systemImage: "icloud.slash")
+                                    .font(SGFont.caption(12))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, SGSpacing.md)
+                                    .padding(.vertical, SGSpacing.xs)
+                                    // Sits directly on the user's own sky photo, which
+                                    // can be a bright overexposed morning — 42% black
+                                    // let enough of it through to fall under 4.5:1.
+                                    .background(.black.opacity(0.68), in: Capsule())
+                                    .padding(.bottom, SGSpacing.md)
+                            }
+                        }
                 } else {
                     VStack(spacing: SGSpacing.sm) {
                         if imageUnavailable {
@@ -45,7 +63,10 @@ struct TodayPhotoCard: View {
                 RoundedRectangle(cornerRadius: 32, style: .continuous)
                     .strokeBorder(.white.opacity(0.34), lineWidth: 1)
             }
-            .accessibilityLabel("This morning's photo")
+            // One stop, not two: the sync badge is part of the photo's state, and
+            // the rest of this screen groups its composite regions the same way.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(isPreview ? "This morning's photo, waiting to sync" : "This morning's photo")
             .task(id: post.imagePath) {
                 await loadImage()
             }
@@ -54,34 +75,32 @@ struct TodayPhotoCard: View {
     private func loadImage() async {
         image = nil
         imageUnavailable = false
-
-        if let localData = ImageFileStore.pendingImageData(forRemotePath: post.imagePath),
-           let localImage = UIImage(data: localData) {
-            image = localImage
-            return
-        }
-
-        // Once Storage has promoted a capture, its bytes never change (create-only,
-        // one post per day), so a disk hit here is as trustworthy as a fresh
-        // download and saves a full-resolution re-fetch on every reappearance of
-        // this card (Today reappearing, or reopening the same day's archive sheet).
-        if let cachedData = ImageFileStore.cachedImageData(forRemotePath: post.imagePath),
-           let cachedImage = UIImage(data: cachedData) {
-            image = cachedImage
-            return
-        }
+        isPreview = false
+        let pipeline = DisplayImagePipeline.resolved(for: imageFetching)
 
         // Firestore metadata can arrive before the Storage object. Keep this task
         // alive with a capped backoff so a successful background upload replaces
         // the neutral state without requiring a screen reload.
         var retryDelay: UInt64 = 500_000_000
         while !Task.isCancelled {
-            if let data = try? await imageFetching.fetchImage(path: post.imagePath),
-               let loaded = UIImage(data: data) {
+            if let loaded = await pipeline.image(path: post.imagePath, size: .photo) {
                 guard !Task.isCancelled else { return }
-                ImageFileStore.cacheImage(data, forRemotePath: post.imagePath)
                 image = loaded
+                isPreview = false
                 return
+            }
+            // A thumbnail already cached by the mosaic makes a useful progressive
+            // preview while the full image is unavailable. No extra remote fetch.
+            if image == nil {
+                // Through the pipeline, not `ImageFileStore` directly: revocation is
+                // the pipeline's to enforce, and `cachedImage` never falls back to a
+                // remote fetch, so this stays free.
+                let preview = await pipeline.cachedImage(path: post.thumbPath, size: .thumbnail)
+                guard !Task.isCancelled else { return }
+                if let preview {
+                    image = preview
+                    isPreview = true
+                }
             }
             imageUnavailable = true
             try? await Task.sleep(nanoseconds: retryDelay)

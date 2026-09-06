@@ -7,6 +7,8 @@ import UIKit
 struct TodayView: View {
     @State private var viewModel: TodayViewModel
     @State private var shareImage: TodayShareableCard?
+    @State private var mokuInteraction = 0
+    @State private var lastMokuInteraction: TimeInterval = -.infinity
     @Environment(\.scenePhase) private var scenePhase
     let imageFetching: any ImageFetching
     let observedDate: LocalDate
@@ -16,6 +18,10 @@ struct TodayView: View {
     /// daily capture and its mosaic as one primary flow rather than peer tabs.
     let onOpenGrid: () -> Void
     let onOpenBuddies: () -> Void
+    /// Lease bookkeeping only — may be called while the sheet is still animating.
+    let onSharePresentationChanged: (Bool) -> Void
+    /// Runs after UIKit has finished dismissing, so the root may present again.
+    let onShareDismissed: () -> Void
     /// Bumped by `RootView` whenever a buddy-post push notification arrives (tapped
     /// or merely delivered while foregrounded) — see `RootView.buddyRefreshToken`.
     /// Not read directly by `body`; only its `.onChange` transition matters.
@@ -28,7 +34,9 @@ struct TodayView: View {
         subscriptionPlan: SubscriptionPlan,
         onOpenGrid: @escaping () -> Void,
         onOpenBuddies: @escaping () -> Void,
-        buddyRefreshToken: Int = 0
+        buddyRefreshToken: Int = 0,
+        onSharePresentationChanged: @escaping (Bool) -> Void = { _ in },
+        onShareDismissed: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: viewModel)
         self.imageFetching = imageFetching
@@ -38,6 +46,8 @@ struct TodayView: View {
         self.onOpenGrid = onOpenGrid
         self.onOpenBuddies = onOpenBuddies
         self.buddyRefreshToken = buddyRefreshToken
+        self.onSharePresentationChanged = onSharePresentationChanged
+        self.onShareDismissed = onShareDismissed
     }
 
     var body: some View {
@@ -81,7 +91,26 @@ struct TodayView: View {
         .onChange(of: buddyRefreshToken) { _, _ in
             viewModel.refreshBuddiesNow()
         }
-        .sheet(item: $shareImage) { card in
+        // The lease flag follows the binding on both edges. This does NOT by itself
+        // rescue a share sheet that resolved but was never presented: the falling
+        // edge comes from `sheet(item:)` clearing its own binding, so no presentation
+        // means no falling edge either. That case is covered by the root's
+        // `releaseUnpresented()` when it leaves `.today`; keeping both edges here
+        // simply stops the flag from depending on a callback that may not come.
+        //
+        // The flag is all this edge may do. `sheet(item:)` clears its binding when
+        // dismissal is *committed*, while UIKit is still animating the sheet away,
+        // so acting on it (presenting the next thing) would ask UIKit to present
+        // over a controller that is still dismissing — silently refused, and the
+        // refused presentation then never gets its own `onDismiss`. Anything that
+        // reacts belongs on `onShareDismissed` below, which runs after the animation.
+        .onChange(of: shareImage != nil) { _, isPresented in
+            onSharePresentationChanged(isPresented)
+        }
+        .sheet(item: $shareImage, onDismiss: {
+            onSharePresentationChanged(false)
+            onShareDismissed()
+        }) { card in
             ShareSheet(items: [card.image])
         }
     }
@@ -108,11 +137,8 @@ struct TodayView: View {
             Text(todayHeading)
                 .font(SGFont.caption(12))
                 .foregroundStyle(SGT.ink3)
-            HStack(alignment: .center, spacing: SGSpacing.sm) {
-                Text("Sky Grid")
-                    .font(.system(size: 34, weight: .black, design: .rounded))
-                MokuScreenMark(state: viewModel.todayPost == nil ? .ready : .settled, side: 48)
-            }
+            Text("Sky Grid")
+                .font(.system(size: 34, weight: .black, design: .rounded))
                 .foregroundStyle(SGT.ink)
         }
     }
@@ -149,8 +175,39 @@ struct TodayView: View {
             .background(SGT.fill.opacity(0.82), in: Capsule())
     }
 
-    @ViewBuilder
     private var morningRecord: some View {
+        morningRecordContent
+            // One stable character lives outside the changing photo/empty state.
+            // Incoming and outgoing record content never instantiate another Moku.
+            .overlay(alignment: .topTrailing) {
+                if viewModel.todayPost != nil || viewModel.postState == .available {
+                    Button {
+                        let now = ProcessInfo.processInfo.systemUptime
+                        guard now - lastMokuInteraction >= 1.15 else { return }
+                        lastMokuInteraction = now
+                        mokuInteraction += 1
+                    } label: {
+                        MokuView(
+                            state: viewModel.todayPost == nil ? .ready : .settled,
+                            side: 108,
+                            interaction: mokuInteraction
+                        )
+                        .frame(width: 132, height: 138)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 12)
+                    .offset(y: -8)
+                    .accessibilityLabel("Say hello to Moku")
+                    .accessibilityHint("Moku says hello back")
+                    .accessibilityIdentifier("moku.play")
+                }
+            }
+            .padding(.top, 16)
+    }
+
+    @ViewBuilder
+    private var morningRecordContent: some View {
         if let post = viewModel.todayPost {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
                 ZStack(alignment: .bottomLeading) {
@@ -245,7 +302,10 @@ struct TodayView: View {
                 .accessibilityLabel(emptyStateAccessibilityLabel)
             }
 
-            Button(action: onOpenCamera) {
+            Button {
+                Haptics.navigationConfirmed()
+                onOpenCamera()
+            } label: {
                 Label("Capture the sky", systemImage: "camera")
                     .frame(maxWidth: .infinity)
             }
@@ -301,7 +361,10 @@ struct TodayView: View {
     }
 
     private var mosaicEntry: some View {
-        Button(action: onOpenGrid) {
+        Button {
+            Haptics.navigationConfirmed()
+            onOpenGrid()
+        } label: {
             HStack(spacing: SGSpacing.md) {
                 Image(systemName: "square.grid.3x3.fill")
                     .font(.system(size: 18, weight: .medium))
@@ -336,7 +399,10 @@ struct TodayView: View {
     @ViewBuilder
     private var buddySection: some View {
         if viewModel.buddies.isEmpty {
-            Button(action: onOpenBuddies) {
+            Button {
+                Haptics.navigationConfirmed()
+                onOpenBuddies()
+            } label: {
                 HStack(spacing: SGSpacing.md) {
                     Image(systemName: "person.2")
                         .font(.system(size: 15, weight: .medium))

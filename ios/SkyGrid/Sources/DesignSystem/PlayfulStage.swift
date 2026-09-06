@@ -19,20 +19,9 @@ struct MokuScreenMark: View {
     var side: CGFloat = 62
     var caption: String? = nil
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var breathing = false
-
     var body: some View {
         HStack(spacing: SGSpacing.sm) {
             MokuView(state: state, side: side)
-                .scaleEffect(reduceMotion || !breathing ? 1 : 1.035)
-                .offset(y: reduceMotion || !breathing ? 0 : -3)
-                .task {
-                    guard !reduceMotion else { return }
-                    withAnimation(.easeInOut(duration: 1.45).repeatForever(autoreverses: true)) {
-                        breathing = true
-                    }
-                }
             if let caption {
                 Text(caption)
                     .font(SGFont.caption(12))
@@ -78,7 +67,7 @@ struct PlayfulEntranceModifier: ViewModifier {
             .opacity(appeared ? 1 : 0)
             .offset(y: reduceMotion || appeared ? 0 : 14)
             .onAppear {
-                if reduceMotion {
+                if reduceMotion || !MokuMotionPolicy.animationsEnabled {
                     appeared = true
                 } else {
                     withAnimation(.spring(response: 0.52, dampingFraction: 0.84)) {

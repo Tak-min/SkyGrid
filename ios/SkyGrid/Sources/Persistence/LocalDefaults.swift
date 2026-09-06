@@ -268,6 +268,7 @@ enum LocalDefaults {
     }
 
     static func resetAccountScopedValues() {
+        FirstCaptureJourney.standard.reset()
         lastKnownTimeZoneIdentifier = nil
         handle = nil
         wakeGoalMinutes = 360

@@ -33,31 +33,157 @@ struct MokuView: View {
     let state: MokuState
     let side: CGFloat
     let capturedSkyPalette: [Color]
+    /// A user tap requests a playful jump without changing the capture state.
+    var interaction: Int
+    var leapsOnArrival: Bool
+    var interactionFeedback: Bool
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var motionTrigger = 0
+    @State private var isLeap = false
+    @State private var hasEntered = false
+    @State private var lastPlayedInteraction = 0
 
     init(
         state: MokuState,
         side: CGFloat = 112,
-        capturedSkyPalette: [Color] = []
+        capturedSkyPalette: [Color] = [],
+        interaction: Int = 0,
+        leapsOnArrival: Bool = false,
+        interactionFeedback: Bool = true
     ) {
         self.state = state
         self.side = side
         self.capturedSkyPalette = capturedSkyPalette
+        self.interaction = interaction
+        self.leapsOnArrival = leapsOnArrival
+        self.interactionFeedback = interactionFeedback
     }
 
     var body: some View {
-        MokuArtwork(
-            state: state,
-            capturedSkyPalette: state.mayUseCapturedSkyPalette ? capturedSkyPalette : []
-        )
+        Group {
+            if motionAllowed {
+                Color.clear
+                    .frame(width: side, height: side)
+                    .keyframeAnimator(initialValue: MokuMotionValues(), trigger: motionTrigger) { _, motion in
+                        artwork(motion: motion)
+                    } keyframes: { _ in
+                        // Anticipation → airborne stretch → contact squash → rest.
+                        // Every track terminates; no ambient timer or whole-screen bob.
+                        KeyframeTrack(\.lift) {
+                            CubicKeyframe(0.035, duration: 0.16)
+                            CubicKeyframe(isLeap ? -0.34 : -0.035, duration: 0.24)
+                            CubicKeyframe(0.018, duration: 0.28)
+                            SpringKeyframe(0, duration: 0.4, spring: .snappy)
+                        }
+                        KeyframeTrack(\.scaleX) {
+                            CubicKeyframe(isLeap ? 1.13 : 1.015, duration: 0.16)
+                            CubicKeyframe(isLeap ? 0.88 : 1, duration: 0.18)
+                            CubicKeyframe(1, duration: 0.25)
+                            CubicKeyframe(isLeap ? 1.16 : 1.015, duration: 0.09)
+                            SpringKeyframe(1, duration: 0.4, spring: .snappy)
+                        }
+                        KeyframeTrack(\.scaleY) {
+                            CubicKeyframe(isLeap ? 0.83 : 0.985, duration: 0.16)
+                            CubicKeyframe(isLeap ? 1.16 : 1, duration: 0.18)
+                            CubicKeyframe(1, duration: 0.25)
+                            CubicKeyframe(isLeap ? 0.82 : 0.985, duration: 0.09)
+                            SpringKeyframe(1, duration: 0.4, spring: .snappy)
+                        }
+                        KeyframeTrack(\.turn) {
+                            CubicKeyframe(-5, duration: 0.16)
+                            CubicKeyframe(isLeap ? 10 : 3, duration: 0.24)
+                            CubicKeyframe(-3, duration: 0.28)
+                            SpringKeyframe(0, duration: 0.4, spring: .snappy)
+                        }
+                        KeyframeTrack(\.wave) {
+                            CubicKeyframe(-20, duration: 0.16)
+                            CubicKeyframe(65, duration: 0.2)
+                            CubicKeyframe(25, duration: 0.14)
+                            CubicKeyframe(70, duration: 0.14)
+                            CubicKeyframe(20, duration: 0.14)
+                            CubicKeyframe(0, duration: 0.3)
+                        }
+                        KeyframeTrack(\.blink) {
+                            LinearKeyframe(1, duration: 0.08)
+                            LinearKeyframe(0.12, duration: 0.08)
+                            LinearKeyframe(1, duration: 0.1)
+                            LinearKeyframe(1, duration: 0.7)
+                            LinearKeyframe(0.12, duration: 0.08)
+                            LinearKeyframe(1, duration: 0.1)
+                        }
+                        KeyframeTrack(\.gaze) {
+                            CubicKeyframe(-0.1, duration: 0.16)
+                            CubicKeyframe(0.12, duration: 0.3)
+                            CubicKeyframe(0, duration: 0.62)
+                        }
+                    }
+            } else {
+                artwork(motion: MokuMotionValues())
+            }
+        }
         .frame(width: side, height: side)
-        .scaleEffect(pose.scale)
-        .rotationEffect(.degrees(pose.rotationDegrees))
-        .offset(y: side * pose.verticalOffset)
-        .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.68), value: state)
+        .task(id: motionAllowed) {
+            guard motionAllowed, !hasEntered else { return }
+            hasEntered = true
+            isLeap = state == .delight || leapsOnArrival
+            motionTrigger += 1
+        }
+        .onChange(of: state) { _, newState in
+            guard motionAllowed else { return }
+            isLeap = newState == .delight
+            motionTrigger += 1
+        }
+        .task(id: MokuInteractionTask(interaction: interaction, enabled: motionAllowed)) {
+            guard interaction > lastPlayedInteraction else {
+                lastPlayedInteraction = max(lastPlayedInteraction, interaction)
+                return
+            }
+            lastPlayedInteraction = interaction
+            // Reduce Motion removes the leap, not the acknowledgement. The screens
+            // that own this still say "Tap Moku to say hello", so a tap that did
+            // nothing at all was a dead control for exactly the people who cannot
+            // see the animation answer. `Haptics` applies its own audit and
+            // inactive-app suppression, so this stays silent where it must.
+            if interactionFeedback { Haptics.characterTouched() }
+            guard motionAllowed else { return }
+            isLeap = true
+            motionTrigger += 1
+            do { try await Task.sleep(for: .milliseconds(680)) } catch { return }
+            guard motionAllowed, !Task.isCancelled else { return }
+            if interactionFeedback { Haptics.characterLanded() }
+        }
         .accessibilityHidden(true)
         .allowsHitTesting(false)
+    }
+
+    private var motionAllowed: Bool {
+        !reduceMotion && scenePhase == .active && MokuMotionPolicy.animationsEnabled
+    }
+
+    /// `nonisolated`: `keyframeAnimator`'s content closure is not main-actor
+    /// isolated, and calling a main-actor method from it is an error under Swift 6.
+    /// Everything read here is a `let` on this value type.
+    nonisolated private func artwork(motion: MokuMotionValues) -> some View {
+        ZStack {
+            Ellipse()
+                .fill(MokuColor.ink.opacity(0.12))
+                .frame(width: side * 0.61, height: side * 0.075)
+                .scaleEffect(x: max(0.48, 1 + motion.lift * 1.5), y: 1)
+                .opacity(max(0.25, 1 + motion.lift * 2))
+                .offset(y: side * 0.52)
+            MokuArtwork(
+                state: state,
+                capturedSkyPalette: state.mayUseCapturedSkyPalette ? capturedSkyPalette : [],
+                motion: motion
+            )
+            .frame(width: side, height: side)
+            .scaleEffect(x: motion.scaleX * pose.scale, y: motion.scaleY * pose.scale, anchor: .bottom)
+            .rotationEffect(.degrees(pose.rotationDegrees + motion.turn), anchor: .bottom)
+            .offset(y: side * (pose.verticalOffset + motion.lift))
+        }
+        .frame(width: side, height: side)
     }
 
     /// Thirteen solid cells form a 4x4 cluster with one deliberately offset lower
@@ -79,7 +205,7 @@ struct MokuView: View {
         MokuPixel(column: 2, row: 3),
     ]
 
-    private var pose: MokuPose {
+    nonisolated private var pose: MokuPose {
         switch state {
         case .waiting:
             MokuPose(scale: 0.98, rotationDegrees: 0, verticalOffset: 0.01)
@@ -106,6 +232,7 @@ private struct MokuPose {
 private struct MokuArtwork: View {
     let state: MokuState
     let capturedSkyPalette: [Color]
+    let motion: MokuMotionValues
 
     var body: some View {
         Canvas { context, size in
@@ -171,11 +298,11 @@ private struct MokuArtwork: View {
         for (index, center) in centers.enumerated() {
             let size = CGSize(
                 width: cell * (index == 1 ? metrics.rightWidth : metrics.leftWidth),
-                height: cell * (index == 1 ? metrics.rightHeight : metrics.leftHeight)
+                height: cell * (index == 1 ? metrics.rightHeight : metrics.leftHeight) * motion.blink
             )
             let yOffset = index == 1 ? metrics.rightVerticalOffset * cell : 0
             let rect = CGRect(
-                x: center.x - size.width / 2,
+                x: center.x - size.width / 2 + cell * motion.gaze,
                 y: center.y - size.height / 2 + yOffset,
                 width: size.width,
                 height: size.height
@@ -226,8 +353,18 @@ private struct MokuArtwork: View {
             height: state == .delight ? long : short
         )
 
-        for rect in [leftArm, rightArm, leftLeg, rightLeg] where rect.width > 0 && rect.height > 0 {
-            context.fill(
+        let joints: [(CGRect, CGPoint, Double)] = [
+            (leftArm, CGPoint(x: leftArm.maxX, y: leftArm.midY), motion.wave * 0.55),
+            (rightArm, CGPoint(x: rightArm.minX, y: rightArm.midY), -motion.wave),
+            (leftLeg, CGPoint(x: leftLeg.midX, y: leftLeg.minY), -motion.wave * 0.28),
+            (rightLeg, CGPoint(x: rightLeg.midX, y: rightLeg.minY), motion.wave * 0.32),
+        ]
+        for (rect, joint, angle) in joints where rect.width > 0 && rect.height > 0 {
+            var limbContext = context
+            limbContext.translateBy(x: joint.x, y: joint.y)
+            limbContext.rotate(by: .degrees(angle))
+            limbContext.translateBy(x: -joint.x, y: -joint.y)
+            limbContext.fill(
                 Path(roundedRect: rect, cornerRadius: armThickness * 0.18),
                 with: .color(MokuColor.ink)
             )
@@ -282,6 +419,30 @@ private struct MokuArtwork: View {
                 rightArmVerticalOffset: 0.06
             )
         }
+    }
+}
+
+private struct MokuMotionValues {
+    var lift: CGFloat = 0
+    var scaleX: CGFloat = 1
+    var scaleY: CGFloat = 1
+    var turn: Double = 0
+    var wave: Double = 0
+    var blink: CGFloat = 1
+    var gaze: CGFloat = 0
+}
+
+private struct MokuInteractionTask: Equatable {
+    let interaction: Int
+    let enabled: Bool
+}
+
+/// Stills stay deterministic; a separate audit launch may opt into real motion.
+/// Haptics are suppressed for both kinds of audit by their own central policy.
+enum MokuMotionPolicy {
+    static var animationsEnabled: Bool {
+        let arguments = ProcessInfo.processInfo.arguments
+        return !arguments.contains("-SkyGridUIAudit") || arguments.contains("-SkyGridUIAuditLiveMotion")
     }
 }
 

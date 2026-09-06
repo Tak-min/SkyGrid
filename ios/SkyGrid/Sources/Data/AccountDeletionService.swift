@@ -14,13 +14,16 @@ protocol AccountDeleting: Sendable {
 final class FirebaseAccountDeletionService: AccountDeleting {
     private let functions: Functions
     private let uploadQueue: UploadQueue?
+    private let imagePipeline: DisplayImagePipeline?
 
     init(
         functions: Functions = Functions.functions(),
-        uploadQueue: UploadQueue? = nil
+        uploadQueue: UploadQueue? = nil,
+        imagePipeline: DisplayImagePipeline? = nil
     ) {
         self.functions = functions
         self.uploadQueue = uploadQueue
+        self.imagePipeline = imagePipeline
     }
 
     func deleteAccount(uid: String) async throws {
@@ -50,6 +53,7 @@ final class FirebaseAccountDeletionService: AccountDeleting {
 
         try? Auth.auth().signOut()
         await uploadQueue?.discardAccountData(uid)
+        await imagePipeline?.invalidate()
         DeviceAccountDataWiper.erase()
     }
 }

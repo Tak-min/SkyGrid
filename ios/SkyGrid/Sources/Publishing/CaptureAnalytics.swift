@@ -17,7 +17,15 @@ enum CaptureAnalytics {
         guard FirebaseApp.app() != nil else { return }
 
         Analytics.logEvent(event.rawValue, parameters: [
-            "minutes_from_goal": minutesFromGoal
+            "minutes_from_goal": minutesFromGoal,
+            "schema_version": 1
         ])
+        if let duration = FirstCaptureJourney.standard.complete() {
+            Analytics.logEvent("skygrid_first_capture_duration", parameters: [
+                "duration_seconds": duration,
+                "schema_version": 1,
+                "experience_variant": "moku_companion"
+            ])
+        }
     }
 }

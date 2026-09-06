@@ -107,7 +107,7 @@ struct OnboardingCoordinatorView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var viewModel = OnboardingViewModel()
     @State private var showPaywall = false
-    @State private var transitionEdge: Edge = .trailing
+    @State private var companionInteraction = 0
     let purchases: any PurchasesServicing
     let entitlements: EntitlementStore
     let uid: String
@@ -116,7 +116,11 @@ struct OnboardingCoordinatorView: View {
     let onFinished: () -> Void
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            if viewModel.step != .welcome {
+                companionRail
+            }
+            Group {
             switch viewModel.step {
             case .welcome:
                 WelcomeView(onNext: advance)
@@ -184,45 +188,29 @@ struct OnboardingCoordinatorView: View {
                     onSkip: finish
                 )
             }
+            }
+            .id(viewModel.step)
+            .transition(.opacity)
         }
         .background(PlayfulStageBackdrop())
-        .playfulEntrance()
-        .overlay(alignment: .topTrailing) {
-            if viewModel.step != .welcome {
-                MokuScreenMark(
-                    state: viewModel.step == .invite ? .delight : .ready,
-                    side: 52
-                )
-                .padding(.top, 54)
-                .padding(.trailing, SGSpacing.xl)
-            }
-        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(SGT.background)
-        .id(viewModel.step)
-        // A task keyed by the current step runs once for the initial screen and
-        // once for each actual new step. Pairing `onAppear` with `onChange` here
-        // would double-count because `.id(viewModel.step)` recreates the subtree.
+        // The companion and modal owner retain their identities as page content
+        // changes. Only the page is replaced, so transitions cannot duplicate Moku.
         .task(id: viewModel.step) {
             OnboardingAnalytics.record(.stepViewed, step: viewModel.step)
         }
-        .transition(reduceMotion ? .identity : .asymmetric(
-            insertion: .move(edge: transitionEdge).combined(with: .opacity),
-            removal: .move(edge: transitionEdge == .trailing ? .leading : .trailing).combined(with: .opacity)
-        ))
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 24)
-                .onEnded { value in
-                    guard abs(value.translation.width) > abs(value.translation.height),
-                          abs(value.translation.width) > 56
-                    else { return }
-                    if value.translation.width < 0 {
-                        advance()
-                    } else {
-                        goBack()
-                    }
-                }
-        )
+        .onChange(of: viewModel.personalizationProfile) { _, _ in
+            Haptics.selectionChanged()
+            companionInteraction += 1
+        }
+        .onChange(of: viewModel.step) { oldStep, newStep in
+            if oldStep != .welcome && newStep != .welcome {
+                companionInteraction += 1
+            }
+        }
+        // Horizontal page gestures are scoped to the companion rail. The previous
+        // page-wide gesture also received drags originating in choices and wheels.
         .fullScreenCover(isPresented: $showPaywall) {
             PaywallView(
                 purchases: purchases,
@@ -239,8 +227,69 @@ struct OnboardingCoordinatorView: View {
         }
     }
 
+    private var companionRail: some View {
+        HStack(spacing: SGSpacing.md) {
+            MokuView(state: .ready, side: 52, interaction: companionInteraction, interactionFeedback: false)
+                .frame(width: 66, height: 64)
+            Text(companionLine)
+                .font(SGFont.caption(13))
+                .foregroundStyle(SGT.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, SGSpacing.xl)
+        .padding(.top, SGSpacing.sm)
+        .padding(.bottom, SGSpacing.xs)
+        .background(SGT.accentSecondary.opacity(0.055))
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 24)
+                .onEnded { value in
+                    guard abs(value.translation.width) > abs(value.translation.height),
+                          abs(value.translation.width) > 56 else { return }
+                    navigateFromRail(forward: value.translation.width < 0)
+                }
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Setup page")
+        // The visible companion line, not `step.rawValue`: that is an analytics key
+        // (`wake_goal`) and VoiceOver read it aloud verbatim.
+        .accessibilityValue(companionLine)
+        // Announced as adjustable only where adjusting actually moves. The alarm,
+        // plan and invite steps keep their explicit buttons, so advertising an
+        // increment there promised a control that silently did nothing.
+        .modifier(RailAdjustableAction(isEnabled: isRailNavigable, navigate: navigateFromRail))
+        .accessibilityIdentifier("onboarding.companionRail")
+    }
+
+    /// The preference questions are optional. Alarm scheduling and plan/free
+    /// decisions retain their explicit buttons, including their busy guards.
+    private var isRailNavigable: Bool {
+        [.intention, .pace, .frequency, .privacy, .reminder].contains(viewModel.step)
+    }
+
+    private func navigateFromRail(forward: Bool) {
+        guard isRailNavigable else { return }
+        if forward { advance() } else { goBack() }
+    }
+
+    private var companionLine: String {
+        switch viewModel.step {
+        case .welcome: "One sky is a beginning."
+        case .intention: "Let's make this morning yours."
+        case .pace: "A pace that feels like you."
+        case .frequency: "There's room for real life."
+        case .privacy: "Your sky. Your circle."
+        case .reminder: "You choose the nudge."
+        case .wakeGoal: "A time to look up."
+        case .plan: "Your first sky is next."
+        case .invite: "Together is optional. Your sky is yours."
+        }
+    }
+
     private func finish() {
         guard !viewModel.didComplete else { return }
+        Haptics.navigationConfirmed()
         OnboardingAnalytics.record(.completed, step: viewModel.step)
         viewModel.complete()
         showPaywall = false
@@ -249,36 +298,61 @@ struct OnboardingCoordinatorView: View {
 
     private func advance() {
         guard viewModel.step != .invite else { return }
+        Haptics.navigationConfirmed()
         OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
-        transitionEdge = .trailing
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
+        withAnimation(viewModel.step == .welcome ? nil : pageAnimation) {
             viewModel.advance()
         }
     }
 
     private func goBack() {
         guard viewModel.step != .welcome else { return }
+        Haptics.navigationConfirmed()
         OnboardingAnalytics.record(.stepBacked, step: viewModel.step)
-        transitionEdge = .leading
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
+        withAnimation(viewModel.step == .intention ? nil : pageAnimation) {
             viewModel.goBackOneStep()
         }
     }
 
     private func skipToPlan() {
+        Haptics.navigationConfirmed()
         OnboardingAnalytics.record(.stepSkipped, step: viewModel.step)
-        transitionEdge = .trailing
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
+        withAnimation(pageAnimation) {
             viewModel.skipToPlan()
         }
     }
 
     private func advanceToInvite() {
         guard viewModel.step != .invite else { return }
+        Haptics.navigationConfirmed()
         OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
-        transitionEdge = .trailing
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.24)) {
+        withAnimation(pageAnimation) {
             viewModel.advanceToInvite()
+        }
+    }
+
+    private var pageAnimation: Animation? {
+        reduceMotion || !MokuMotionPolicy.animationsEnabled ? nil : .easeOut(duration: 0.18)
+    }
+}
+
+/// Attaches the adjustable action only when it can do something. A conditional
+/// modifier rather than a no-op closure: VoiceOver announces the trait itself.
+private struct RailAdjustableAction: ViewModifier {
+    let isEnabled: Bool
+    let navigate: (Bool) -> Void
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment: navigate(true)
+                case .decrement: navigate(false)
+                @unknown default: break
+                }
+            }
+        } else {
+            content
         }
     }
 }

@@ -4,6 +4,51 @@ import XCTest
 /// fabricated local users, photos, or purchases. End-to-end camera and backend
 /// coverage belongs to a Firebase Emulator / physical-device test plan.
 final class SkyGridUITests: XCTestCase {
+    func testRewardDismissalSerializesInviteAndDayOnePresentation() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "presentation-flow"]
+        app.launch()
+        app.buttons["Start saved-sky reward"].tap()
+        XCTAssertTrue(app.buttons["Dismiss pending invite"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["Finish morning"].exists)
+        app.buttons["Dismiss pending invite"].tap()
+        XCTAssertTrue(app.buttons["Finish morning"].waitForExistence(timeout: 5))
+        app.buttons["Finish morning"].tap()
+        XCTAssertTrue(app.staticTexts["Morning is ready"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Start saved-sky reward"].isHittable)
+    }
+
+    func testRewardBackgroundReturnHasAnExit() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "presentation-flow"]
+        app.launch()
+        app.buttons["Start saved-sky reward"].tap()
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(app.buttons["Dismiss pending invite"].waitForExistence(timeout: 10))
+        app.buttons["Dismiss pending invite"].tap()
+        XCTAssertTrue(app.buttons["Finish morning"].waitForExistence(timeout: 5))
+        app.buttons["Finish morning"].tap()
+        XCTAssertTrue(app.staticTexts["Morning is ready"].waitForExistence(timeout: 5))
+    }
+
+    func testMokuPlayKeepsOnboardingActionUsable() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditLiveMotion", "-SkyGridUIAuditScenario", "onboarding"]
+        app.launch()
+        XCTAssertTrue(app.buttons["Get started"].waitForExistence(timeout: 8))
+        let moku = app.buttons["Say hello to Moku"]
+        XCTAssertTrue(moku.exists)
+        moku.tap()
+        XCTAssertTrue(app.buttons["Get started"].isHittable)
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "moku-welcome-live"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+        app.buttons["Get started"].tap()
+        XCTAssertTrue(app.buttons["Continue"].waitForExistence(timeout: 5))
+    }
+
     private func requirePhysicalDevice(allowLiveBackendSimulator: Bool = false) throws {
         #if targetEnvironment(simulator)
         if allowLiveBackendSimulator {
@@ -372,15 +417,15 @@ final class SkyGridUITests: XCTestCase {
 
         app.buttons["Get started"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 1 OF 6 · Choose a direction. This stays on your device."].waitForExistence(timeout: 5))
-        app.swipeLeft()
+        app.otherElements["onboarding.companionRail"].swipeLeft()
         XCTAssertTrue(app.staticTexts["QUESTION 2 OF 6 · How should it feel? You can change this later."].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Back"].exists)
         app.buttons["Back"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 1 OF 6 · Choose a direction. This stays on your device."].waitForExistence(timeout: 5))
 
-        app.swipeLeft()
+        app.otherElements["onboarding.companionRail"].swipeLeft()
         XCTAssertTrue(app.staticTexts["QUESTION 2 OF 6 · How should it feel? You can change this later."].waitForExistence(timeout: 5))
-        app.swipeRight()
+        app.otherElements["onboarding.companionRail"].swipeRight()
         XCTAssertTrue(app.staticTexts["QUESTION 1 OF 6 · Choose a direction. This stays on your device."].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Back"].exists)
     }

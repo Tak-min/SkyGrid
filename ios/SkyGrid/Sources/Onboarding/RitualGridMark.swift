@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// A small non-branded mark made from the app's actual artifact: individual days
-/// becoming a quiet field of sky. It gives onboarding a visual anchor without
-/// importing a mascot, illustration, or a fixed marketing color.
+/// An illustrative mosaic, never a user's saved grid. It stays still while Moku
+/// moves independently above it; ordinary screens never animate the entire grid.
 struct RitualGridMark: View {
     let side: CGFloat
 

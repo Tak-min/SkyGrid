@@ -6,9 +6,10 @@ struct RootView: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.requestReview) private var requestReview
-    @State private var destination: LaunchDestination = .onboarding
-    @State private var showCamera = false
-    @State private var showPaywall = false
+    @State private var destination: LaunchDestination = LaunchGate.destination(onboardingDone: LocalDefaults.onboardingDone)
+    @State private var presentations = RootPresentationCoordinator()
+    @State private var cameraRouteTask: Task<Void, Never>?
+    @State private var isReconcilingRitual = false
     @State private var paywallEntryPoint: PaywallEntryPoint = .home
     @State private var postCaptureBackstop: Task<Void, Never>?
     @State private var observedLocalDate: LocalDate?
@@ -25,7 +26,6 @@ struct RootView: View {
     /// drop every reading.
     @State private var revealSignal = RevealSignal()
     @State private var postCaptureArming: PostCaptureArming?
-    @State private var milestoneMoment: MilestoneMoment?
     /// Set only when a milestone outranks an eligible solo paywall, to the exact
     /// capture day that made it eligible. See the write site in
     /// `resolvePostCaptureMoment` and the read site in `resolveSoloPaywall` for why
@@ -33,7 +33,6 @@ struct RootView: View {
     /// "today" — a calendar-day rollover between the defer and the re-ask would
     /// otherwise stop it matching `revealSignal.reading`.
     @State private var deferredSoloPaywallDate: LocalDate?
-    @State private var inviteMoment: InviteCode?
     /// Bumped every time `consumePendingBuddyRevealIfNeeded()` acts on a buddy-post
     /// push, so `TodayView` can re-resolve the buddy strip via
     /// `TodayViewModel.refreshBuddiesNow()` — mirrors `streakSignal`/`revealSignal`:
@@ -45,9 +44,10 @@ struct RootView: View {
     /// `postCaptureArming`, this never waits on `streakSignal`: DESIGN.md's daily
     /// reward only needs "did the capture durably save", which is already known
     /// synchronously in `cameraSheet`'s `onConfirmed` closure.
-    @State private var rewardMoment: RewardMoment?
     /// Armed by `recordCompletedCapture`, while the camera is still on screen, and
-    /// claimed by `showCamera`'s own `onDismiss` — mirrors why `onDismiss` (not the
+    /// claimed by the shared full-screen `onDismiss` the next time it fires — in
+    /// practice always the camera's own dismissal, since nothing else is on screen
+    /// while this is armed — mirrors why `onDismiss` (not the
     /// `onConfirmed` closure itself) is where `milestoneMoment`/paywall presentation
     /// already happens: presenting a new full-screen cover from the same runloop as
     /// this one's dismissal animation can swallow it.
@@ -59,14 +59,36 @@ struct RootView: View {
     @State private var hasHandledInitialHomeRoute = false
     let onAccountDeleted: () -> Void
 
+    private var showCamera: Bool {
+        get { if case .camera = presentations.active { return true }; return false }
+        nonmutating set { if newValue { presentations.present(.camera) } else if showCamera { presentations.dismiss() } }
+    }
+    private var showPaywall: Bool {
+        get { if case .paywall = presentations.active { return true }; return false }
+        nonmutating set { if newValue { presentations.present(.paywall) } else if showPaywall { presentations.dismiss() } }
+    }
+    private var rewardMoment: RewardMoment? {
+        get { if case .reward(let moment) = presentations.active { return moment }; return nil }
+        nonmutating set { if let newValue { presentations.present(.reward(newValue)) } else if rewardMoment != nil { presentations.dismiss() } }
+    }
+    private var milestoneMoment: MilestoneMoment? {
+        get { if case .milestone(let moment) = presentations.active { return moment }; return nil }
+        nonmutating set { if let newValue { presentations.present(.milestone(newValue)) } else if milestoneMoment != nil { presentations.dismiss() } }
+    }
+    private var inviteMoment: InviteCode? {
+        get { if case .invite(let code) = presentations.active { return code }; return nil }
+        nonmutating set { if let newValue { presentations.present(.invite(newValue)) } else if inviteMoment != nil { presentations.dismiss() } }
+    }
+
     var body: some View {
         Group {
             if let services = appServices {
                 content(services: services)
                     .task(id: services.currentUid) {
                         refreshObservedLocalDate(services: services)
+                        refreshDestination(services: services)
                         await services.entitlements.refresh()
-                        await refreshDestination(services: services)
+                        resolvePendingPresentations(services: services)
                     }
                     .onAppear {
                         refreshObservedLocalDate(services: services)
@@ -99,6 +121,18 @@ struct RootView: View {
                         consumePendingBuddyRevealIfNeeded()
                         resolvePendingPresentations(services: services)
                     }
+                    .onChange(of: services.entitlements.status) { _, _ in
+                        resolvePendingPresentations(services: services)
+                    }
+                    // Must live here, not on `todayFlow`: leaving `.today` removes
+                    // that subtree in the same update, so an `onChange` inside it
+                    // never runs. Nothing presented below can still be on screen
+                    // once this is not `.today`, so holding the lease past that
+                    // point can only ever be a leak — see `releaseUnpresented()`.
+                    .onChange(of: destination) { _, value in
+                        guard value != .today else { return }
+                        presentations.releaseUnpresented()
+                    }
             } else {
                 ProgressView()
             }
@@ -116,7 +150,7 @@ struct RootView: View {
                 userRepository: services.userRepository,
                 inviteRepository: services.inviteRepository
             ) {
-                Task { await refreshDestination(services: services) }
+                refreshDestination(services: services)
             }
         case .today:
             todayFlow(services: services)
@@ -145,7 +179,14 @@ struct RootView: View {
                 subscriptionPlan: services.entitlements.plan,
                 onOpenGrid: { homeDestination = .archive },
                 onOpenBuddies: { homeDestination = .buddies },
-                buddyRefreshToken: buddyRefreshToken
+                buddyRefreshToken: buddyRefreshToken,
+                onSharePresentationChanged: { presented in
+                    presentations.childIsPresented = presented
+                },
+                onShareDismissed: {
+                    resolvePendingPresentations(services: services)
+                    consumePendingCameraRequestIfNeeded()
+                }
             )
             .tint(SGT.ink)
             .navigationDestination(item: $homeDestination) { destination in
@@ -172,6 +213,16 @@ struct RootView: View {
                         imageFetching: services.imageFetching,
                         clock: services.clock
                     )
+                case .settings:
+                    SettingsView(
+                        uid: services.currentUid,
+                        accountDeletionService: services.accountDeletionService,
+                        friendRepository: services.friendRepository,
+                        userRepository: services.userRepository,
+                        purchases: services.purchases,
+                        entitlements: services.entitlements,
+                        onAccountDeleted: onAccountDeleted
+                    )
                 }
             }
             .toolbar {
@@ -187,16 +238,8 @@ struct RootView: View {
                     .accessibilityLabel("Explore Sky Grid and Buddies")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        SettingsView(
-                            uid: services.currentUid,
-                            accountDeletionService: services.accountDeletionService,
-                            friendRepository: services.friendRepository,
-                            userRepository: services.userRepository,
-                            purchases: services.purchases,
-                            entitlements: services.entitlements,
-                            onAccountDeleted: onAccountDeleted
-                        )
+                    Button {
+                        homeDestination = .settings
                     } label: {
                         Image(systemName: "gearshape")
                     }
@@ -204,77 +247,38 @@ struct RootView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showCamera, onDismiss: {
-            // The camera is actually gone by the time this runs, so anything the
-            // capture earned can be presented from here without racing iOS's own
-            // dismissal animation — the reason this is a callback and not a timer.
-            //
-            // A pending reward always takes this slot instead of the milestone/
-            // paywall arbitration: DESIGN.md requires the reward to play for
-            // every successful capture, and forbids it competing with a second
-            // full-screen celebration. `resolvePendingPresentations` still runs,
-            // just deferred to the reward cover's own `onDismiss` below, so a
-            // milestone/paywall earned by the same capture is never dropped —
-            // only ever delayed until the reward has finished.
-            if let pendingReward {
-                rewardMoment = pendingReward
-                self.pendingReward = nil
-            } else {
-                resolvePendingPresentations(services: services)
+        .fullScreenCover(item: presentations.binding(fullScreen: true), onDismiss: {
+            presentationDidDismiss(services: services)
+        }) { presentation in
+            switch presentation {
+            case .camera:
+                cameraSheet(services: services)
+            case .reward(let moment):
+                RewardOverlayView(moment: moment, revealSignal: revealSignal, imageFetching: services.imageFetching) {
+                    presentations.dismiss()
+                }
+            case .milestone(let moment):
+                MilestoneView(moment: moment, inviteRepository: services.inviteRepository) {
+                    presentations.dismiss()
+                }
+            case .paywall, .invite:
+                EmptyView()
             }
-        }) {
-            cameraSheet(services: services)
-        }
-        .fullScreenCover(item: $rewardMoment, onDismiss: {
-            resolvePendingPresentations(services: services)
-        }) { moment in
-            RewardOverlayView(
-                moment: moment,
-                revealSignal: revealSignal,
-                imageFetching: services.imageFetching
-            ) {
-                rewardMoment = nil
-            }
-        }
-        .fullScreenCover(item: $milestoneMoment, onDismiss: {
-            // A milestone that outranked an eligible first-unlock or solo paywall
-            // deferred it without recording anything — this is what lets the
-            // paywall claim its turn the moment the arbiter is free again. Waiting
-            // for the cover's own `onDismiss` (rather than calling this from
-            // `onDone` synchronously) avoids presenting a new sheet in the same
-            // runloop as this cover's own dismissal animation, which could
-            // otherwise swallow it — mirrors the camera's
-            // `fullScreenCover(isPresented:onDismiss:)` above.
-            resolvePendingPresentations(services: services)
-        }) { moment in
-            MilestoneView(moment: moment, inviteRepository: services.inviteRepository, onDone: {
-                milestoneMoment = nil
-            })
         }
         .onChange(of: streakSignal.reading) { _, _ in
             // The other half of the resolution: the streak usually lands after the
             // camera is gone, so whichever event is second finds the arming intact.
-            resolvePostCaptureMoment(services: services)
+            resolvePendingPresentations(services: services)
         }
         .onChange(of: revealSignal.reading) { _, _ in
             resolvePendingPresentations(services: services)
         }
-        .sheet(isPresented: $showPaywall, onDismiss: {
-            // A capture can be armed and still unresolved when the user opens the
-            // paywall *manually* (plan badge, archive upgrade). While it is up,
-            // `resolvePostCaptureMoment` defers, and `StreakSignal.record`/
-            // `RevealSignal.record` no-op on an unchanged reading — so without this,
-            // nothing would ever ask again and an earned milestone or first-unlock
-            // paywall would be silently dropped. Automatic paywalls are unaffected:
-            // they clear the arming when they claim the capture.
-            //
-            // This recovers the quick-dismissal case only. A paywall session longer
-            // than `armingLifetime` still expires the arming, and that is the wanted
-            // outcome: a celebration arriving after a minute inside a purchase flow
-            // no longer reads as caused by the capture.
-            resolvePendingPresentations(services: services)
-        }) {
-            PaywallView(
+        .sheet(item: presentations.binding(fullScreen: false), onDismiss: {
+            presentationDidDismiss(services: services)
+        }) { presentation in
+            switch presentation {
+            case .paywall:
+                PaywallView(
                 purchases: services.purchases,
                 entryPoint: paywallEntryPoint,
                 onEntitlementGranted: {
@@ -289,20 +293,22 @@ struct RootView: View {
                 onPresented: { recordAutomaticPaywallPresentationIfNeeded(services: services) },
                 onDismissed: recordSoloPaywallDismissalIfNeeded
             )
-        }
-        .sheet(item: $inviteMoment, onDismiss: {
-            // Swiping the sheet away (rather than tapping a terminal "Done"/"Not now")
-            // still counts as a decision: the same code can always be re-opened from
-            // the original link, so there is nothing to preserve by keeping it pending.
-            router.consumePendingInvite()
-        }) { code in
-            InviteClaimView(
+            case .invite(let code):
+                InviteClaimView(
                 code: code,
                 uid: services.currentUid,
                 inviteRepository: services.inviteRepository,
                 userRepository: services.userRepository,
-                onFinished: { inviteMoment = nil }
+                onFinished: { presentations.dismiss() }
             )
+            case .camera, .reward, .milestone:
+                EmptyView()
+            }
+        }
+        .onChange(of: homeDestination) { _, value in
+            guard value == nil else { return }
+            consumePendingCameraRequestIfNeeded()
+            resolvePendingPresentations(services: services)
         }
         .task { consumePendingCameraRequestIfNeeded() }
         .task { consumePendingBuddyRevealIfNeeded() }
@@ -330,14 +336,18 @@ struct RootView: View {
             onDismiss: { showCamera = false },
             onConfirmed: { draft in
                 try await services.postPublisher.publish(draft)
-                await MorningRitualCoordinator.captureCompleted(localDate: draft.localDate)
-                await recordCompletedCapture(draft, services: services)
+                recordCompletedCapture(draft, services: services)
                 showCamera = false
+                Task { await MorningRitualCoordinator.captureCompleted(localDate: draft.localDate) }
+                Task {
+                    await services.entitlements.refresh()
+                    resolvePendingPresentations(services: services)
+                }
             }
         )
     }
 
-    private func refreshDestination(services: AppServices) async {
+    private func refreshDestination(services: AppServices) {
         let isUITestFastPath = ProcessInfo.processInfo.arguments.contains("-SkyGridSkipOnboarding")
         destination = LaunchGate.destination(
             onboardingDone: LocalDefaults.onboardingDone || isUITestFastPath
@@ -351,6 +361,7 @@ struct RootView: View {
     }
 
     private func presentPaywall(from entryPoint: PaywallEntryPoint) {
+        guard presentations.isAvailable else { return }
         paywallEntryPoint = entryPoint
         showPaywall = true
     }
@@ -364,7 +375,7 @@ struct RootView: View {
     /// it can become true asynchronously (a buddy posting hours later), so
     /// `resolvePostCaptureMoment`/`resolveFirstUnlockPaywall` compute it fresh at
     /// every re-ask instead of freezing it into the arming.
-    private func recordCompletedCapture(_ draft: PostDraft, services: AppServices) async {
+    private func recordCompletedCapture(_ draft: PostDraft, services: AppServices) {
         prepareAutomaticPaywallState(for: draft.ownerUid)
         armDailyReward(draft: draft)
         guard LocalDefaults.lastCompletedCaptureLocalDate != draft.localDate.docID else { return }
@@ -372,7 +383,6 @@ struct RootView: View {
         LocalDefaults.lastCompletedCaptureLocalDate = draft.localDate.docID
         LocalDefaults.completedCaptureCount += 1
         let count = LocalDefaults.completedCaptureCount
-        await services.entitlements.refresh()
 
         armPostCaptureMoment(
             localDate: draft.localDate,
@@ -395,7 +405,15 @@ struct RootView: View {
             lastPlayedLocalDate: LocalDefaults.lastRewardPlayedLocalDate
         ) else { return }
 
-        LocalDefaults.lastRewardPlayedLocalDate = draft.localDate.docID
+        // Deliberately NOT marked played here. The moment itself lives in volatile
+        // `@State`, so writing the flag at arming time meant a process death between
+        // the publish and the presentation permanently suppressed that day's reward:
+        // the flag said "played" while nothing ever played. The write now happens
+        // where the reward is actually put on screen, in `resolvePendingPresentations`.
+        //
+        // Residual, knowingly unfixed: the moment is still lost if the process dies
+        // before it presents. Recovering that needs the moment persisted, not just
+        // the flag moved — out of scope for this pass.
         pendingReward = RewardMoment(
             localDate: draft.localDate,
             skyColor: draft.skyColor,
@@ -457,7 +475,7 @@ struct RootView: View {
         // callback re-asks this resolver. In particular, the first asynchronous
         // streak reading for a Day-1 capture can arrive during the reward; without
         // this guard SwiftUI is asked to present reward and milestone covers at once.
-        guard !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil else { return }
+        guard canPresentAutomaticMoment else { return }
 
         prepareUnlockPaywallState(for: services.currentUid)
         let isFirstUnlockEligible = FirstUnlockPaywallPolicy.shouldPresent(
@@ -559,7 +577,7 @@ struct RootView: View {
     /// that path also has to weigh a milestone against it — this one has nothing to
     /// arbitrate against, so it can act the moment eligibility is true.
     private func resolveFirstUnlockPaywall(services: AppServices) {
-        guard !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil, inviteMoment == nil else { return }
+        guard canPresentAutomaticMoment else { return }
         // A capture is currently being arbitrated — that path owns this decision so
         // a milestone can still outrank the paywall; this resolver only ever handles
         // the case where there is nothing else in flight to arbitrate against.
@@ -584,7 +602,7 @@ struct RootView: View {
     /// today otherwise; see that property's write site for why "today" is not
     /// always the right day to re-ask against.
     private func resolveSoloPaywall(services: AppServices) {
-        guard !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil, inviteMoment == nil else { return }
+        guard canPresentAutomaticMoment else { return }
         // A capture is currently being arbitrated — that path owns this decision so
         // a milestone can still outrank the paywall; this resolver only ever handles
         // the case where there is nothing else in flight to arbitrate against.
@@ -692,12 +710,14 @@ struct RootView: View {
     /// Re-checking the current value from every relevant lifecycle hook — appear,
     /// scenePhase becoming active, and destination changing — closes that gap.
     private func consumePendingCameraRequestIfNeeded() {
-        guard destination == .today, let services = appServices else { return }
+        guard destination == .today, let services = appServices,
+              presentations.isAvailable, homeDestination == nil, cameraRouteTask == nil else { return }
         let wantsCameraFromNotification = router.pendingRoute == .camera
         let wantsCameraFromAlarm = LocalDefaults.openCameraAfterMorningAlarm
         guard wantsCameraFromNotification || wantsCameraFromAlarm else { return }
 
-        Task {
+        cameraRouteTask = Task {
+            defer { cameraRouteTask = nil }
             // Both routes can fire after the day's post already exists — a queued
             // notification tap opened late, or the AlarmKit flag surviving a launch
             // that happens after a capture from a different trigger. `TodayView`'s
@@ -708,6 +728,9 @@ struct RootView: View {
             let today = services.clock.today()
             switch await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)) {
             case .value(nil):
+                guard !Task.isCancelled, presentations.isAvailable, homeDestination == nil,
+                      services.clock.today() == today,
+                      appServices?.currentUid == services.currentUid else { return }
                 if wantsCameraFromNotification { router.pendingRoute = nil }
                 if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
                 homeDestination = nil
@@ -764,6 +787,18 @@ struct RootView: View {
     /// aren't met, so calling all three from every site is cheap and never stacks
     /// two presentations at once.
     private func resolvePendingPresentations(services: AppServices) {
+        guard destination == .today, scenePhase == .active,
+              presentations.isAvailable, homeDestination == nil else { return }
+        if let pendingReward {
+            // The flag is written only once the coordinator has actually accepted
+            // the presentation — see `armDailyReward` for why it is not written at
+            // arming time. Dropping the moment on a refused present would lose the
+            // celebration outright.
+            guard presentations.present(.reward(pendingReward)) else { return }
+            LocalDefaults.lastRewardPlayedLocalDate = pendingReward.localDate.docID
+            self.pendingReward = nil
+            return
+        }
         resolvePendingInvite()
         resolvePostCaptureMoment(services: services)
         resolveFirstUnlockPaywall(services: services)
@@ -777,11 +812,23 @@ struct RootView: View {
     /// arming/backstop machinery.
     private func resolvePendingInvite() {
         guard destination == .today,
-              inviteMoment == nil,
-              !showCamera, !showPaywall, rewardMoment == nil, milestoneMoment == nil,
+              canPresentAutomaticMoment,
               let code = router.pendingInviteCode
         else { return }
         inviteMoment = code
+    }
+
+    private var canPresentAutomaticMoment: Bool {
+        presentations.isAvailable && pendingReward == nil && homeDestination == nil && scenePhase == .active
+    }
+
+    private func presentationDidDismiss(services: AppServices) {
+        let dismissed = presentations.didDismiss()
+        if case .invite(let code) = dismissed, router.pendingInviteCode == code {
+            router.consumePendingInvite()
+        }
+        resolvePendingPresentations(services: services)
+        consumePendingCameraRequestIfNeeded()
     }
 
     private func firstValue<T: Sendable>(from stream: AsyncStream<T>) async -> T? {
@@ -795,6 +842,9 @@ struct RootView: View {
     /// card. Cheap and idempotent, so calling it from every foreground moment is
     /// safe — see `MorningRitualPolicy`.
     private func reconcileMorningRitual(services: AppServices) async {
+        guard !isReconcilingRitual else { return }
+        isReconcilingRitual = true
+        defer { isReconcilingRitual = false }
         let today = services.clock.today()
         guard case .value(let post)? = await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)) else {
             return
@@ -812,6 +862,7 @@ struct RootView: View {
 private enum HomeDestination: Hashable, Identifiable {
     case archive
     case buddies
+    case settings
 
     var id: Self { self }
 }

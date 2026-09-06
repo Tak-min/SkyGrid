@@ -22,6 +22,7 @@ enum ServiceFactory {
         try await RevenueCatConfig.configureOrIdentify(appUserID: uid)
         let postRepository = FirebasePostRepository(firestore: firestore)
         let imageStore = FirebaseImageStore()
+        let imagePipeline = DisplayImagePipeline(remote: imageStore)
         let uploadQueue = UploadQueue(
             modelContainer: LocalStoreContainer.make(),
             uploader: imageStore,
@@ -44,8 +45,8 @@ enum ServiceFactory {
             friendRepository: FirebaseFriendRepository(firestore: firestore),
             inviteRepository: FirebaseInviteRepository(),
             contentSafetyRepository: FirebaseContentSafetyRepository(firestore: firestore),
-            accountDeletionService: FirebaseAccountDeletionService(uploadQueue: uploadQueue),
-            imageFetching: imageStore,
+            accountDeletionService: FirebaseAccountDeletionService(uploadQueue: uploadQueue, imagePipeline: imagePipeline),
+            imageFetching: imagePipeline,
             uploadQueue: uploadQueue,
             postPublisher: PostPublisher(uploadQueue: uploadQueue),
             orphanedPostRecovery: OrphanedPostRecovery(postRepository: postRepository, uploadQueue: uploadQueue, imageStore: imageStore),

@@ -16,29 +16,67 @@ struct RewardOverlayView: View {
     let onDone: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @State private var controller: RewardSequenceController?
     @State private var started = false
+    @State private var sourceThumbnail: UIImage?
+    @State private var pixelTile: UIImage?
 
     var body: some View {
         ZStack {
             RewardStageColor.background.ignoresSafeArea()
 
             if let controller {
-                content(controller: controller)
+                VStack {
+                    content(controller: controller)
+                    Button("Continue") {
+                        controller.cancel()
+                        onDone()
+                    }
+                    .buttonStyle(SkySecondaryButtonStyle())
+                    .padding(.horizontal, SGSpacing.xl)
+                    .padding(.bottom, SGSpacing.lg)
+                    .accessibilityHint("Your sky is already saved")
+                }
             }
         }
         .task {
-            guard !started else { return }
+            guard !started else {
+                // A cancelled presentation must still have an exit on reappearance.
+                if controller?.isFinished == true { onDone() }
+                return
+            }
             started = true
             let controller = RewardSequenceController(reducedMotion: reduceMotion)
             self.controller = controller
             controller.start(onComplete: onDone)
+            let data = moment.thumbnailData
+            let images = await Task.detached(priority: .userInitiated) {
+                (data.flatMap { ImageProcessor.displayThumbnail(from: $0, maxPixelSize: 320) },
+                 PixelSkyTileRenderer.makeTile(from: data))
+            }.value
+            guard !Task.isCancelled else { return }
+            sourceThumbnail = images.0
+            pixelTile = images.1
         }
         .onDisappear {
             // A view recreation or backgrounding mid-sequence must resolve to the
             // truthful settled state without replaying the reward or claiming a
             // completion that never happened — DESIGN.md's interruption rule.
             controller?.cancel()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                controller?.cancel()
+            } else if phase == .active, controller?.isFinished == true {
+                onDone()
+            }
+        }
+        .onChange(of: reduceMotion) { _, reduced in
+            if reduced {
+                controller?.cancel()
+                onDone()
+            }
         }
         .onChange(of: controller?.beat) { _, beat in
             guard beat == .settle else { return }
@@ -65,8 +103,8 @@ struct RewardOverlayView: View {
         VStack(spacing: SGSpacing.lg) {
             ZStack {
                 RewardMosaicLandingView(
-                    sourceThumbnail: moment.thumbnailData.flatMap(UIImage.init(data:)),
-                    tile: PixelSkyTileRenderer.makeTile(from: moment.thumbnailData),
+                    sourceThumbnail: sourceThumbnail,
+                    tile: pixelTile,
                     fallbackColor: moment.skyColor.color,
                     localDate: moment.localDate,
                     beat: beat

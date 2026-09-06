@@ -66,6 +66,8 @@ private enum UIAuditScenario: String {
     case rewardLanding = "reward-landing"
     case rewardPeak = "reward-peak"
     case rewardSettle = "reward-settle"
+    case presentationFlow = "presentation-flow"
+    case rewardLive = "reward-live"
 
     static var current: Self? {
         let arguments = ProcessInfo.processInfo.arguments
@@ -104,7 +106,9 @@ private struct UIAuditRoot: View {
     }
 
     var body: some View {
-        if scenario == .moku {
+        if scenario == .presentationFlow || scenario == .rewardLive {
+            PresentationFlowAuditView()
+        } else if scenario == .moku {
             // Debug-only deterministic host: this verifies every mascot state
             // without wiring Moku into the shipped daily flow before its reward
             // state machine exists.

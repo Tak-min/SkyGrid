@@ -207,19 +207,7 @@ final class GridArchiveViewModel {
     }
 
     private static func loadThumbnail(for post: SkyPost, imageFetching: any ImageFetching) async -> UIImage? {
-        if let localData = ImageFileStore.pendingImageData(forRemotePath: post.thumbPath),
-           let localThumbnail = ImageProcessor.displayThumbnail(from: localData) {
-            return localThumbnail
-        }
-        if let cachedData = ImageFileStore.cachedThumbnailData(forRemotePath: post.thumbPath),
-           let cachedThumbnail = ImageProcessor.displayThumbnail(from: cachedData) {
-            return cachedThumbnail
-        }
-        guard let remoteData = try? await imageFetching.fetchImage(path: post.thumbPath),
-              let remoteThumbnail = ImageProcessor.displayThumbnail(from: remoteData)
-        else { return nil }
-        ImageFileStore.cacheThumbnail(remoteData, forRemotePath: post.thumbPath)
-        return remoteThumbnail
+        await ThumbnailLoader.loadThumbnail(forRemotePath: post.thumbPath, imageFetching: imageFetching)
     }
 }
 

@@ -17,18 +17,6 @@ enum ThumbnailLoader {
     /// since revoked the pairing, etc.) — callers are expected to keep whatever
     /// non-photo fallback they already show rather than surface an error.
     static func loadThumbnail(forRemotePath remotePath: String, imageFetching: any ImageFetching) async -> UIImage? {
-        if let localData = ImageFileStore.pendingImageData(forRemotePath: remotePath),
-           let localThumbnail = ImageProcessor.displayThumbnail(from: localData) {
-            return localThumbnail
-        }
-        if let cachedData = ImageFileStore.cachedThumbnailData(forRemotePath: remotePath),
-           let cachedThumbnail = ImageProcessor.displayThumbnail(from: cachedData) {
-            return cachedThumbnail
-        }
-        guard let remoteData = try? await imageFetching.fetchImage(path: remotePath),
-              let remoteThumbnail = ImageProcessor.displayThumbnail(from: remoteData)
-        else { return nil }
-        ImageFileStore.cacheThumbnail(remoteData, forRemotePath: remotePath)
-        return remoteThumbnail
+        await DisplayImagePipeline.resolved(for: imageFetching).image(path: remotePath, size: .thumbnail)
     }
 }

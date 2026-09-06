@@ -77,7 +77,9 @@ struct CameraView: View {
                 }
                 .foregroundStyle(.white)
                 Spacer()
-                MokuScreenMark(state: .settled, side: 42)
+                // The live screen's only Moku is the expressive one in
+                // `CameraCaptureControls`, which reacts to `isCapturing`. A second
+                // static mark here made the capture screen show two companions.
                 closeButton
             }
         } viewfinder: {

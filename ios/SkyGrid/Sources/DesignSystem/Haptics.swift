@@ -1,39 +1,69 @@
 import UIKit
 
-/// Deliberately minimal, and split along the same calm/loud boundary as
-/// `SGT` vs `SGExport`: the morning ritual gets one soft pulse and nothing else,
-/// while the milestone moment — which is an explicit celebration — gets a success
-/// notification.
-///
-/// This supersedes the earlier rule that `postCompleted` was the ONLY haptic in the
-/// app (and VISION.md §6's blanket ban on level-up effects). The persona change to a
-/// shareable, milestone-driven product was a deliberate product decision; see
-/// `dev-notes/ui-viral-persona-pass_2026-08-08.md`.
-///
-/// The 2026-09-05 playful-reward redesign (DESIGN.md's "Daily reward motion
-/// contract") adds one more: `rewardLanded`, at the reward peak beat. That contract
-/// is explicit that button-press feedback (`postCompleted`'s soft impact, fired at
-/// capture confirm) and a "success" notification haptic must never stack — so
-/// `rewardLanded` is a distinct, later beat rather than a second call alongside
-/// `postCompleted`.
+/// One feedback budget across navigation, character play, and the saved-capture
+/// reward. Generators survive individual taps; overlapping callbacks cannot stack
+/// motors or manufacture an extra success notification.
+@MainActor
 enum Haptics {
+    private static let selection = UISelectionFeedbackGenerator()
+    private static let soft = UIImpactFeedbackGenerator(style: .soft)
+    private static let landing = UIImpactFeedbackGenerator(style: .rigid)
+    private static let notification = UINotificationFeedbackGenerator()
+    private static var lastFeedbackTime: TimeInterval = -.infinity
+    private static var lastSuccessTime: TimeInterval = -.infinity
+
+    /// Reduce Motion deliberately does NOT gate this. Haptics are not motion, and
+    /// suppressing them there would silently drop the shipped `postCompleted`
+    /// confirmation for exactly the people who lost the animation that carried the
+    /// same meaning. Character-play haptics stay tied to motion at their own call
+    /// site in `MokuView`, which is where that coupling belongs.
+    private static var enabled: Bool {
+        UIApplication.shared.applicationState == .active
+            && !ProcessInfo.processInfo.arguments.contains("-SkyGridUIAudit")
+    }
+
+    private static func accept(minimumInterval: TimeInterval = 0.09) -> Bool {
+        guard enabled else { return false }
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - lastFeedbackTime >= minimumInterval else { return false }
+        lastFeedbackTime = now
+        return true
+    }
+
+    static func selectionChanged() {
+        guard accept() else { return }
+        selection.selectionChanged()
+    }
+
+    static func navigationConfirmed() {
+        guard accept(minimumInterval: 0.12) else { return }
+        soft.impactOccurred(intensity: 0.55)
+    }
+
+    static func characterTouched() {
+        guard accept(minimumInterval: 0.16) else { return }
+        soft.impactOccurred(intensity: 0.45)
+        landing.prepare()
+    }
+
+    static func characterLanded() {
+        guard accept(minimumInterval: 0.16) else { return }
+        landing.impactOccurred(intensity: 0.45)
+    }
+
+    /// Tactile capture confirmation, distinct from durable-save success.
     static func postCompleted() {
-        let generator = UIImpactFeedbackGenerator(style: .soft)
-        generator.impactOccurred()
+        guard accept(minimumInterval: 0.16) else { return }
+        soft.impactOccurred(intensity: 0.7)
     }
 
-    /// Fires only from `MilestoneView`, at a streak threshold — at most a handful of
-    /// times in a user's life, never on an ordinary morning.
-    static func milestoneReached() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-    }
+    static func milestoneReached() { success() }
+    static func rewardLanded() { success() }
 
-    /// Fires once, at the daily reward's reward-peak beat — DESIGN.md's "one success
-    /// haptic occurs at landing" rule. Never called alongside `postCompleted` for the
-    /// same capture; see the type-level note above.
-    static func rewardLanded() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+    private static func success() {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now - lastSuccessTime >= 1.2, accept(minimumInterval: 0.25) else { return }
+        lastSuccessTime = now
+        notification.notificationOccurred(.success)
     }
 }
