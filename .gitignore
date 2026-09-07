@@ -61,3 +61,11 @@ branding/promo/out/contact-sheet.png
 # ignored before, so ~9.5GB of exports and renders were tracked by accident and
 # purged from history on 2026-09-06. The files themselves stay on disk.
 videos/
+
+# App Store screenshot pipeline intermediates. `store.yaml` + `capture.py` regenerate
+# them from a simulator, so the raw captures and the pre-crop framed renders are not
+# worth carrying. `final/` (exactly what was uploaded to ASC) and `previous/` (the
+# superseded set, already deleted from ASC and therefore not re-downloadable) ARE tracked.
+branding/app-store/*/raw/
+branding/app-store/*/framed/
+dev-notes/tools/__pycache__/

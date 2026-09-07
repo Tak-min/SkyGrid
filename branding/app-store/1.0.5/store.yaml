@@ -1,0 +1,376 @@
+{
+  "project": {
+    "name": "Sky Grid 1.0.5",
+    "device": "iPhone 17 - Black - Portrait",
+    "output_size": "iPhone6_5",
+    "output_dir": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/final"
+  },
+  "screenshots": {
+    "01-morning": {
+      "background": {
+        "type": "linear",
+        "colors": [
+          "#F4F7FA",
+          "#F4F7FA"
+        ],
+        "direction": 0
+      },
+      "content": [
+        {
+          "type": "text",
+          "content": "SKY GRID",
+          "position": [
+            "50%",
+            "105"
+          ],
+          "size": 36,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Wake up.",
+          "position": [
+            "50%",
+            "290"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Make it count.",
+          "position": [
+            "50%",
+            "470"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "A sky photo. A small morning win.",
+          "position": [
+            "50%",
+            "670"
+          ],
+          "size": 43,
+          "max_width": 1140,
+          "color": "#15191F"
+        },
+        {
+          "type": "image",
+          "asset": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/raw/grid-light.png",
+          "frame": true,
+          "position": [
+            "90%",
+            "1980"
+          ],
+          "scale": 0.42,
+          "rotation": 8
+        },
+        {
+          "type": "image",
+          "asset": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/raw/today-light.png",
+          "frame": true,
+          "position": [
+            "50%",
+            "1780"
+          ],
+          "scale": 0.72,
+          "rotation": -5
+        }
+      ]
+    },
+    "02-capture": {
+      "background": {
+        "type": "linear",
+        "colors": [
+          "#0B0D12",
+          "#0B0D12"
+        ],
+        "direction": 0
+      },
+      "content": [
+        {
+          "type": "text",
+          "content": "SKY GRID",
+          "position": [
+            "50%",
+            "105"
+          ],
+          "size": 36,
+          "weight": "bold",
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "content": "One sky.",
+          "position": [
+            "50%",
+            "290"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "content": "Every morning.",
+          "position": [
+            "50%",
+            "470"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "content": "Step outside. Keep a little of today.",
+          "position": [
+            "50%",
+            "670"
+          ],
+          "size": 43,
+          "max_width": 1140,
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "image",
+          "asset": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/raw/camera-review-light.png",
+          "frame": true,
+          "position": [
+            "50%",
+            "1780"
+          ],
+          "scale": 0.72,
+          "rotation": 0
+        }
+      ]
+    },
+    "03-mosaic": {
+      "background": {
+        "type": "linear",
+        "colors": [
+          "#DAEDF7",
+          "#DAEDF7"
+        ],
+        "direction": 0
+      },
+      "content": [
+        {
+          "type": "text",
+          "content": "SKY GRID",
+          "position": [
+            "50%",
+            "105"
+          ],
+          "size": 36,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Your mornings.",
+          "position": [
+            "50%",
+            "290"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "One mosaic.",
+          "position": [
+            "50%",
+            "470"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Watch your days become a year.",
+          "position": [
+            "50%",
+            "670"
+          ],
+          "size": 43,
+          "max_width": 1140,
+          "color": "#15191F"
+        },
+        {
+          "type": "image",
+          "asset": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/raw/grid-light.png",
+          "frame": true,
+          "position": [
+            "50%",
+            "1780"
+          ],
+          "scale": 0.72,
+          "rotation": 0
+        },
+        {
+          "type": "text",
+          "content": "Newest 30 days free \u00b7 Full archive with Pro",
+          "position": [
+            "50%",
+            "752"
+          ],
+          "size": 33,
+          "color": "#15191F"
+        }
+      ]
+    },
+    "04-together": {
+      "background": {
+        "type": "linear",
+        "colors": [
+          "#0B0D12",
+          "#0B0D12"
+        ],
+        "direction": 0
+      },
+      "content": [
+        {
+          "type": "text",
+          "content": "SKY GRID",
+          "position": [
+            "50%",
+            "105"
+          ],
+          "size": 36,
+          "weight": "bold",
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "content": "Show up.",
+          "position": [
+            "50%",
+            "290"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "content": "Together.",
+          "position": [
+            "50%",
+            "470"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "content": "Your skies unlock when you both post.",
+          "position": [
+            "50%",
+            "670"
+          ],
+          "size": 43,
+          "max_width": 1140,
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "image",
+          "asset": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/raw/buddies-dark.png",
+          "frame": true,
+          "position": [
+            "50%",
+            "1780"
+          ],
+          "scale": 0.72,
+          "rotation": 0
+        }
+      ]
+    },
+    "05-share": {
+      "background": {
+        "type": "linear",
+        "colors": [
+          "#F4F7FA",
+          "#F4F7FA"
+        ],
+        "direction": 0
+      },
+      "content": [
+        {
+          "type": "text",
+          "content": "SKY GRID",
+          "position": [
+            "50%",
+            "105"
+          ],
+          "size": 36,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Your sky.",
+          "position": [
+            "50%",
+            "290"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Your story.",
+          "position": [
+            "50%",
+            "470"
+          ],
+          "size": 142,
+          "max_width": 1150,
+          "weight": "bold",
+          "color": "#15191F"
+        },
+        {
+          "type": "text",
+          "content": "Keep a morning worth sharing.",
+          "position": [
+            "50%",
+            "670"
+          ],
+          "size": 43,
+          "max_width": 1140,
+          "color": "#15191F"
+        },
+        {
+          "type": "image",
+          "asset": "/Users/taku8/Desktop/SkyGrid/branding/app-store/1.0.5/raw/share-morning-dark.png",
+          "frame": true,
+          "position": [
+            "50%",
+            "1780"
+          ],
+          "scale": 0.72,
+          "rotation": 0
+        }
+      ]
+    }
+  }
+}

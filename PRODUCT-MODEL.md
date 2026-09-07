@@ -69,3 +69,11 @@
 - 招待受諾通知の通知文面、同意状態、失敗時の再試行要件。
 - buddy 数の上限を置くか。厳密に上限を置くなら、handle 経由とリンク claim の両方の作成経路をサーバーで集約する必要がある。
 - 週末に欠席が集中しているか（複数アラームの投資判断）。
+
+## 7. App Store release measurement — 2026-09-06
+
+- Target metric: page-attributed first-time downloads / unique product-page viewers, aligned by date, storefront and source. Current value: **unmeasured**; do not substitute all downloads divided by page views.
+- Created ongoing ASC analytics request `11e25502-8655-4a78-a377-4d2032e9a088`. Read with `asc analytics view --request-id 11e25502-8655-4a78-a377-4d2032e9a088`; report definitions exist, but no report instances are available yet.
+- 1.0.5 creative bet: current UI plus one concise benefit per screenshot helps visitors understand the capture→mosaic→buddy loop. Without the change, 1.0-era screens and obsolete color-only/Pro descriptions persist.
+- Cheapest check: compare a complete seven-day post-publication window with a matched prior window when reports exist; if volume is insufficient, leave the result unmeasured. Do not attribute conversion changes to creative alone because the app version changes simultaneously. Preserve the former set; revise if qualified conversion drops with adequate comparable data.
+- Submission prerequisite found: current iOS handle requests/acceptance require two missing production Functions. See `dev-notes/asc-1.0.5-release_2026-09-06.md`; no global eight-person-cap claim in this release copy.

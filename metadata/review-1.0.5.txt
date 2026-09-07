@@ -1,0 +1,9 @@
+Sky Grid starts with Firebase anonymous authentication; no email or password is required. Complete onboarding and choose Continue with Free on the optional Pro screens. Optional Sign in with Apple in Settings protects the archive across reinstalls/devices; it is not required to use the app.
+
+1.0.5 introduces Moku, an adaptive light/dark design, and a post-capture mosaic celebration. From the home screen, Capture the sky opens the camera. Capture a photo and choose Use this one. Camera permission is required; a physical device is recommended for camera, AlarmKit, App Attest, and notifications.
+
+Your Mosaic opens the archive. Buddies is reachable from the home navigation and lets two installations choose handles and connect through an invite link or handle request. Buddy skies stay private until both users have posted that day. No pre-existing demo account is required.
+
+Settings contains the morning alarm, Pro purchase/restore, privacy/support links, and account deletion. Pro unlocks the archive beyond the free 30-day view; monthly, annual, and lifetime options are available. The daily capture/buddy ritual remains available on Free.
+
+Store screenshots show the actual current UI with local demonstration data and CC0 sample sky photos; the screenshot harness is excluded from the Release build.

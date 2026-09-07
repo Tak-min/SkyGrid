@@ -527,6 +527,15 @@ private enum UIAuditData {
     }
 
     private static func thumbnail(for skyColor: SkyColor) -> UIImage {
+        // Store captures use local CC0 demo photos through the real UI. This entire
+        // audit harness is DEBUG-only; normal audit tests retain fixed gradients.
+        let arguments = ProcessInfo.processInfo.arguments
+        if let index = arguments.firstIndex(of: "-SkyGridStorePhotoDirectory"),
+           arguments.indices.contains(index + 1) {
+            let filename = skyColor.hex == "#91B6C8" ? "real_overcast_sky.jpg" : "real_sunset_sky.jpg"
+            let url = URL(fileURLWithPath: arguments[index + 1]).appendingPathComponent(filename)
+            if let image = UIImage(contentsOfFile: url.path) { return image }
+        }
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: 96, height: 96))
         return renderer.image { context in
             let base = UIColor(skyColor.color)

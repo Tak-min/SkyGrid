@@ -369,6 +369,9 @@ struct CameraReviewAuditView: View {
         CameraStage {
             CameraAuditHeader()
         } viewfinder: {
+            if let photo = storePhoto {
+                Image(uiImage: photo).resizable().scaledToFill()
+            } else {
             LinearGradient(
                 colors: [
                     Color(red: 0.34, green: 0.56, blue: 0.72),
@@ -377,6 +380,7 @@ struct CameraReviewAuditView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
+            }
         } controls: {
             VStack(spacing: SGSpacing.md) {
                 Text("KEEP THIS SKY")
@@ -389,6 +393,14 @@ struct CameraReviewAuditView: View {
                 )
             }
         }
+    }
+
+    private var storePhoto: UIImage? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-SkyGridStorePhotoDirectory"),
+              arguments.indices.contains(index + 1) else { return nil }
+        let url = URL(fileURLWithPath: arguments[index + 1]).appendingPathComponent("real_sunset_sky.jpg")
+        return UIImage(contentsOfFile: url.path)
     }
 }
 
