@@ -350,43 +350,53 @@ private struct BuddyNameRow: View {
     let imageFetching: any ImageFetching
     @State private var profile: UserProfile?
     @State private var thumbnail: UIImage?
+    @State private var showingSky = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private static let tileSize: CGFloat = 48
+    private static let tileRadius: CGFloat = 12
 
     private var isPosted: Bool {
         if case .posted = revealState { return true }
         return false
     }
 
+    private var postedPost: SkyPost? {
+        guard case .posted(let post) = revealState else { return nil }
+        return post
+    }
+
     var body: some View {
         HStack(spacing: SGSpacing.sm) {
-            Circle()
+            // A sky is not a profile picture. Circle-cropping it made this read as
+            // a generic social avatar and left almost none of the photograph
+            // visible; DESIGN.md gives the mosaic a square tile at an 8-12pt
+            // radius, and a buddy's morning is the same object as a mosaic cell.
+            RoundedRectangle(cornerRadius: Self.tileRadius, style: .continuous)
                 .fill(avatarFill)
-                .frame(width: 42, height: 42)
+                .frame(width: Self.tileSize, height: Self.tileSize)
                 .overlay {
                     if isPosted, let thumbnail {
                         Image(uiImage: thumbnail)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(width: 42, height: 42)
-                            .clipShape(Circle())
-                    }
-                }
-                .overlay(Circle().strokeBorder(avatarStrokeColor, lineWidth: 1))
-                .overlay {
-                    if case .sealed = revealState {
-                        Circle()
-                            .strokeBorder(SGT.ink3.opacity(0.18), lineWidth: 2)
-                            .padding(-4)
+                            .frame(width: Self.tileSize, height: Self.tileSize)
+                            .clipShape(RoundedRectangle(cornerRadius: Self.tileRadius, style: .continuous))
                     }
                 }
                 .overlay {
+                    RoundedRectangle(cornerRadius: Self.tileRadius, style: .continuous)
+                        .strokeBorder(avatarStrokeColor, lineWidth: 1)
+                }
+                .overlay {
                     if case .sealed = revealState {
+                        // One mark for sealed, not a ring and a glyph stacked on
+                        // the same 42pt circle.
                         Image(systemName: "lock.fill")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(SGT.ink3)
                     }
                 }
-                .scaleEffect(isPosted ? 1 : 0.92)
             VStack(alignment: .leading, spacing: 3) {
                 Text(profile?.displayName ?? "Buddy")
                     .font(SGFont.body(16))
@@ -402,8 +412,27 @@ private struct BuddyNameRow: View {
                 .multilineTextAlignment(.trailing)
         }
         .frame(minHeight: 56)
+        // Only a revealed sky is openable. Sealed and not-yet rows stay inert so
+        // the row never implies content the server has not authorised.
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard postedPost != nil else { return }
+            showingSky = true
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(profile?.displayName ?? "Buddy"), \(profile?.handle.map { "at " + $0.value } ?? "handle loading"), \(statusText)")
+        .accessibilityAddTraits(postedPost == nil ? [] : .isButton)
+        .accessibilityHint(postedPost == nil ? "" : "Opens their sky")
+        .fullScreenCover(isPresented: $showingSky) {
+            if let postedPost {
+                BuddySkyDetailView(
+                    post: postedPost,
+                    displayName: profile?.displayName ?? "Buddy",
+                    handle: profile?.handle?.value,
+                    imageFetching: imageFetching
+                )
+            }
+        }
         .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
         .task(id: photoIdentity) { await loadThumbnail(for: photoIdentity) }
             .task {
