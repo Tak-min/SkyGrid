@@ -34,7 +34,24 @@
 | `skygrid_invite_link_created` / `shared` / `code_copied` | `ios/SkyGrid/Sources/Invite/InviteAnalytics.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 | `skygrid_invite_preview_viewed` / `claim_started` / `claim_resolved` | `ios/SkyGrid/Sources/Invite/InviteAnalytics.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 
-次の最小作業は、新規カスタム install イベントでも plist の未使用キー変更でもなく、DebugView / Realtime report で新規 debug build の `first_open` と既存カスタムイベントの到着を確認することである。到着後、`first_open` を分母にして `capture_completed` → `invite_prompt_viewed` → `invite_share_started` → `preview_viewed` → `claim_resolved` → `mutual_reveal_unlocked` を集計する。UID、handle、invite code は送らない。すべてに `schema_version`、招待導線に `placement` / `experiment_variant` を付ける。
+### 2.1 送信経路の検証結果（2026-09-07 実測・Claude Code）
+
+**収集は有効で、イベントは実際に Google に到達している。** 以下はシミュレータ実機ログによる直接観測であり、推測ではない。
+
+- `GoogleService-Info.plist` の `IS_ANALYTICS_ENABLED = False` は**無効**である。firebase-ios-sdk 12.17.0 のチェックアウトを全文検索したところ、この文字列は `docs/FirebaseOptionsPerProduct.md` にしか現れず、コードからは一度も読まれない。実際のゲートキーは `FIROptions.m` の `FIREBASE_ANALYTICS_COLLECTION_ENABLED` / `FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED` で、いずれも **Info.plist** から読む。`ios/SkyGrid/Config/Info.plist` にはどちらも存在しないため、収集は既定どおり有効。
+- `-FIRDebugEnabled` 付きで Debug ビルドを起動し、`log stream` を取得した結果:
+  `first_open` / `session_start` / `user_engagement` が記録 → `Bundle added to the upload queue` → `Uploading data. Host: https://app-analytics-services.com/a` → **`Successful upload. Got network response. Code: 204`**。
+  つまり自動イベントの送信経路は端から端まで機能している。
+- GA4 側の紐付けも実在する: property `552768124`（account `364874961`）、iOS stream `15716675392`。
+
+**未解決は「読み取り」と「カスタムイベントの発火」の2点に絞られた。**
+
+- 読み取り経路が無い。BigQuery エクスポートは未設定（`bq ls --project_id=sky-grid-app` が空）。GA4 Data API は ADC のスコープ不足で 403（`ACCESS_TOKEN_SCOPE_INSUFFICIENT`）。どちらの解除にも `analytics.readonly` を含む対話ログインが要る。
+- カスタム `skygrid_*` の到達は**未確認のまま**。起動のみでは 1 件も発火しなかった（サインイン画面で停止するため当然）。加えて 9 箇所すべてが `Analytics.logEvent` の静的呼び出しで、抽象化もテストダブルも無く、`ios/SkyGrid/Tests` に Analytics を検証するテストは 1 件も無い。よって「その行が実際に実行されるか」を保証する仕組みが現状ゼロである。最小の是正は、送信を protocol 越しにしてテストで観測可能にすること。
+
+### 2.2 次の最小作業
+
+次の最小作業は、新規カスタム install イベントでも plist の未使用キー変更でもなく、到着後、`first_open` を分母にして `capture_completed` → `invite_prompt_viewed` → `invite_share_started` → `preview_viewed` → `claim_resolved` → `mutual_reveal_unlocked` を集計する。UID、handle、invite code は送らない。すべてに `schema_version`、招待導線に `placement` / `experiment_variant` を付ける。
 
 ## 3. ユーザー動線（実装の事実）
 
