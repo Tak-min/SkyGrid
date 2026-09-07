@@ -49,6 +49,54 @@
 - 読み取り経路が無い。BigQuery エクスポートは未設定（`bq ls --project_id=sky-grid-app` が空）。GA4 Data API は ADC のスコープ不足で 403（`ACCESS_TOKEN_SCOPE_INSUFFICIENT`）。どちらの解除にも `analytics.readonly` を含む対話ログインが要る。
 - カスタム `skygrid_*` の到達は**未確認のまま**。起動のみでは 1 件も発火しなかった（サインイン画面で停止するため当然）。加えて 9 箇所すべてが `Analytics.logEvent` の静的呼び出しで、抽象化もテストダブルも無く、`ios/SkyGrid/Tests` に Analytics を検証するテストは 1 件も無い。よって「その行が実際に実行されるか」を保証する仕組みが現状ゼロである。最小の是正は、送信を protocol 越しにしてテストで観測可能にすること。
 
+### 2.1b 実測値（2026-09-07・GA4 Data API 直読み）
+
+読み取り経路が開通した。`skygrid-analytics-reader@sky-grid-app.iam.gserviceaccount.com` を
+GA4 property `552768124` の閲覧者に追加し、鍵ファイルなしの impersonation で取得する:
+
+```sh
+TOKEN=$(gcloud auth print-access-token \
+  --impersonate-service-account=skygrid-analytics-reader@sky-grid-app.iam.gserviceaccount.com \
+  --scopes=https://www.googleapis.com/auth/analytics.readonly)
+```
+
+**カスタムイベントは届いている。** 90日レンジで 24 種類、うち 18 種類が `skygrid_*`。
+「コード呼出しあり・実到着未確認」は解消。実機も報告している（1.0.4 が iPhone16,1 /
+iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
+
+**ただしデータは 2026-09-04 以降の4日分しか存在しない。** 1.0.4 は 8/14 に公開済みで、
+Analytics SDK は 8/2、招待計測の呼出しは 8/12 から入っている。にもかかわらず 9/4 より前が
+ゼロなので、GA4 プロパティ側の紐付けがその日まで機能していなかったと考えるのが自然である。
+過去分は遡って取得できない。母数は `first_open` 7 人であり、**この標本で率を語ってはならない。**
+
+| イベント | count | users |
+|---|---:|---:|
+| `skygrid_onboarding_step_viewed` | 58 | 2 |
+| `skygrid_paywall_step_viewed` | 20 | 4 |
+| `skygrid_paywall_presented` | 12 | 5 |
+| `first_open` | 7 | 7 |
+| `skygrid_capture_completed` | 6 | 2 |
+| `skygrid_onboarding_completed` | 5 | 2 |
+| `skygrid_invite_link_created` | 4 | 2 |
+| `skygrid_invite_link_shared` | 3 | 1 |
+| `skygrid_invite_code_copied` | 1 | 1 |
+
+### 2.1c ファネル後半が一度も発火していない（要調査）
+
+`skygrid_invite_preview_viewed` / `skygrid_invite_claim_started` /
+`skygrid_invite_claim_resolved` / `skygrid_mutual_reveal_unlocked` は **1件も存在しない。**
+招待リンクは作成4・共有3まで到達しているのに、受信側の導線が一度も観測されていない。
+
+北極星指標「D7 相互公開率」は、標本不足ではなく **分子が構造的にゼロ**である。ループが
+一度も閉じたことがない。考えられるのは次の2つで、まだ切り分けていない:
+
+1. 共有されたリンクを誰も開いていない（=配布の問題）
+2. 受信側の呼出しに到達しない（=実装の問題）
+
+切り分けの最小手順は、テスト端末2台で招待リンクを実際に開き、`invite_preview_viewed` が
+GA4 に現れるかを見ること。現れれば 1、現れなければ 2 である。**この切り分けを終える前に
+外部集客へ投資してはならない。** 後半が動かないループに人を流し込むだけになる。
+
 ### 2.2 次の最小作業
 
 次の最小作業は、新規カスタム install イベントでも plist の未使用キー変更でもなく、到着後、`first_open` を分母にして `capture_completed` → `invite_prompt_viewed` → `invite_share_started` → `preview_viewed` → `claim_resolved` → `mutual_reveal_unlocked` を集計する。UID、handle、invite code は送らない。すべてに `schema_version`、招待導線に `placement` / `experiment_variant` を付ける。
