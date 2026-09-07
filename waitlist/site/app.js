@@ -1,10 +1,15 @@
 (function () {
   "use strict";
 
+  // Real sky, not invented colour. DESIGN.md forbids fabricating a sky for visual
+  // completeness, so these are average colours sampled from the CC0 sky photographs
+  // the app ships in ios/SkyGrid/Tests/Fixtures — the same averaging the app performs
+  // to derive a mosaic tile. Clear, dramatic, overcast and sunset mornings.
   var PALETTE = [
-    "#F4A261", "#E76F51", "#6B8CAE", "#A8DADC",
-    "#F2CC8F", "#81B29A", "#E9C46A", "#457B9D",
-    "#F1FAEE", "#E07A5F", "#3D5A80", "#98C1D9"
+    "#3D7AC0", "#306AAE", "#2661A7", "#3372B9",
+    "#543D5A", "#44324F", "#844A56", "#A04E4E",
+    "#7C8489", "#999B9E", "#AAADAF", "#687176",
+    "#044A8C", "#3C5DA6", "#5F70AD", "#B7A5C6"
   ];
 
   function buildMosaic() {
@@ -15,69 +20,9 @@
       var tile = document.createElement("i");
       var color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
       tile.style.setProperty("--tile", color);
-      tile.style.setProperty("--delay", (Math.random() * 5).toFixed(2) + "s");
+      tile.style.setProperty("--delay", (i * 18) + "ms");
       mosaic.appendChild(tile);
     }
-  }
-
-  function isValidEmail(value) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  }
-
-  function wireForm(formId, statusId) {
-    var form = document.getElementById(formId);
-    var status = document.getElementById(statusId);
-    if (!form || !status) return;
-
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
-
-      var honeypot = form.querySelector('input[name="company"]');
-      if (honeypot && honeypot.value) {
-        // Bot filled the hidden field — pretend success, do nothing.
-        showStatus(status, "You're on the list.", "success");
-        form.reset();
-        return;
-      }
-
-      var emailInput = form.querySelector('input[type="email"]');
-      var email = (emailInput.value || "").trim();
-
-      if (!isValidEmail(email)) {
-        showStatus(status, "That doesn't look like a valid email.", "error");
-        emailInput.focus();
-        return;
-      }
-
-      var button = form.querySelector("button");
-      button.disabled = true;
-      showStatus(status, "Adding you…", "");
-
-      fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email })
-      })
-        .then(function (res) {
-          if (!res.ok) throw new Error("request-failed");
-          return res.json();
-        })
-        .then(function () {
-          showStatus(status, "You're on the list. We'll email you the moment Sky Grid is live.", "success");
-          form.reset();
-        })
-        .catch(function () {
-          showStatus(status, "Something went wrong — please try again in a moment.", "error");
-        })
-        .finally(function () {
-          button.disabled = false;
-        });
-    });
-  }
-
-  function showStatus(el, message, kind) {
-    el.textContent = message;
-    el.className = "form-status" + (kind ? " " + kind : "");
   }
 
   function wireShare() {
@@ -102,8 +47,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     buildMosaic();
-    wireForm("waitlist-form", "form-status");
-    wireForm("waitlist-form-2", "form-status-2");
     wireShare();
   });
 })();

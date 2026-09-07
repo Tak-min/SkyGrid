@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Moku, the Sky Grid tile spirit">
+  <rect width="64" height="64" rx="14" fill="#080A0F"/>
+  <g fill="#F4F1EA">
+    <rect x="20" y="4"  width="11" height="11" rx="3"/>
+    <rect x="32" y="4"  width="11" height="11" rx="3"/>
+    <rect x="8"  y="16" width="11" height="11" rx="3"/>
+    <rect x="20" y="16" width="11" height="11" rx="3"/>
+    <rect x="32" y="16" width="11" height="11" rx="3"/>
+    <rect x="8"  y="28" width="11" height="11" rx="3"/>
+    <rect x="20" y="28" width="11" height="11" rx="3"/>
+    <rect x="32" y="28" width="11" height="11" rx="3"/>
+    <rect x="44" y="28" width="11" height="11" rx="3"/>
+    <rect x="8"  y="40" width="11" height="11" rx="3"/>
+    <rect x="20" y="40" width="11" height="11" rx="3"/>
+    <rect x="32" y="40" width="11" height="11" rx="3"/>
+    <rect x="2"  y="19.5" width="6.5" height="4" rx="1.6"/>
+    <rect x="55" y="19.5" width="6.5" height="4" rx="1.6"/>
+    <rect x="21" y="51" width="4" height="6" rx="1.4"/>
+    <rect x="37" y="51" width="4" height="6" rx="1.4"/>
+  </g>
+  <rect x="44" y="16" width="11" height="11" rx="3" fill="#FF6846"/>
+  <g fill="#17181B">
+    <rect x="23" y="19" width="4" height="5" rx="1.2"/>
+    <rect x="35" y="19" width="4" height="5" rx="1.2"/>
+  </g>
+</svg>

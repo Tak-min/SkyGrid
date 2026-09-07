@@ -1,26 +1,42 @@
 :root {
   color-scheme: light dark;
+  /* Tokens below are the app's own, from DESIGN.md "Color and type".
+     Night Stage #080A0F, Cloud #F4F1EA, Dawn Spark #FF6846, Open Sky #58C7F3.
+     The settled shell is true white with dark ink in Light Mode and Night Stage
+     with Cloud ink in Dark Mode — never the former cream paper. */
+  --night-stage: #080A0F;
+  --cloud: #F4F1EA;
+  --dawn-spark: #FF6846;
+  --open-sky: #58C7F3;
+
   --bg: #FFFFFF;
-  --ink: #16181C;
-  --muted: #5C5C58;
-  --line: #E4DFD6;
+  --ink: #17181B;
+  --muted: #6A6E76;
+  --line: #E4E7EB;
   --card: #FFFFFF;
-  --dawn-1: #FF653F;
-  --dawn-2: #B83A1B;
-  --dawn-3: #6B8CAE;
-  --accent-ink: #16181C;
-  --shadow: 0 20px 40px -24px rgba(26, 26, 24, 0.25);
+  /* Dawn Spark is only 2.87:1 on white, so small accent text uses a darkened
+     Dawn at 4.51:1 while surfaces keep the true accent. */
+  --dawn-surface: var(--dawn-spark);
+  --dawn-text: #C75137;
+  --focus: #359EC7;
+  --accent-ink: #17181B;
+  --shadow: 0 20px 40px -24px rgba(8, 10, 15, 0.25);
   --bezel-1: #2C2C2E;
   --bezel-2: #151517;
+  --radius-action: 18px;
+  --radius-surface: 22px;
+  --radius-tile: 4px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #080A0E;
-    --ink: #F5F5F7;
-    --muted: #A8A6A0;
-    --line: #2A2C33;
-    --card: #14171E;
-    --dawn-2: #FF8063;
+    --bg: #080A0F;
+    --ink: #F4F1EA;
+    --muted: #9AA0A8;
+    --line: #23262E;
+    --card: #12151C;
+    /* On Night Stage the true Dawn Spark already clears AA at 6.9:1. */
+    --dawn-text: #FF6846;
+    --focus: #58C7F3;
     --shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.55);
   }
 }
@@ -54,7 +70,7 @@ ol { list-style: none; margin: 0; padding: 0; }
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--dawn-2);
+  color: var(--dawn-text);
   margin-bottom: 10px;
 }
 .section-head { text-align: center; max-width: 480px; margin: 0 auto 36px; }
@@ -97,7 +113,7 @@ header {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--dawn-2);
+  background: var(--dawn-text);
   animation: pulse 2.4s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -118,52 +134,14 @@ header {
   margin: 0 auto 28px;
 }
 
-/* ---------- waitlist form ---------- */
-.waitlist-form {
-  display: flex;
-  gap: 8px;
-  max-width: 420px;
-  margin: 0 auto;
-}
-.waitlist-form input[type="email"] {
-  flex: 1;
-  min-width: 0;
-  font-size: 1rem;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--ink);
-}
-.waitlist-form input[type="email"]:focus {
-  outline: 2px solid var(--dawn-3);
-  outline-offset: 1px;
-}
-.waitlist-form button {
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 14px 20px;
-  border-radius: 12px;
-  border: none;
-  color: var(--accent-ink);
-  background: var(--dawn-1);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  white-space: nowrap;
-}
-.waitlist-form button:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
-.waitlist-form button:active { transform: translateY(0); }
-.waitlist-form button:disabled { opacity: 0.6; cursor: default; transform: none; }
-.hp-field { position: absolute; left: -9999px; top: -9999px; }
-
 .download-cta {
   display: inline-block;
   font-size: 1rem;
   font-weight: 600;
   padding: 14px 28px;
-  border-radius: 12px;
+  border-radius: var(--radius-action);
   color: var(--accent-ink);
-  background: var(--dawn-1);
+  background: var(--dawn-surface);
   text-decoration: none;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -171,18 +149,6 @@ header {
 .download-cta:active { transform: translateY(0); }
 
 .form-note { font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
-.form-status {
-  min-height: 1.2em;
-  font-size: 0.92rem;
-  margin-top: 14px;
-  transition: opacity 0.2s ease;
-}
-.form-status.success { color: var(--dawn-2); font-weight: 600; }
-.form-status.error { color: #C4483C; }
-
-@media (max-width: 420px) {
-  .waitlist-form { flex-direction: column; }
-}
 
 /* ---------- device frame (native app screenshot mockup) ---------- */
 .phone-frame {
@@ -200,23 +166,25 @@ header {
 .mosaic {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  gap: 4px;
+  gap: 2px;
   width: min(100%, 340px);
 }
 .mosaic i {
   display: block;
   aspect-ratio: 1;
-  border-radius: 3px;
-  background: var(--tile, var(--dawn-3));
-  animation: shimmer 5s ease-in-out infinite;
+  border-radius: var(--radius-tile);
+  background: var(--tile, #3372B9);
+  opacity: 0;
+  animation: tile-land 420ms ease-out forwards;
   animation-delay: var(--delay, 0s);
 }
-@keyframes shimmer {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
+@keyframes tile-land {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mosaic i, .badge .dot { animation: none; }
+  .mosaic i { animation: none; opacity: 1; transform: none; }
+  .badge .dot { animation: none; }
 }
 
 .divider { border: none; border-top: 1px solid var(--line); margin: 0; }
@@ -230,7 +198,7 @@ header {
   display: block;
   font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 0.85rem;
-  color: var(--dawn-2);
+  color: var(--dawn-text);
   letter-spacing: 0.06em;
   margin-bottom: 6px;
 }
@@ -238,12 +206,10 @@ header {
 .step-copy p { color: var(--muted); max-width: 40ch; margin: 0 auto; }
 
 /* ---------- FAQ ---------- */
-.faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq-list { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--line); }
 .faq-item {
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 4px 20px;
-  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  padding: 4px 2px;
 }
 .faq-item summary {
   list-style: none;

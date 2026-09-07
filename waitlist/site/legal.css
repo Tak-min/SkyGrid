@@ -1,16 +1,43 @@
 :root {
   color-scheme: light dark;
+  /* Tokens below are the app's own, from DESIGN.md "Color and type".
+     Night Stage #080A0F, Cloud #F4F1EA, Dawn Spark #FF6846, Open Sky #58C7F3.
+     The settled shell is true white with dark ink in Light Mode and Night Stage
+     with Cloud ink in Dark Mode — never the former cream paper. */
+  --night-stage: #080A0F;
+  --cloud: #F4F1EA;
+  --dawn-spark: #FF6846;
+  --open-sky: #58C7F3;
+
   --bg: #FFFFFF;
-  --ink: #16181C;
-  --muted: #5C5C58;
-  --line: #E4DFD6;
+  --ink: #17181B;
+  --muted: #6A6E76;
+  --line: #E4E7EB;
+  --card: #FFFFFF;
+  /* Dawn Spark is only 2.87:1 on white, so small accent text uses a darkened
+     Dawn at 4.51:1 while surfaces keep the true accent. */
+  --dawn-surface: var(--dawn-spark);
+  --dawn-text: #C75137;
+  --focus: #359EC7;
+  --accent-ink: #17181B;
+  --shadow: 0 20px 40px -24px rgba(8, 10, 15, 0.25);
+  --bezel-1: #2C2C2E;
+  --bezel-2: #151517;
+  --radius-action: 18px;
+  --radius-surface: 22px;
+  --radius-tile: 4px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #080A0E;
-    --ink: #F5F5F7;
-    --muted: #A8A6A0;
-    --line: #2A2C33;
+    --bg: #080A0F;
+    --ink: #F4F1EA;
+    --muted: #9AA0A8;
+    --line: #23262E;
+    --card: #12151C;
+    /* On Night Stage the true Dawn Spark already clears AA at 6.9:1. */
+    --dawn-text: #FF6846;
+    --focus: #58C7F3;
+    --shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.55);
   }
 }
 * { box-sizing: border-box; }
