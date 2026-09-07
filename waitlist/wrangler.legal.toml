@@ -1,0 +1,5 @@
+# Redirect-only replacement for the existing worker. No assets, routes, or D1.
+name = "skygrid-legal"
+main = "src/legalRedirect.ts"
+compatibility_date = "2026-07-30"
+workers_dev = true

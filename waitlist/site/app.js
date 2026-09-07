@@ -86,7 +86,7 @@
     btn.addEventListener("click", function () {
       var shareData = {
         title: "Sky Grid",
-        text: "One photo of the sky each morning. A year, one grid. Join the waitlist:",
+        text: "One photo of the sky each morning. A year, one grid. Available on the App Store:",
         url: window.location.href
       };
       if (navigator.share) {
