@@ -262,13 +262,7 @@ struct TodayView: View {
 
     private var emptyMorningRecord: some View {
         VStack(alignment: .leading, spacing: SGSpacing.lg) {
-            ZStack(alignment: .bottomLeading) {
-                YesterdaySkyBackdrop(
-                    thumbPath: yesterdayThumbnailPath,
-                    imageFetching: imageFetching,
-                    fallback: emptySkyGradient
-                )
-
+            VStack(alignment: .leading, spacing: 0) {
                 // The hero of the pre-capture screen is the streak, not a
                 // placeholder clock. The previous "—:—" at ultraLight 74pt rendered
                 // as detached hairlines and floating dots — it read as a font-loading
@@ -300,6 +294,14 @@ struct TodayView: View {
                 .padding(SGSpacing.xl)
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(emptyStateAccessibilityLabel)
+            }
+            .frame(maxWidth: .infinity, minHeight: 280, alignment: .bottomLeading)
+            .background {
+                YesterdaySkyBackdrop(
+                    thumbPath: yesterdayThumbnailPath,
+                    imageFetching: imageFetching,
+                    fallback: emptySkyGradient
+                )
             }
 
             Button {

@@ -7,6 +7,7 @@ import UIKit
 /// server-side), so this card only ever appears once one exists. `placement`
 /// distinguishes the two call sites in analytics without a second event name.
 struct InviteLinkCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var viewModel: InviteLinkViewModel
     @State private var showCopiedConfirmation = false
     @State private var showRevokeConfirmation = false
@@ -82,7 +83,7 @@ struct InviteLinkCard: View {
             .font(SGFont.caption(13))
             .foregroundStyle(SGT.ink2)
 
-        HStack(spacing: SGSpacing.sm) {
+        inviteActionsLayout {
             ShareLink(item: link.url) {
                 Label("Share", systemImage: "square.and.arrow.up")
                     .font(SGFont.body(15))
@@ -125,5 +126,13 @@ struct InviteLinkCard: View {
         }
         .font(SGFont.caption(13))
         .disabled(viewModel.isRevoking)
+    }
+
+    private var inviteActionsLayout: AnyLayout {
+        if dynamicTypeSize.isAccessibilitySize {
+            AnyLayout(VStackLayout(alignment: .leading, spacing: SGSpacing.sm))
+        } else {
+            AnyLayout(HStackLayout(spacing: SGSpacing.sm))
+        }
     }
 }

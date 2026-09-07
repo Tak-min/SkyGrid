@@ -1727,7 +1727,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1757,7 +1757,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -1784,7 +1784,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1814,7 +1814,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;

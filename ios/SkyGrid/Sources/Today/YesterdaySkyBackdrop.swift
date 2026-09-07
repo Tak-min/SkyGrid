@@ -40,14 +40,13 @@ struct YesterdaySkyBackdrop: View {
                     .offset(x: 28, y: -36)
 
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.42)],
+                    colors: [.black.opacity(0.65), .black.opacity(0.72)],
                     startPoint: .center,
                     endPoint: .bottom
                 )
             }
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 280)
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
