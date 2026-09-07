@@ -83,12 +83,22 @@ struct BuddiesView: View {
                     // invite…" stacked on top of its already-usable invite code.
                 }
 
-                if viewModel.hasHandle == true {
+            }
+
+            // Its own Section on purpose. `InviteLinkCard` paints a 24pt rounded
+            // card of its own, while the buddy rows below take this List's grouped
+            // background; sharing one Section butted those two rounded containers
+            // together with no gap and they visibly collided.
+            if viewModel.hasHandle == true {
+                Section {
                     InviteLinkCard(inviteRepository: inviteRepository)
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
                 }
+            }
 
+            Section {
                 ForEach(viewModel.accepted, id: \.pairId) { friendship in
                     if let otherUid = friendship.otherMember(than: viewModel.uid) {
                         Button {
@@ -122,7 +132,9 @@ struct BuddiesView: View {
                     }
                 }
             } header: {
-                Text("YOUR CIRCLE")
+                if !viewModel.accepted.isEmpty {
+                    Text("YOUR CIRCLE")
+                }
             }
 
             if viewModel.friendshipState == .unavailable {
@@ -252,6 +264,7 @@ struct BuddiesView: View {
                 friendship: route.friendship,
                 subjectUid: route.subjectUid,
                 revealState: route.revealState,
+                imageFetching: imageFetching,
                 friendRepository: viewModel.friendRepository,
                 userRepository: viewModel.userRepository,
                 contentSafetyRepository: contentSafetyRepository,
@@ -299,7 +312,7 @@ private struct BuddyRitualCard: View {
                     .foregroundStyle(SGT.ink2)
             } else {
                 Text("Skies revealed together.")
-                    .font(SGFont.serifTitle(27))
+                    .font(SGFont.title(27))
                     .foregroundStyle(SGT.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.center)
@@ -350,7 +363,6 @@ private struct BuddyNameRow: View {
     let imageFetching: any ImageFetching
     @State private var profile: UserProfile?
     @State private var thumbnail: UIImage?
-    @State private var showingSky = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private static let tileSize: CGFloat = 48
@@ -359,11 +371,6 @@ private struct BuddyNameRow: View {
     private var isPosted: Bool {
         if case .posted = revealState { return true }
         return false
-    }
-
-    private var postedPost: SkyPost? {
-        guard case .posted(let post) = revealState else { return nil }
-        return post
     }
 
     var body: some View {
@@ -412,27 +419,8 @@ private struct BuddyNameRow: View {
                 .multilineTextAlignment(.trailing)
         }
         .frame(minHeight: 56)
-        // Only a revealed sky is openable. Sealed and not-yet rows stay inert so
-        // the row never implies content the server has not authorised.
-        .contentShape(Rectangle())
-        .onTapGesture {
-            guard postedPost != nil else { return }
-            showingSky = true
-        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(profile?.displayName ?? "Buddy"), \(profile?.handle.map { "at " + $0.value } ?? "handle loading"), \(statusText)")
-        .accessibilityAddTraits(postedPost == nil ? [] : .isButton)
-        .accessibilityHint(postedPost == nil ? "" : "Opens their sky")
-        .fullScreenCover(isPresented: $showingSky) {
-            if let postedPost {
-                BuddySkyDetailView(
-                    post: postedPost,
-                    displayName: profile?.displayName ?? "Buddy",
-                    handle: profile?.handle?.value,
-                    imageFetching: imageFetching
-                )
-            }
-        }
         .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
         .task(id: photoIdentity) { await loadThumbnail(for: photoIdentity) }
             .task {
@@ -515,6 +503,7 @@ private struct BuddyRelationshipView: View {
     let friendship: Friendship
     let subjectUid: String
     let revealState: TodayViewModel.BuddyRevealState
+    let imageFetching: any ImageFetching
     let friendRepository: any FriendRepository
     let userRepository: any UserRepository
     let contentSafetyRepository: any ContentSafetyRepository
@@ -522,6 +511,7 @@ private struct BuddyRelationshipView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var profile: UserProfile?
+    @State private var showingSky = false
     @State private var showRemoveConfirmation = false
     @State private var isRemoving = false
     @State private var removeError: String?
@@ -531,7 +521,7 @@ private struct BuddyRelationshipView: View {
             Section {
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
                     Text(profile?.displayName ?? "Buddy")
-                        .font(SGFont.serifTitle(28))
+                        .font(SGFont.title(28))
                         .foregroundStyle(SGT.ink)
                     Text(profile?.handle.map { "@" + $0.value } ?? "@…")
                         .font(SGFont.body(15))
@@ -560,6 +550,19 @@ private struct BuddyRelationshipView: View {
                     }
                 }
                 .frame(minHeight: 52)
+
+                // Only the already-authorized post can offer a photo action.
+                // Sealed/not-yet states expose no image path and do no post read.
+                if case .posted = revealState {
+                    Button {
+                        showingSky = true
+                    } label: {
+                        Label("View their sky", systemImage: "arrow.up.left.and.arrow.down.right")
+                            .font(SGFont.body(16))
+                            .frame(minHeight: 44)
+                    }
+                    .accessibilityHint("Opens their photo. Double tap or pinch the photo to zoom.")
+                }
             }
             .listRowBackground(SGT.fill)
             .listRowSeparator(.hidden)
@@ -621,6 +624,16 @@ private struct BuddyRelationshipView: View {
         .background(SGT.background)
         .navigationTitle("Buddy")
         .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $showingSky) {
+            if case .posted(let post) = revealState {
+                BuddySkyDetailView(
+                    post: post,
+                    displayName: profile?.displayName ?? "Buddy",
+                    handle: profile?.handle?.value,
+                    imageFetching: imageFetching
+                )
+            }
+        }
         .alert("Remove this buddy?", isPresented: $showRemoveConfirmation) {
             Button("Remove", role: .destructive) { removeRelationship() }
             Button("Keep", role: .cancel) {}

@@ -331,7 +331,7 @@ private struct ArchivePhotoDetail: View {
                     TodayPhotoCard(post: post, imageFetching: imageFetching)
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
                         Text(post.localDate.docID)
-                            .font(SGFont.serifTitle(30))
+                            .font(SGFont.title(30))
                             .foregroundStyle(SGT.ink)
                         Text("Captured \(post.minutesFromGoalDescription)")
                             .font(SGFont.body(15))

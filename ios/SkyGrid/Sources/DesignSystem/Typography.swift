@@ -1,10 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// Headlines use iOS's native serif ("New York" via the `ui-serif`/`.serif` design),
-/// numbers use SF Pro with tabular figures. See `design/screens-mockup.html` — the
-/// same two font stacks appear on every screen (`ui-serif, "New York", ...` for
-/// headings; the default `-apple-system` stack for everything else).
+/// Interactive headlines use the system rounded family; body text uses system sans.
+/// New York serif is reserved for fixed exported photo artifacts (DESIGN.md).
+/// Numeric readouts use tabular figures.
 enum SGFont {
     private static func scaled(
         _ size: CGFloat,
@@ -18,12 +17,12 @@ enum SGFont {
         return metrics.scaledValue(for: size)
     }
 
-    /// Large ritual headline (e.g. the year on the Sky Grid screen).
-    static func serifTitle(_ size: CGFloat = 34) -> Font {
+    /// Persistent interactive headline, scaled for Dynamic Type.
+    static func title(_ size: CGFloat = 34) -> Font {
         .system(
             size: scaled(size, relativeTo: .title1, maximumScale: 1.55),
-            weight: .regular,
-            design: .serif
+            weight: .bold,
+            design: .rounded
         )
     }
 
@@ -70,8 +69,7 @@ enum SGFont {
         .system(size: scaled(size, relativeTo: .body), weight: weight, design: .default).monospacedDigit()
     }
 
-    /// Dense calendar labels and exported share art have a fixed physical canvas;
-    /// they remain fixed-size while the interactive UI around them scales.
+    /// Serif is only for fixed exported photo artifacts, never interactive UI.
     static func fixedSerifTitle(_ size: CGFloat) -> Font {
         .system(size: size, weight: .regular, design: .serif)
     }

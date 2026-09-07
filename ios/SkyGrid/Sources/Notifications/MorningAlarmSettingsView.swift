@@ -87,7 +87,7 @@ struct MorningAlarmSettingsView: View {
     private var timeControl: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
             Text("Time")
-                .font(SGFont.serifTitle(23))
+                .font(SGFont.title(23))
                 .foregroundStyle(SGT.ink)
             DatePicker(
                 "Morning time",

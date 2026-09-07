@@ -13,7 +13,7 @@ struct HandleClaimView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
             Text("Choose a handle to add a buddy")
-                .font(SGFont.serifTitle(28))
+                .font(SGFont.title(28))
                 .foregroundStyle(SGT.ink)
             Text("It is only used for invitations and cannot be changed later.")
                 .font(SGFont.caption())

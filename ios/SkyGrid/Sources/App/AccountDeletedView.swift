@@ -16,7 +16,7 @@ struct AccountDeletedView: View {
 
             VStack(alignment: .leading, spacing: SGSpacing.sm) {
                 Text("Your sky\nhas been cleared.")
-                    .font(SGFont.serifTitle(36))
+                    .font(SGFont.title(36))
                     .foregroundStyle(SGT.ink)
                     .multilineTextAlignment(.leading)
                 Text("Your photos, Sky Grid, and buddy connections have been removed from this device and the service.")

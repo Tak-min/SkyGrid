@@ -9,7 +9,7 @@ struct AddBuddyView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
             Text("Invite a buddy")
-                .font(SGFont.serifTitle(28))
+                .font(SGFont.title(28))
                 .foregroundStyle(SGT.ink)
             Text("Share your handle first, then enter theirs. They can accept whenever they’re ready.")
                 .font(SGFont.caption(13))
