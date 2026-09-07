@@ -39,3 +39,4 @@ Committed as `4113c74`, explicit paths only. `VISION.md`/`state.json` updated wi
 102:- [ ] Iteration 8: add/refresh audit scenarios and screenshots.
 103:- [ ] Iteration 9: run full validation, resolve review findings, and write the dev-note.
 [loop-engine 01:04:26] VERIFY failing (rc=1). Identical-failure streak: 1/3.
+[loop-engine 01:04:26] === iteration 2 / 15 ===
