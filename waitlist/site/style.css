@@ -148,6 +148,19 @@ header {
 .download-cta:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
 .download-cta:active { transform: translateY(0); }
 
+.invite-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.store-link {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
 .form-note { font-size: 0.82rem; color: var(--muted); margin-top: 10px; }
 
 /* ---------- device frame (native app screenshot mockup) ---------- */

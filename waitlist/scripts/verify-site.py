@@ -40,6 +40,19 @@ for path, title in [('/', 'Sky Grid — Available now on the App Store'),
             assert hashlib.sha256(actual).digest() == hashlib.sha256(expected).digest(), asset
             print(f'200 {asset}: byte-for-byte match', flush=True)
 
+aasa, status, _, redirect = fetch(base + '/.well-known/apple-app-site-association')
+assert status == 200 and not redirect
+assert b'NVZB82UK53.com.takmin.skygrid' in aasa and b'"/i/*"' in aasa
+print('200 AASA: app ID and /i/* contract present', flush=True)
+
+invite, status, _, redirect = fetch(base + '/i/ABCDEFGH12')
+assert status == 200 and not redirect
+invite_html = invite.decode()
+assert 'app-argument=https://skygrid.my/i/ABCDEFGH12' in invite_html
+assert 'href="https://open.skygrid.my/i/ABCDEFGH12"' in invite_html
+assert 'Open Sky Grid' in invite_html
+print('200 invite: Universal Link metadata and installed-app recovery present', flush=True)
+
 if base == 'https://skygrid.my':
     old = 'https://skygrid-legal.taku810616.workers.dev/privacy'
     _, status, _, redirect = fetch(old)

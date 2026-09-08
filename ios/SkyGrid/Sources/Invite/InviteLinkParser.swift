@@ -1,15 +1,12 @@
 import Foundation
 
-/// Recognizes `https://skygrid.my/i/{code}` as an invite link — the only path the
-/// Worker's AASA associates with this app (`waitlist/src/aasa.ts` scopes `components`
-/// to `/i/*` deliberately, so `/privacy`, `/terms`, and `/support` keep opening in
-/// Safari instead of being swallowed by the app).
-///
-/// Does not recognize `skygrid://capture` — that scheme belongs to the Live Activity,
-/// and teaching this parser about it would widen an untrusted-input surface (an
-/// attacker-controlled URL string) for no benefit.
+/// Recognizes the public invite link and the secure cross-domain recovery link.
+/// Safari deliberately keeps a same-domain link on the web; `open.skygrid.my` gives
+/// the fallback page a different associated domain it can hand back to the app without
+/// exposing the invite secret through a claimable custom URL scheme.
 enum InviteLinkParser {
     static let host = "skygrid.my"
+    static let recoveryHost = "open.skygrid.my"
     static let pathPrefix = "/i/"
 
     /// `https://skygrid.my/i/ABCDE12345`, optionally with a trailing slash, query, or
@@ -18,7 +15,8 @@ enum InviteLinkParser {
     /// `/i/` — returns `nil` rather than guessing.
     static func code(from url: URL) -> InviteCode? {
         guard url.scheme?.lowercased() == "https",
-              url.host?.lowercased() == host,
+              let incomingHost = url.host?.lowercased(),
+              incomingHost == host || incomingHost == recoveryHost,
               url.pathComponents.count == 3,
               url.pathComponents[0] == "/",
               url.pathComponents[1] == "i"

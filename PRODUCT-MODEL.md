@@ -32,6 +32,7 @@
 | `skygrid_capture_completed` | `ios/SkyGrid/Sources/Publishing/PostPublisher.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 | `skygrid_mutual_reveal_unlocked` | `ios/SkyGrid/Sources/Today/TodayViewModel.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 | `skygrid_invite_link_created` / `shared` / `code_copied` | `ios/SkyGrid/Sources/Invite/InviteAnalytics.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
+| `skygrid_invite_link_opened` / `skygrid_invite_fallback_recovered` | `ios/SkyGrid/Sources/App/AppRouter.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-08 実装。Universal Link受信とWeb復旧リンク受信を区別し、UID・invite codeは送らない。実到着未確認 |
 | `skygrid_invite_preview_viewed` / `claim_started` / `claim_resolved` | `ios/SkyGrid/Sources/Invite/InviteAnalytics.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 | `skygrid_alarm_schedule_changed` | `ios/SkyGrid/Sources/Notifications/MorningAlarmAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-07 実装。時刻・曜日・UIDは送らず、保存件数/有効件数/backend/成功のみ。実到着未確認 |
 | `skygrid_wake_session_started` / `skygrid_wake_retry_horizon_refilled` / `skygrid_wake_session_ended` | `ios/SkyGrid/Sources/Notifications/MorningAlarmAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-08 実装。分母はsession開始、完了はended reason=`captured`。時刻・alarm ID・写真情報は送らない。実到着未確認 |
@@ -96,13 +97,13 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 `first_open` 7 のうち実機は4機種、残りはシミュレータである。この標本からファネルについて
 言えることは何もない。
 
-招待リンクの仕様は確認済みで、正しく動作している。`https://skygrid.my/i/{code}` は Universal Link
-であり、AASA (`/.well-known/apple-app-site-association`) は `/i/*` を
-`NVZB82UK53.com.takmin.skygrid` に紐付けて 200 を返す。**アプリが入っている端末では
-リンクは直接アプリを開き、Web フォールバックページは表示されない。** 未導入の端末にのみ
-フォールバックが出る。遅延ディープリンクは意図的に持たず
-(`ios/SkyGrid/Sources/Invite/InviteLinkCard.swift:114`)、フォールバックページは
-「インストール後に同じリンクをもう一度開く」よう案内している。
+`https://skygrid.my/i/{code}` のAASA、Apple CDNキャッシュ、1.0.5提出IPAのAssociated Domains署名、
+アプリ内parser/routerはいずれも2026-09-08に再確認済み。ただし「インストール済みなら必ず直接
+アプリを開く」という旧記述は誤りだった。Appleの仕様では、同一ドメインをSafari内でタップした
+場合や、利用者が過去にWeb表示を選んだ場合は、インストール済みでもSafariが継続する。旧Web
+フォールバックにはApp Store CTAしかなく、この正常なOS分岐からアプリへ戻る経路がなかった。
+そこでSmart App Bannerに加え、別のAssociated Domainである
+`https://open.skygrid.my/i/{code}`への復旧CTAを追加した。
 
 したがって現時点で必要なのは、受信側の切り分けでも Web ページの計測でもない。**実ユーザーが
 いないことが唯一の事実であり、ファネルの形は実ユーザーが付いてから初めて読める。**
@@ -134,6 +135,7 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 | 10 | Mokuの弱り表現は将来の継続動機になり得る | D7/D30が改善せず、通知停止・離脱・否定的反応が増える | 保留 | 欠席への罰にせず、回復可能な表現として継続データ取得後に試す | 2026-09-08 |
 | 11 | 保存後の任意の気分・一言は空を語れる共有物になり得る | 投稿完了率または相互公開率を悪化させ、共有率が上がらない | 保留 | 投稿完了率が安定した後、撮影保存後の任意入力として試す | 2026-09-08 |
 | 12 | Stop後も写真保存まで5分ごとにPhoto Missionを再鳴動すると、alarm起点の保存成功率が上がる | wake session開始群で保存成功が改善せず、alarm無効化・権限拒否・当日終了が増える | 実装済み・検証待ち | AlarmKitのOS Stopは阻止できないため、4時間窓内の真のone-shot alarm再予約で実現 | 2026-09-08 |
+| 13 | Web着地時の明示的な「Open Sky Grid」復旧CTAは、招待リンク→アプリ内preview到達率を上げる | Web着地数に対するfallback recoveryとpreview到達が改善しない、または誤起動報告が増える | 実装済み・検証待ち | 現在値は未測定。最安検証はCloudflareの`/i/*`着地数と匿名のopened/recovered/previewイベントを同じ期間で比較 | 2026-09-08 |
 
 ## 5. 意思決定履歴
 
@@ -149,6 +151,7 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 | 2026-09-08 | オンボーディング由来のpaywallは最初の実写真保存とrewardの後に出す | 説明ではなくSkyGrid固有のセル完成を先に体験させるため | 45アプリ調査・依頼者判断 | 仮説9の反証条件成立時 |
 | 2026-09-08 | Mokuの弱り表現と任意の気分・一言は将来採用候補として保留する | 継続・共有価値はあり得るが、現在の初回投稿へ摩擦を加えないため | 依頼者判断・製品Bet | 投稿ファネルの十分な実測後に再評価 |
 | 2026-09-08 | Photo MissionをAlarmKitの再鳴動として実装し、ローカル保存成功だけを完了条件にする | 撮影を起床アラームの付加機能ではなくSkyGridの中心ループにするため | 依頼者判断・Apple AlarmKit仕様・コード観測 | 仮説12の反証条件成立、または実機で再予約の信頼性を満たせない場合 |
+| 2026-09-08 | 主リンクのAASA契約を維持し、Web着地後は別Associated Domainの`open.skygrid.my`で復旧する | iOSはSafari内の同一ドメインリンクをWebに保つ一方、Universal Linkはcustom schemeと違って他アプリに横取りされないため | Apple一次資料・本番AASA/CDN・提出IPA・コード観測 | 仮説13の反証条件成立、または副ドメインのApple CDN取得が安定しない場合 |
 
 ## 6. 未解決の不明点
 

@@ -58,9 +58,25 @@ struct InviteLinkParserTests {
         #expect(InviteLinkParser.code(from: url) == nil)
     }
 
-    @Test("does not recognize the skygrid:// custom scheme")
-    func doesNotRecognizeCustomScheme() {
-        let url = URL(string: "skygrid://capture")!
-        #expect(InviteLinkParser.code(from: url) == nil)
+    @Test("parses only the associated cross-domain recovery link")
+    func parsesRecoveryLink() {
+        #expect(InviteLinkParser.code(from: URL(string: "https://open.skygrid.my/i/ABCDE12345")!)?.value == "ABCDE12345")
+        #expect(InviteLinkParser.code(from: URL(string: "skygrid://capture")!) == nil)
+        #expect(InviteLinkParser.code(from: URL(string: "https://open.skygrid.my/i/short")!) == nil)
+        #expect(InviteLinkParser.code(from: URL(string: "https://evil.skygrid.my/i/ABCDE12345")!) == nil)
+    }
+
+    @Test("routes a web fallback recovery into the pending invite flow")
+    @MainActor
+    func routesRecoveryLink() {
+        let original = LocalDefaults.pendingInviteCode
+        defer { LocalDefaults.pendingInviteCode = original }
+        LocalDefaults.pendingInviteCode = nil
+
+        let router = AppRouter()
+        router.handle(url: URL(string: "https://open.skygrid.my/i/ABCDE12345")!)
+
+        #expect(router.pendingInviteCode?.value == "ABCDE12345")
+        #expect(LocalDefaults.pendingInviteCode == "ABCDE12345")
     }
 }

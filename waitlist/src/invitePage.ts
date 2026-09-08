@@ -24,8 +24,15 @@ export function parseInviteCode(pathname: string): string | null {
   return INVITE_CODE_PATTERN.test(candidate) ? candidate : null;
 }
 
-export function renderInvitePage(code: string | null): string {
+export function renderInvitePage(code: string | null, isRecoveryHost = false): string {
   const canonicalUrl = code ? `https://skygrid.my/i/${code}` : "https://skygrid.my/i/";
+  const appUrl = code ? `https://open.skygrid.my/i/${code}` : null;
+  const primaryAction = appUrl && !isRecoveryHost
+    ? `<a class="download-cta" href="${appUrl}">Open Sky Grid</a>\n      <a class="store-link" href="${APP_STORE_URL}" target="_blank" rel="noopener">Download on the App Store</a>`
+    : `<a class="download-cta" href="${APP_STORE_URL}" target="_blank" rel="noopener">Download on the App Store</a>`;
+  const recoveryNote = isRecoveryHost
+    ? "Install Sky Grid, sign in, then return to the original invite link to connect."
+    : "Already installed but still seeing this page? Tap Open Sky Grid above, or tap OPEN in Safari's app banner to restore direct opening.";
 
   return `<!doctype html>
 <html lang="en">
@@ -58,9 +65,9 @@ export function renderInvitePage(code: string | null): string {
   <section class="hero">
     <div class="hero-copy">
       <h1>You've been invited to Sky Grid.</h1>
-      <p class="lede">A friend wants to share their mornings with you. If Sky Grid is already on their phone, this link opens the app directly — otherwise, download it and come back to connect.</p>
-      <a class="download-cta" href="${APP_STORE_URL}" target="_blank" rel="noopener">Download on the App Store</a>
-      <p class="form-note">Free to download. Open this same link again once you're signed in to connect.</p>
+      <p class="lede">A friend wants to share their mornings with you. Open Sky Grid to review the invitation, or download it first and return to this link.</p>
+      <div class="invite-actions">${primaryAction}</div>
+      <p class="form-note">${recoveryNote}</p>
     </div>
   </section>
 </main>

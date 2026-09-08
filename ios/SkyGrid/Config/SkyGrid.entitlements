@@ -13,6 +13,7 @@
     <key>com.apple.developer.associated-domains</key>
     <array>
         <string>applinks:skygrid.my</string>
+        <string>applinks:open.skygrid.my</string>
     </array>
 </dict>
 </plist>

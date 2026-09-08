@@ -9,6 +9,8 @@ enum InviteAnalytics {
     enum Event: String {
         case linkCreated = "skygrid_invite_link_created"
         case linkShared = "skygrid_invite_link_shared"
+        case linkOpened = "skygrid_invite_link_opened"
+        case fallbackRecovered = "skygrid_invite_fallback_recovered"
         case codeCopied = "skygrid_invite_code_copied"
         case linkRevoked = "skygrid_invite_link_revoked"
         case previewViewed = "skygrid_invite_preview_viewed"

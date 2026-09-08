@@ -57,7 +57,10 @@ export default {
     }
 
     if (url.pathname === "/i" || url.pathname.startsWith("/i/")) {
-      return new Response(renderInvitePage(parseInviteCode(url.pathname)), {
+      return new Response(renderInvitePage(
+        parseInviteCode(url.pathname),
+        url.hostname.toLowerCase() === "open.skygrid.my"
+      ), {
         headers: { "content-type": "text/html; charset=utf-8" }
       });
     }

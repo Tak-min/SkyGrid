@@ -50,6 +50,9 @@ final class AppRouter {
     /// later can never shadow an invite either.
     func handle(url: URL) {
         if let code = InviteLinkParser.code(from: url) {
+            InviteAnalytics.record(
+                url.host?.lowercased() == InviteLinkParser.recoveryHost ? .fallbackRecovered : .linkOpened
+            )
             pendingInviteCode = code
             return
         }
