@@ -53,6 +53,7 @@
 		2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C40E82FC02E08596714BA7FB /* RootView.swift */; };
 		2E14D29C579773ADF5F2F5F1 /* GridArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087C71720687FEA840D1BCE1 /* GridArchiveView.swift */; };
 		2E4E16DB1B5C62B6FB04811C /* RewardMoment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CC0F0447BD504E5D676CE2 /* RewardMoment.swift */; };
+		301786DC0471F293C999C6C4 /* MorningWakeSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9708D4CDD99003B80FD9A4D /* MorningWakeSessionTests.swift */; };
 		33755F234CF98678EFB43647 /* MorningRitualCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9348C0D211964D2CF1B5EC19 /* MorningRitualCoordinator.swift */; };
 		3396B627FB301F1EED6800EE /* YesterdaySkyBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9902856F934E3CD0729A0B7B /* YesterdaySkyBackdrop.swift */; };
 		33D71F66E9BC0DC37D1A945A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */; };
@@ -98,6 +99,7 @@
 		5DB8DB1770D51E87EF95DB9A /* ServiceFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBF16BFCD3C19F0AFA074361 /* ServiceFactory.swift */; };
 		5E231E656EEA92440D8DD0F6 /* MorningAlarmSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */; };
 		5E7027284EA3F427AA81A2DF /* ImageProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9677E6B310F6E014A7FF3956 /* ImageProcessorTests.swift */; };
+		5F8E8251864833E67D9AC96F /* MorningWakeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A38D09481D2FB6547E8AD87 /* MorningWakeSession.swift */; };
 		61705FFBA67541492EEBB035 /* BuddyRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 130FA656FED8CCC97C00BAA5 /* BuddyRow.swift */; };
 		6211FA6EAECA6C92CD4A11CD /* HandleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2CF6408E55C637CB12A7C79 /* HandleTests.swift */; };
 		62D371902E633F9E431148A7 /* TimeZonePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */; };
@@ -113,6 +115,7 @@
 		6855FABADB7E8A62C3A00773 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A927580850A3394C8C30C4A3 /* CameraViewModel.swift */; };
 		69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */; };
 		6B314D6B5FF83D8EFCC172DC /* BuddyRevealGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */; };
+		6FB342931BF0FC5E2563D4F9 /* MorningAlarmAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0DA0CA852741824EC9B796E /* MorningAlarmAnalytics.swift */; };
 		6FEE92D9AD3A87B9DF26190C /* AddBuddyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */; };
 		752C1378D18B4AA527A9D8F4 /* OrphanedPostRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A44F9555D9421767F1992D2 /* OrphanedPostRecovery.swift */; };
 		768812D1C860F17A1025743A /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */; };
@@ -365,6 +368,7 @@
 		4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoloMorningPaywallPolicyTests.swift; sourceTree = "<group>"; };
 		46A4C8B5EA3EEEDC4D0D9725 /* real_clear_sky.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = real_clear_sky.jpg; sourceTree = "<group>"; };
 		49AC2202E0868FB93F5D007B /* BuddiesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddiesView.swift; sourceTree = "<group>"; };
+		4A38D09481D2FB6547E8AD87 /* MorningWakeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningWakeSession.swift; sourceTree = "<group>"; };
 		4A6AD71E8A1083E36FB4E3A0 /* MorningRitualActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualActivity.swift; sourceTree = "<group>"; };
 		4AEB43A82C094CA46F04D5BD /* MilestoneLoudButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MilestoneLoudButtonStyle.swift; sourceTree = "<group>"; };
 		4CED1196E56E4C621B48F448 /* ImageFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageFileStore.swift; sourceTree = "<group>"; };
@@ -466,6 +470,7 @@
 		A7A1DD4AB119E2EA11E7E8D4 /* AppStartupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStartupView.swift; sourceTree = "<group>"; };
 		A8BF668DC816AF5A94F02C5C /* PresentationFlowAuditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationFlowAuditView.swift; sourceTree = "<group>"; };
 		A927580850A3394C8C30C4A3 /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
+		A9708D4CDD99003B80FD9A4D /* MorningWakeSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningWakeSessionTests.swift; sourceTree = "<group>"; };
 		AB78CDB872AA9BFD7CA228B1 /* UploadState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadState.swift; sourceTree = "<group>"; };
 		AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
 		AB863FB1A21B7C9327F94CE9 /* PostRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRepository.swift; sourceTree = "<group>"; };
@@ -477,6 +482,7 @@
 		B015AC827F07FC7CB7028EC1 /* PlayfulStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayfulStage.swift; sourceTree = "<group>"; };
 		B0B3F1244F36C7A3929F0AE5 /* RewardOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardOverlayView.swift; sourceTree = "<group>"; };
 		B0C06D7AD160C0956C2C73E8 /* UploadQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadQueue.swift; sourceTree = "<group>"; };
+		B0DA0CA852741824EC9B796E /* MorningAlarmAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningAlarmAnalytics.swift; sourceTree = "<group>"; };
 		B13D2D69183D73FD77FD8B97 /* OnboardingCoordinatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCoordinatorView.swift; sourceTree = "<group>"; };
 		B1512D261F73427D29CF1ECB /* ImageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageStore.swift; sourceTree = "<group>"; };
 		B156A846BD6D16D03BA1658D /* CameraSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSessionController.swift; sourceTree = "<group>"; };
@@ -989,11 +995,13 @@
 			children = (
 				DFE558B73B23D63DFBA24F8A /* BuddyPairingNotificationPermission.swift */,
 				06433918EDC1C3800C409EE3 /* BuddyPushPayload.swift */,
+				B0DA0CA852741824EC9B796E /* MorningAlarmAnalytics.swift */,
 				36B2DBD9864A466A2E427117 /* MorningAlarmSchedule.swift */,
 				F5D4917FF65639DA2CF5FE4D /* MorningAlarmScheduler.swift */,
 				6CC4718FF053AE180B3EFD0A /* MorningAlarmSettingsView.swift */,
 				33F794A01BD4E093D6832224 /* MorningFollowUpScheduler.swift */,
 				886FBC991A7FABB9E2EEB78D /* MorningRealarmPolicy.swift */,
+				4A38D09481D2FB6547E8AD87 /* MorningWakeSession.swift */,
 				8F40477A5D361698E46D76F2 /* NotificationRouter.swift */,
 			);
 			path = Notifications;
@@ -1027,6 +1035,7 @@
 				A31C68EBA409BD985E6DEC6E /* MorningRealarmPolicyTests.swift */,
 				2C6CEA8D8FCAD9A1D8DC99F6 /* MorningRitualCoordinatorTests.swift */,
 				AE252A44036F1878560BEF90 /* MorningRitualPolicyTests.swift */,
+				A9708D4CDD99003B80FD9A4D /* MorningWakeSessionTests.swift */,
 				7C3179FE4DAF5ACD3B53B8FD /* NotificationRouterTests.swift */,
 				4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */,
 				C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */,
@@ -1342,6 +1351,7 @@
 				176C5ADC14947459EC3A4833 /* MilestoneMoment.swift in Sources */,
 				47B98544EC63B418A73C3A25 /* MilestoneView.swift in Sources */,
 				6473B8F12A00EF0A1D9D6E6F /* MokuView.swift in Sources */,
+				6FB342931BF0FC5E2563D4F9 /* MorningAlarmAnalytics.swift in Sources */,
 				212238C56C8C82E2950DCEA7 /* MorningAlarmSchedule.swift in Sources */,
 				29E2E71E084F449C79BDF60E /* MorningAlarmScheduler.swift in Sources */,
 				5E231E656EEA92440D8DD0F6 /* MorningAlarmSettingsView.swift in Sources */,
@@ -1353,6 +1363,7 @@
 				33755F234CF98678EFB43647 /* MorningRitualCoordinator.swift in Sources */,
 				7B3FD00A67C9D505A9D3D14D /* MorningRitualPolicy.swift in Sources */,
 				850C2AB52D7199C0772067D3 /* MorningShareAnalytics.swift in Sources */,
+				5F8E8251864833E67D9AC96F /* MorningWakeSession.swift in Sources */,
 				57E37E5EDCF65B9C244A572E /* NotificationRouter.swift in Sources */,
 				4262808CDCBD5509575509FB /* OnboardingAnalytics.swift in Sources */,
 				D4E05414E3DAF916F1D1AD68 /* OnboardingCoordinatorView.swift in Sources */,
@@ -1484,6 +1495,7 @@
 				36F235B06C2D555EE7062092 /* MorningRealarmPolicyTests.swift in Sources */,
 				C60C3001AE68DE980621916D /* MorningRitualCoordinatorTests.swift in Sources */,
 				E2FBCBB5FE138027E0A9D949 /* MorningRitualPolicyTests.swift in Sources */,
+				301786DC0471F293C999C6C4 /* MorningWakeSessionTests.swift in Sources */,
 				4DF257C26750F166783046E9 /* NotificationRouterTests.swift in Sources */,
 				2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */,
 				529EC867219879D7D0B8146A /* OrphanedPostRecoveryTests.swift in Sources */,
@@ -1727,7 +1739,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1738,7 +1750,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridWidgets;
 				PRODUCT_MODULE_NAME = SkyGridWidgets;
 				SDKROOT = iphoneos;
@@ -1757,7 +1769,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -1770,7 +1782,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
 				PRODUCT_MODULE_NAME = SkyGrid;
 				SDKROOT = iphoneos;
@@ -1784,7 +1796,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1795,7 +1807,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridWidgets;
 				PRODUCT_MODULE_NAME = SkyGridWidgets;
 				SDKROOT = iphoneos;
@@ -1814,7 +1826,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -1828,7 +1840,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
 				PRODUCT_MODULE_NAME = SkyGrid;
 				SDKROOT = iphoneos;

@@ -22,7 +22,7 @@ enum MorningFollowUpScheduler {
         lastCapturedLocalDateID: String?
     ) -> Bool {
         guard let lastCapturedLocalDateID else { return false }
-        return identifier == identifierPrefix + lastCapturedLocalDateID
+        return identifier.hasPrefix(identifierPrefix + lastCapturedLocalDateID)
     }
 
     /// Pure and testable: the (wake day, delivery day, fire-time components)
@@ -51,17 +51,15 @@ enum MorningFollowUpScheduler {
         startingFrom today: LocalDate,
         dayCount: Int = MorningRitualPolicy.followUpWindowDays
     ) -> [(wakeDay: LocalDate, deliveryDay: LocalDate, fireComponents: DateComponents)] {
-        (0..<dayCount).map { offset in
+        (0..<dayCount).compactMap { offset in
             let wakeDay = today.adding(days: offset)
-            let components = fireComponents(wakeGoalMinutes: wakeGoalMinutes, wakeDay: wakeDay)
+            guard let firstWakeMinutes = schedules.firstWakeMinutes(on: wakeDay.weekday) else { return nil }
+            let components = fireComponents(wakeGoalMinutes: firstWakeMinutes, wakeDay: wakeDay)
             return (
                 wakeDay,
                 deliveryDay: deliveryDay(for: components),
                 fireComponents: components
             )
-        }
-        .filter { planned in
-            schedules.contains { $0.isEnabled && $0.weekdays.contains(planned.wakeDay.weekday) }
         }
     }
 
@@ -114,10 +112,18 @@ enum MorningFollowUpScheduler {
     /// (already sitting in Notification Center), so a capture makes it disappear
     /// either way.
     static func cancel(for localDate: LocalDate) {
-        let id = identifier(for: localDate)
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [id])
-        center.removeDeliveredNotifications(withIdentifiers: [id])
+        let prefix = identifier(for: localDate)
+        Task {
+            let pending = await center.pendingNotificationRequests()
+                .map(\.identifier)
+                .filter { $0.hasPrefix(prefix) }
+            center.removePendingNotificationRequests(withIdentifiers: pending)
+            let delivered = await center.deliveredNotifications()
+                .map(\.request.identifier)
+                .filter { $0.hasPrefix(prefix) }
+            center.removeDeliveredNotifications(withIdentifiers: delivered)
+        }
     }
 
     static func cancelAll() async {

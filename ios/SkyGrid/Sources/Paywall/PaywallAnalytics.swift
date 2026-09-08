@@ -9,6 +9,7 @@ enum PaywallAnalytics {
     enum Event: String {
         case presented = "skygrid_paywall_presented"
         case stepViewed = "skygrid_paywall_step_viewed"
+        case valuePreviewCompleted = "skygrid_paywall_value_preview_completed"
         case planSelected = "skygrid_paywall_plan_selected"
         case purchaseStarted = "skygrid_paywall_purchase_started"
         case purchaseConfirmed = "skygrid_paywall_purchase_confirmed"
@@ -30,7 +31,8 @@ enum PaywallAnalytics {
 
         var parameters: [String: Any] = [
             "entry_point": entryPoint.analyticsName,
-            "automatic": entryPoint.isAutomaticReminder ? 1 : 0
+            "automatic": entryPoint.isAutomaticReminder ? 1 : 0,
+            "schema_version": 1
         ]
         if let period {
             parameters["plan_period"] = period.analyticsName

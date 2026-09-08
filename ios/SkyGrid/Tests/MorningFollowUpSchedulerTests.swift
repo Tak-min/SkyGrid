@@ -13,7 +13,7 @@ struct MorningFollowUpSchedulerTests {
         #expect(id.hasPrefix(MorningFollowUpScheduler.identifierPrefix))
     }
 
-    @Test("plans one follow-up per day for the requested window, delivery day preserved")
+    @Test("plans one follow-up per scheduled morning, delivery day preserved")
     func plansOnePerDay() {
         let planned = MorningFollowUpScheduler.plannedFollowUps(wakeGoalMinutes: 360, startingFrom: today, dayCount: 3)
         #expect(planned.map(\.wakeDay) == [today, today.adding(days: 1), today.adding(days: 2)])
@@ -80,6 +80,33 @@ struct MorningFollowUpSchedulerTests {
         #expect(fireComponents.day == today.adding(days: 1).day)
         #expect(fireComponents.hour == 0)
         #expect(fireComponents.minute == 10)
+    }
+
+    @Test("the first alarm for a weekday controls its single follow-up")
+    func weekdayAlarmTimeControlsSingleFollowUp() {
+        let sundayEarly = MorningAlarmSchedule(
+            id: UUID(),
+            minutesAfterMidnight: 6 * 60,
+            weekdays: [1],
+            isEnabled: true
+        )
+        let sundayLate = MorningAlarmSchedule(
+            id: UUID(),
+            minutesAfterMidnight: 9 * 60,
+            weekdays: [1],
+            isEnabled: true
+        )
+
+        let planned = MorningFollowUpScheduler.plannedFollowUps(
+            wakeGoalMinutes: 6 * 60,
+            schedules: [sundayEarly, sundayLate],
+            startingFrom: today,
+            dayCount: 1
+        )
+
+        #expect(planned.count == 1)
+        #expect(planned[0].fireComponents.hour == 6)
+        #expect(planned[0].fireComponents.minute == 20)
     }
 
     @Test("suppresses only a same-day foreground follow-up after a local capture")

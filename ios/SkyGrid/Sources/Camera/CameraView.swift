@@ -13,18 +13,24 @@ struct CameraView: View {
     @State private var isRecovering = false
     @State private var confirmationError: String?
     private let liveSession: AVCaptureSession
+    let requiresCaptureToDismiss: Bool
     let onDismiss: () -> Void
+    let onEndRequiredCapture: () async -> Void
     let onConfirmed: (PostDraft) async throws -> Void
 
     init(
         viewModel: CameraViewModel,
         liveSession: AVCaptureSession,
+        requiresCaptureToDismiss: Bool = false,
         onDismiss: @escaping () -> Void,
+        onEndRequiredCapture: @escaping () async -> Void = {},
         onConfirmed: @escaping (PostDraft) async throws -> Void
     ) {
         _viewModel = State(initialValue: viewModel)
         self.liveSession = liveSession
+        self.requiresCaptureToDismiss = requiresCaptureToDismiss
         self.onDismiss = onDismiss
+        self.onEndRequiredCapture = onEndRequiredCapture
         self.onConfirmed = onConfirmed
     }
 
@@ -71,7 +77,7 @@ struct CameraView: View {
                     Text("SKY GRID")
                         .font(SGFont.caption(12))
                         .tracking(1.8)
-                    Text("THIS MORNING")
+                    Text(requiresCaptureToDismiss ? "PHOTO MISSION" : "THIS MORNING")
                         .font(SGFont.caption(11))
                         .foregroundStyle(.white.opacity(0.62))
                 }
@@ -80,7 +86,7 @@ struct CameraView: View {
                 // The live screen's only Moku is the expressive one in
                 // `CameraCaptureControls`, which reacts to `isCapturing`. A second
                 // static mark here made the capture screen show two companions.
-                closeButton
+                if !requiresCaptureToDismiss { closeButton }
             }
         } viewfinder: {
             CameraPreviewView(session: liveSession)
@@ -123,7 +129,7 @@ struct CameraView: View {
                 .foregroundStyle(.white)
                 Spacer()
                 MokuScreenMark(state: .settled, side: 42)
-                closeButton
+                if !requiresCaptureToDismiss { closeButton }
             }
         } viewfinder: {
             Image(uiImage: image)
@@ -157,7 +163,17 @@ struct CameraView: View {
             failure: failure,
             isRecovering: isRecovering,
             onPrimaryAction: { handleFailureAction(failure) },
-            onClose: onDismiss
+            closeTitle: requiresCaptureToDismiss ? "End today's wake-up" : "Close camera",
+            onClose: {
+                guard requiresCaptureToDismiss else {
+                    onDismiss()
+                    return
+                }
+                Task {
+                    await onEndRequiredCapture()
+                    onDismiss()
+                }
+            }
         )
     }
 
@@ -224,6 +240,7 @@ struct CameraFailureContent: View {
     let failure: CameraViewModel.Failure
     let isRecovering: Bool
     let onPrimaryAction: () -> Void
+    var closeTitle = "Close camera"
     let onClose: () -> Void
 
     var body: some View {
@@ -259,7 +276,7 @@ struct CameraFailureContent: View {
                         .buttonStyle(.plain)
                         .disabled(isRecovering)
 
-                        Button("Close camera", action: onClose)
+                        Button(closeTitle, action: onClose)
                             .font(SGFont.body(15))
                             .foregroundStyle(.white.opacity(0.82))
                             .frame(maxWidth: .infinity, minHeight: 44)

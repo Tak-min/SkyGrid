@@ -88,11 +88,11 @@ struct WakeGoalPickerView: View {
 
             if reminderPreference == .scheduledAlarm {
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                    Text("Stop doesn't end your morning.")
+                    Text(alarmState.kind == .systemAlarm ? "Photo Mission stays active." : "Reminder fallback")
                         .font(SGFont.body(14))
                         .fontWeight(.bold)
                         .foregroundStyle(SGT.ink2)
-                    Text("If you don't capture the sky, Sky Grid brings the alarm back every 5 minutes, up to 3 times. iPhone always silences the alarm the moment you tap Stop — Sky Grid can only ask again, not keep it sounding.")
+                    Text(photoMissionDetail)
                         .font(SGFont.caption())
                         .foregroundStyle(SGT.ink3)
                 }
@@ -109,6 +109,13 @@ struct WakeGoalPickerView: View {
             .buttonStyle(SkySecondaryButtonStyle())
             .disabled(isScheduling)
         }
+    }
+
+    private var photoMissionDetail: String {
+        if alarmState.kind == .systemAlarm {
+            return "Stop silences the current ring. A system alarm returns every 5 minutes until your photo is saved, for up to four hours."
+        }
+        return "This iOS version uses a regular notification. It cannot require a photo or bypass Silent mode and Focus."
     }
 
     private var alarmActionTitle: String {

@@ -438,8 +438,8 @@ final class SkyGridUITests: XCTestCase {
 
         app.buttons["Skip setup"].tap()
         XCTAssertTrue(app.staticTexts["YOUR MORNING PLAN"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["See my complete archive"].exists)
-        XCTAssertTrue(app.buttons["Start with Free"].exists)
+        XCTAssertTrue(app.buttons["Start my first sky"].exists)
+        XCTAssertTrue(app.staticTexts["Take one real photo first. Your archive options come after your first sky lands in the grid."].exists)
         XCTAssertTrue(app.buttons["Edit answers"].exists)
     }
 

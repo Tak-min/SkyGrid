@@ -4,6 +4,14 @@ import Testing
 
 @Suite("Morning reminder reconcile plan")
 struct MorningAlarmSchedulerTests {
+    @Test("five all-week alarms leave notification budget headroom")
+    func maximumScheduleCountFitsNotificationBudget() {
+        let repeatingRequests = MorningAlarmScheduler.maximumScheduleCount * 7
+        let followUps = MorningRitualPolicy.followUpWindowDays
+        let realarms = MorningRealarmPolicy.maximumAttempts
+        #expect(repeatingRequests + followUps + realarms <= 64)
+    }
+
     private func schedule(
         id: UUID = UUID(),
         minutesAfterMidnight: Int = 6 * 60 + 30,

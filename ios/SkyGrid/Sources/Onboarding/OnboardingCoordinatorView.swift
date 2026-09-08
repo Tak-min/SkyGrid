@@ -98,6 +98,12 @@ final class OnboardingViewModel {
         LocalDefaults.personalizationProfile = personalizationProfile
         LocalDefaults.onboardingDone = true
     }
+
+    func completeForFirstCapture() {
+        LocalDefaults.openCameraAfterOnboarding = true
+        LocalDefaults.pendingOnboardingPaywallAfterFirstCapture = true
+        complete()
+    }
 }
 
 /// A short, preference-led setup. Permissions are requested only at the moment a
@@ -176,8 +182,7 @@ struct OnboardingCoordinatorView: View {
                 PersonalizedPlanView(
                     profile: viewModel.personalizationProfile,
                     wakeGoalMinutes: viewModel.wakeGoalMinutes,
-                    onExplorePro: { showPaywall = true },
-                    onContinueFree: advanceToInvite,
+                    onStartFirstSky: finishForFirstCapture,
                     onEditAnswers: goBack
                 )
             case .invite:
@@ -276,11 +281,21 @@ struct OnboardingCoordinatorView: View {
     private var companionLine: String {
         switch viewModel.step {
         case .welcome: "One sky is a beginning."
-        case .intention: "Let's make this morning yours."
-        case .pace: "A pace that feels like you."
-        case .frequency: "There's room for real life."
-        case .privacy: "Your sky. Your circle."
-        case .reminder: "You choose the nudge."
+        case .intention:
+            viewModel.personalizationProfile.intent.map { "\($0.title) — a good place to begin." }
+                ?? "Let's make this morning yours."
+        case .pace:
+            viewModel.personalizationProfile.pace.map { "\($0.title) works. I'll follow your pace." }
+                ?? "A pace that feels like you."
+        case .frequency:
+            viewModel.personalizationProfile.frequency.map { "\($0.title). There's room for real life." }
+                ?? "There's room for real life."
+        case .privacy:
+            viewModel.personalizationProfile.privacy.map { "\($0.title). Your sky stays yours." }
+                ?? "Your sky. Your circle."
+        case .reminder:
+            viewModel.personalizationProfile.reminder.map { "\($0.title). You stay in control." }
+                ?? "You choose the nudge."
         case .wakeGoal: "A time to look up."
         case .plan: "Your first sky is next."
         case .invite: "Together is optional. Your sky is yours."
@@ -292,6 +307,15 @@ struct OnboardingCoordinatorView: View {
         Haptics.navigationConfirmed()
         OnboardingAnalytics.record(.completed, step: viewModel.step)
         viewModel.complete()
+        showPaywall = false
+        onFinished()
+    }
+
+    private func finishForFirstCapture() {
+        guard !viewModel.didComplete else { return }
+        Haptics.navigationConfirmed()
+        OnboardingAnalytics.record(.completed, step: viewModel.step)
+        viewModel.completeForFirstCapture()
         showPaywall = false
         onFinished()
     }

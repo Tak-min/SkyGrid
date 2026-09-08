@@ -47,7 +47,9 @@ struct WelcomeView: View {
 /// The mosaic is a stationary floor; Moku alone steps out of its plane. The
 /// optional toy has a separate hit target and never gates the primary action.
 private struct MokuWelcomeStage: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var interaction = 0
+    @State private var dialogueStep = 0
     @State private var lastInteraction: TimeInterval = -.infinity
 
     var body: some View {
@@ -69,6 +71,9 @@ private struct MokuWelcomeStage: View {
                     guard now - lastInteraction >= 1.15 else { return }
                     lastInteraction = now
                     interaction += 1
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
+                        dialogueStep = (dialogueStep + 1) % 2
+                    }
                 } label: {
                     MokuView(state: .ready, side: 144, interaction: interaction, leapsOnArrival: true)
                         .frame(width: 190, height: 198)
@@ -79,6 +84,23 @@ private struct MokuWelcomeStage: View {
                 .accessibilityLabel("Say hello to Moku")
                 .accessibilityHint("Moku says hello back. You can get started at any time.")
                 .accessibilityIdentifier("moku.play")
+
+                Text(dialogueLine)
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, SGSpacing.md)
+                    .padding(.vertical, SGSpacing.sm)
+                    .frame(width: 178, alignment: .leading)
+                    .background(SGT.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .strokeBorder(SGT.rule, lineWidth: 1)
+                    }
+                    .offset(x: 58, y: -96)
+                    .id(dialogueStep)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    .accessibilityIdentifier("onboarding.mokuDialogue")
             }
             .frame(maxWidth: .infinity)
             // The 3D-rotated mosaic's near edge projects below its layout bounds,
@@ -90,5 +112,22 @@ private struct MokuWelcomeStage: View {
                 .font(SGFont.caption(12))
                 .foregroundStyle(SGT.ink3)
         }
+        .task {
+            guard !reduceMotion else {
+                dialogueStep = 1
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.22)) {
+                dialogueStep = 1
+            }
+        }
+    }
+
+    private var dialogueLine: String {
+        dialogueStep == 0
+            ? "Hi! I'm Moku."
+            : "Six quick questions, then we'll shape your morning. Ready?"
     }
 }

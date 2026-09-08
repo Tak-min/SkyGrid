@@ -80,10 +80,11 @@ final class CameraViewModel {
     func capture() async {
         do {
             let image = try await cameraSource.capturePhoto()
-            guard let skyColor = SkyColorExtractor.extract(from: image) else {
-                phase = .failed(.colorDetection)
-                return
-            }
+            // A real shutter result is enough for Photo Mission. Darkness or a
+            // featureless sky must not make the alarm impossible to complete.
+            let skyColor = SkyColorExtractor.extract(from: image)
+                ?? liveSkyColor
+                ?? SkyColor(uncheckedHex: "#9DB7C5")
             phase = .reviewing(capturedImage: image, skyColor: skyColor)
         } catch {
             phase = .failed(.capture)

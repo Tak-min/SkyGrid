@@ -1,6 +1,6 @@
 # PRODUCT-MODEL — Sky Grid
 
-最終更新: 2026-09-04 / 更新者: Codex
+最終更新: 2026-09-08 / 更新者: Codex
 
 ## 0. 北極星指標
 
@@ -33,6 +33,9 @@
 | `skygrid_mutual_reveal_unlocked` | `ios/SkyGrid/Sources/Today/TodayViewModel.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 | `skygrid_invite_link_created` / `shared` / `code_copied` | `ios/SkyGrid/Sources/Invite/InviteAnalytics.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
 | `skygrid_invite_preview_viewed` / `claim_started` / `claim_resolved` | `ios/SkyGrid/Sources/Invite/InviteAnalytics.swift` | Firebase Analytics | — | コード呼出しあり・実到着未確認 |
+| `skygrid_alarm_schedule_changed` | `ios/SkyGrid/Sources/Notifications/MorningAlarmAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-07 実装。時刻・曜日・UIDは送らず、保存件数/有効件数/backend/成功のみ。実到着未確認 |
+| `skygrid_wake_session_started` / `skygrid_wake_retry_horizon_refilled` / `skygrid_wake_session_ended` | `ios/SkyGrid/Sources/Notifications/MorningAlarmAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-08 実装。分母はsession開始、完了はended reason=`captured`。時刻・alarm ID・写真情報は送らない。実到着未確認 |
+| `skygrid_paywall_value_preview_completed` | `ios/SkyGrid/Sources/Paywall/PaywallAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-07 実装。entry point/step/schema versionのみ。実到着未確認 |
 
 ### 2.1 送信経路の検証結果（2026-09-07 実測・Claude Code）
 
@@ -124,6 +127,13 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 | 3 | 通常日の share 導線は共有数を上げる | 導線追加後も capture あたりの共有意図が変わらない | 検証待ち | 未測定（share-card 固有イベントなし） | 2026-09-04 |
 | 4 | オンボーディング最終画面の任意招待は Invite shared を上げる | 7日成熟コホートで onboarding placement の共有率・D7相互公開率が改善しない | 実装済み・検証待ち | 実イベント到着未確認のため未測定 | 2026-09-04 |
 | 5 | 昨日の空を pre-capture card に出すと、昨日投稿した人の翌朝 capture 率を上げる | 同一導線の7日成熟コホートで翌朝 capture 率が改善しない | 実装済み・検証待ち | Analytics 実到着未確認のため未測定。最安検証は card exposure と翌朝 `capture_completed` の cohort 比較 | 2026-09-04 |
+| 6 | 曜日別に最大5件のアラームを保存できると、alarm設定者の24時間以内初回撮影率と翌日撮影率が上がる | 単一アラーム群と比べて改善せず、設定失敗率または通知離脱が悪化する | 実装済み・検証待ち | 現在値は未測定。最安検証は匿名の有効件数コホート別に `capture_completed` を比較 | 2026-09-07 |
+| 7 | CTAを塞がないMokuの短い導入会話と回答即時反映は first_open→初回撮影完了率を上げる | 7日成熟コホートで改善せず、onboarding完了率が悪化する | 実装済み・検証待ち | 現在値は未測定（既存7 first_openはシミュレータ混在・非コホート） | 2026-09-07 |
+| 8 | 7日→30日→1年の短い操作可能プレビューは paywall view→purchase started を上げる | preview完了者を含む十分な標本で purchase started または confirmed が改善しない | 実装済み・検証待ち | 価格・商品構成は固定。preview完了イベントの実到着は未確認 | 2026-09-07 |
+| 9 | 初回の実写真とセル着地を課金より先に置くと、説明先行より24時間以内の初回保存成功率が上がる | 7日成熟コホートで初回保存が改善せず、paywall到達またはpurchase startが悪化する | 実装済み・検証待ち | 初回paywallは保存成功とrewardの後に保留解除する | 2026-09-08 |
+| 10 | Mokuの弱り表現は将来の継続動機になり得る | D7/D30が改善せず、通知停止・離脱・否定的反応が増える | 保留 | 欠席への罰にせず、回復可能な表現として継続データ取得後に試す | 2026-09-08 |
+| 11 | 保存後の任意の気分・一言は空を語れる共有物になり得る | 投稿完了率または相互公開率を悪化させ、共有率が上がらない | 保留 | 投稿完了率が安定した後、撮影保存後の任意入力として試す | 2026-09-08 |
+| 12 | Stop後も写真保存まで5分ごとにPhoto Missionを再鳴動すると、alarm起点の保存成功率が上がる | wake session開始群で保存成功が改善せず、alarm無効化・権限拒否・当日終了が増える | 実装済み・検証待ち | AlarmKitのOS Stopは阻止できないため、4時間窓内の真のone-shot alarm再予約で実現 | 2026-09-08 |
 
 ## 5. 意思決定履歴
 
@@ -133,6 +143,12 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 | 2026-09-04 | プロモーション判断より先に D7 相互公開率を計測する | 現在値が未測定であり、導線変更の因果を評価できないため | 依頼者判断・コード観測 | 集計経路で install / first-open cohort の分母を含む実測が取得できた場合 |
 | 2026-09-04 | `IS_ANALYTICS_ENABLED` を手動変更しない | Firebase iOS SDK 12.17 はこの GoogleService-Info 項目を未使用と明記し、実際の制御キーにも含めないため | SDK 一次ソース・ローカル設定観測 | DebugView でイベントが到着せず、別の有効な収集停止条件が確認された場合 |
 | 2026-09-04 | pace / frequency を残し、任意の9画面目として招待を追加する | 両回答は個別プランと paywall の文面に使用されるため | コード観測・依頼者判断 | オンボーディング完了率の実測低下が招待導線の増分を上回る場合 |
+| 2026-09-07 | 複数アラームは最大5件、各時刻/曜日を独立保存し、起動時に保存集合をそのまま再同期する | fallbackの64 pending通知予算と既存owner decisionを守り、全時刻が最早時刻へ潰れる再同期欠陥を防ぐ | 既存意思決定記録・コード観測 | OSの通知上限またはfallback設計が変わり、別の安全な上限を実測できた場合 |
+| 2026-09-07 | 日付跨ぎの当日投稿リセットは既存実装を維持し、manual clock changeの監視だけ追加する | `NSCalendarDayChanged`/timezone/foregroundと`TodayViewModel.start(for:)`の即時clearで報告原因は既に修正済みだったため | コード観測 | 実機回帰で前日postが当日postとして残る場合 |
+| 2026-09-07 | オンボ会話とpaywallプレビューは操作を待たせず、価格/プラン構成を同時に変えない | 初回撮影までの遅延を増やさず、演出の効果を分離して測るため | 45アプリ調査・製品Bet | 仮説7/8の反証条件成立時 |
+| 2026-09-08 | オンボーディング由来のpaywallは最初の実写真保存とrewardの後に出す | 説明ではなくSkyGrid固有のセル完成を先に体験させるため | 45アプリ調査・依頼者判断 | 仮説9の反証条件成立時 |
+| 2026-09-08 | Mokuの弱り表現と任意の気分・一言は将来採用候補として保留する | 継続・共有価値はあり得るが、現在の初回投稿へ摩擦を加えないため | 依頼者判断・製品Bet | 投稿ファネルの十分な実測後に再評価 |
+| 2026-09-08 | Photo MissionをAlarmKitの再鳴動として実装し、ローカル保存成功だけを完了条件にする | 撮影を起床アラームの付加機能ではなくSkyGridの中心ループにするため | 依頼者判断・Apple AlarmKit仕様・コード観測 | 仮説12の反証条件成立、または実機で再予約の信頼性を満たせない場合 |
 
 ## 6. 未解決の不明点
 

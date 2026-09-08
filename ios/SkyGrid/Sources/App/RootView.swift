@@ -117,6 +117,13 @@ struct RootView: View {
                         refreshObservedLocalDate(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
+                    .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+                        // Covers a manual clock change and large system time jump.
+                        // Clear/rebind Today immediately rather than waiting for a
+                        // foreground transition that may never occur.
+                        refreshObservedLocalDate(services: services)
+                        Task { await reconcileMorningRitual(services: services) }
+                    }
                     .onChange(of: destination) { _, _ in
                         consumePendingCameraRequestIfNeeded()
                         consumePendingBuddyRevealIfNeeded()
@@ -326,6 +333,11 @@ struct RootView: View {
 
     private func cameraSheet(services: AppServices) -> some View {
         let cameraSource = services.cameraSourceFactory()
+        let today = services.clock.today()
+        let requiresCapture = MorningAlarmScheduler.hasActiveCaptureRequiredSession(
+            today: today,
+            now: services.clock.now
+        )
         return CameraView(
             viewModel: CameraViewModel(
                 ownerUid: services.currentUid,
@@ -334,12 +346,18 @@ struct RootView: View {
                 wakeGoal: WakeGoal(minutesAfterMidnight: LocalDefaults.wakeGoalMinutes)
             ),
             liveSession: cameraSource.session,
+            requiresCaptureToDismiss: requiresCapture,
             onDismiss: { showCamera = false },
+            onEndRequiredCapture: {
+                await MorningAlarmScheduler.endActiveCaptureRequiredSession(
+                    reason: .userEndedAfterFailure
+                )
+            },
             onConfirmed: { draft in
                 try await services.postPublisher.publish(draft)
+                await MorningRitualCoordinator.captureCompleted(localDate: draft.localDate)
                 recordCompletedCapture(draft, services: services)
                 showCamera = false
-                Task { await MorningRitualCoordinator.captureCompleted(localDate: draft.localDate) }
                 Task {
                     await services.entitlements.refresh()
                     resolvePendingPresentations(services: services)
@@ -679,6 +697,8 @@ struct RootView: View {
     /// offer it again.
     private func recordAutomaticPaywallPresentationIfNeeded(services: AppServices) {
         switch paywallEntryPoint {
+        case .onboarding:
+            LocalDefaults.pendingOnboardingPaywallAfterFirstCapture = false
         case .firstUnlock:
             LocalDefaults.unlockPaywallPresentedAt = Date()
         case .soloMorning(let captureCount):
@@ -747,7 +767,8 @@ struct RootView: View {
               presentations.isAvailable, homeDestination == nil, cameraRouteTask == nil else { return }
         let wantsCameraFromNotification = router.pendingRoute == .camera
         let wantsCameraFromAlarm = LocalDefaults.openCameraAfterMorningAlarm
-        guard wantsCameraFromNotification || wantsCameraFromAlarm else { return }
+        let wantsCameraFromOnboarding = LocalDefaults.openCameraAfterOnboarding
+        guard wantsCameraFromNotification || wantsCameraFromAlarm || wantsCameraFromOnboarding else { return }
 
         cameraRouteTask = Task {
             defer { cameraRouteTask = nil }
@@ -759,6 +780,19 @@ struct RootView: View {
             // `PostPublisher.publish` at all, which is what let a post document and
             // its queued upload point at two different images (see `UploadQueue`).
             let today = services.clock.today()
+            // Alarm and first-run capture must work without a network read. A
+            // locally committed post is the truth that ends a Photo Mission;
+            // server conflict handling remains inside PostPublisher.
+            if (wantsCameraFromAlarm || wantsCameraFromOnboarding),
+               LocalDefaults.lastCapturedLocalDateID != today.docID {
+                guard !Task.isCancelled, presentations.isAvailable, homeDestination == nil,
+                      services.clock.today() == today,
+                      appServices?.currentUid == services.currentUid else { return }
+                if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
+                if wantsCameraFromOnboarding { LocalDefaults.openCameraAfterOnboarding = false }
+                showCamera = true
+                return
+            }
             switch await firstValue(from: services.postRepository.observePost(uid: services.currentUid, localDate: today)) {
             case .value(nil):
                 guard !Task.isCancelled, presentations.isAvailable, homeDestination == nil,
@@ -766,6 +800,7 @@ struct RootView: View {
                       appServices?.currentUid == services.currentUid else { return }
                 if wantsCameraFromNotification { router.pendingRoute = nil }
                 if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
+                if wantsCameraFromOnboarding { LocalDefaults.openCameraAfterOnboarding = false }
                 homeDestination = nil
                 showCamera = true
             case .value(.some):
@@ -774,6 +809,7 @@ struct RootView: View {
                 // never become valid again, and clear both notification systems.
                 if wantsCameraFromNotification { router.pendingRoute = nil }
                 if wantsCameraFromAlarm { LocalDefaults.openCameraAfterMorningAlarm = false }
+                if wantsCameraFromOnboarding { LocalDefaults.openCameraAfterOnboarding = false }
                 await MorningRitualCoordinator.captureCompleted(localDate: today)
             case .unavailable, .none:
                 // Preserve the pending route only for a later foreground retry.
@@ -833,6 +869,7 @@ struct RootView: View {
             self.pendingReward = nil
             return
         }
+        resolveOnboardingPaywall(services: services)
         resolvePendingInvite()
         resolvePostCaptureMoment(services: services)
         resolveFirstUnlockPaywall(services: services)
@@ -844,6 +881,19 @@ struct RootView: View {
     /// function because an invite tap is a deliberate user action, not a derived
     /// celebration, and must never be silently dropped by `PostCaptureMomentPolicy`'s
     /// arming/backstop machinery.
+    private func resolveOnboardingPaywall(services: AppServices) {
+        guard LocalDefaults.pendingOnboardingPaywallAfterFirstCapture,
+              LocalDefaults.lastCapturedLocalDateID == services.clock.today().docID,
+              canPresentAutomaticMoment else { return }
+        // The first real sky and its reward are the onboarding value moment. It
+        // owns this capture's follow-up slot so no second automatic prompt stacks.
+        consumePostCaptureArming()
+        presentPaywall(from: .onboarding(
+            profile: LocalDefaults.personalizationProfile,
+            wakeGoalMinutes: LocalDefaults.wakeGoalMinutes
+        ))
+    }
+
     private func resolvePendingInvite() {
         guard destination == .today,
               canPresentAutomaticMoment,

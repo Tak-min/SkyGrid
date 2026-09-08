@@ -50,6 +50,14 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "onboardingDone", defaultValue: false)
     static var onboardingDone: Bool
 
+    /// Bridges onboarding completion into RootView's existing camera presentation.
+    @UserDefaultBacked(key: "openCameraAfterOnboarding", defaultValue: false)
+    static var openCameraAfterOnboarding: Bool
+
+    /// Held until the first durable capture and its reward have completed.
+    @UserDefaultBacked(key: "pendingOnboardingPaywallAfterFirstCapture", defaultValue: false)
+    static var pendingOnboardingPaywallAfterFirstCapture: Bool
+
     @UserDefaultBacked(key: "personalizationProfile", defaultValue: nil)
     private static var personalizationProfileData: Data?
 
@@ -227,6 +235,19 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "morningRealarmWakeDayID", defaultValue: nil)
     static var morningRealarmWakeDayID: String?
 
+    @UserDefaultBacked(key: "morningWakeSession", defaultValue: nil)
+    private static var morningWakeSessionData: Data?
+
+    static var morningWakeSession: MorningWakeSession? {
+        get {
+            guard let morningWakeSessionData else { return nil }
+            return try? JSONDecoder().decode(MorningWakeSession.self, from: morningWakeSessionData)
+        }
+        set {
+            morningWakeSessionData = newValue.flatMap { try? JSONEncoder().encode($0) }
+        }
+    }
+
     /// Set by the AlarmKit stop intent. The app consumes it once the scene becomes
     /// active, which makes the system alarm's dismissal lead straight to capture.
     @UserDefaultBacked(key: "openCameraAfterMorningAlarm", defaultValue: false)
@@ -274,6 +295,8 @@ enum LocalDefaults {
         handle = nil
         wakeGoalMinutes = 360
         onboardingDone = false
+        openCameraAfterOnboarding = false
+        pendingOnboardingPaywallAfterFirstCapture = false
         personalizationProfileData = nil
         resetAutomaticPaywallState()
         resetUnlockPaywallState()
@@ -286,6 +309,7 @@ enum LocalDefaults {
         morningAlarmScheduleModelVersion = 0
         morningRealarmAttemptCount = 0
         morningRealarmWakeDayID = nil
+        morningWakeSession = nil
         openCameraAfterMorningAlarm = false
         lastCapturedLocalDateID = nil
     }

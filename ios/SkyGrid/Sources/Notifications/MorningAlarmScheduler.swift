@@ -243,6 +243,7 @@ func morningReminderCancellationsAfterAdding(
 /// selected time replaces the existing AlarmKit schedule instead of accumulating
 /// alarms. The notification identifier remains public for NotificationRouter.
 enum MorningAlarmScheduler {
+    static let maximumScheduleCount = 5
     static let notificationIdentifier = "com.takmin.skygrid.morning-reminder"
     /// Reserved namespace for the future multi-schedule reminder fallback requests.
     /// The trailing dot keeps it distinct from the legacy bare identifier above.
@@ -270,62 +271,22 @@ enum MorningAlarmScheduler {
         return LocalDefaults.morningRealarmAttemptCount
     }
 
-    /// Schedules every still-valid local-notification re-alarm after AlarmKit's
-    /// Stop action. They are all reserved now because a later local-notification
-    /// delivery cannot invoke app code to extend the loop.
-    /// This deliberately has no reminder-fallback caller: a local notification
-    /// is not equivalent to an AlarmKit alarm on earlier iOS versions.
+    /// Compatibility entry point retained for alarms bound by an older build.
+    /// Current builds use genuine one-shot AlarmKit alarms below; old pending
+    /// notification retries are removed as part of that migration.
     @available(iOS 26.0, *)
     static func scheduleNextRealarmIfNeeded(
         originalWakeDay: LocalDate,
         now: Date,
         timeZone: TimeZone
     ) async {
-        let attemptCount = prepareRealarmAttemptCount(for: originalWakeDay)
-        let occurrences = morningRealarmOccurrences(
-            attemptCount: attemptCount,
-            originalWakeDay: originalWakeDay,
+        await beginCaptureRequiredSession(
+            sourceAlarmID: alarmIdentifier,
+            alarmAlreadyStopped: true,
+            wakeDay: originalWakeDay,
             now: now,
             timeZone: timeZone
         )
-        guard !occurrences.isEmpty else { return }
-
-        let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
-        let authorized = [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus)
-        guard authorized else { return }
-
-        var highestScheduledAttempt: Int?
-        for occurrence in occurrences {
-            let content = UNMutableNotificationContent()
-            content.title = "Still asleep?"
-            content.body = "Capture the sky to end this morning's ritual."
-            content.sound = .default
-            let interval = max(1, occurrence.fireDate.timeIntervalSince(now))
-            let request = UNNotificationRequest(
-                identifier: realarmIdentifier(wakeDay: originalWakeDay, attempt: occurrence.attempt),
-                content: content,
-                trigger: UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)
-            )
-            do {
-                try await center.add(request)
-                highestScheduledAttempt = occurrence.attempt
-            } catch {
-                // A failed re-alarm remains a quiet handoff to the existing
-                // follow-up notification; do not block later valid attempts.
-            }
-        }
-        if let highestScheduledAttempt {
-            guard LocalDefaults.morningAlarmEnabled else {
-                // Disabling can race this background scheduling work. Remove
-                // any request added after disable began, and never restore its
-                // cleared retry state.
-                await cancelAllRealarmNotifications()
-                return
-            }
-            LocalDefaults.morningRealarmAttemptCount = highestScheduledAttempt
-            LocalDefaults.morningRealarmWakeDayID = originalWakeDay.docID
-        }
     }
 
     /// A completed capture applies to the whole wake-day loop, whose request
@@ -341,6 +302,74 @@ enum MorningAlarmScheduler {
             .map(\.request.identifier)
             .filter { $0.hasPrefix(realarmIdentifierPrefix) }
         center.removeDeliveredNotifications(withIdentifiers: deliveredIDs)
+    }
+
+    /// Removes the durable capture mission and every one-shot system alarm it
+    /// owns. Repeating user schedules live in a separate ID set and are untouched.
+    @MainActor
+    static func cancelCaptureRequiredSession(
+        reason: MorningAlarmAnalytics.WakeSessionEndReason? = nil
+    ) async {
+        let session = LocalDefaults.morningWakeSession
+        let retryIDs = session?.pendingRetryAlarmIDs ?? []
+        if #available(iOS 26.0, *) {
+            // Stop the originating repeating alarm if it is still alerting, but
+            // do not cancel it: tomorrow's schedule must remain armed.
+            if let sourceAlarmID = session?.sourceAlarmID {
+                try? AlarmManager.shared.stop(id: sourceAlarmID)
+            }
+            for id in retryIDs {
+                try? AlarmManager.shared.stop(id: id)
+                try? AlarmManager.shared.cancel(id: id)
+            }
+        }
+        LocalDefaults.morningWakeSession = nil
+        await cancelAllRealarmNotifications() // migrate old notification retries
+        LocalDefaults.morningRealarmAttemptCount = 0
+        LocalDefaults.morningRealarmWakeDayID = nil
+        if session != nil, let reason {
+            MorningAlarmAnalytics.recordWakeSessionEnded(reason: reason)
+        }
+    }
+
+    /// Clears an expired, completed, captured, or previous-day mission whenever
+    /// the app gets a lifecycle opportunity. This prevents fixed AlarmKit alarms
+    /// from becoming orphans after a date/time-zone change.
+    @MainActor
+    static func reconcileCaptureRequiredSession(
+        today: LocalDate,
+        now: Date,
+        hasCaptured: Bool
+    ) async {
+        guard let session = LocalDefaults.morningWakeSession else {
+            await cancelAllRealarmNotifications()
+            return
+        }
+        guard !hasCaptured, session.isActive(today: today, now: now), LocalDefaults.morningAlarmEnabled else {
+            let reason: MorningAlarmAnalytics.WakeSessionEndReason
+            if hasCaptured {
+                reason = .captured
+            } else if !LocalDefaults.morningAlarmEnabled {
+                reason = .disabled
+            } else {
+                reason = .deadline
+            }
+            await cancelCaptureRequiredSession(reason: reason)
+            return
+        }
+    }
+
+    @MainActor
+    static func hasActiveCaptureRequiredSession(today: LocalDate, now: Date) -> Bool {
+        LocalDefaults.morningWakeSession?.isActive(today: today, now: now) == true
+    }
+
+    @MainActor
+    static func endActiveCaptureRequiredSession(reason: MorningCaptureSessionEndReason) async {
+        _ = reason
+        LocalDefaults.openCameraAfterMorningAlarm = false
+        await cancelCaptureRequiredSession(reason: .cameraFailure)
+        await MorningRitualActivity.end(status: .ended)
     }
 
     static var preferredKind: MorningAlarmKind {
@@ -363,6 +392,35 @@ enum MorningAlarmScheduler {
             return await alarmKitState()
         }
         return await reminderState()
+    }
+
+    /// Returns the entries that are fully represented by the selected system
+    /// backend. Settings uses this only after a partial scheduling failure so it
+    /// can identify the affected row without claiming that every saved alarm is
+    /// broken.
+    static func scheduledScheduleIDs(
+        in schedules: [MorningAlarmSchedule],
+        useReminderFallback: Bool
+    ) async -> Set<UUID> {
+        let enabled = schedules.filter(\.isEnabled)
+        if #available(iOS 26.0, *), !useReminderFallback {
+            do {
+                let liveIDs = Set(try AlarmManager.shared.alarms.map(\.id))
+                return Set(enabled.map(\.id)).intersection(liveIDs)
+            } catch {
+                return []
+            }
+        }
+
+        let pending = Set(await UNUserNotificationCenter.current()
+            .pendingNotificationRequests()
+            .map(\.identifier))
+        return Set(enabled.compactMap { schedule in
+            let required = Set(schedule.weekdays.map {
+                reminderIdentifier(scheduleID: schedule.id, weekday: $0)
+            })
+            return required.isSubset(of: pending) ? schedule.id : nil
+        })
     }
 
     /// Requests only the authorization relevant to the current OS and schedules
@@ -396,6 +454,64 @@ enum MorningAlarmScheduler {
         return await scheduleReminderFallback(wakeGoalMinutes: normalizedMinutes)
     }
 
+    /// Persists and reconciles the complete user-edited schedule set. This is the
+    /// only entry point used by the multi-alarm settings UI, so editing one alarm
+    /// cannot accidentally stamp its time onto every other enabled alarm through
+    /// the legacy single-time API above.
+    static func apply(
+        schedules: [MorningAlarmSchedule],
+        useReminderFallback: Bool = false
+    ) async -> MorningAlarmState {
+        guard schedules.count <= maximumScheduleCount else {
+            return .failed(useReminderFallback ? .reminder : preferredKind)
+        }
+        let normalized = schedules.map { schedule in
+            MorningAlarmSchedule(
+                id: schedule.id,
+                minutesAfterMidnight: normalizeWakeGoalMinutes(schedule.minutesAfterMidnight),
+                weekdays: Set(schedule.weekdays.filter { (1...7).contains($0) }),
+                isEnabled: schedule.isEnabled && !schedule.weekdays.isEmpty
+            )
+        }
+        LocalDefaults.morningAlarmSchedules = normalized
+        if let earliest = MorningAlarmSchedule.derivedWakeGoalMinutes(from: normalized) {
+            LocalDefaults.wakeGoalMinutes = earliest
+        }
+
+        let state: MorningAlarmState
+        if #available(iOS 26.0, *), !useReminderFallback {
+            LocalDefaults.morningAlarmBackend = "automatic"
+            state = await scheduleAlarmKit(schedules: normalized)
+            if state.isScheduled || !normalized.contains(where: \.isEnabled) {
+                await cancelAllReminderSchedules()
+            }
+        } else {
+            if #available(iOS 26.0, *), useReminderFallback {
+                await cancelCaptureRequiredSession(reason: .disabled)
+                LocalDefaults.morningAlarmBackend = "reminder"
+                // Moving to the explicit notification fallback must not leave a
+                // system alarm firing at the same time.
+                _ = await scheduleAlarmKit(schedules: normalized.map { schedule in
+                    var disabled = schedule
+                    disabled.isEnabled = false
+                    return disabled
+                })
+            }
+            state = await scheduleReminders(schedules: normalized)
+        }
+
+        if normalized.contains(where: \.isEnabled) {
+            await refreshMorningRitualFollowUps(
+                minutes: LocalDefaults.wakeGoalMinutes,
+                schedules: normalized
+            )
+        } else {
+            await MorningFollowUpScheduler.cancelAll()
+            await MorningRitualActivity.end(status: .ended)
+        }
+        return state
+    }
+
     static func disable() async {
         disableSynchronously()
         await disableImmediately()
@@ -418,7 +534,11 @@ enum MorningAlarmScheduler {
     /// State that callers depend on before any asynchronous cleanup begins.
     private static func disableSynchronously() {
         if #available(iOS 26.0, *) {
-            try? AlarmManager.shared.cancel(id: alarmIdentifier)
+            let retryIDs = LocalDefaults.morningWakeSession?.pendingRetryAlarmIDs ?? []
+            let ids = Set(LocalDefaults.morningAlarmSchedules.map(\.id))
+                .union([alarmIdentifier])
+                .union(retryIDs)
+            for id in ids { try? AlarmManager.shared.cancel(id: id) }
         }
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
         LocalDefaults.morningAlarmEnabled = false
@@ -428,9 +548,8 @@ enum MorningAlarmScheduler {
     /// Awaits dynamic re-alarm cleanup so account deletion cannot outlive its
     /// pending notification cancellation.
     private static func disableImmediately() async {
-        await cancelAllRealarmNotifications()
-        LocalDefaults.morningRealarmAttemptCount = 0
-        LocalDefaults.morningRealarmWakeDayID = nil
+        await cancelAllReminderSchedules()
+        await cancelCaptureRequiredSession(reason: .disabled)
     }
 
     private static func finishDisabling() async {
@@ -518,6 +637,14 @@ enum MorningAlarmScheduler {
     static func resyncIfNeeded() async {
         await migrateScheduleModelIfNeeded()
         guard LocalDefaults.morningAlarmEnabled else { return }
+        let schedules = LocalDefaults.morningAlarmSchedules
+        if !schedules.isEmpty {
+            _ = await apply(
+                schedules: schedules,
+                useReminderFallback: LocalDefaults.morningAlarmBackend == "reminder"
+            )
+            return
+        }
         let minutes = LocalDefaults.wakeGoalMinutes
         if LocalDefaults.morningAlarmBackend == "reminder" {
             let normalizedMinutes = normalizeWakeGoalMinutes(minutes)
@@ -532,6 +659,16 @@ enum MorningAlarmScheduler {
 
     private static func normalizeWakeGoalMinutes(_ minutes: Int) -> Int {
         min(max(minutes, 0), 23 * 60 + 59)
+    }
+
+    private static func cancelAllReminderSchedules() async {
+        let center = UNUserNotificationCenter.current()
+        let identifiers = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter {
+                $0 == notificationIdentifier || $0.hasPrefix(multiScheduleIdentifierPrefix)
+            }
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     /// Reconciles the pre-AlarmKit fallback as one weekly local notification per
@@ -692,6 +829,145 @@ enum MorningAlarmScheduler {
 #if canImport(AlarmKit)
 @available(iOS 26.0, *)
 private extension MorningAlarmScheduler {
+    /// Keeps a rolling horizon of three true one-shot alarms. Each retry action
+    /// consumes its own ID and extends that horizon by one slot, continuing until
+    /// capture or the four-hour/local-day deadline rather than stopping after
+    /// three dismissals.
+    @MainActor
+    static func beginCaptureRequiredSession(
+        sourceAlarmID: UUID,
+        alarmAlreadyStopped: Bool,
+        wakeDay: LocalDate,
+        now: Date,
+        timeZone: TimeZone
+    ) async {
+        let hasCaptured = LocalDefaults.lastCapturedLocalDateID == wakeDay.docID
+        let decision = morningWakeSessionDecision(
+            existing: LocalDefaults.morningWakeSession,
+            wakeDay: wakeDay,
+            now: now,
+            timeZone: timeZone,
+            hasCaptured: hasCaptured
+        )
+        let session: MorningWakeSession
+        switch decision {
+        case .clear:
+            await cancelCaptureRequiredSession(reason: hasCaptured ? .captured : .deadline)
+            return
+        case .resume(let existing):
+            session = existing
+            if !alarmAlreadyStopped {
+                await cancelAllRealarmNotifications()
+                return
+            }
+        case .start(let deadline):
+            await cancelCaptureRequiredSession(reason: .deadline)
+            session = MorningWakeSession(
+                wakeDayID: wakeDay.docID,
+                sourceAlarmID: sourceAlarmID,
+                startedAt: now,
+                deadline: deadline,
+                phase: .awaitingCapture,
+                pendingRetries: []
+            )
+            MorningAlarmAnalytics.recordWakeSessionStarted()
+        }
+
+        await cancelAllRealarmNotifications()
+        let consumedAlarmID = alarmAlreadyStopped ? sourceAlarmID : nil
+        let wasRetry = consumedAlarmID.map(session.pendingRetryAlarmIDs.contains) == true
+        if wasRetry { try? AlarmManager.shared.cancel(id: sourceAlarmID) }
+        let retryPlan = morningWakeRetryDates(
+            pending: session.pendingRetries,
+            consumedAlarmID: consumedAlarmID,
+            now: now,
+            deadline: session.deadline
+        )
+        let additions = retryPlan.additions.map { MorningWakeRetry(id: UUID(), fireDate: $0) }
+        var updated = session
+        updated.pendingRetries = retryPlan.retained + additions
+
+        // Persist ownership before the first scheduling await. A capture or
+        // account deletion racing this work can cancel every planned ID.
+        LocalDefaults.morningWakeSession = updated
+        guard LocalDefaults.morningAlarmEnabled else {
+            await cancelCaptureRequiredSession(reason: .disabled)
+            return
+        }
+
+        var successfullyAdded: [MorningWakeRetry] = []
+        for retry in additions {
+            do {
+                _ = try await AlarmManager.shared.schedule(
+                    id: retry.id,
+                    configuration: captureRetryConfiguration(
+                        alarmID: retry.id,
+                        fireDate: retry.fireDate
+                    )
+                )
+                successfullyAdded.append(retry)
+            } catch {
+                // Existing horizon entries stay armed if replenishment fails.
+            }
+        }
+
+        guard LocalDefaults.morningAlarmEnabled,
+              LocalDefaults.morningWakeSession?.wakeDayID == wakeDay.docID,
+              LocalDefaults.lastCapturedLocalDateID != wakeDay.docID
+        else {
+            for retry in successfullyAdded { try? AlarmManager.shared.cancel(id: retry.id) }
+            await cancelCaptureRequiredSession(
+                reason: LocalDefaults.lastCapturedLocalDateID == wakeDay.docID ? .captured : .disabled
+            )
+            return
+        }
+        updated.pendingRetries = retryPlan.retained + successfullyAdded
+        LocalDefaults.morningWakeSession = updated
+        if !successfullyAdded.isEmpty, !retryPlan.retained.isEmpty {
+            MorningAlarmAnalytics.recordRetryHorizonRefilled()
+        }
+        LocalDefaults.morningRealarmAttemptCount = updated.pendingRetries.count
+        LocalDefaults.morningRealarmWakeDayID = wakeDay.docID
+    }
+
+    static func captureRetryConfiguration(
+        alarmID: UUID,
+        fireDate: Date
+    ) -> AlarmManager.AlarmConfiguration<SkyGridAlarmMetadata> {
+        let cameraButton = AlarmButton(
+            text: "Capture the sky",
+            textColor: .white,
+            systemImageName: "camera"
+        )
+        let alert: AlarmPresentation.Alert
+        if #available(iOS 26.1, *) {
+            alert = AlarmPresentation.Alert(
+                title: "Your sky is still waiting",
+                secondaryButton: cameraButton,
+                secondaryButtonBehavior: .custom
+            )
+        } else {
+            alert = AlarmPresentation.Alert(
+                title: "Your sky is still waiting",
+                stopButton: AlarmButton(text: "Open camera", textColor: .white, systemImageName: "camera"),
+                secondaryButton: cameraButton,
+                secondaryButtonBehavior: .custom
+            )
+        }
+        let attributes = AlarmAttributes(
+            presentation: AlarmPresentation(alert: alert),
+            metadata: SkyGridAlarmMetadata(),
+            tintColor: Color(red: 0.48, green: 0.65, blue: 0.78)
+        )
+        return .alarm(
+            schedule: .fixed(fireDate),
+            attributes: attributes,
+            stopIntent: MorningAlarmStoppedIntent(alarmID: alarmID),
+            secondaryIntent: OpenMorningCameraIntent(alarmID: alarmID),
+            sound: .default
+        )
+    }
+
     static func scheduleAlarmKit(schedules: [MorningAlarmSchedule]) async -> MorningAlarmState {
         let manager = AlarmManager.shared
         let currentAlarms: [MorningAlarmKitScheduledAlarm]
@@ -699,7 +975,10 @@ private extension MorningAlarmScheduler {
             // AlarmKit exposes only this app's alarms. At this incremental stage,
             // that is the multi-schedule space (including the legacy fixed UUID
             // reused by migration); future re-alarm IDs will be excluded here.
-            currentAlarms = try manager.alarms.map(alarmKitScheduledAlarm(from:))
+            let retryIDs = Set(LocalDefaults.morningWakeSession?.pendingRetryAlarmIDs ?? [])
+            currentAlarms = try manager.alarms
+                .filter { !retryIDs.contains($0.id) }
+                .map(alarmKitScheduledAlarm(from:))
         } catch {
             return .failed(.systemAlarm)
         }
@@ -804,8 +1083,8 @@ private extension MorningAlarmScheduler {
         return .alarm(
             schedule: schedule,
             attributes: attributes,
-            stopIntent: MorningAlarmStoppedIntent(),
-            secondaryIntent: OpenMorningCameraIntent(),
+            stopIntent: MorningAlarmStoppedIntent(alarmID: entry.id),
+            secondaryIntent: OpenMorningCameraIntent(alarmID: entry.id),
             sound: .default
         )
     }
@@ -902,7 +1181,7 @@ private extension MorningAlarmScheduler {
         let configuration = AlarmManager.AlarmConfiguration.alarm(
             schedule: schedule,
             attributes: attributes,
-            stopIntent: MorningAlarmStoppedIntent(),
+            stopIntent: MorningAlarmStoppedIntent(alarmID: alarmIdentifier),
             secondaryIntent: OpenMorningCameraIntent(),
             sound: .default
         )
@@ -927,7 +1206,7 @@ private extension MorningAlarmScheduler {
         }
         return AlarmPresentation.Alert(
             title: "Capture the sky",
-            stopButton: AlarmButton(text: "Stop", textColor: .white, systemImageName: "stop.fill"),
+            stopButton: AlarmButton(text: "Open camera", textColor: .white, systemImageName: "camera"),
             secondaryButton: cameraButton,
             secondaryButtonBehavior: .custom
         )
@@ -952,12 +1231,30 @@ struct OpenMorningCameraIntent: LiveActivityIntent {
     // bring the app forward when this intent runs."
     static var supportedModes: IntentModes = .foreground(.immediate)
 
+    @Parameter(title: "Alarm ID")
+    var alarmID: String
+
+    init(alarmID: UUID) {
+        self.alarmID = alarmID.uuidString
+    }
+
+    init() {
+        self.alarmID = MorningAlarmScheduler.alarmIdentifier.uuidString
+    }
+
     func perform() async throws -> some IntentResult {
-        // This ends AlarmKit's own alerting UI (sound and Island presentation).
-        // It intentionally does not cancel the repeating schedule; that remains
-        // armed for tomorrow. The separate Live Activity is reconciled/ended once
-        // the capture is confirmed.
-        try? AlarmManager.shared.stop(id: MorningAlarmScheduler.alarmIdentifier)
+        // Keep the current system alert active while the camera opens. A durable
+        // capture commit stops it; tomorrow's repeating schedule remains armed.
+        let id = UUID(uuidString: alarmID) ?? MorningAlarmScheduler.alarmIdentifier
+        let now = Date()
+        let today = LocalDate(date: now, timeZone: .current)
+        await MorningAlarmScheduler.beginCaptureRequiredSession(
+            sourceAlarmID: id,
+            alarmAlreadyStopped: false,
+            wakeDay: today,
+            now: now,
+            timeZone: .current
+        )
         LocalDefaults.openCameraAfterMorningAlarm = true
         return .result()
     }
@@ -977,26 +1274,38 @@ struct OpenMorningCameraIntent: LiveActivityIntent {
 struct MorningAlarmStoppedIntent: LiveActivityIntent {
     static var title: LocalizedStringResource = "Sky Grid morning alarm stopped"
     static var isDiscoverable: Bool { false }
-    // No `supportedModes` override: the default is background execution. This
-    // must NOT bring the app forward — the person chose not to open it.
+    static var supportedModes: IntentModes = .foreground(.immediate)
+
+    @Parameter(title: "Alarm ID")
+    var alarmID: String
+
+    init(alarmID: UUID) {
+        self.alarmID = alarmID.uuidString
+    }
+
+    init() {
+        self.alarmID = MorningAlarmScheduler.alarmIdentifier.uuidString
+    }
 
     func perform() async throws -> some IntentResult {
         let now = Date()
         let today = LocalDate(date: now, timeZone: .current)
         let hasPostToday = LocalDefaults.lastCapturedLocalDateID == today.docID
+        let id = UUID(uuidString: alarmID) ?? MorningAlarmScheduler.alarmIdentifier
+        await MorningAlarmScheduler.beginCaptureRequiredSession(
+            sourceAlarmID: id,
+            alarmAlreadyStopped: true,
+            wakeDay: today,
+            now: now,
+            timeZone: .current
+        )
+        LocalDefaults.openCameraAfterMorningAlarm = !hasPostToday
         await MorningRitualCoordinator.reconcile(
             today: today,
             hasPostToday: hasPostToday,
             now: now,
             timeZone: .current
         )
-        if !hasPostToday {
-            await MorningAlarmScheduler.scheduleNextRealarmIfNeeded(
-                originalWakeDay: today,
-                now: now,
-                timeZone: .current
-            )
-        }
         return .result()
     }
 }

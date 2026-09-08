@@ -23,3 +23,14 @@ struct MorningAlarmSchedule: Codable, Sendable, Identifiable, Equatable {
             .min()
     }
 }
+
+extension Array where Element == MorningAlarmSchedule {
+    /// The first enabled wake time that applies to one calendar weekday. The
+    /// follow-up nudge is intentionally once per morning even when several alarms
+    /// are used as backups.
+    func firstWakeMinutes(on weekday: Int) -> Int? {
+        filter { $0.isEnabled && $0.weekdays.contains(weekday) }
+            .map(\.minutesAfterMidnight)
+            .min()
+    }
+}

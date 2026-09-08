@@ -51,6 +51,7 @@ private enum UIAuditScenario: String {
     case buddiesRequestFlow = "buddies-request-flow"
     case paywall
     case paywallPlan = "paywall-plan"
+    case alarm
     case settings
     case settingsBlockedUnavailable = "settings-blocked-unavailable"
     case cameraReview = "camera-review"
@@ -90,6 +91,24 @@ private struct UIAuditRoot: View {
 
     init(scenario: UIAuditScenario) {
         self.scenario = scenario
+        if scenario == .alarm {
+            LocalDefaults.morningAlarmScheduleModelVersion = 1
+            LocalDefaults.morningAlarmEnabled = true
+            LocalDefaults.morningAlarmSchedules = [
+                MorningAlarmSchedule(
+                    id: MorningAlarmScheduler.alarmIdentifier,
+                    minutesAfterMidnight: 6 * 60 + 30,
+                    weekdays: Set(2...6),
+                    isEnabled: true
+                ),
+                MorningAlarmSchedule(
+                    id: UUID(uuidString: "2FA82770-2D6C-4D1C-8B3D-9FA87EBB7B64")!,
+                    minutesAfterMidnight: 8 * 60,
+                    weekdays: [1, 7],
+                    isEnabled: true
+                ),
+            ]
+        }
         _auditEntitlements = State(initialValue: EntitlementStore(purchases: UIAuditPurchases()))
         auditPostRepository = UIAuditPostRepository(
             posts: UIAuditData.posts,
@@ -145,6 +164,8 @@ private struct UIAuditRoot: View {
                 onEntitlementGranted: {},
                 onDismissed: { _ in }
             )
+        } else if scenario == .alarm {
+            NavigationStack { MorningAlarmSettingsView() }
         } else if scenario == .settings || scenario == .settingsBlockedUnavailable {
             NavigationStack {
                 SettingsView(

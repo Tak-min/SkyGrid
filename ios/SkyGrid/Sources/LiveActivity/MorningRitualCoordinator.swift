@@ -16,9 +16,7 @@ enum MorningRitualCoordinator {
         LocalDefaults.openCameraAfterMorningAlarm = false
         await MorningRitualActivity.end(status: .captured)
         MorningFollowUpScheduler.cancel(for: localDate)
-        await MorningAlarmScheduler.cancelAllRealarmNotifications()
-        LocalDefaults.morningRealarmAttemptCount = 0
-        LocalDefaults.morningRealarmWakeDayID = nil
+        await MorningAlarmScheduler.cancelCaptureRequiredSession(reason: .captured)
     }
 
     /// Call from every relevant foreground lifecycle hook (appear, scenePhase
@@ -33,6 +31,11 @@ enum MorningRitualCoordinator {
             hasPostToday: hasPostToday,
             lastCapturedLocalDateID: LocalDefaults.lastCapturedLocalDateID,
             today: today
+        )
+        await MorningAlarmScheduler.reconcileCaptureRequiredSession(
+            today: today,
+            now: now,
+            hasCaptured: effectiveHasPostToday
         )
         let decision = MorningRitualPolicy.decide(
             now: now,

@@ -56,4 +56,27 @@ final class MorningAlarmScheduleTests: XCTestCase {
         }))
         XCTAssertNil(MorningAlarmSchedule.derivedWakeGoalMinutes(from: []))
     }
+
+    func testApplyRejectsSixSchedulesWithoutOverwritingSavedSet() async {
+        let original = LocalDefaults.morningAlarmSchedules
+        defer { LocalDefaults.morningAlarmSchedules = original }
+        let saved = MorningAlarmSchedule.migrate(morningAlarmEnabled: true, wakeGoalMinutes: 360)
+        LocalDefaults.morningAlarmSchedules = saved
+        let tooMany = (0...MorningAlarmScheduler.maximumScheduleCount).map { offset in
+            MorningAlarmSchedule(
+                id: UUID(),
+                minutesAfterMidnight: 360 + offset,
+                weekdays: Set(1...7),
+                isEnabled: true
+            )
+        }
+
+        let state = await MorningAlarmScheduler.apply(
+            schedules: tooMany,
+            useReminderFallback: true
+        )
+
+        XCTAssertEqual(state, .failed(.reminder))
+        XCTAssertEqual(LocalDefaults.morningAlarmSchedules, saved)
+    }
 }

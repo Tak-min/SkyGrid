@@ -3,8 +3,7 @@ import SwiftUI
 struct PersonalizedPlanView: View {
     let profile: PersonalizationProfile
     let wakeGoalMinutes: Int
-    let onExplorePro: () -> Void
-    let onContinueFree: () -> Void
+    let onStartFirstSky: () -> Void
     let onEditAnswers: () -> Void
 
     private var plan: PersonalizedMorningPlan {
@@ -56,19 +55,11 @@ struct PersonalizedPlanView: View {
                 .padding(SGSpacing.lg)
                 .quietCard()
 
-                // The personalised prompt describes the same paid archive for
-                // everyone; only its relevance copy changes with local answers.
-                Button("See my complete archive", action: onExplorePro)
+                Button("Start my first sky", action: onStartFirstSky)
                     .frame(maxWidth: .infinity)
                     .buttonStyle(SkyPrimaryButtonStyle())
 
-                Button("Start with Free", action: onContinueFree)
-                    .font(SGFont.body(15))
-                    .foregroundStyle(SGT.ink2)
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: 44)
-
-                Text("Free includes daily capture, your weekly rhythm, 30 days of archive, and standard sharing.")
+                Text("Take one real photo first. Your archive options come after your first sky lands in the grid.")
                     .font(SGFont.caption(12))
                     .foregroundStyle(SGT.ink3)
                     .frame(maxWidth: .infinity, alignment: .center)

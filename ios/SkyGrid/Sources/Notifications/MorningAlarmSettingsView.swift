@@ -5,224 +5,300 @@ import UIKit
 @MainActor
 @Observable
 final class MorningAlarmSettingsViewModel {
-    var minutes = LocalDefaults.wakeGoalMinutes
+    private(set) var schedules: [MorningAlarmSchedule] = []
     private(set) var state = MorningAlarmState.off(MorningAlarmScheduler.preferredKind)
     private(set) var liveActivitiesEnabled = MorningRitualActivity.areActivitiesEnabled
     private(set) var isWorking = false
+    private(set) var failedScheduleIDs: Set<UUID> = []
+
+    var nextSchedule: MorningAlarmSchedule {
+        MorningAlarmSchedule(
+            id: UUID(),
+            minutesAfterMidnight: LocalDefaults.wakeGoalMinutes,
+            weekdays: Set(1...7),
+            isEnabled: true
+        )
+    }
 
     func refresh() async {
         MorningAlarmScheduler.migrateScheduleModelIfNeeded()
+        schedules = LocalDefaults.morningAlarmSchedules
         state = await MorningAlarmScheduler.currentState()
         liveActivitiesEnabled = MorningRitualActivity.areActivitiesEnabled
     }
 
-    func enableSystemAlarm() async {
-        isWorking = true
-        LocalDefaults.wakeGoalMinutes = minutes
-        state = await MorningAlarmScheduler.enable(wakeGoalMinutes: minutes)
-        isWorking = false
+    func save(_ schedule: MorningAlarmSchedule) async {
+        var updated = schedules
+        if let index = updated.firstIndex(where: { $0.id == schedule.id }) {
+            updated[index] = schedule
+        } else {
+            updated.append(schedule)
+        }
+        await apply(updated)
     }
 
-    func enableReminderFallback() async {
-        isWorking = true
-        LocalDefaults.wakeGoalMinutes = minutes
-        state = await MorningAlarmScheduler.enableReminderFallback(wakeGoalMinutes: minutes)
-        isWorking = false
+    func setEnabled(_ isEnabled: Bool, for schedule: MorningAlarmSchedule) async {
+        var updated = schedule
+        updated.isEnabled = isEnabled
+        await save(updated)
     }
 
-    func disable() async {
+    func delete(_ schedule: MorningAlarmSchedule) async {
+        await apply(schedules.filter { $0.id != schedule.id })
+    }
+
+    func useReminderFallback() async {
+        await apply(schedules, useReminderFallback: true)
+    }
+
+    private func apply(
+        _ updated: [MorningAlarmSchedule],
+        useReminderFallback: Bool = LocalDefaults.morningAlarmBackend == "reminder"
+    ) async {
+        guard !isWorking else { return }
         isWorking = true
-        await MorningAlarmScheduler.disable()
-        state = await MorningAlarmScheduler.currentState()
+        schedules = updated
+        state = await MorningAlarmScheduler.apply(
+            schedules: updated,
+            useReminderFallback: useReminderFallback
+        )
+        schedules = LocalDefaults.morningAlarmSchedules
+        MorningAlarmAnalytics.recordScheduleChanged(
+            schedules: schedules,
+            kind: state.kind,
+            succeeded: state.isScheduled || !schedules.contains(where: \.isEnabled)
+        )
+        if case .failed = state {
+            let scheduledIDs = await MorningAlarmScheduler.scheduledScheduleIDs(
+                in: schedules,
+                useReminderFallback: useReminderFallback
+            )
+            failedScheduleIDs = Set(schedules.filter(\.isEnabled).map(\.id))
+                .subtracting(scheduledIDs)
+        } else {
+            failedScheduleIDs = []
+        }
+        liveActivitiesEnabled = MorningRitualActivity.areActivitiesEnabled
         isWorking = false
     }
 }
 
-/// A single-purpose settings screen for the wake flow. This is intentionally not a
-/// generic notification preference: it tells the person exactly whether the device
-/// has a real AlarmKit alarm or a best-effort notification reminder.
+/// Edits independent weekly alarms. Each row owns its time and weekdays; saving
+/// one row reconciles the complete set so removed days and deleted alarms are
+/// cancelled on both AlarmKit and notification-fallback devices.
 struct MorningAlarmSettingsView: View {
     @State private var viewModel = MorningAlarmSettingsViewModel()
+    @State private var editedSchedule: MorningAlarmSchedule?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: SGSpacing.xxl) {
-                alarmReadout
-                timeControl
+                header
+                scheduleList
                 stateSection
-                actionSection
             }
             .padding(.horizontal, SGSpacing.xl)
             .padding(.vertical, SGSpacing.lg)
         }
         .background(SGT.background)
-        .navigationTitle("Morning Alarm")
+        .navigationTitle("Morning Alarms")
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.refresh() }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await viewModel.refresh() }
         }
+        .sheet(item: $editedSchedule) { schedule in
+            MorningAlarmEditor(schedule: schedule) { updated in
+                editedSchedule = nil
+                Task { await viewModel.save(updated) }
+            }
+            .presentationDetents([.large])
+        }
     }
 
-    private var alarmReadout: some View {
+    private var header: some View {
         VStack(alignment: .leading, spacing: SGSpacing.sm) {
             Text(viewModel.state.kind.title.uppercased())
                 .font(SGFont.caption(11))
                 .tracking(1.4)
                 .foregroundStyle(SGT.ink3)
-            Text(timeString(viewModel.minutes))
-                .font(SGFont.bigTime(78))
+            Text(headerTitle)
+                .font(.system(size: 42, weight: .black, design: .rounded))
                 .foregroundStyle(SGT.ink)
                 .contentTransition(.numericText())
-            Text(viewModel.state.kind.detail)
-                .font(SGFont.caption())
+            Text("Use a different rhythm for weekdays, weekends, or any morning that needs its own start.")
+                .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, SGSpacing.lg)
     }
 
-    private var timeControl: some View {
+    private var headerTitle: String {
+        let enabled = viewModel.schedules.filter(\.isEnabled)
+        guard !enabled.isEmpty else { return "No alarms" }
+        let noun = enabled.count == 1 ? "alarm" : "alarms"
+        return viewModel.state.isScheduled
+            ? "\(enabled.count) \(noun) ready"
+            : "\(enabled.count) \(noun)"
+    }
+
+    private var scheduleList: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
-            Text("Time")
-                .font(SGFont.title(23))
-                .foregroundStyle(SGT.ink)
-            DatePicker(
-                "Morning time",
-                selection: Binding(
-                    get: { date(for: viewModel.minutes) },
-                    set: { viewModel.minutes = minutes(for: $0) }
-                ),
-                displayedComponents: .hourAndMinute
-            )
-            .datePickerStyle(.wheel)
-            .labelsHidden()
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, SGSpacing.sm)
-            .quietCard()
+            HStack {
+                Text("YOUR SCHEDULE")
+                    .font(SGFont.caption(11))
+                    .tracking(1.3)
+                    .foregroundStyle(SGT.ink3)
+                Spacer()
+                if viewModel.isWorking { ProgressView() }
+            }
+
+            ForEach(viewModel.schedules) { schedule in
+                alarmRow(schedule)
+            }
+
+            Button {
+                editedSchedule = viewModel.nextSchedule
+            } label: {
+                Label("Add another alarm", systemImage: "plus")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SkyPrimaryButtonStyle())
+            .disabled(viewModel.isWorking)
+            .disabled(viewModel.schedules.count >= MorningAlarmScheduler.maximumScheduleCount)
+            .accessibilityIdentifier("alarm.add")
+
+            if viewModel.schedules.count >= MorningAlarmScheduler.maximumScheduleCount {
+                Text("Five alarms is the safe maximum while keeping room for weekly reminders.")
+                    .font(SGFont.caption(12))
+                    .foregroundStyle(SGT.ink3)
+            }
         }
+    }
+
+    private func alarmRow(_ schedule: MorningAlarmSchedule) -> some View {
+        HStack(spacing: SGSpacing.md) {
+            Button { editedSchedule = schedule } label: {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(timeString(schedule.minutesAfterMidnight))
+                        .font(SGFont.numeric(30, weight: .medium))
+                        .foregroundStyle(schedule.isEnabled ? SGT.ink : SGT.ink3)
+                    Text(weekdaySummary(schedule.weekdays))
+                        .font(SGFont.caption(13))
+                        .foregroundStyle(SGT.ink2)
+                    if viewModel.failedScheduleIDs.contains(schedule.id) {
+                        Label("Couldn't update this alarm", systemImage: "exclamationmark.circle.fill")
+                            .font(SGFont.caption(12))
+                            .foregroundStyle(.red)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Toggle(
+                "Enable \(timeString(schedule.minutesAfterMidnight))",
+                isOn: Binding(
+                    get: { schedule.isEnabled },
+                    set: { value in Task { await viewModel.setEnabled(value, for: schedule) } }
+                )
+            )
+            .labelsHidden()
+            .disabled(viewModel.isWorking)
+
+            Button(role: .destructive) {
+                Task { await viewModel.delete(schedule) }
+            } label: {
+                Image(systemName: "trash")
+                    .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(SGT.ink3)
+            .disabled(viewModel.isWorking)
+            .accessibilityLabel("Delete \(timeString(schedule.minutesAfterMidnight)) alarm")
+        }
+        .padding(SGSpacing.lg)
+        .quietCard()
     }
 
     @ViewBuilder
     private var stateSection: some View {
-        switch viewModel.state {
-        case .scheduled:
-            VStack(alignment: .leading, spacing: SGSpacing.sm) {
-                Label("Set for every day at this time", systemImage: "checkmark.circle.fill")
+        VStack(alignment: .leading, spacing: SGSpacing.sm) {
+            switch viewModel.state {
+            case .scheduled(let kind):
+                Label("All enabled alarms are scheduled", systemImage: "checkmark.circle.fill")
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
-                if viewModel.state.kind == .systemAlarm {
-                    if viewModel.liveActivitiesEnabled {
-                        Text("After you stop the alarm, a quiet Sky Grid card remains on the Lock Screen and Dynamic Island. Tap it to open the camera.")
-                            .font(SGFont.caption())
-                            .foregroundStyle(SGT.ink3)
-                    } else {
-                        Label("Live Activities are off", systemImage: "rectangle.badge.xmark")
-                            .font(SGFont.body(14))
-                            .foregroundStyle(SGT.ink2)
-                        Text("Your alarm still works, but the Lock Screen and Dynamic Island camera shortcut cannot appear.")
-                            .font(SGFont.caption())
-                            .foregroundStyle(SGT.ink3)
-                        Button("Open Settings", action: openSystemSettings)
-                            .font(SGFont.body(14))
-                            .foregroundStyle(SGT.ink)
-                            .frame(minHeight: 44)
-                    }
-
-                    VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                        Text("Stop doesn't end your morning.")
-                            .font(SGFont.body(14))
-                            .fontWeight(.bold)
-                            .foregroundStyle(SGT.ink2)
-                        Text("If you don't capture the sky, Sky Grid brings the alarm back every 5 minutes, up to 3 times. iPhone always silences the alarm the moment you tap Stop — Sky Grid can only ask again, not keep it sounding.")
-                            .font(SGFont.caption())
-                            .foregroundStyle(SGT.ink3)
-                    }
+                Text(kind.detail)
+                    .font(SGFont.caption())
+                    .foregroundStyle(SGT.ink3)
+                if kind == .systemAlarm {
+                    Label("Photo Mission", systemImage: "camera.fill")
+                        .font(SGFont.body(14))
+                        .foregroundStyle(SGT.ink2)
+                    Text("Stopping a ring opens the camera. Until a photo is saved, Sky Grid schedules another system alarm every 5 minutes for up to four hours.")
+                        .font(SGFont.caption())
+                        .foregroundStyle(SGT.ink3)
                 }
-            }
-        case .needsAuthorization:
-            Label("Permission is needed to turn this on", systemImage: "bell.badge")
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
-        case .denied(let kind):
-            VStack(alignment: .leading, spacing: SGSpacing.sm) {
+                if kind == .systemAlarm && !viewModel.liveActivitiesEnabled {
+                    Label("Live Activities are off", systemImage: "rectangle.badge.xmark")
+                        .font(SGFont.body(14))
+                        .foregroundStyle(SGT.ink2)
+                    Button("Open Settings", action: openSystemSettings)
+                        .font(SGFont.body(14))
+                        .frame(minHeight: 44)
+                }
+            case .needsAuthorization:
+                Text("Add or enable an alarm to request permission at the moment it is needed.")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+            case .denied(let kind):
                 Label("Permission is not allowed", systemImage: "exclamationmark.circle")
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
                 Text(kind == .systemAlarm
-                     ? "Allow Sky Grid alarms in Settings to use a System Alarm."
-                     : "Allow notifications to receive a morning reminder on this device.")
+                     ? "Allow Sky Grid alarms in Settings, or use a regular reminder."
+                     : "Allow notifications in Settings to receive morning reminders.")
                     .font(SGFont.caption())
                     .foregroundStyle(SGT.ink3)
-            }
-        case .off:
-            Text("Not set yet")
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
-        case .failed:
-            Text("The alarm could not be updated. Try again.")
-                .font(SGFont.body(15))
-                .foregroundStyle(SGT.ink2)
-        }
-    }
-
-    @ViewBuilder
-    private var actionSection: some View {
-        if viewModel.state.isScheduled {
-            Button(role: .destructive) {
-                Task { await viewModel.disable() }
-            } label: {
-                Text("Turn off alarm")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(SkySecondaryButtonStyle())
-            .disabled(viewModel.isWorking)
-
-            Button {
-                Task { await viewModel.enableSystemAlarm() }
-            } label: {
-                Text("Update time")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(SkyPrimaryButtonStyle())
-            .disabled(viewModel.isWorking)
-        } else {
-            Button {
-                Task { await viewModel.enableSystemAlarm() }
-            } label: {
-                if viewModel.isWorking {
-                    ProgressView().tint(SGT.background)
-                } else {
-                    Text(viewModel.state.kind == .systemAlarm ? "Turn on System Alarm" : "Turn on Morning Reminder")
+                Button("Open Settings", action: openSystemSettings)
+                    .buttonStyle(SkySecondaryButtonStyle())
+                if kind == .systemAlarm, !viewModel.schedules.isEmpty {
+                    Button("Use regular reminders") {
+                        Task { await viewModel.useReminderFallback() }
+                    }
+                    .buttonStyle(SkySecondaryButtonStyle())
+                    .disabled(viewModel.isWorking)
                 }
-            }
-            .buttonStyle(SkyPrimaryButtonStyle())
-            .disabled(viewModel.isWorking)
-
-            if case .denied(.systemAlarm) = viewModel.state {
-                Button("Open Settings") {
-                    openSystemSettings()
-                }
-                .buttonStyle(SkySecondaryButtonStyle())
-
-                Button("Use a regular reminder") {
-                    Task { await viewModel.enableReminderFallback() }
-                }
-                .buttonStyle(SkySecondaryButtonStyle())
-                .disabled(viewModel.isWorking)
+            case .off:
+                Text(viewModel.schedules.isEmpty
+                     ? "Add your first alarm when you're ready."
+                     : viewModel.schedules.contains(where: \.isEnabled)
+                        ? "These times are saved but aren't scheduled on this device. Edit one or toggle it off and on to try again."
+                        : "Turn on at least one alarm.")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
+            case .failed:
+                Text("One or more alarms could not be updated. Your saved schedule is still here; try the change again.")
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink2)
             }
         }
     }
 
-    private func date(for minutes: Int) -> Date {
-        Calendar.current.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: Date()) ?? Date()
-    }
-
-    private func minutes(for date: Date) -> Int {
-        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
-        return (components.hour ?? 6) * 60 + (components.minute ?? 0)
+    private func weekdaySummary(_ weekdays: Set<Int>) -> String {
+        if weekdays == Set(1...7) { return "Every day" }
+        if weekdays == Set(2...6) { return "Weekdays" }
+        if weekdays == Set([1, 7]) { return "Weekends" }
+        let symbols = Calendar.current.veryShortWeekdaySymbols
+        return weekdays.sorted().compactMap { day in
+            guard symbols.indices.contains(day - 1) else { return nil }
+            return symbols[day - 1]
+        }.joined(separator: " · ")
     }
 
     private func timeString(_ minutes: Int) -> String {
@@ -232,5 +308,92 @@ struct MorningAlarmSettingsView: View {
     private func openSystemSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
+    }
+}
+
+private struct MorningAlarmEditor: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: MorningAlarmSchedule
+    let onSave: (MorningAlarmSchedule) -> Void
+
+    init(schedule: MorningAlarmSchedule, onSave: @escaping (MorningAlarmSchedule) -> Void) {
+        _draft = State(initialValue: schedule)
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: SGSpacing.xxl) {
+                    DatePicker(
+                        "Alarm time",
+                        selection: Binding(
+                            get: { date(for: draft.minutesAfterMidnight) },
+                            set: { draft.minutesAfterMidnight = minutes(for: $0) }
+                        ),
+                        displayedComponents: .hourAndMinute
+                    )
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity)
+
+                    VStack(alignment: .leading, spacing: SGSpacing.md) {
+                        Text("REPEAT")
+                            .font(SGFont.caption(11))
+                            .tracking(1.3)
+                            .foregroundStyle(SGT.ink3)
+                        HStack(spacing: 6) {
+                            ForEach(1...7, id: \.self) { weekday in
+                                weekdayButton(weekday)
+                            }
+                        }
+                    }
+                }
+                .padding(SGSpacing.xl)
+            }
+            .background(SGT.background)
+            .navigationTitle("Alarm")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { onSave(draft) }
+                        .disabled(draft.weekdays.isEmpty)
+                }
+            }
+        }
+    }
+
+    private func weekdayButton(_ weekday: Int) -> some View {
+        let selected = draft.weekdays.contains(weekday)
+        let symbol = Calendar.current.veryShortWeekdaySymbols[weekday - 1]
+        return Button {
+            if selected { draft.weekdays.remove(weekday) } else { draft.weekdays.insert(weekday) }
+        } label: {
+            Text(symbol)
+                .font(SGFont.caption(13))
+                .foregroundStyle(selected ? SGT.background : SGT.ink2)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(selected ? SGT.ink : SGT.fill, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Calendar.current.weekdaySymbols[weekday - 1])
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func date(for minutes: Int) -> Date {
+        Calendar.current.date(
+            bySettingHour: minutes / 60,
+            minute: minutes % 60,
+            second: 0,
+            of: Date()
+        ) ?? Date()
+    }
+
+    private func minutes(for date: Date) -> Int {
+        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (components.hour ?? 6) * 60 + (components.minute ?? 0)
     }
 }
