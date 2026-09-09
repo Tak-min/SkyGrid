@@ -1,0 +1,138 @@
+{
+  "identifier" : "F1A2B3C4-D5E6-47F8-A9B0-C1D2E3F4A5B6",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "DA63493D-199A-424C-B498-B907E3F4648B",
+      "localizations" : [],
+      "name" : "Sky Grid Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "AFD81A3C-DF51-4F2B-907B-FC287DBA0487",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Full access to Sky Grid, billed monthly.",
+              "displayName" : "Sky Grid Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.takmin.skygrid.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Sky Grid Pro Monthly",
+          "subscriptionGroupID" : "DA63493D-199A-424C-B498-B907E3F4648B",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "19.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "49E74133-F0CD-4AB4-81D1-DF6FF1C910D0",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Full access to Sky Grid, billed yearly.",
+              "displayName" : "Sky Grid Pro Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.takmin.skygrid.pro.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Sky Grid Pro Yearly",
+          "subscriptionGroupID" : "DA63493D-199A-424C-B498-B907E3F4648B",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "D498699A-7230-4EC3-B41B-AF1BB0886101",
+          "introductoryOffer" : {
+            "displayPrice" : "0.99",
+            "internalID" : "91C1CA66-2FA7-4CCE-84B0-A0D8710B93F1",
+            "paymentMode" : "payAsYouGo",
+            "subscriptionPeriod" : "P1M",
+            "numberOfPeriods" : 1
+          },
+          "localizations" : [
+            {
+              "description" : "First month discount, then regular monthly price.",
+              "displayName" : "Sky Grid Pro — Second Chance",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.takmin.skygrid.pro.monthly.secondchance",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Sky Grid Pro Monthly (Second Chance)",
+          "subscriptionGroupID" : "DA63493D-199A-424C-B498-B907E3F4648B",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

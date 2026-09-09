@@ -289,7 +289,8 @@ struct RootView: View {
                 PaywallView(
                 purchases: services.purchases,
                 entryPoint: paywallEntryPoint,
-                allowsSecondChance: SecondChancePaywallPolicy.shouldAttempt(
+                initialStep: Self.isSecondChanceScreenshotFixture ? .secondChance : nil,
+                allowsSecondChance: Self.isSecondChanceScreenshotFixture || SecondChancePaywallPolicy.shouldAttempt(
                     entryPoint: paywallEntryPoint,
                     hasPresentedForAccount: LocalDefaults.hasPresentedSecondChancePaywall(
                         for: services.currentUid
@@ -330,6 +331,7 @@ struct RootView: View {
         .task { consumePendingCameraRequestIfNeeded() }
         .task { consumePendingBuddyRevealIfNeeded() }
         .task { openInitialHomeRouteIfNeeded() }
+        .task { presentSecondChanceScreenshotFixtureIfNeeded() }
         .onChange(of: router.buddyRevealRefreshTicks) { _, _ in
             // A buddy-post push that arrived while this app was already foregrounded
             // is not a tap — nobody navigated — but the strip should still catch up.
@@ -855,6 +857,20 @@ struct RootView: View {
         hasHandledInitialHomeRoute = true
         guard ProcessInfo.processInfo.arguments.contains("-SkyGridLaunchGrid") else { return }
         homeDestination = .archive
+    }
+
+    /// Debug-only fixture for capturing an App Store Connect review screenshot of
+    /// the second-chance paywall step without walking the real trigger path
+    /// (finish onboarding, present the standard paywall, close it). Gated behind an
+    /// explicit launch argument mirroring `-SkyGridLaunchGrid`/`-SkyGridSkipOnboarding`
+    /// above; never reachable in a normal launch. See
+    /// `dev-notes/second-chance-paywall-decision-record_2026-09-08.md` §7.
+    static let isSecondChanceScreenshotFixture = ProcessInfo.processInfo.arguments
+        .contains("-SkyGridSecondChanceScreenshotFixture")
+
+    private func presentSecondChanceScreenshotFixtureIfNeeded() {
+        guard Self.isSecondChanceScreenshotFixture, !showPaywall else { return }
+        presentPaywall(from: .onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: LocalDefaults.wakeGoalMinutes))
     }
 
     /// The single entry point every lifecycle hook and modal-dismissal callback calls

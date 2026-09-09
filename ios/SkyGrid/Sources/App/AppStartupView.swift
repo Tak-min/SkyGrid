@@ -24,6 +24,14 @@ struct AppStartupView: View {
                     onAppleAuthorizationFailure: startup.appleAuthorizationFailed,
                     onContinueAsGuest: { Task { await startup.startNewAnonymousSession() } }
                 )
+                // Debug-only: skip the tap on "Start without an account" so the
+                // second-chance paywall screenshot fixture (RootView) can be
+                // reached without any UI automation. Same launch-arg convention as
+                // `-SkyGridSkipOnboarding`/`-SkyGridLaunchGrid`.
+                .task {
+                    guard RootView.isSecondChanceScreenshotFixture else { return }
+                    await startup.startNewAnonymousSession()
+                }
             case .ready(let services):
                 RootView(onAccountDeleted: {
                     Task { await startup.restartAfterAccountDeletion() }
