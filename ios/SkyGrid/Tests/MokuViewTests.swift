@@ -5,7 +5,7 @@ import Testing
 struct MokuViewTests {
     @Test("states stay in the causal reward order")
     func statesStayInCausalOrder() {
-        #expect(MokuState.allCases == [.waiting, .ready, .bracing, .delight, .settled, .error])
+        #expect(MokuState.allCases == [.waiting, .ready, .bracing, .delight, .settled, .error, .pleading])
     }
 
     @Test("only successful post-capture states accept sky colors")
@@ -14,6 +14,7 @@ struct MokuViewTests {
         #expect(!MokuState.ready.mayUseCapturedSkyPalette)
         #expect(!MokuState.bracing.mayUseCapturedSkyPalette)
         #expect(!MokuState.error.mayUseCapturedSkyPalette)
+        #expect(!MokuState.pleading.mayUseCapturedSkyPalette)
         #expect(MokuState.delight.mayUseCapturedSkyPalette)
         #expect(MokuState.settled.mayUseCapturedSkyPalette)
     }

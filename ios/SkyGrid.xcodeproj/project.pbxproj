@@ -54,6 +54,7 @@
 		2E14D29C579773ADF5F2F5F1 /* GridArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087C71720687FEA840D1BCE1 /* GridArchiveView.swift */; };
 		2E4E16DB1B5C62B6FB04811C /* RewardMoment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CC0F0447BD504E5D676CE2 /* RewardMoment.swift */; };
 		301786DC0471F293C999C6C4 /* MorningWakeSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9708D4CDD99003B80FD9A4D /* MorningWakeSessionTests.swift */; };
+		31718914435F146FB063D296 /* PaywallSecondChanceStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94D21FEC469286492E009357 /* PaywallSecondChanceStepView.swift */; };
 		33755F234CF98678EFB43647 /* MorningRitualCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9348C0D211964D2CF1B5EC19 /* MorningRitualCoordinator.swift */; };
 		3396B627FB301F1EED6800EE /* YesterdaySkyBackdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9902856F934E3CD0729A0B7B /* YesterdaySkyBackdrop.swift */; };
 		33D71F66E9BC0DC37D1A945A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */; };
@@ -63,6 +64,7 @@
 		3783962C8C57500685EB4D03 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 0AF085D3C6D7750CCAC773AC /* FirebaseFunctions */; };
 		38B29DA22E13F9633322DDD3 /* SkyGridExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9707DFE75C337522093E25A5 /* SkyGridExportView.swift */; };
 		38DAAADD4A21588C6A92FEFA /* PaywallValueStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF20425A2DB3329831D0D75B /* PaywallValueStepView.swift */; };
+		3A297189A4711951190F63B7 /* MokuAmbientBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95F0B3164389C2C9ACBEDDC /* MokuAmbientBubble.swift */; };
 		3AD6F998EEC62AF4B9B808E5 /* RevenueCatConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6733AE9FAF3EBC515702D196 /* RevenueCatConfig.swift */; };
 		3B523E338B5EE6363AB4CED9 /* AppReviewPromptPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDD36F72288A165ECAF70220 /* AppReviewPromptPolicyTests.swift */; };
 		3C7786DD975353D2A9EC9DDC /* StreakMilestoneTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3866D3B5A0B65B9D4FCAFAB4 /* StreakMilestoneTests.swift */; };
@@ -83,11 +85,13 @@
 		4D0178A5D5C0B27708C30C4D /* FirebaseContentSafetyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */; };
 		4D18633E8DC5D3E5398355E7 /* InviteLinkParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E04A3EBA32F5CB4180A33A /* InviteLinkParserTests.swift */; };
 		4DF257C26750F166783046E9 /* NotificationRouterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3179FE4DAF5ACD3B53B8FD /* NotificationRouterTests.swift */; };
+		5097776A6DAD3BD5AC16FE48 /* SecondChancePaywallPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0978723BEC7F2240AA174667 /* SecondChancePaywallPolicy.swift */; };
 		51206B88C29F69D7E89FC54C /* ShareCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896D44D44B9A318AC1D6831F /* ShareCardRenderer.swift */; };
 		51D8332E35DB3D52BAF33AE6 /* OrphanedPostBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78F5E2F5A9A2ACF74DEE529 /* OrphanedPostBanner.swift */; };
 		523CBFDDEB46964B8ED61F4E /* SkyPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9C6B1CE06EF73E6B5B7EAE /* SkyPost.swift */; };
 		529EC867219879D7D0B8146A /* OrphanedPostRecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */; };
 		539EDA42CFB950F02BCC4FB4 /* TodayPhotoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C064C2501016587055152C8 /* TodayPhotoCard.swift */; };
+		53C0346FACA63AD129BCDCA1 /* PaywallViewModelSecondChanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6FBF63CCB14BD3B704B29F /* PaywallViewModelSecondChanceTests.swift */; };
 		540BEF6C8554DE04A2573138 /* HandleClaimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ADD269C003226844C3BBB5B /* HandleClaimView.swift */; };
 		54B783EFF5A040C4C127567C /* CameraSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B156A846BD6D16D03BA1658D /* CameraSessionController.swift */; };
 		5657A2439D2F9FB3235C90A1 /* SkyColorDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5565AB14B8D1E157A50CB323 /* SkyColorDisplay.swift */; };
@@ -140,6 +144,7 @@
 		8BA5BF3FB14D4B28A78DEC9B /* ImageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1512D261F73427D29CF1ECB /* ImageStore.swift */; };
 		8C2B0F91213705756BE521EC /* ContactSheetLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC3AF4F93BC6DE3214FC33B /* ContactSheetLayout.swift */; };
 		8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */; };
+		8C744490E09AABE5E98C6C48 /* MokuAmbientMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211686736CFF1F10CDF1FF15 /* MokuAmbientMessage.swift */; };
 		8C91F4B3E9D311773ACFD125 /* DailyRewardPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D876AAE44C3BD844038BD3F /* DailyRewardPolicy.swift */; };
 		8DAEDB09D752FE718C522129 /* clear_sky.png in Resources */ = {isa = PBXBuildFile; fileRef = E4D4885634D10DFD9629310C /* clear_sky.png */; };
 		91A57694C601C9789E95494A /* GridCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3AD0FDB72D81461B58527B /* GridCanvas.swift */; };
@@ -241,6 +246,7 @@
 		E87922CD54E95934223F2841 /* PersonalizationQuestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE08F2693E2014B6F411183 /* PersonalizationQuestionsView.swift */; };
 		E8A87BDA1A437D2740E1C528 /* LaunchGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */; };
 		E9BEB26CA7366FC2A034E15E /* MorningAlarmSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898942EB213A9B8ACBDFDA47 /* MorningAlarmSchedulerTests.swift */; };
+		E9CCB16D7B6FE089685D5339 /* MokuAmbientMessagePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E451265B6E73B9B4CD72B0 /* MokuAmbientMessagePolicyTests.swift */; };
 		EAD14BEF648B531FC044E7BE /* RevenueCatServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B464F1444E53D886E4F974E1 /* RevenueCatServiceTests.swift */; };
 		EB8ACDD93719279AA70154D1 /* PendingRewardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9808209703279B42F6141 /* PendingRewardStore.swift */; };
 		EC95088712901C8CACF695EB /* MorningFollowUpSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F80275CA399B3382985AACD9 /* MorningFollowUpSchedulerTests.swift */; };
@@ -256,6 +262,7 @@
 		F46CEF08F53E6A1DCE6E4E4D /* RetryPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */; };
 		F5750D43D5F807D1E59E967A /* TimeZonePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABE9214A14000FFD1A8CDCB /* TimeZonePolicyTests.swift */; };
 		F6AAB4EB034F9304D54C7D4C /* real_sunset_sky.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 8BEA7377DC53C02D20468F45 /* real_sunset_sky.jpg */; };
+		F7C52691173E1F1E44428FF8 /* SecondChancePaywallPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 386C878B380A265C7B631271 /* SecondChancePaywallPolicyTests.swift */; };
 		F895399715D2D6374CD22858 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 971FE35331B41C1D9C120101 /* FirebaseFirestore */; };
 		F994B4461B28FFE17199A889 /* FirebaseAuthSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 175C29F37106C472FAD174B5 /* FirebaseAuthSession.swift */; };
 		F9F04A8B066CD6D489EECB79 /* SkyColorExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */; };
@@ -312,6 +319,7 @@
 		05A2E7BB4F115A3D42C4B46D /* PostCreateWindowPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostCreateWindowPolicyTests.swift; sourceTree = "<group>"; };
 		06433918EDC1C3800C409EE3 /* BuddyPushPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyPushPayload.swift; sourceTree = "<group>"; };
 		087C71720687FEA840D1BCE1 /* GridArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GridArchiveView.swift; sourceTree = "<group>"; };
+		0978723BEC7F2240AA174667 /* SecondChancePaywallPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondChancePaywallPolicy.swift; sourceTree = "<group>"; };
 		0A46A397E06A3257ACDE0857 /* AddBuddyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddBuddyView.swift; sourceTree = "<group>"; };
 		0BBA64477D59F1CC2012C7B5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0BF80D0A4CB2995F036339AD /* RetryPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RetryPolicy.swift; sourceTree = "<group>"; };
@@ -322,6 +330,7 @@
 		1651F3A167F06A63A99A9BE9 /* LocalDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalDate.swift; sourceTree = "<group>"; };
 		165570757A55F9BFB6931185 /* PostIntegrityPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostIntegrityPolicyTests.swift; sourceTree = "<group>"; };
 		175C29F37106C472FAD174B5 /* FirebaseAuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAuthSession.swift; sourceTree = "<group>"; };
+		17E451265B6E73B9B4CD72B0 /* MokuAmbientMessagePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MokuAmbientMessagePolicyTests.swift; sourceTree = "<group>"; };
 		1836B35A721254A99B0DF929 /* SkyGrid.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SkyGrid.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		19D66D63AE9CD0018D35E5C6 /* RootPresentationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootPresentationCoordinator.swift; sourceTree = "<group>"; };
 		1AA8996478709BCDADA1C141 /* FirebaseRepositoryError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseRepositoryError.swift; sourceTree = "<group>"; };
@@ -332,6 +341,7 @@
 		1EE3C43CE6D7E0E96108E4FD /* DisplayImagePipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayImagePipelineTests.swift; sourceTree = "<group>"; };
 		1F460544F954279E3A86BFE9 /* SkyColorExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColorExtractor.swift; sourceTree = "<group>"; };
 		1F6B7C4C22D4B7B68E45FA57 /* FirebaseAsync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseAsync.swift; sourceTree = "<group>"; };
+		211686736CFF1F10CDF1FF15 /* MokuAmbientMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MokuAmbientMessage.swift; sourceTree = "<group>"; };
 		2221ED6CBEAF25D9207FA231 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		223D04A8062F9444EF6C7083 /* RevealSignal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevealSignal.swift; sourceTree = "<group>"; };
 		2285E46741780075D5553D8C /* PendingCellState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingCellState.swift; sourceTree = "<group>"; };
@@ -348,6 +358,7 @@
 		2C6CEA8D8FCAD9A1D8DC99F6 /* MorningRitualCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualCoordinatorTests.swift; sourceTree = "<group>"; };
 		2D1A3C90FF9151B784398B50 /* StreakCalculatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakCalculatorTests.swift; sourceTree = "<group>"; };
 		2D666341BEDF4B71F79EF742 /* SkyGridTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SkyGridTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D6FBF63CCB14BD3B704B29F /* PaywallViewModelSecondChanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewModelSecondChanceTests.swift; sourceTree = "<group>"; };
 		2F0E8E0123775F322B6B2E0B /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		2F125065E951B193C7012001 /* LocalStoreContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStoreContainer.swift; sourceTree = "<group>"; };
 		2F1325EDBEBFA016DB36C59B /* InviteAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteAnalytics.swift; sourceTree = "<group>"; };
@@ -360,6 +371,7 @@
 		36B2DBD9864A466A2E427117 /* MorningAlarmSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningAlarmSchedule.swift; sourceTree = "<group>"; };
 		37C1EA135CD21F85869C40CE /* SkyColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyColor.swift; sourceTree = "<group>"; };
 		3866D3B5A0B65B9D4FCAFAB4 /* StreakMilestoneTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakMilestoneTests.swift; sourceTree = "<group>"; };
+		386C878B380A265C7B631271 /* SecondChancePaywallPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecondChancePaywallPolicyTests.swift; sourceTree = "<group>"; };
 		399D785A4FF2ECB99992BD10 /* PendingUpload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingUpload.swift; sourceTree = "<group>"; };
 		3DB163E0D34F01969A98C3E0 /* SkyGridWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SkyGridWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		3DE535718E8F305008C110CE /* PendingCellStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingCellStateTests.swift; sourceTree = "<group>"; };
@@ -452,6 +464,7 @@
 		92A1C340E327193C4CAD7D41 /* BuddyRevealGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyRevealGate.swift; sourceTree = "<group>"; };
 		92F9808209703279B42F6141 /* PendingRewardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingRewardStore.swift; sourceTree = "<group>"; };
 		9348C0D211964D2CF1B5EC19 /* MorningRitualCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningRitualCoordinator.swift; sourceTree = "<group>"; };
+		94D21FEC469286492E009357 /* PaywallSecondChanceStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallSecondChanceStepView.swift; sourceTree = "<group>"; };
 		9555768A3A6D38DB4A8A9D63 /* FirebaseUserRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseUserRepository.swift; sourceTree = "<group>"; };
 		9677E6B310F6E014A7FF3956 /* ImageProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessorTests.swift; sourceTree = "<group>"; };
 		96D4496086137C2173D7CCE2 /* TimeZonePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeZonePolicy.swift; sourceTree = "<group>"; };
@@ -491,6 +504,7 @@
 		B4D99A1AC60E4FFB718500E1 /* DailyRewardPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyRewardPolicyTests.swift; sourceTree = "<group>"; };
 		B5E0907AF5694D836BC9375E /* OnboardingAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingAnalytics.swift; sourceTree = "<group>"; };
 		B877BE3CFC484D9D98406261 /* SkyGridApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyGridApp.swift; sourceTree = "<group>"; };
+		B95F0B3164389C2C9ACBEDDC /* MokuAmbientBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MokuAmbientBubble.swift; sourceTree = "<group>"; };
 		BBE626ECA74382CDC96957E5 /* ContentReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentReport.swift; sourceTree = "<group>"; };
 		BD12F936B84A806E16CF92D2 /* DisplayImagePipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayImagePipeline.swift; sourceTree = "<group>"; };
 		BD181FD3F9CD149F317299BA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -713,12 +727,14 @@
 				7C2A1E4935C2F01342AFEC2E /* PaywallEntryPoint.swift */,
 				5CD4CCC9DC4F1D1F267F7587 /* PaywallFeaturesStepView.swift */,
 				6E54FC924BD00C89A602F018 /* PaywallPlanStepView.swift */,
+				94D21FEC469286492E009357 /* PaywallSecondChanceStepView.swift */,
 				9C4B09225F2C599CBFB99F5B /* PaywallStep.swift */,
 				3E91ECCE7507AB3089451A75 /* PaywallStepScaffold.swift */,
 				BF20425A2DB3329831D0D75B /* PaywallValueStepView.swift */,
 				E251EBCA47E25AC6D80E7F8E /* PaywallView.swift */,
 				87D89CFE518D3C5B6A064724 /* PaywallViewModel.swift */,
 				8B1D6A19B1D21AB95D2E5BCA /* ProGate.swift */,
+				0978723BEC7F2240AA174667 /* SecondChancePaywallPolicy.swift */,
 				ED768CEB58968D7F7E67E722 /* SoloMorningPaywallPolicy.swift */,
 			);
 			path = Paywall;
@@ -1028,6 +1044,7 @@
 				D5E04A3EBA32F5CB4180A33A /* InviteLinkParserTests.swift */,
 				6EF14DECC59A1B96BA8E967C /* LaunchGateTests.swift */,
 				BD23650166A18C5BF4671015 /* LocalDateTests.swift */,
+				17E451265B6E73B9B4CD72B0 /* MokuAmbientMessagePolicyTests.swift */,
 				24FEA04A5805CF72F95C4E00 /* MokuViewTests.swift */,
 				898942EB213A9B8ACBDFDA47 /* MorningAlarmSchedulerTests.swift */,
 				C06D1DAE2AC8060A615617F0 /* MorningAlarmScheduleTests.swift */,
@@ -1040,6 +1057,7 @@
 				4101392199423E82FCB2E8C4 /* OnboardingFlowTests.swift */,
 				C21E816D42B110B99F5A1271 /* OrphanedPostRecoveryTests.swift */,
 				FE2A2882ADF140C0BD62770C /* PaywallFlowTests.swift */,
+				2D6FBF63CCB14BD3B704B29F /* PaywallViewModelSecondChanceTests.swift */,
 				3DE535718E8F305008C110CE /* PendingCellStateTests.swift */,
 				50D92ED03C3A7ADB23C33AE5 /* PendingRewardStoreTests.swift */,
 				BFC176EE7A9E0CB0BA365EAE /* PersonalizationProfileTests.swift */,
@@ -1052,6 +1070,7 @@
 				61F7C7F523E9A76536E689A8 /* RewardBeatTests.swift */,
 				634CC1F8B52CD414E1E8274B /* RewardRevealPolicyTests.swift */,
 				365991617064B059F29C9B51 /* RootPresentationCoordinatorTests.swift */,
+				386C878B380A265C7B631271 /* SecondChancePaywallPolicyTests.swift */,
 				E03D6103BCFD146ECAD9EDF3 /* SkyColorExtractorTests.swift */,
 				6C9ED6F5B406515C75CE1B40 /* SkyColorTests.swift */,
 				4627F3F2D42314446650222C /* SoloMorningPaywallPolicyTests.swift */,
@@ -1086,6 +1105,8 @@
 				632B29DA6F73459A3AAB7B5F /* BigTimeView.swift */,
 				130FA656FED8CCC97C00BAA5 /* BuddyRow.swift */,
 				6BB41B2F732D5C25821B6051 /* BuddyTile.swift */,
+				B95F0B3164389C2C9ACBEDDC /* MokuAmbientBubble.swift */,
+				211686736CFF1F10CDF1FF15 /* MokuAmbientMessage.swift */,
 				F78F5E2F5A9A2ACF74DEE529 /* OrphanedPostBanner.swift */,
 				13BACEF1CC5D7C6A30CC8F3B /* PostStatusBanner.swift */,
 				8C064C2501016587055152C8 /* TodayPhotoCard.swift */,
@@ -1350,6 +1371,8 @@
 				469FD0B5717D8F2C6CB264CC /* MilestoneLoudButtonStyle.swift in Sources */,
 				176C5ADC14947459EC3A4833 /* MilestoneMoment.swift in Sources */,
 				47B98544EC63B418A73C3A25 /* MilestoneView.swift in Sources */,
+				3A297189A4711951190F63B7 /* MokuAmbientBubble.swift in Sources */,
+				8C744490E09AABE5E98C6C48 /* MokuAmbientMessage.swift in Sources */,
 				6473B8F12A00EF0A1D9D6E6F /* MokuView.swift in Sources */,
 				6FB342931BF0FC5E2563D4F9 /* MorningAlarmAnalytics.swift in Sources */,
 				212238C56C8C82E2950DCEA7 /* MorningAlarmSchedule.swift in Sources */,
@@ -1374,6 +1397,7 @@
 				DC69B9AC25AF58733BA32103 /* PaywallEntryPoint.swift in Sources */,
 				B48120C64042B75E4606CC3D /* PaywallFeaturesStepView.swift in Sources */,
 				FBF51E510C3A50E805585CD2 /* PaywallPlanStepView.swift in Sources */,
+				31718914435F146FB063D296 /* PaywallSecondChanceStepView.swift in Sources */,
 				DD614E8D3ABAC3B0DED4DA48 /* PaywallStep.swift in Sources */,
 				C84E4906A46DFFB6E6D0978A /* PaywallStepScaffold.swift in Sources */,
 				38DAAADD4A21588C6A92FEFA /* PaywallValueStepView.swift in Sources */,
@@ -1415,6 +1439,7 @@
 				F35ACD21DBA2EC1AA156C4F2 /* RitualGridMark.swift in Sources */,
 				E172525D2E3F3DE977F72DB9 /* RootPresentationCoordinator.swift in Sources */,
 				2D8A2F1EEAFC4B0C4F62A977 /* RootView.swift in Sources */,
+				5097776A6DAD3BD5AC16FE48 /* SecondChancePaywallPolicy.swift in Sources */,
 				46968A01BEE2FBE99E0F7125 /* ServiceEnvironment.swift in Sources */,
 				5DB8DB1770D51E87EF95DB9A /* ServiceFactory.swift in Sources */,
 				D3749B2D566AC3F41063F462 /* SettingsView.swift in Sources */,
@@ -1488,6 +1513,7 @@
 				4D18633E8DC5D3E5398355E7 /* InviteLinkParserTests.swift in Sources */,
 				E8A87BDA1A437D2740E1C528 /* LaunchGateTests.swift in Sources */,
 				E5768E9031FE2B5AE0CBB959 /* LocalDateTests.swift in Sources */,
+				E9CCB16D7B6FE089685D5339 /* MokuAmbientMessagePolicyTests.swift in Sources */,
 				ABB331796DB1F956CF568760 /* MokuViewTests.swift in Sources */,
 				05B359A0F28C91CC0B5695D8 /* MorningAlarmScheduleTests.swift in Sources */,
 				E9BEB26CA7366FC2A034E15E /* MorningAlarmSchedulerTests.swift in Sources */,
@@ -1500,6 +1526,7 @@
 				2D3FD825C9B24316E77BF6A5 /* OnboardingFlowTests.swift in Sources */,
 				529EC867219879D7D0B8146A /* OrphanedPostRecoveryTests.swift in Sources */,
 				5B1ADCD16515E93BF000C3EE /* PaywallFlowTests.swift in Sources */,
+				53C0346FACA63AD129BCDCA1 /* PaywallViewModelSecondChanceTests.swift in Sources */,
 				06CA68D5ABBF09AED97E528D /* PendingCellStateTests.swift in Sources */,
 				B54A7F5D5CDF5968B71A6F53 /* PendingRewardStoreTests.swift in Sources */,
 				8C603527CBBE547650665EFF /* PersonalizationProfileTests.swift in Sources */,
@@ -1512,6 +1539,7 @@
 				AD1B5443B51963B905F4111F /* RewardBeatTests.swift in Sources */,
 				07982C27546087192B944519 /* RewardRevealPolicyTests.swift in Sources */,
 				2C6F093E15ABC33FD0942DE2 /* RootPresentationCoordinatorTests.swift in Sources */,
+				F7C52691173E1F1E44428FF8 /* SecondChancePaywallPolicyTests.swift in Sources */,
 				F9F04A8B066CD6D489EECB79 /* SkyColorExtractorTests.swift in Sources */,
 				69EC5BA0FD92CCA7D3E440B1 /* SkyColorTests.swift in Sources */,
 				680FFFAAE8CFF9A53425D69B /* SoloMorningPaywallPolicyTests.swift in Sources */,

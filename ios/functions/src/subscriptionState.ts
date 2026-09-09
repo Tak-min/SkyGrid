@@ -25,6 +25,7 @@ export const FREE_SUBSCRIPTION: SubscriptionSnapshot = {
 export function planForProductID(productID: string | null | undefined): SubscriptionPlan | null {
   switch (productID) {
     case "com.takmin.skygrid.pro.monthly":
+    case "com.takmin.skygrid.pro.monthly.secondchance":
       return "monthly";
     case "com.takmin.skygrid.pro.annual":
       return "annual";

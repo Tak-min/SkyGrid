@@ -118,11 +118,22 @@ struct PaywallContent: Equatable, Sendable {
     let products: [PurchaseProduct]
 }
 
+/// StoreKit-sourced terms for the one-month introductory offer. Every price
+/// string comes from the storefront; the app never invents or hard-codes one.
+struct SecondChanceOffer: Equatable, Sendable {
+    let product: PurchaseProduct
+    let introductoryPriceLabel: String
+    let savingsLabel: String
+    let renewalPriceLabel: String
+}
+
 enum PurchaseError: Error, Equatable, Sendable {
     case userCancelled
     case configurationMissing
     case noOfferingAvailable
     case productNotFound
+    case eligibilityUnavailable
+    case paymentPending
     case underlying(String)
 }
 
@@ -139,7 +150,15 @@ struct UnconfiguredPurchasesService: PurchasesServicing {
         throw PurchaseError.configurationMissing
     }
 
+    func purchaseSecondChance(product: PurchaseProduct) async throws -> EntitlementStatus {
+        throw PurchaseError.configurationMissing
+    }
+
     func restorePurchases() async throws -> EntitlementStatus {
+        throw PurchaseError.configurationMissing
+    }
+
+    func fetchSecondChanceOffer() async throws -> SecondChanceOffer? {
         throw PurchaseError.configurationMissing
     }
 }
@@ -148,11 +167,21 @@ protocol PurchasesServicing: Sendable {
     func entitlementStatus() async -> EntitlementStatus
     func entitlementSummary() async -> EntitlementSummary
     func fetchPaywall() async throws -> PaywallContent
+    func fetchSecondChanceOffer() async throws -> SecondChanceOffer?
     func purchase(product: PurchaseProduct) async throws -> EntitlementStatus
+    func purchaseSecondChance(product: PurchaseProduct) async throws -> EntitlementStatus
     func restorePurchases() async throws -> EntitlementStatus
 }
 
 extension PurchasesServicing {
+    /// Test doubles and non-RevenueCat implementations opt out safely. `nil`
+    /// means no verified offer can be shown; it is never replaced by local copy.
+    func fetchSecondChanceOffer() async throws -> SecondChanceOffer? { nil }
+
+    func purchaseSecondChance(product: PurchaseProduct) async throws -> EntitlementStatus {
+        try await purchase(product: product)
+    }
+
     func entitlementSummary() async -> EntitlementSummary {
         switch await entitlementStatus() {
         case .notSubscribed: return .free

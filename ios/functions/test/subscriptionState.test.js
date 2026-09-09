@@ -7,8 +7,9 @@ const {
   planForProductID,
 } = require("../lib/subscriptionState.js");
 
-test("maps exactly the three paid Sky Grid products", () => {
+test("maps the normal catalog and second-chance monthly product", () => {
   assert.equal(planForProductID("com.takmin.skygrid.pro.monthly"), "monthly");
+  assert.equal(planForProductID("com.takmin.skygrid.pro.monthly.secondchance"), "monthly");
   assert.equal(planForProductID("com.takmin.skygrid.pro.annual"), "annual");
   assert.equal(planForProductID("com.takmin.skygrid.pro.lifetime"), "lifetime");
   assert.equal(planForProductID("com.takmin.skygrid.pro.weekly"), null);

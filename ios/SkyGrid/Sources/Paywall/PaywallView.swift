@@ -15,34 +15,42 @@ struct PaywallView: View {
     @State private var viewModel: PaywallViewModel
     @Environment(\.dismiss) private var dismiss
     let entryPoint: PaywallEntryPoint
-    let flow: PaywallFlow
     let onEntitlementGranted: () async -> Void
     let onPresented: () -> Void
     let onDismissed: (PaywallDismissalReason) -> Void
+    let allowsSecondChance: Bool
+    let onSecondChancePresented: () -> Void
 
+    @State private var flow: PaywallFlow
     @State private var step: PaywallStep
     @State private var isMovingBackward = false
     @State private var viewedSteps: Set<PaywallStep> = []
     @State private var selectedProductID: String?
     @State private var hasResolvedExit = false
     @State private var didRecordPresentation = false
+    @State private var didAttemptSecondChance = false
 
     init(
         purchases: any PurchasesServicing,
         entryPoint: PaywallEntryPoint = .settings,
         initialStep: PaywallStep? = nil,
+        allowsSecondChance: Bool = false,
         onEntitlementGranted: @escaping () async -> Void,
         onPresented: @escaping () -> Void = {},
-        onDismissed: @escaping (PaywallDismissalReason) -> Void = { _ in }
+        onDismissed: @escaping (PaywallDismissalReason) -> Void = { _ in },
+        onSecondChancePresented: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: PaywallViewModel(purchases: purchases))
         self.entryPoint = entryPoint
-        let flow = PaywallFlow.make(for: entryPoint)
-        self.flow = flow
+        let standardFlow = PaywallFlow.make(for: entryPoint)
+        let flow = initialStep == .secondChance ? standardFlow.appendingSecondChance() : standardFlow
+        _flow = State(initialValue: flow)
         _step = State(initialValue: initialStep ?? flow.first)
+        self.allowsSecondChance = allowsSecondChance
         self.onEntitlementGranted = onEntitlementGranted
         self.onPresented = onPresented
         self.onDismissed = onDismissed
+        self.onSecondChancePresented = onSecondChancePresented
     }
 
     var body: some View {
@@ -59,7 +67,7 @@ struct PaywallView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if step != flow.first {
+                if step != flow.first && step != .secondChance {
                     ToolbarItem(placement: .topBarLeading) {
                         Button("Back", action: goBack)
                             .foregroundStyle(SGT.ink2)
@@ -76,6 +84,9 @@ struct PaywallView: View {
         .task {
             recordPresentationIfNeeded()
             recordStepViewedIfNeeded(step)
+            if allowsSecondChance || step == .secondChance {
+                viewModel.loadSecondChanceOffer()
+            }
             await preparePaywall()
         }
         .onChange(of: viewModel.state) { _, state in
@@ -86,6 +97,10 @@ struct PaywallView: View {
         }
         .onChange(of: step) { _, newStep in
             recordStepViewedIfNeeded(newStep)
+        }
+        .onChange(of: viewModel.secondChanceState) { _, state in
+            guard step == .secondChance, state == .unavailable else { return }
+            finishExit(.close)
         }
         .onDisappear {
             guard !hasResolvedExit else { return }
@@ -122,6 +137,17 @@ struct PaywallView: View {
                 onPurchase: purchase,
                 onRetry: { Task { await preparePaywall() } },
                 onRestore: restorePurchases,
+                onContinueWithFree: continueWithFree
+            )
+            .transition(stepTransition)
+        case .secondChance:
+            PaywallSecondChanceStepView(
+                flow: flow,
+                state: viewModel.secondChanceState,
+                isPurchasing: viewModel.isPurchasing,
+                purchaseError: viewModel.errorMessage,
+                onPurchase: purchase,
+                onRetry: { viewModel.loadSecondChanceOffer() },
                 onContinueWithFree: continueWithFree
             )
             .transition(stepTransition)
@@ -166,11 +192,14 @@ struct PaywallView: View {
 
     private func purchase(_ product: PurchaseProduct) {
         Task {
-            PaywallAnalytics.record(.purchaseStarted, entryPoint: entryPoint, period: product.period)
-            if await viewModel.purchase(product: product) {
-                PaywallAnalytics.record(.purchaseConfirmed, entryPoint: entryPoint, period: product.period)
-                await onEntitlementGranted()
+            PaywallAnalytics.record(.purchaseStarted, entryPoint: entryPoint, period: product.period, step: step)
+            if await viewModel.purchase(
+                product: product,
+                usesSecondChanceOffer: step == .secondChance
+            ) {
                 hasResolvedExit = true
+                PaywallAnalytics.record(.purchaseConfirmed, entryPoint: entryPoint, period: product.period, step: step)
+                await onEntitlementGranted()
                 dismiss()
             }
         }
@@ -184,8 +213,8 @@ struct PaywallView: View {
     private func preparePaywall() async {
         let status = await viewModel.load(verifyEntitlement: entryPoint.requiresEntitlementVerification)
         guard status == .subscribed else { return }
-        await onEntitlementGranted()
         hasResolvedExit = true
+        await onEntitlementGranted()
         dismiss()
     }
 
@@ -193,9 +222,9 @@ struct PaywallView: View {
         Task {
             PaywallAnalytics.record(.restoreStarted, entryPoint: entryPoint)
             if await viewModel.restore() {
+                hasResolvedExit = true
                 PaywallAnalytics.record(.restoreConfirmed, entryPoint: entryPoint)
                 await onEntitlementGranted()
-                hasResolvedExit = true
                 dismiss()
             }
         }
@@ -209,6 +238,32 @@ struct PaywallView: View {
     }
 
     private func resolveExit(_ reason: PaywallDismissalReason) {
+        guard !hasResolvedExit else { return }
+        if reason == .close,
+           step != .secondChance,
+           allowsSecondChance,
+           !didAttemptSecondChance {
+            if viewModel.secondChanceState == .unavailable {
+                finishExit(reason)
+                return
+            }
+            didAttemptSecondChance = true
+            onSecondChancePresented()
+            flow = flow.appendingSecondChance()
+            isMovingBackward = false
+            Haptics.navigationConfirmed()
+            withAnimation(SGMotion.exchange) {
+                step = .secondChance
+            }
+            if viewModel.secondChanceState == .idle || viewModel.secondChanceState == .disconnected {
+                viewModel.loadSecondChanceOffer()
+            }
+            return
+        }
+        finishExit(reason)
+    }
+
+    private func finishExit(_ reason: PaywallDismissalReason) {
         guard !hasResolvedExit else { return }
         hasResolvedExit = true
         PaywallAnalytics.record(.dismissed, entryPoint: entryPoint, dismissalReason: reason, step: step)

@@ -31,9 +31,11 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
         }
         .background(PaywallStepScaffold.background.ignoresSafeArea())
         .overlay(alignment: .topTrailing) {
-            MokuScreenMark(state: .ready, side: 50)
-                .padding(.top, 54)
-                .padding(.trailing, SGSpacing.xl)
+            if step != .secondChance {
+                MokuScreenMark(state: .ready, side: 50)
+                    .padding(.top, 54)
+                    .padding(.trailing, SGSpacing.xl)
+            }
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: SGSpacing.md) {

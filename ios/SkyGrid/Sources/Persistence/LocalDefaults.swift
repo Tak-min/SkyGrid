@@ -58,6 +58,40 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "pendingOnboardingPaywallAfterFirstCapture", defaultValue: false)
     static var pendingOnboardingPaywallAfterFirstCapture: Bool
 
+    /// Calendar-day cooldown for Moku's ambient Today message. This is local UI
+    /// presentation state only and intentionally has no analytics counterpart.
+    @UserDefaultBacked(key: "lastMokuAmbientMessageLocalDate", defaultValue: nil)
+    static var lastMokuAmbientMessageLocalDate: String?
+
+    @UserDefaultBacked(key: "secondChancePaywallPresentedAccountIDs", defaultValue: nil)
+    private static var secondChancePaywallPresentedAccountIDsData: Data?
+
+    /// This is presentation history only. It never asserts StoreKit offer
+    /// eligibility; RevenueCat checks that independently immediately before the
+    /// offer is shown. Keeping all seen account IDs avoids re-arming an earlier
+    /// account if identities change on the same installation.
+    static func hasPresentedSecondChancePaywall(for accountID: String) -> Bool {
+        secondChancePaywallPresentedAccountIDs.contains(accountID)
+    }
+
+    static func markSecondChancePaywallPresented(for accountID: String) {
+        var accountIDs = secondChancePaywallPresentedAccountIDs
+        accountIDs.insert(accountID)
+        secondChancePaywallPresentedAccountIDs = accountIDs
+    }
+
+    private static var secondChancePaywallPresentedAccountIDs: Set<String> {
+        get {
+            guard let data = secondChancePaywallPresentedAccountIDsData,
+                  let values = try? JSONDecoder().decode(Set<String>.self, from: data)
+            else { return [] }
+            return values
+        }
+        set {
+            secondChancePaywallPresentedAccountIDsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
     @UserDefaultBacked(key: "personalizationProfile", defaultValue: nil)
     private static var personalizationProfileData: Data?
 
@@ -297,6 +331,7 @@ enum LocalDefaults {
         onboardingDone = false
         openCameraAfterOnboarding = false
         pendingOnboardingPaywallAfterFirstCapture = false
+        secondChancePaywallPresentedAccountIDsData = nil
         personalizationProfileData = nil
         resetAutomaticPaywallState()
         resetUnlockPaywallState()

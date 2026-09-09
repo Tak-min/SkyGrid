@@ -289,6 +289,12 @@ struct RootView: View {
                 PaywallView(
                 purchases: services.purchases,
                 entryPoint: paywallEntryPoint,
+                allowsSecondChance: SecondChancePaywallPolicy.shouldAttempt(
+                    entryPoint: paywallEntryPoint,
+                    hasPresentedForAccount: LocalDefaults.hasPresentedSecondChancePaywall(
+                        for: services.currentUid
+                    )
+                ),
                 onEntitlementGranted: {
                     await services.entitlements.refresh()
                     // A purchase from the solo paywall resolves its cadence — there
@@ -299,7 +305,10 @@ struct RootView: View {
                     }
                 },
                 onPresented: { recordAutomaticPaywallPresentationIfNeeded(services: services) },
-                onDismissed: recordSoloPaywallDismissalIfNeeded
+                onDismissed: recordSoloPaywallDismissalIfNeeded,
+                onSecondChancePresented: {
+                    LocalDefaults.markSecondChancePaywallPresented(for: services.currentUid)
+                }
             )
             case .invite(let code):
                 InviteClaimView(

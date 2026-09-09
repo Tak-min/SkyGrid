@@ -47,6 +47,9 @@ struct RevenueCatService: PurchasesServicing {
             throw PurchaseError.noOfferingAvailable
         }
         let products = offering.availablePackages.compactMap { pkg -> PurchaseProduct? in
+            guard pkg.storeProduct.productIdentifier != RevenueCatConfig.secondChanceProductID else {
+                return nil
+            }
             let period = Self.period(
                 for: pkg.packageType,
                 productID: pkg.storeProduct.productIdentifier
@@ -87,6 +90,55 @@ struct RevenueCatService: PurchasesServicing {
         return PaywallContent(offeringID: offering.identifier, products: products)
     }
 
+    func fetchSecondChanceOffer() async throws -> SecondChanceOffer? {
+        let offerings: Offerings
+        do {
+            offerings = try await Purchases.shared.offerings()
+        } catch {
+            Self.logger.error("RevenueCat introductory-offer request failed")
+            throw PurchaseError.eligibilityUnavailable
+        }
+        guard let offering = offerings.offering(identifier: RevenueCatConfig.secondChanceOfferingID),
+              let package = offering.availablePackages.first(where: {
+                  $0.storeProduct.productIdentifier == RevenueCatConfig.secondChanceProductID
+              }),
+              let discount = package.storeProduct.introductoryDiscount,
+              discount.type == .introductory,
+              discount.paymentMode == .payAsYouGo,
+              discount.subscriptionPeriod.unit == .month,
+              discount.subscriptionPeriod.value == 1,
+              discount.numberOfPeriods == 1,
+              discount.price < package.storeProduct.price,
+              let savings = package.storeProduct.priceFormatter?.string(
+                  from: (package.storeProduct.price - discount.price) as NSDecimalNumber
+              )
+        else {
+            // No product, no intro metadata, or terms other than the approved
+            // one-month pay-as-you-go discount all mean “do not show”.
+            return nil
+        }
+
+        let eligibility = await Purchases.shared.checkTrialOrIntroDiscountEligibility(
+            product: package.storeProduct
+        )
+        switch eligibility {
+        case .eligible:
+            let product = Self.purchaseProduct(from: package, offeringID: offering.identifier)
+            return SecondChanceOffer(
+                product: product,
+                introductoryPriceLabel: discount.localizedPriceString,
+                savingsLabel: savings,
+                renewalPriceLabel: package.storeProduct.localizedPriceString
+            )
+        case .ineligible, .noIntroOfferExists:
+            return nil
+        case .unknown:
+            throw PurchaseError.eligibilityUnavailable
+        @unknown default:
+            throw PurchaseError.eligibilityUnavailable
+        }
+    }
+
     func purchase(product: PurchaseProduct) async throws -> EntitlementStatus {
         let offerings = try await Purchases.shared.offerings()
         guard let offering = offerings.offering(identifier: product.offeringID) else {
@@ -103,8 +155,53 @@ struct RevenueCatService: PurchasesServicing {
             return Self.status(from: result.customerInfo)
         } catch let e as PurchaseError {
             throw e
+        } catch ErrorCode.paymentPendingError {
+            throw PurchaseError.paymentPending
         } catch {
             Self.logger.error("Purchase failed: \(error.localizedDescription)")
+            throw PurchaseError.underlying(error.localizedDescription)
+        }
+    }
+
+    func purchaseSecondChance(product: PurchaseProduct) async throws -> EntitlementStatus {
+        let offerings = try await Purchases.shared.offerings()
+        guard let offering = offerings.offering(identifier: RevenueCatConfig.secondChanceOfferingID),
+              offering.identifier == product.offeringID,
+              let package = offering.availablePackages.first(where: {
+                  $0.identifier == product.id
+                      && $0.storeProduct.productIdentifier == product.storeProductID
+                      && $0.storeProduct.productIdentifier == RevenueCatConfig.secondChanceProductID
+              }),
+              let discount = package.storeProduct.introductoryDiscount,
+              discount.type == .introductory,
+              discount.paymentMode == .payAsYouGo,
+              discount.subscriptionPeriod.unit == .month,
+              discount.subscriptionPeriod.value == 1,
+              discount.numberOfPeriods == 1,
+              discount.price < package.storeProduct.price
+        else {
+            throw PurchaseError.productNotFound
+        }
+
+        let eligibility = await Purchases.shared.checkTrialOrIntroDiscountEligibility(
+            product: package.storeProduct
+        )
+        guard eligibility == .eligible else {
+            // Never fall through to a regular-price purchase after showing intro
+            // terms. Another device may have consumed eligibility since loading.
+            throw PurchaseError.eligibilityUnavailable
+        }
+
+        do {
+            let result = try await Purchases.shared.purchase(package: package)
+            if result.userCancelled { throw PurchaseError.userCancelled }
+            return Self.status(from: result.customerInfo)
+        } catch let error as PurchaseError {
+            throw error
+        } catch ErrorCode.paymentPendingError {
+            throw PurchaseError.paymentPending
+        } catch {
+            Self.logger.error("Second-chance purchase failed: \(error.localizedDescription)")
             throw PurchaseError.underlying(error.localizedDescription)
         }
     }
@@ -159,6 +256,32 @@ struct RevenueCatService: PurchasesServicing {
         }
     }
 
+    private static func purchaseProduct(from package: Package, offeringID: String) -> PurchaseProduct {
+        let period = period(
+            for: package.packageType,
+            productID: package.storeProduct.productIdentifier
+        )
+        let pricePerMonth = package.storeProduct.pricePerMonth?.decimalValue
+        return PurchaseProduct(
+            id: package.identifier,
+            title: package.storeProduct.localizedTitle,
+            priceLabel: package.storeProduct.localizedPriceString,
+            periodLabel: periodLabel(for: period),
+            offeringID: offeringID,
+            storeProductID: package.storeProduct.productIdentifier,
+            period: period,
+            pricePerMonth: pricePerMonth,
+            pricePerMonthLabel: pricePerMonth.flatMap {
+                package.storeProduct.priceFormatter?.string(from: $0 as NSDecimalNumber)
+            },
+            price: package.storeProduct.price,
+            billingDescription: billingDescription(
+                price: package.storeProduct.localizedPriceString,
+                period: period
+            )
+        )
+    }
+
     /// RevenueCat's standard package types remain the primary source. A custom
     /// package is also valid when — and only when — it wraps one of Sky Grid's
     /// approved App Store products. This prevents a dashboard naming change from
@@ -177,6 +300,7 @@ struct RevenueCatService: PurchasesServicing {
     private static func canonicalProductPeriod(for productID: String) -> PurchasePeriod {
         switch productID {
         case "com.takmin.skygrid.pro.monthly": return .monthly
+        case RevenueCatConfig.secondChanceProductID: return .monthly
         case "com.takmin.skygrid.pro.annual": return .annual
         case "com.takmin.skygrid.pro.lifetime": return .lifetime
         default: return .unknown

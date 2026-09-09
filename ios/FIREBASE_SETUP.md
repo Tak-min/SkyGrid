@@ -27,8 +27,15 @@ Before enabling it in a staging project:
 3. Send a RevenueCat dashboard test event and confirm only the expected
    `monthly`, `annual`, or `lifetime` product creates an entitlement snapshot.
 
-The mobile offering must expose only these paid product identifiers:
+The normal mobile offering may expose these paid product identifiers:
 `com.takmin.skygrid.pro.monthly`, `com.takmin.skygrid.pro.annual`, and
-`com.takmin.skygrid.pro.lifetime`. Remove the former three-day introductory
-offer from App Store Connect and RevenueCat before production rollout; this
-source deliberately has no trial state or trial copy.
+`com.takmin.skygrid.pro.lifetime`.
+
+The first-onboarding-exit second-chance offer uses the dedicated monthly product
+`com.takmin.skygrid.pro.monthly.secondchance` in the same App Store subscription
+group. Attach a one-month pay-as-you-go introductory offer to that product, add it
+to RevenueCat's `premium` entitlement, and expose it only through the RevenueCat
+offering `second_chance`. Do not include it in the current/normal offering: an
+introductory offer attached to the normal monthly product would also appear to
+eligible customers outside the second-chance step. The app verifies Apple's
+eligibility and the exact introductory terms again immediately before purchase.

@@ -6,11 +6,11 @@ enum PaywallStep: String, CaseIterable, Equatable {
     case value
     case features
     case plan
+    case secondChance = "second_chance"
 }
 
-/// The ordered sequence of steps a paywall presentation walks through. The final
-/// step is always `.plan`: pricing is never hidden behind more than the entry
-/// point's own step count.
+/// The ordered sequence of steps a paywall presentation walks through. Standard
+/// flows end at `.plan`; an eligible close can append `.secondChance` at runtime.
 struct PaywallFlow: Equatable {
     let steps: [PaywallStep]
 
@@ -20,13 +20,25 @@ struct PaywallFlow: Equatable {
     /// `session-handoff-paywall-alarm_2026-08-01.md` §5 for the reasoning. The same
     /// logic extends to `.firstUnlock`: a mutual reveal has already demonstrated the
     /// product's value more directly than the value step could restate it.
-    static func make(for entryPoint: PaywallEntryPoint) -> PaywallFlow {
+    static func make(
+        for entryPoint: PaywallEntryPoint,
+        includesSecondChance: Bool = false
+    ) -> PaywallFlow {
+        let standardSteps: [PaywallStep]
         switch entryPoint {
         case .ritualMilestone, .firstUnlock:
-            PaywallFlow(steps: [.features, .plan])
+            standardSteps = [.features, .plan]
         default:
-            PaywallFlow(steps: [.value, .features, .plan])
+            standardSteps = [.value, .features, .plan]
         }
+        return PaywallFlow(
+            steps: includesSecondChance ? standardSteps + [.secondChance] : standardSteps
+        )
+    }
+
+    func appendingSecondChance() -> PaywallFlow {
+        guard !steps.contains(.secondChance) else { return self }
+        return PaywallFlow(steps: steps + [.secondChance])
     }
 
     var first: PaywallStep { steps[0] }

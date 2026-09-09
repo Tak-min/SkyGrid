@@ -19,6 +19,10 @@ struct RevenueCatServiceTests {
             productID: "com.takmin.skygrid.pro.lifetime"
         ) == .lifetime)
         #expect(RevenueCatService.period(
+            for: .monthly,
+            productID: RevenueCatConfig.secondChanceProductID
+        ) == .monthly)
+        #expect(RevenueCatService.period(
             for: .custom,
             productID: "com.takmin.skygrid.unapproved"
         ) == .unknown)

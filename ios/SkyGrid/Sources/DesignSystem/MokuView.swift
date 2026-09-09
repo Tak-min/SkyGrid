@@ -10,6 +10,7 @@ enum MokuState: String, CaseIterable, Identifiable {
     case delight
     case settled
     case error
+    case pleading
 
     var id: Self { self }
 
@@ -227,6 +228,8 @@ struct MokuView: View {
             MokuPose(scale: 1, rotationDegrees: 0, verticalOffset: 0)
         case .error:
             MokuPose(scale: 0.98, rotationDegrees: 3, verticalOffset: 0.01)
+        case .pleading:
+            MokuPose(scale: 0.94, rotationDegrees: -2, verticalOffset: 0.025)
         }
     }
 }
@@ -271,6 +274,34 @@ private struct MokuArtwork: View {
             }
 
             drawEyes(in: &context, canvasSide: side, origin: origin, cell: cell, gap: gap)
+            if state == .pleading {
+                drawTears(in: &context, origin: origin, cell: cell, gap: gap)
+            }
+        }
+    }
+
+    private func drawTears(
+        in context: inout GraphicsContext,
+        origin: CGPoint,
+        cell: CGFloat,
+        gap: CGFloat
+    ) {
+        let tearSize = CGSize(width: cell * 0.16, height: cell * 0.3)
+        let centers = [
+            CGPoint(x: origin.x + cell * 1.5 + gap, y: origin.y + cell * 2.02 + gap),
+            CGPoint(x: origin.x + cell * 2.5 + gap * 2, y: origin.y + cell * 2.02 + gap),
+        ]
+        for center in centers {
+            let rect = CGRect(
+                x: center.x - tearSize.width / 2,
+                y: center.y,
+                width: tearSize.width,
+                height: tearSize.height
+            )
+            context.fill(
+                Path(ellipseIn: rect),
+                with: .color(MokuColor.tear.opacity(0.88))
+            )
         }
     }
 
@@ -399,6 +430,8 @@ private struct MokuArtwork: View {
                 rightHeight: 0.18,
                 rightVerticalOffset: 0.08
             )
+        case .pleading:
+            MokuEyeMetrics(leftWidth: 0.48, leftHeight: 0.6, rightWidth: 0.48, rightHeight: 0.6)
         }
     }
 
@@ -425,6 +458,13 @@ private struct MokuArtwork: View {
                 rightArmLength: 0.16,
                 armRow: 2,
                 rightArmVerticalOffset: 0.06
+            )
+        case .pleading:
+            MokuLimbPose(
+                leftArmLength: 0.055,
+                rightArmLength: 0.055,
+                armRow: 2.45,
+                rightArmVerticalOffset: 0.02
             )
         }
     }
@@ -478,6 +518,7 @@ enum MokuColor {
     static let cloud = Color(red: 244 / 255, green: 241 / 255, blue: 234 / 255)
     static let ink = Color(red: 23 / 255, green: 24 / 255, blue: 27 / 255)
     static let dawnSpark = Color(red: 255 / 255, green: 104 / 255, blue: 70 / 255)
+    static let tear = Color(red: 102 / 255, green: 190 / 255, blue: 238 / 255)
     static let morningPaper = Color(red: 255 / 255, green: 248 / 255, blue: 238 / 255)
 }
 

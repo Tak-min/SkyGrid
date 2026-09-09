@@ -9,6 +9,12 @@ enum RevenueCatConfig {
     /// Must match the entitlement identifier configured in the RevenueCat dashboard.
     nonisolated static let entitlementID = "premium"
 
+    /// A separate product/offering keeps the introductory SKU out of the normal
+    /// three-plan paywall. App Store Connect and RevenueCat must use these exact
+    /// identifiers before the step can become eligible.
+    nonisolated static let secondChanceOfferingID = "second_chance"
+    nonisolated static let secondChanceProductID = "com.takmin.skygrid.pro.monthly.secondchance"
+
     static var isConfigured: Bool {
         guard let key = rawAPIKey else { return false }
         return !key.isEmpty && !key.contains("YOUR_")

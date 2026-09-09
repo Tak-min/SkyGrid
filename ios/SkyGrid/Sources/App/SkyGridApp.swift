@@ -51,6 +51,7 @@ private enum UIAuditScenario: String {
     case buddiesRequestFlow = "buddies-request-flow"
     case paywall
     case paywallPlan = "paywall-plan"
+    case paywallSecondChance = "paywall-second-chance"
     case alarm
     case settings
     case settingsBlockedUnavailable = "settings-blocked-unavailable"
@@ -161,6 +162,15 @@ private struct UIAuditRoot: View {
                 purchases: UIAuditPurchases(),
                 entryPoint: .settings,
                 initialStep: .plan,
+                onEntitlementGranted: {},
+                onDismissed: { _ in }
+            )
+        } else if scenario == .paywallSecondChance {
+            PaywallView(
+                purchases: UIAuditPurchases(),
+                entryPoint: .onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: 360),
+                initialStep: .secondChance,
+                allowsSecondChance: true,
                 onEntitlementGranted: {},
                 onDismissed: { _ in }
             )
@@ -865,6 +875,26 @@ private struct UIAuditPurchases: PurchasesServicing {
                     billingDescription: "One payment. No renewal."
                 )
             ]
+        )
+    }
+
+    func fetchSecondChanceOffer() async throws -> SecondChanceOffer? {
+        let product = PurchaseProduct(
+            id: "$rc_monthly",
+            title: "Sky Grid Pro Monthly",
+            priceLabel: "$3.99",
+            periodLabel: "Monthly",
+            offeringID: RevenueCatConfig.secondChanceOfferingID,
+            storeProductID: RevenueCatConfig.secondChanceProductID,
+            period: .monthly,
+            price: 3.99,
+            billingDescription: "$3.99 per month. Auto-renews unless cancelled."
+        )
+        return SecondChanceOffer(
+            product: product,
+            introductoryPriceLabel: "$0.99",
+            savingsLabel: "$3.00",
+            renewalPriceLabel: "$3.99"
         )
     }
 

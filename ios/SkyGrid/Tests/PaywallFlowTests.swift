@@ -70,4 +70,17 @@ struct PaywallFlowTests {
         #expect(flow.index(of: .features) == 1)
         #expect(flow.index(of: .plan) == 2)
     }
+
+    @Test("second chance is appended only after an eligible close")
+    func secondChanceIsConditional() {
+        let standard = PaywallFlow.make(
+            for: .onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: 360)
+        )
+        #expect(standard.steps == [.value, .features, .plan])
+
+        let extended = standard.appendingSecondChance()
+        #expect(extended.steps == [.value, .features, .plan, .secondChance])
+        #expect(extended.appendingSecondChance() == extended)
+        #expect(extended.previous(before: .secondChance) == .plan)
+    }
 }
