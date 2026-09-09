@@ -9,7 +9,9 @@ struct TodayView: View {
     @State private var shareImage: TodayShareableCard?
     @State private var mokuInteraction = 0
     @State private var lastMokuInteraction: TimeInterval = -.infinity
+    @State private var ambientMessage: MokuAmbientMessage?
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let imageFetching: any ImageFetching
     let observedDate: LocalDate
     let onOpenCamera: () -> Void
@@ -57,11 +59,35 @@ struct TodayView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: SGSpacing.xxl) {
                     heading
+                        .mokuAmbientBubble(
+                            ambientMessage,
+                            at: .heading,
+                            alignment: .bottomTrailing,
+                            offset: CGSize(width: 0, height: 44)
+                        )
                     morningRecord
                         .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
                     mosaicEntry
+                        .mokuAmbientBubble(
+                            ambientMessage,
+                            at: .mosaicEntry,
+                            alignment: .topTrailing,
+                            offset: CGSize(width: -8, height: -34)
+                        )
                     buddySection
+                        .mokuAmbientBubble(
+                            ambientMessage,
+                            at: .buddySection,
+                            alignment: .topTrailing,
+                            offset: CGSize(width: -8, height: -34)
+                        )
                     rhythmSection
+                        .mokuAmbientBubble(
+                            ambientMessage,
+                            at: .rhythmSection,
+                            alignment: .topTrailing,
+                            offset: CGSize(width: -8, height: -34)
+                        )
                     PostStatusBanner(
                         pending: viewModel.pendingSummary,
                         today: observedDate,
@@ -82,11 +108,22 @@ struct TodayView: View {
                 Color.clear.frame(height: SGSpacing.xl)
             }
         }
+        .onAppear { presentAmbientMessageIfEligible() }
         .task(id: observedDate) { viewModel.start(for: observedDate) }
-        .onDisappear { viewModel.stop() }
+        .onChange(of: observedDate) { _, _ in
+            ambientMessage = nil
+            presentAmbientMessageIfEligible()
+        }
+        .onDisappear {
+            ambientMessage = nil
+            viewModel.stop()
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             viewModel.refreshBuddiesNow()
+            if ambientMessage == nil {
+                presentAmbientMessageIfEligible()
+            }
         }
         .onChange(of: buddyRefreshToken) { _, _ in
             viewModel.refreshBuddiesNow()
@@ -180,29 +217,33 @@ struct TodayView: View {
             // One stable character lives outside the changing photo/empty state.
             // Incoming and outgoing record content never instantiate another Moku.
             .overlay(alignment: .topTrailing) {
-                if viewModel.todayPost != nil || viewModel.postState == .available {
-                    Button {
-                        let now = ProcessInfo.processInfo.systemUptime
-                        guard now - lastMokuInteraction >= 1.15 else { return }
-                        lastMokuInteraction = now
-                        mokuInteraction += 1
-                    } label: {
-                        MokuView(
-                            state: viewModel.todayPost == nil ? .ready : .settled,
-                            side: 108,
-                            interaction: mokuInteraction
-                        )
-                        .frame(width: 132, height: 138)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.trailing, 12)
-                    .offset(y: -8)
-                    .accessibilityLabel("Say hello to Moku")
-                    .accessibilityHint("Moku says hello back")
-                    .accessibilityIdentifier("moku.play")
+                Button {
+                    let now = ProcessInfo.processInfo.systemUptime
+                    guard now - lastMokuInteraction >= 1.15 else { return }
+                    lastMokuInteraction = now
+                    mokuInteraction += 1
+                } label: {
+                    MokuView(
+                        state: ambientMessage?.mokuState ?? (viewModel.todayPost == nil ? .ready : .settled),
+                        side: 108,
+                        interaction: mokuInteraction
+                    )
+                    .frame(width: 132, height: 138)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .padding(.trailing, 12)
+                .offset(y: -8)
+                .accessibilityLabel("Say hello to Moku")
+                .accessibilityHint("Moku says hello back")
+                .accessibilityIdentifier("moku.play")
             }
+            .mokuAmbientBubble(
+                ambientMessage,
+                at: .morningRecord,
+                alignment: .topLeading,
+                offset: CGSize(width: 12, height: -12)
+            )
             .padding(.top, 16)
     }
 
@@ -242,6 +283,12 @@ struct TodayView: View {
                 }
                 .buttonStyle(SkySecondaryButtonStyle())
                 .accessibilityHint("Opens the share sheet with this morning's card as an image")
+                .mokuAmbientBubble(
+                    ambientMessage,
+                    at: .shareButton,
+                    alignment: .topTrailing,
+                    offset: CGSize(width: -8, height: -56)
+                )
 
                 if viewModel.todayIntegrity == .orphaned {
                     OrphanedPostBanner(
@@ -303,6 +350,12 @@ struct TodayView: View {
                     fallback: emptySkyGradient
                 )
             }
+            .mokuAmbientBubble(
+                ambientMessage,
+                at: .emptyMorningRecord,
+                alignment: .topLeading,
+                offset: CGSize(width: 16, height: 16)
+            )
 
             Button {
                 Haptics.navigationConfirmed()
@@ -312,6 +365,12 @@ struct TodayView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SkyPrimaryButtonStyle())
+            .mokuAmbientBubble(
+                ambientMessage,
+                at: .captureButton,
+                alignment: .topTrailing,
+                offset: CGSize(width: -8, height: -56)
+            )
         }
     }
 
@@ -528,6 +587,29 @@ struct TodayView: View {
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "H:mm"
         return "Captured \(formatter.string(from: post.capturedAt)) / Posted \(formatter.string(from: post.uploadedAt))"
+    }
+
+    private func presentAmbientMessageIfEligible() {
+        let context = MokuAmbientMessage.Context(
+            isPostStatusKnown: viewModel.postState != .checking,
+            hasPostedToday: viewModel.todayPost != nil,
+            hasBuddies: !viewModel.buddies.isEmpty,
+            hasBuddyPostToday: viewModel.buddies.contains { $0.post != nil },
+            streak: viewModel.streak.currentStreak
+        )
+        guard let selection = MokuAmbientMessagePolicy.randomSelectionForVisit(
+            context: context,
+            today: observedDate,
+            lastPresentedLocalDateID: LocalDefaults.lastMokuAmbientMessageLocalDate
+        ) else { return }
+
+        LocalDefaults.lastMokuAmbientMessageLocalDate = observedDate.docID
+        let animation: Animation? = MokuAmbientMessagePolicy.shouldAnimate(reduceMotion: reduceMotion)
+            ? .spring(response: 0.42, dampingFraction: 0.78)
+            : nil
+        withAnimation(animation) {
+            ambientMessage = selection
+        }
     }
 }
 
