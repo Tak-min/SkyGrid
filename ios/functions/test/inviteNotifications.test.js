@@ -1,17 +1,59 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { inviteClaimedNotificationCopy } = require("../lib/inviteNotifications.js");
+const {
+  inviteClaimedNotificationCopy,
+  inviterUidForCreatedFriendship,
+} = require("../lib/inviteNotifications.js");
 
-test("inviteClaimedNotificationCopy names the claimer by handle", () => {
-  const copy = inviteClaimedNotificationCopy("mira_sky");
+test("accepted invite friendship selects requestedBy as the inviter", () => {
+  const inviterUid = inviterUidForCreatedFriendship("claimer_inviter", {
+    members: ["claimer", "inviter"],
+    status: "accepted",
+    requestedBy: "inviter",
+    blockedBy: [],
+  });
 
-  assert.equal(copy.title, "Your invite was claimed.");
-  assert.match(copy.body, /mira_sky/);
+  assert.equal(inviterUid, "inviter");
 });
 
-test("inviteClaimedNotificationCopy falls back to a generic name when the handle is unknown", () => {
-  const copy = inviteClaimedNotificationCopy(null);
+test("pending handle request is not treated as a claimed invite", () => {
+  const inviterUid = inviterUidForCreatedFriendship("recipient_requester", {
+    members: ["recipient", "requester"],
+    status: "pending",
+    requestedBy: "requester",
+    blockedBy: [],
+  });
 
-  assert.match(copy.body, /Someone/);
+  assert.equal(inviterUid, null);
+});
+
+test("malformed or blocked friendships are not notified", () => {
+  assert.equal(inviterUidForCreatedFriendship("claimer_inviter", { status: "accepted" }), null);
+  assert.equal(inviterUidForCreatedFriendship("claimer_inviter", {
+    members: ["claimer", "inviter"],
+    status: "accepted",
+    requestedBy: "outsider",
+    blockedBy: [],
+  }), null);
+  assert.equal(inviterUidForCreatedFriendship("claimer_inviter", {
+    members: ["claimer", "inviter"],
+    status: "accepted",
+    requestedBy: "inviter",
+    blockedBy: ["claimer"],
+  }), null);
+  assert.equal(inviterUidForCreatedFriendship("wrong_pair", {
+    members: ["claimer", "inviter"],
+    status: "accepted",
+    requestedBy: "inviter",
+    blockedBy: [],
+  }), null);
+});
+
+test("invite notification copy contains no account or invite identifier", () => {
+  const copy = inviteClaimedNotificationCopy();
+
+  assert.equal(copy.title, "Your invite was claimed.");
+  assert.equal(copy.body, "You’re buddies now. Open Sky Grid to say hi.");
+  assert.doesNotMatch(`${copy.title} ${copy.body}`, /uid|handle|code|mira_sky|claimer|inviter/i);
 });

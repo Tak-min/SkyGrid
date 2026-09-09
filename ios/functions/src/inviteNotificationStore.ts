@@ -5,19 +5,9 @@ import { isWithinQuietHours, staleTokenIndices } from "./buddyNotifications.js";
 import { inviteClaimedNotificationCopy } from "./inviteNotifications.js";
 
 /**
- * Notifies an inviter the moment their invite link is claimed (closes D2). Called
- * synchronously from `claimInviteCode` right after `claimInvite`'s transaction
- * commits with a `"paired"` outcome — deliberately *not* a separate
- * `onDocumentCreated` Firestore trigger on `friendships/{pairId}` the way
- * `onBuddyPostCreated` is: that collection's documents are created both by an
- * invite claim (`status: "accepted"` immediately) and by an ordinary handle-based
- * friend request (`status: "pending"`, accepted later via a *different* client
- * write this module has nothing to do with) — see `firestore.rules`' "buddy
- * request lifecycle" and `inviteStore.ts#claimInvite`'s own doc comment. A
- * document-create trigger cannot tell those two origins apart without re-deriving
- * exactly the context `claimInvite`'s caller already has for free (was this
- * literally the result of a claim, and who is the inviter), so calling this
- * directly from the callable is simpler and cannot misfire for the unrelated flow.
+ * Notifies only the inviter after an invite claim establishes a friendship.
+ * The Firestore create trigger and the callable's pending-to-accepted fallback share
+ * this shell and its marker, so at most one path sends for a relationship.
  *
  * **Never throws** — same discipline as `notifyBuddiesOfPost`: the pairing already
  * succeeded and committed by the time this runs, and nothing about a notification
@@ -36,7 +26,6 @@ const INVITE_CLAIM_NOTIFICATION_MARKER_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 export interface NotifyInviterOfClaimParams {
   inviterUid: string;
   pairId: string;
-  claimerHandle: string | null;
   nowMs: number;
 }
 
@@ -45,7 +34,7 @@ export async function notifyInviterOfClaim(
   messaging: Pick<Messaging, "sendEachForMulticast">,
   params: NotifyInviterOfClaimParams
 ): Promise<void> {
-  const { inviterUid, pairId, claimerHandle, nowMs } = params;
+  const { inviterUid, pairId, nowMs } = params;
 
   // `pairId` (one per ordered pair of accounts, see `PairID`/the Swift-side
   // equivalent) rather than the claimer's uid: idempotent per *relationship*, so a
@@ -87,16 +76,16 @@ export async function notifyInviterOfClaim(
     .filter((token): token is string => Boolean(token));
   if (tokens.length === 0) return;
 
-  const copy = inviteClaimedNotificationCopy(claimerHandle);
+  const copy = inviteClaimedNotificationCopy();
 
   let response;
   try {
     response = await messaging.sendEachForMulticast({
       tokens,
       notification: { title: copy.title, body: copy.body },
-      data: { type: "invite_claimed", pairId },
+      data: { type: "invite_claimed" },
       apns: {
-        headers: { "apns-collapse-id": collapseId(pairId) },
+        headers: { "apns-collapse-id": "invite_claimed" },
         payload: { aps: { sound: "default", "thread-id": "invite-claimed" } },
       },
     });
@@ -136,12 +125,6 @@ async function claimNotificationMarker(
     logger.error("Could not claim the invite-claim notification marker.", { inviterUid, pairId, error });
     return false;
   }
-}
-
-/** `apns-collapse-id` is capped at 64 bytes by APNs; a pairId never gets close, but
- * the cap is enforced defensively rather than assumed (mirrors `buddyNotificationStore.ts`). */
-function collapseId(pairId: string): string {
-  return `ic_${pairId}`.slice(0, 64);
 }
 
 function isAlreadyExistsError(error: unknown): boolean {

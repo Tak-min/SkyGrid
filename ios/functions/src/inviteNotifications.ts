@@ -1,25 +1,49 @@
+/** Pure decision logic for friendship-created notifications. Kept free of
+ * `firebase-admin` so recipient selection and PII-free copy stay easy to test. */
+
+export interface FriendshipCreatedRecord {
+  members?: unknown;
+  status?: unknown;
+  requestedBy?: unknown;
+  blockedBy?: unknown;
+}
+
 /**
- * Pure decision logic for the "your invite was claimed" push notification (closes
- * D2 — see `dev-notes/virality-stickiness-assessment_2026-09-04.md` §6 / VISION.md's
- * TODO checklist: the inviter previously had no way to learn their invite was
- * claimed short of reopening the app). Kept free of `firebase-admin` for the same
- * reason as `buddyNotifications.ts`: this is exactly the kind of copy/logic mistake
- * that is trivial to get wrong and invisible in an emulator run.
- * `inviteNotificationStore.ts` is the thin Firestore/FCM-aware shell that wires this
- * to real data — deliberately separate from `buddyNotificationStore.ts` rather than
- * folded into it, since the trigger (an invite claim, not a post) and the recipient
- * (the inviter, not a buddy who already exists) are a different event shape.
+ * Invite claims create an already-accepted friendship whose `requestedBy` is the
+ * invite creator. Ordinary handle requests are created as `pending`, so they must
+ * not notify here.
  */
+export function inviterUidForCreatedFriendship(
+  pairId: string,
+  friendship: FriendshipCreatedRecord
+): string | null {
+  const { members, status, requestedBy, blockedBy } = friendship;
+  if (
+    status !== "accepted"
+    || !Array.isArray(members)
+    || members.length !== 2
+    || !members.every((member) => typeof member === "string")
+    || members[0] === members[1]
+    || members[0] >= members[1]
+    || `${members[0]}_${members[1]}` !== pairId
+    || typeof requestedBy !== "string"
+    || !members.includes(requestedBy)
+    || !Array.isArray(blockedBy)
+    || blockedBy.length !== 0
+  ) {
+    return null;
+  }
+  return requestedBy;
+}
 
 export interface InviteClaimedNotificationCopy {
   title: string;
   body: string;
 }
 
-export function inviteClaimedNotificationCopy(claimerHandle: string | null): InviteClaimedNotificationCopy {
-  const name = claimerHandle ?? "Someone";
+export function inviteClaimedNotificationCopy(): InviteClaimedNotificationCopy {
   return {
     title: "Your invite was claimed.",
-    body: `${name} joined using your link — say hi in Buddies.`,
+    body: "You’re buddies now. Open Sky Grid to say hi.",
   };
 }

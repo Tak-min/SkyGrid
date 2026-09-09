@@ -69,3 +69,6 @@ videos/
 branding/app-store/*/raw/
 branding/app-store/*/framed/
 dev-notes/tools/__pycache__/
+
+# Local secrets (never commit)
+.stats-token.local.txt

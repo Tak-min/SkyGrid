@@ -52,20 +52,24 @@ function fakeMessaging(responseForToken = () => ({ success: true, messageId: "fa
 test("notifies the inviter with a registered device", async () => {
   await reset();
   await makeUser("inviter");
+  await makeUser("claimer");
   await makeDevice("inviter", "token-1", "fcm-token-1");
+  await makeDevice("claimer", "token-2", "fcm-token-2");
   const messaging = fakeMessaging();
 
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "inviter",
     pairId: "claimer_inviter",
-    claimerHandle: "claimer_sky",
     nowMs: NOW,
   });
 
   assert.equal(messaging.calls.length, 1);
   assert.deepEqual(messaging.calls[0].tokens, ["fcm-token-1"]);
-  assert.match(messaging.calls[0].notification.body, /claimer_sky/);
+  assert.equal(messaging.calls[0].notification.body, "You’re buddies now. Open Sky Grid to say hi.");
   assert.equal(messaging.calls[0].data.type, "invite_claimed");
+  assert.deepEqual(Object.keys(messaging.calls[0].data), ["type"]);
+  assert.equal(messaging.calls[0].apns.headers["apns-collapse-id"], "invite_claimed");
+  assert.doesNotMatch(JSON.stringify(messaging.calls[0]), /claimer|inviter|mira_sky|ABCDE12345/);
 });
 
 test("a second notification for the same pair sends nothing — the marker is claimed once", async () => {
@@ -73,10 +77,25 @@ test("a second notification for the same pair sends nothing — the marker is cl
   await makeUser("inviter");
   await makeDevice("inviter", "token-1", "fcm-token-1");
   const messaging = fakeMessaging();
-  const params = { inviterUid: "inviter", pairId: "claimer_inviter", claimerHandle: "claimer_sky", nowMs: NOW };
+  const params = { inviterUid: "inviter", pairId: "claimer_inviter", nowMs: NOW };
 
   await notifyInviterOfClaim(db, messaging, params);
   await notifyInviterOfClaim(db, messaging, params);
+
+  assert.equal(messaging.calls.length, 1);
+});
+
+test("concurrent trigger and callable paths share one marker and send once", async () => {
+  await reset();
+  await makeUser("inviter");
+  await makeDevice("inviter", "token-1", "fcm-token-1");
+  const messaging = fakeMessaging();
+  const params = { inviterUid: "inviter", pairId: "claimer_inviter", nowMs: NOW };
+
+  await Promise.all([
+    notifyInviterOfClaim(db, messaging, params),
+    notifyInviterOfClaim(db, messaging, params),
+  ]);
 
   assert.equal(messaging.calls.length, 1);
 });
@@ -90,13 +109,11 @@ test("a different pairId for the same inviter is a genuinely new notification", 
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "inviter",
     pairId: "claimer-one_inviter",
-    claimerHandle: "one",
     nowMs: NOW,
   });
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "inviter",
     pairId: "claimer-two_inviter",
-    claimerHandle: "two",
     nowMs: NOW,
   });
 
@@ -111,7 +128,6 @@ test("an inviter with no registered device is skipped without attempting a send"
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "inviter",
     pairId: "claimer_inviter",
-    claimerHandle: "claimer_sky",
     nowMs: NOW,
   });
 
@@ -128,7 +144,6 @@ test("an inviter in their own quiet hours receives nothing", async () => {
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "inviter",
     pairId: "claimer_inviter",
-    claimerHandle: "claimer_sky",
     nowMs: midnightTokyo,
   });
 
@@ -142,28 +157,10 @@ test("a deleted inviter account is skipped without error", async () => {
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "never-existed",
     pairId: "claimer_never-existed",
-    claimerHandle: "claimer_sky",
     nowMs: NOW,
   });
 
   assert.equal(messaging.calls.length, 0);
-});
-
-test("a null claimerHandle falls back to generic copy instead of crashing", async () => {
-  await reset();
-  await makeUser("inviter");
-  await makeDevice("inviter", "token-1", "fcm-token-1");
-  const messaging = fakeMessaging();
-
-  await notifyInviterOfClaim(db, messaging, {
-    inviterUid: "inviter",
-    pairId: "claimer_inviter",
-    claimerHandle: null,
-    nowMs: NOW,
-  });
-
-  assert.equal(messaging.calls.length, 1);
-  assert.match(messaging.calls[0].notification.body, /Someone/);
 });
 
 test("a stale device token is deleted after a not-registered response, a healthy one is kept", async () => {
@@ -180,7 +177,6 @@ test("a stale device token is deleted after a not-registered response, a healthy
   await notifyInviterOfClaim(db, messaging, {
     inviterUid: "inviter",
     pairId: "claimer_inviter",
-    claimerHandle: "claimer_sky",
     nowMs: NOW,
   });
 

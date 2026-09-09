@@ -1,17 +1,21 @@
 # PRODUCT-MODEL — Sky Grid website
 
-Updated: 2026-09-07. Scope: waitlist/ only.
+Updated: 2026-09-09. Scope: waitlist/ only.
 
 ## Observed flow
 `site/index.html` links to the live App Store listing, support, terms, and privacy.
 `src/legalRedirect.ts` consolidates the legacy legal host onto skygrid.my with 301 redirects.
 
 ## Measurement
-App Store click rate (App Store link clicks / homepage visits): **unmeasured**.
-No website analytics collector or retrieval path is configured in this source.
-This release corrects supplied imagery and verified listing claims; it makes no
-conversion-improvement claim or measured design decision. Analytics instrumentation
-and conversion evaluation remain separate work; no new visitor collection is added.
+Bio-link traffic by platform and campaign phase: **unmeasured before 2026-09-09**.
+`GET /get/{placement}` now counts App Store redirect GETs by placement without storing
+IP addresses, user agents, cookies, or other request metadata. This denominator is
+redirect GETs, not post views, unique people, App Store page views, or downloads.
+
+Bet: placement-level counts are sufficient to compare broad TikTok/Instagram phases.
+The cheapest test is to assign one bio URL per platform/phase and compare counts with
+the corresponding posting windows. Stop treating this attribution as useful if link
+previews/bots or manual checks materially dominate the small traffic volume.
 
 ## Decision
 Owner requested 1.0.5 parity before automatic approval release. Source: read-only
