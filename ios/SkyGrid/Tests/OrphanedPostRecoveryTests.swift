@@ -495,7 +495,7 @@ struct CollectionObservationStateTests {
             blockedBy: []
         )
         let repository = ValueThenUnavailableFriends(friendship: friendship)
-        repository.acceptResult = .circleFull
+        repository.acceptResult = .circleFull(canUpgrade: true)
         let viewModel = FriendsViewModel(
             uid: "uid",
             friendRepository: repository,
@@ -504,7 +504,7 @@ struct CollectionObservationStateTests {
 
         await viewModel.accept(friendship)
 
-        #expect(viewModel.acceptErrorMessage == "Your buddy circle is full. Remove a buddy before accepting another request.")
+        #expect(viewModel.acceptErrorMessage == "Free Circle holds 5 buddies. Open Settings → Sky Grid Pro for an unlimited Circle.")
         #expect(viewModel.acceptingPairIDs.isEmpty)
     }
 }

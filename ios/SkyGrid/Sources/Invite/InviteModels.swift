@@ -63,6 +63,26 @@ struct InviteClaim: Equatable, Sendable {
     /// server-side. Not currently consumed by the client; carried through in case a
     /// future screen needs to distinguish a first buddy from a replacement one.
     let generation: Int?
+    /// Present only when the caller's own Circle refused the claim. Older Functions
+    /// omit both fields, so the client must treat absence as "do not upsell."
+    let circleLimit: Int?
+    let canUpgradeCircle: Bool
+
+    init(
+        outcome: InviteClaimOutcome,
+        buddyUid: String?,
+        buddyHandle: Handle?,
+        generation: Int?,
+        circleLimit: Int? = nil,
+        canUpgradeCircle: Bool = false
+    ) {
+        self.outcome = outcome
+        self.buddyUid = buddyUid
+        self.buddyHandle = buddyHandle
+        self.generation = generation
+        self.circleLimit = circleLimit
+        self.canUpgradeCircle = canUpgradeCircle
+    }
 }
 
 /// What `revokeInvite` returned.

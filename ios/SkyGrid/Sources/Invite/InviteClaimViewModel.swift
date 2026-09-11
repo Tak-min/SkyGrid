@@ -17,6 +17,7 @@ final class InviteClaimViewModel {
     }
 
     private(set) var step: Step = .loadingPreview
+    private(set) var canUpgradeCircle = false
 
     let code: InviteCode
     let uid: String
@@ -80,6 +81,7 @@ final class InviteClaimViewModel {
         do {
             let result = try await inviteRepository.claimInvite(code: code)
             InviteAnalytics.record(.claimResolved, claimOutcome: result.outcome)
+            canUpgradeCircle = result.canUpgradeCircle
             step = .result(result.outcome)
             // A fresh pairing is the first moment there is anything for
             // `onBuddyPostCreated`'s push to notify this person about.

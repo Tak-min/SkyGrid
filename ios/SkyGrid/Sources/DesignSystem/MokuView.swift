@@ -155,7 +155,10 @@ struct MokuView: View {
             // nothing at all was a dead control for exactly the people who cannot
             // see the animation answer. `Haptics` applies its own audit and
             // inactive-app suppression, so this stays silent where it must.
-            if interactionFeedback { Haptics.characterTouched() }
+            if interactionFeedback {
+                Haptics.characterTouched()
+                SoundEffectPlayer.shared.play(.mokuTap)
+            }
             guard motionAllowed else { return }
             isLeap = true
             motionTrigger += 1

@@ -185,8 +185,10 @@ struct RootView: View {
                 observedDate: today,
                 onOpenCamera: { showCamera = true },
                 subscriptionPlan: services.entitlements.plan,
+                isPro: services.entitlements.isPro,
                 onOpenGrid: { homeDestination = .archive },
                 onOpenBuddies: { homeDestination = .buddies },
+                onUpgrade: { presentPaywall(from: .home) },
                 buddyRefreshToken: buddyRefreshToken,
                 onSharePresentationChanged: { presented in
                     presentations.childIsPresented = presented

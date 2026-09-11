@@ -20,12 +20,14 @@ enum FriendRequestResult: Sendable, Equatable {
     case incomingRequestExists
     case alreadyBuddies
     case blocked
+    case circleFull(canUpgrade: Bool)
+    case buddyCircleFull
 }
 
 enum FriendRequestAcceptanceResult: Sendable, Equatable {
     case accepted
     case alreadyAccepted
-    case circleFull
+    case circleFull(canUpgrade: Bool)
     case buddyCircleFull
     case invalidRequest
 }

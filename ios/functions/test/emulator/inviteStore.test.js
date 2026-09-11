@@ -16,7 +16,8 @@ const {
   acceptBuddyRequest,
   requestBuddyByHandle,
 } = require("../../lib/friendshipStore.js");
-const { INVITE_TTL_MS, MAX_ACCEPTED_BUDDIES } = require("../../lib/invites.js");
+const { FREE_CIRCLE_LIMIT, PRO_CIRCLE_LIMIT, INVITE_TTL_MS } = require("../../lib/invites.js");
+const { CircleEntitlementRequiredError } = require("../../lib/circleEntitlement.js");
 const { RATE_LIMITS } = require("../../lib/rateLimit.js");
 
 /**
@@ -171,7 +172,7 @@ test("a claim that would push the claimer's circle past the cap is refused, and 
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT, "claimer_buddy");
 
   const created = await createInviteForUser(db, "creator", NOW);
   const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
@@ -193,7 +194,7 @@ test("a claim that would push the inviter's circle past the cap is refused, and 
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("creator", MAX_ACCEPTED_BUDDIES, "creator_buddy");
+  await fillCircle("creator", FREE_CIRCLE_LIMIT, "creator_buddy");
 
   const created = await createInviteForUser(db, "creator", NOW);
   const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
@@ -215,7 +216,7 @@ test("a refused claim can still be claimed later once a buddy is removed", async
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT, "claimer_buddy");
 
   const created = await createInviteForUser(db, "creator", NOW);
   const refused = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
@@ -232,29 +233,29 @@ test("a refused claim can still be claimed later once a buddy is removed", async
   );
 });
 
-test("the cap is on the circle size after the claim, not before: 7 existing buddies may still gain an 8th", async () => {
+test("the cap is on the circle size after the claim: four Free buddies may still gain a fifth", async () => {
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES - 1, "claimer_buddy");
-  await fillCircle("creator", MAX_ACCEPTED_BUDDIES - 1, "creator_buddy");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT - 1, "claimer_buddy");
+  await fillCircle("creator", FREE_CIRCLE_LIMIT - 1, "creator_buddy");
 
   const created = await createInviteForUser(db, "creator", NOW);
   const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
 
-  assert.equal(result.outcome, "paired", "8 is the max circle size after the claim, not before it");
+  assert.equal(result.outcome, "paired", "5 is the Free maximum after the claim, not before it");
   assert.equal(
     (await db.collection("friendships").doc("claimer_creator").get()).data().status,
     "accepted"
   );
 });
 
-test("exactly 8 existing buddies on either side refuses the 9th", async () => {
+test("exactly five existing Free buddies on either side refuses the sixth", async () => {
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
-  await fillCircle("creator", MAX_ACCEPTED_BUDDIES, "creator_buddy");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT, "claimer_buddy");
+  await fillCircle("creator", FREE_CIRCLE_LIMIT, "creator_buddy");
 
   const created = await createInviteForUser(db, "creator", NOW);
   const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
@@ -267,7 +268,7 @@ test("a blocked buddy does not count against the circle cap", async () => {
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES - 1, "claimer_buddy");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT - 1, "claimer_buddy");
   await makeUser("claimer_blocked", "claimer_blocked_handle");
   await db.collection("friendships").doc(pairKey("claimer", "claimer_blocked")).set({
     members: ["claimer", "claimer_blocked"].sort(),
@@ -280,16 +281,16 @@ test("a blocked buddy does not count against the circle cap", async () => {
   const created = await createInviteForUser(db, "creator", NOW);
   const result = await claimInvite(db, { code: created.code, callerUid: "claimer", nowMs: NOW });
 
-  // The claimer has MAX_ACCEPTED_BUDDIES - 1 real buddies plus one blocked one; the
+  // The claimer has FREE_CIRCLE_LIMIT - 1 real buddies plus one blocked one; the
   // blocked edge must not count toward the cap or this would wrongly refuse.
   assert.equal(result.outcome, "paired");
 });
 
-test("promoting a pending request into the 8th accepted buddy still respects the cap", async () => {
+test("promoting a pending request beyond the Free limit still respects the cap", async () => {
   await reset();
   await makeUser("creator", "mira_sky");
   await makeUser("claimer", "theo_dawn");
-  await fillCircle("claimer", MAX_ACCEPTED_BUDDIES, "claimer_buddy");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT, "claimer_buddy");
   await db.collection("friendships").doc("claimer_creator").set({
     members: ["claimer", "creator"],
     status: "pending",
@@ -307,6 +308,104 @@ test("promoting a pending request into the 8th accepted buddy still respects the
     "pending",
     "a refused promotion must leave the pending request untouched"
   );
+});
+
+test("a Pro claimer may reach the configured limit but not exceed it", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", PRO_CIRCLE_LIMIT - 1, "pro_claimer_buddy");
+
+  const first = await createInviteForUser(db, "creator", NOW);
+  const accepted = await claimInvite(db, {
+    code: first.code,
+    callerUid: "claimer",
+    nowMs: NOW,
+    circleLimitsByUid: { creator: FREE_CIRCLE_LIMIT, claimer: PRO_CIRCLE_LIMIT },
+  });
+  assert.equal(accepted.outcome, "paired");
+
+  await makeUser("second_creator", "second_creator_handle");
+  const second = await createInviteForUser(db, "second_creator", NOW + 1);
+  const refused = await claimInvite(db, {
+    code: second.code,
+    callerUid: "claimer",
+    nowMs: NOW + 1,
+    circleLimitsByUid: { second_creator: FREE_CIRCLE_LIMIT, claimer: PRO_CIRCLE_LIMIT },
+  });
+  assert.equal(refused.outcome, "circleFull");
+  assert.equal((await db.collection("invites").doc(second.code).get()).data().status, "open");
+});
+
+test("concurrent claims cannot push a Free circle from four to six", async () => {
+  await reset();
+  await makeUser("claimer", "theo_dawn");
+  await makeUser("creator_a", "creator_a_handle");
+  await makeUser("creator_b", "creator_b_handle");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT - 1, "race_buddy");
+  const [inviteA, inviteB] = await Promise.all([
+    createInviteForUser(db, "creator_a", NOW),
+    createInviteForUser(db, "creator_b", NOW),
+  ]);
+
+  const results = await Promise.all([
+    claimInvite(db, { code: inviteA.code, callerUid: "claimer", nowMs: NOW }),
+    claimInvite(db, { code: inviteB.code, callerUid: "claimer", nowMs: NOW }),
+  ]);
+  assert.deepEqual(results.map((result) => result.outcome).sort(), ["circleFull", "paired"]);
+  const accepted = await db.collection("friendships")
+    .where("members", "array-contains", "claimer")
+    .where("status", "==", "accepted")
+    .get();
+  assert.equal(accepted.size, FREE_CIRCLE_LIMIT);
+});
+
+test("concurrent claims cannot push a Pro circle from fourteen to sixteen", async () => {
+  await reset();
+  await makeUser("claimer", "theo_dawn");
+  await makeUser("creator_a", "creator_a_handle");
+  await makeUser("creator_b", "creator_b_handle");
+  await fillCircle("claimer", PRO_CIRCLE_LIMIT - 1, "pro_race_buddy");
+  const [inviteA, inviteB] = await Promise.all([
+    createInviteForUser(db, "creator_a", NOW),
+    createInviteForUser(db, "creator_b", NOW),
+  ]);
+  const limits = {
+    claimer: PRO_CIRCLE_LIMIT,
+    creator_a: FREE_CIRCLE_LIMIT,
+    creator_b: FREE_CIRCLE_LIMIT,
+  };
+
+  const results = await Promise.all([
+    claimInvite(db, { code: inviteA.code, callerUid: "claimer", nowMs: NOW, circleLimitsByUid: limits }),
+    claimInvite(db, { code: inviteB.code, callerUid: "claimer", nowMs: NOW, circleLimitsByUid: limits }),
+  ]);
+  assert.deepEqual(results.map((result) => result.outcome).sort(), ["circleFull", "paired"]);
+  const accepted = await db.collection("friendships")
+    .where("members", "array-contains", "claimer")
+    .where("status", "==", "accepted")
+    .get();
+  assert.equal(accepted.size, PRO_CIRCLE_LIMIT);
+});
+
+test("the transaction emits a typed entitlement requirement before writing", async () => {
+  await reset();
+  await makeUser("creator", "mira_sky");
+  await makeUser("claimer", "theo_dawn");
+  await fillCircle("claimer", FREE_CIRCLE_LIMIT, "claimer_buddy");
+  const created = await createInviteForUser(db, "creator", NOW);
+
+  await assert.rejects(
+    claimInvite(db, {
+      code: created.code,
+      callerUid: "claimer",
+      nowMs: NOW,
+      resolveEntitlementIfNeeded: true,
+    }),
+    CircleEntitlementRequiredError,
+  );
+  assert.equal((await db.collection("invites").doc(created.code).get()).data().status, "open");
+  assert.equal((await db.collection("friendships").doc("claimer_creator").get()).exists, false);
 });
 
 test("a blocked pair cannot be resurrected, and the link survives for after an unblock", async () => {
@@ -645,16 +744,16 @@ test("a handle request is server-authored with the exact friendship shape", asyn
   assert.deepEqual(friendship.blockedBy, []);
 });
 
-test("accepting a pending handle request refuses a ninth buddy without changing it", async () => {
+test("accepting a pending handle request beyond the Free limit leaves it pending", async () => {
   await reset();
   await makeUser("requester", "mira_sky");
   await makeUser("recipient", "theo_dawn");
-  await fillCircle("recipient", MAX_ACCEPTED_BUDDIES, "recipient_buddy");
   await requestBuddyByHandle(db, {
     callerUid: "requester",
     recipientHandle: "theo_dawn",
     nowMs: NOW,
   });
+  await fillCircle("recipient", FREE_CIRCLE_LIMIT, "recipient_buddy");
 
   const result = await acceptBuddyRequest(db, {
     callerUid: "recipient",
@@ -668,12 +767,12 @@ test("accepting a pending handle request refuses a ninth buddy without changing 
   );
 });
 
-test("accepting a pending handle request allows the eighth buddy and is idempotent", async () => {
+test("accepting a pending handle request allows the fifth Free buddy and is idempotent", async () => {
   await reset();
   await makeUser("requester", "mira_sky");
   await makeUser("recipient", "theo_dawn");
-  await fillCircle("requester", MAX_ACCEPTED_BUDDIES - 1, "requester_buddy");
-  await fillCircle("recipient", MAX_ACCEPTED_BUDDIES - 1, "recipient_buddy");
+  await fillCircle("requester", FREE_CIRCLE_LIMIT - 1, "requester_buddy");
+  await fillCircle("recipient", FREE_CIRCLE_LIMIT - 1, "recipient_buddy");
   await requestBuddyByHandle(db, {
     callerUid: "requester",
     recipientHandle: "theo_dawn",
@@ -688,4 +787,19 @@ test("accepting a pending handle request allows the eighth buddy and is idempote
     callerUid: "recipient",
     pairId: "recipient_requester",
   }), { outcome: "alreadyAccepted" });
+});
+
+test("requestBuddy refuses a new pending request when the caller is at their Free limit", async () => {
+  await reset();
+  await makeUser("requester", "mira_sky");
+  await makeUser("recipient", "theo_dawn");
+  await fillCircle("requester", FREE_CIRCLE_LIMIT, "requester_buddy");
+
+  const result = await requestBuddyByHandle(db, {
+    callerUid: "requester",
+    recipientHandle: "theo_dawn",
+    nowMs: NOW,
+  });
+  assert.deepEqual(result, { outcome: "circleFull" });
+  assert.equal((await db.collection("friendships").doc("recipient_requester").get()).exists, false);
 });

@@ -50,6 +50,12 @@ struct CameraView: View {
             else { return }
             recoverCamera()
         }
+        .onChange(of: viewModel.phase) { _, phase in
+            guard case .failed(let failure) = phase,
+                  failure != .permissionDenied
+            else { return }
+            SoundEffectPlayer.shared.play(.recoverableError)
+        }
         .onDisappear {
             viewModel.stop()
         }
@@ -194,6 +200,7 @@ struct CameraView: View {
         guard !isConfirming else { return }
         guard let draft = viewModel.confirmCapture() else {
             confirmationError = "Your photo could not be saved."
+            SoundEffectPlayer.shared.play(.recoverableError)
             return
         }
 
@@ -209,9 +216,11 @@ struct CameraView: View {
                 // succeed. Say so plainly instead of the generic message, which
                 // read as "try again" when trying again cannot help.
                 confirmationError = "You've already recorded today's sky."
+                SoundEffectPlayer.shared.play(.recoverableError)
                 isConfirming = false
             } catch {
                 confirmationError = "Your post could not be saved."
+                SoundEffectPlayer.shared.play(.recoverableError)
                 isConfirming = false
             }
         }

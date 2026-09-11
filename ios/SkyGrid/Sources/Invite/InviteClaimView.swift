@@ -192,7 +192,9 @@ struct InviteClaimView: View {
             terminal(
                 icon: "person.2.badge.minus",
                 title: "Your circle is full",
-                message: "Remove a buddy in Settings before joining someone new.",
+                message: viewModel.canUpgradeCircle
+                    ? "Free Circle holds 5 buddies. Open Settings → Sky Grid Pro for an unlimited Circle."
+                    : "Your Circle has reached its capacity. Remove a buddy in Settings before joining someone new.",
                 primaryTitle: "Done",
                 primaryAction: onFinished
             )
@@ -200,7 +202,7 @@ struct InviteClaimView: View {
             terminal(
                 icon: "person.2.badge.minus",
                 title: "This circle is full",
-                message: "Ask them to make room, then try this link again.",
+                message: "Ask them to make room—or, on Free, open Settings → Sky Grid Pro for an unlimited Circle—then try again.",
                 primaryTitle: "Done",
                 primaryAction: onFinished
             )

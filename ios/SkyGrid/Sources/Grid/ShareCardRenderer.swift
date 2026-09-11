@@ -35,4 +35,38 @@ enum ShareCardRenderer {
         renderer.scale = 1
         return renderer.uiImage
     }
+
+    static func renderTogether(
+        ownPost: SkyPost,
+        buddyPost: SkyPost,
+        ownPhoto: UIImage?,
+        buddyPhoto: UIImage?,
+        buddyName: String,
+        handle: Handle? = nil
+    ) -> UIImage? {
+        let renderer = ImageRenderer(content: TogetherCardExportView(
+            ownPost: ownPost,
+            buddyPost: buddyPost,
+            ownPhoto: ownPhoto,
+            buddyPhoto: buddyPhoto,
+            buddyName: buddyName,
+            handle: handle
+        ))
+        renderer.scale = 1
+        return renderer.uiImage
+    }
+
+    static func renderWeekly(
+        posts: [SkyPost],
+        photos: [LocalDate: UIImage],
+        handle: Handle? = nil
+    ) -> UIImage? {
+        let renderer = ImageRenderer(content: WeeklyRecapExportView(
+            posts: posts,
+            photos: photos,
+            handle: handle
+        ))
+        renderer.scale = 1
+        return renderer.uiImage
+    }
 }

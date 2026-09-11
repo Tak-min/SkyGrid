@@ -87,6 +87,8 @@ final class FirebaseFriendRepository: FriendRepository {
             case "incomingRequestExists": return .incomingRequestExists
             case "alreadyBuddies": return .alreadyBuddies
             case "blocked": return .blocked
+            case "circleFull": return .circleFull(canUpgrade: payload["canUpgradeCircle"] as? Bool ?? false)
+            case "buddyCircleFull": return .buddyCircleFull
             case "unknownHandle", "ownHandle":
                 throw RepositoryError.unknown(underlying: "The buddy handle is no longer available.")
             default:
@@ -108,7 +110,7 @@ final class FirebaseFriendRepository: FriendRepository {
             switch rawOutcome {
             case "accepted": return .accepted
             case "alreadyAccepted": return .alreadyAccepted
-            case "circleFull": return .circleFull
+            case "circleFull": return .circleFull(canUpgrade: payload["canUpgradeCircle"] as? Bool ?? false)
             case "buddyCircleFull": return .buddyCircleFull
             case "invalidRequest": return .invalidRequest
             default: throw RepositoryError.unknown(underlying: "acceptBuddy returned an unknown outcome.")

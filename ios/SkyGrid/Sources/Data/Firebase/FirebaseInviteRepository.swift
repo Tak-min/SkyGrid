@@ -67,7 +67,9 @@ final class FirebaseInviteRepository: InviteRepository {
                 outcome: outcome,
                 buddyUid: payload["buddyUid"] as? String,
                 buddyHandle: (payload["buddyHandle"] as? String).flatMap(Handle.init(raw:)),
-                generation: (payload["generation"] as? NSNumber)?.intValue
+                generation: (payload["generation"] as? NSNumber)?.intValue,
+                circleLimit: (payload["circleLimit"] as? NSNumber)?.intValue,
+                canUpgradeCircle: payload["canUpgradeCircle"] as? Bool ?? false
             )
         } catch {
             throw FirebaseRepositoryError.map(error)

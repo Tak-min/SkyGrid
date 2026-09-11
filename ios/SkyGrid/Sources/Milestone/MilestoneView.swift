@@ -34,6 +34,7 @@ struct MilestoneView: View {
         .scaleEffect(hasAppeared ? 1 : 0.94)
         .task {
             Haptics.milestoneReached()
+            SoundEffectPlayer.shared.play(.streakMilestone)
             // Reduce Motion still gets the state change, just without the spring —
             // skipping the assignment entirely would leave the screen invisible.
             if reduceMotion {

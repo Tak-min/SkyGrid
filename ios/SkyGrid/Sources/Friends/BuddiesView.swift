@@ -397,13 +397,35 @@ private struct BuddyNameRow: View {
                 }
                 .overlay {
                     if case .sealed = revealState {
-                        // One mark for sealed, not a ring and a glyph stacked on
-                        // the same 42pt circle.
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(SGT.ink3)
+                        // Per DESIGN.md's "identity motif" note, a sealed buddy
+                        // should borrow the mosaic's grid-of-tiles language
+                        // instead of a flat fill with a lone padlock. A faint 2x2
+                        // subdivision (rule-colored hairlines only, no gradient —
+                        // DESIGN.md restricts gradients to real sampled sky data)
+                        // hints that a sky lives in this cell without revealing
+                        // any of the buddy's actual capture.
+                        SealedTileGridTexture()
+                            .stroke(SGT.rule.opacity(0.6), lineWidth: 1)
+                            .clipShape(RoundedRectangle(cornerRadius: Self.tileRadius, style: .continuous))
                     }
                 }
+                .overlay {
+                    if case .sealed = revealState {
+                        // The lock reads as a considered mark, not a leftover
+                        // system glyph, once it sits in its own small badge
+                        // rather than floating directly on the tile fill.
+                        Circle()
+                            .fill(SGT.ghost)
+                            .frame(width: 22, height: 22)
+                            .overlay {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .symbolRenderingMode(.hierarchical)
+                                    .foregroundStyle(SGT.ink2)
+                            }
+                    }
+                }
+                .shadow(color: SGT.ink.opacity(sealedShadowOpacity), radius: 3, y: 1)
             VStack(alignment: .leading, spacing: 3) {
                 Text(profile?.displayName ?? "Buddy")
                     .font(SGFont.body(16))
@@ -462,6 +484,13 @@ private struct BuddyNameRow: View {
         }
     }
 
+    /// A sealed tile lifts slightly off the row to read as a considered object
+    /// rather than a flat placeholder; every other state stays shadowless.
+    private var sealedShadowOpacity: Double {
+        if case .sealed = revealState { return 0.08 }
+        return 0
+    }
+
     private var avatarStrokeColor: Color {
         switch revealState {
         case .posted:
@@ -477,6 +506,21 @@ private struct BuddyNameRow: View {
         case .posted: "Captured today"
         case .notYet: "Not yet today"
         }
+    }
+}
+
+/// A faint 2x2 crosshair, drawn as hairlines only (never a fill or gradient),
+/// that echoes the mosaic's grid-of-tiles identity on a sealed buddy tile.
+/// Kept as its own `Shape` rather than inline `Path` drawing so the sealed
+/// texture stays a single reusable definition instead of copy-pasted geometry.
+private struct SealedTileGridTexture: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        return path
     }
 }
 

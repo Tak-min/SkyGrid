@@ -1,11 +1,14 @@
 import { Timestamp, type Firestore, type QuerySnapshot } from "firebase-admin/firestore";
 import {
-  MAX_ACCEPTED_BUDDIES,
   applyCircleCap,
   existingFriendshipFrom,
   type ClaimDecision,
 } from "./invites.js";
 import { AccountUnavailableError, MalformedFriendshipError, pairID } from "./inviteStore.js";
+import {
+  limitsOrRequireLiveEntitlements,
+  type CircleLimitsByUid,
+} from "./circleEntitlement.js";
 
 const FRIENDSHIPS = "friendships";
 const HANDLES = "handles";
@@ -17,6 +20,8 @@ export type BuddyRequestOutcome =
   | "incomingRequestExists"
   | "alreadyBuddies"
   | "blocked"
+  | "circleFull"
+  | "buddyCircleFull"
   | "unknownHandle"
   | "ownHandle";
 
@@ -48,7 +53,13 @@ function countUnblockedAcceptedFriendships(snapshot: QuerySnapshot): number {
  */
 export async function requestBuddyByHandle(
   db: Firestore,
-  input: { callerUid: string; recipientHandle: string; nowMs: number },
+  input: {
+    callerUid: string;
+    recipientHandle: string;
+    nowMs: number;
+    circleLimitsByUid?: CircleLimitsByUid;
+    resolveEntitlementIfNeeded?: boolean;
+  },
 ): Promise<{ outcome: BuddyRequestOutcome }> {
   const { callerUid, recipientHandle, nowMs } = input;
   if (!validHandle(recipientHandle)) return { outcome: "unknownHandle" };
@@ -84,6 +95,33 @@ export async function requestBuddyByHandle(
     }
 
     if (!friendshipSnapshot.exists) {
+      const acceptedQuery = (uid: string) => transaction.get(
+        db.collection(FRIENDSHIPS).where("members", "array-contains", uid).where("status", "==", "accepted"),
+      );
+      const [recipientFriendships, callerFriendships] = await Promise.all([
+        acceptedQuery(recipientUid),
+        acceptedQuery(callerUid),
+      ]);
+      const inviterAcceptedCount = countUnblockedAcceptedFriendships(recipientFriendships);
+      const claimerAcceptedCount = countUnblockedAcceptedFriendships(callerFriendships);
+      const decision = applyCircleCap({
+        decision: { outcome: "paired", consumesInvite: false, friendshipAction: "create" },
+        inviterAcceptedCount,
+        claimerAcceptedCount,
+        limits: limitsOrRequireLiveEntitlements({
+          // Outcome names stay caller-relative: the handle recipient is the
+          // "buddy" when an early request is refused.
+          inviterUid: recipientUid,
+          claimerUid: callerUid,
+          inviterAcceptedCount,
+          claimerAcceptedCount,
+          suppliedLimitsByUid: input.circleLimitsByUid,
+          resolveEntitlementIfNeeded: input.resolveEntitlementIfNeeded,
+        }),
+      });
+      if (decision.outcome === "circleFull" || decision.outcome === "buddyCircleFull") {
+        return { outcome: decision.outcome };
+      }
       transaction.create(friendshipSnapshot.ref, {
         members: [callerUid, recipientUid].sort(),
         status: "pending",
@@ -115,7 +153,12 @@ export async function requestBuddyByHandle(
  */
 export async function acceptBuddyRequest(
   db: Firestore,
-  input: { callerUid: string; pairId: string },
+  input: {
+    callerUid: string;
+    pairId: string;
+    circleLimitsByUid?: CircleLimitsByUid;
+    resolveEntitlementIfNeeded?: boolean;
+  },
 ): Promise<{ outcome: BuddyAcceptOutcome }> {
   const { callerUid, pairId } = input;
 
@@ -155,10 +198,20 @@ export async function acceptBuddyRequest(
       acceptedQuery(callerUid),
     ]);
 
+    const inviterAcceptedCount = countUnblockedAcceptedFriendships(requesterFriendships);
+    const claimerAcceptedCount = countUnblockedAcceptedFriendships(callerFriendships);
     const decision: ClaimDecision = applyCircleCap({
       decision: { outcome: "paired", consumesInvite: false, friendshipAction: "promote" },
-      inviterAcceptedCount: countUnblockedAcceptedFriendships(requesterFriendships),
-      claimerAcceptedCount: countUnblockedAcceptedFriendships(callerFriendships),
+      inviterAcceptedCount,
+      claimerAcceptedCount,
+      limits: limitsOrRequireLiveEntitlements({
+        inviterUid: requesterUid,
+        claimerUid: callerUid,
+        inviterAcceptedCount,
+        claimerAcceptedCount,
+        suppliedLimitsByUid: input.circleLimitsByUid,
+        resolveEntitlementIfNeeded: input.resolveEntitlementIfNeeded,
+      }),
     });
     if (decision.outcome === "circleFull" || decision.outcome === "buddyCircleFull") {
       return { outcome: decision.outcome };
@@ -168,5 +221,3 @@ export async function acceptBuddyRequest(
     return { outcome: "accepted" as const };
   });
 }
-
-export { MAX_ACCEPTED_BUDDIES };

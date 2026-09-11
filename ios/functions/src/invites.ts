@@ -56,19 +56,27 @@ export const INVITE_LINK_BASE = "https://skygrid.my/i/";
 export const MAX_OPEN_INVITES_PER_USER = 3;
 
 /**
- * The N-way circle cap (see `dev-notes/virality-stickiness-assessment_2026-09-04.md` §6):
- * the pairwise `friendships/{pairId}` model already supports any number of buddies per
- * user, so nothing stops an unbounded circle without a server-side limit. This is that
- * limit — a growth/product decision, not a technical one, so it lives in the callable
- * transaction rather than `firestore.rules` (Rules cannot count a user's edges without a
- * fan-out counter).
+ * Circle capacity is a product entitlement, not one global invariant. Both values are
+ * enforced by the server because Firestore Rules cannot count a user's accepted edges.
+ * The cap applies to the count *after* the new edge is accepted.
  *
- * The cap is on the count *after* the claim succeeds, not before: a user with exactly 7
- * accepted, unblocked buddies may still gain an 8th, but not a 9th. This is what "cap ~8"
- * in the design note cashes out to — 8 is the maximum circle size a claim may produce,
- * never a threshold that must already be clear beforehand.
+ * Pro is marketed as "unlimited," but a literal unbounded circle would remove the
+ * abuse/spam ceiling this cap exists for (see hard-circle-cap-authority_2026-09-04.md).
+ * 100 is the effective ceiling: far beyond any real daily-sky-sharing circle, so no
+ * genuine Pro user should ever feel it, while still bounding per-user Firestore reads.
  */
-export const MAX_ACCEPTED_BUDDIES = 8;
+export const FREE_CIRCLE_LIMIT = 5;
+export const PRO_CIRCLE_LIMIT = 100;
+
+export interface CircleLimits {
+  inviterLimit: number;
+  claimerLimit: number;
+}
+
+export const FREE_CIRCLE_LIMITS: CircleLimits = {
+  inviterLimit: FREE_CIRCLE_LIMIT,
+  claimerLimit: FREE_CIRCLE_LIMIT,
+};
 
 export type InviteStatus = "open" | "claimed" | "revoked";
 
@@ -121,9 +129,9 @@ export type ClaimOutcome =
   | "claimed"
   | "unknown"
   | "ownInvite"
-  /** The *claimer's* circle is already at `MAX_ACCEPTED_BUDDIES` — theirs to fix (remove a buddy). */
+  /** The *claimer's* circle is already at their entitlement-dependent limit. */
   | "circleFull"
-  /** The *inviter's* circle is already at `MAX_ACCEPTED_BUDDIES`. Named after `buddyUid`/`buddyHandle`
+  /** The *inviter's* circle is already at their entitlement-dependent limit. Named after `buddyUid`/`buddyHandle`
    * on `ClaimResult`, which likewise mean "the other party, from the claimer's point of view". */
   | "buddyCircleFull";
 
@@ -251,7 +259,7 @@ export function resolveClaim(input: {
 
 /**
  * Overrides a `create`/`promote` decision with a refusal when either side's circle would
- * exceed `MAX_ACCEPTED_BUDDIES` after this claim. Kept as a second, pure function rather
+ * exceed that person's entitlement-dependent limit after this claim. Kept as a second, pure function rather
  * than folded into `resolveClaim` because the counts it needs come from two extra
  * Firestore queries that only the `friendshipAction !== "none"` branch ever needs to run —
  * `claimInvite` calls `resolveClaim` first and only pays for those reads, and for this
@@ -270,14 +278,20 @@ export function applyCircleCap(input: {
   decision: ClaimDecision;
   inviterAcceptedCount: number;
   claimerAcceptedCount: number;
+  limits?: CircleLimits;
 }): ClaimDecision {
-  const { decision, inviterAcceptedCount, claimerAcceptedCount } = input;
+  const {
+    decision,
+    inviterAcceptedCount,
+    claimerAcceptedCount,
+    limits = FREE_CIRCLE_LIMITS,
+  } = input;
   if (decision.friendshipAction === "none") return decision;
 
-  if (claimerAcceptedCount + 1 > MAX_ACCEPTED_BUDDIES) {
+  if (claimerAcceptedCount + 1 > limits.claimerLimit) {
     return { outcome: "circleFull", consumesInvite: false, friendshipAction: "none" };
   }
-  if (inviterAcceptedCount + 1 > MAX_ACCEPTED_BUDDIES) {
+  if (inviterAcceptedCount + 1 > limits.inviterLimit) {
     return { outcome: "buddyCircleFull", consumesInvite: false, friendshipAction: "none" };
   }
   return decision;

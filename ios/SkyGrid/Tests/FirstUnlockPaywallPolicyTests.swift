@@ -158,7 +158,6 @@ struct TodayViewModelBuddyRefreshTests {
         #expect(signal.reading?.buddyStatuses.first(where: { $0.uid == "buddy8" })?.revealState == .posted(post("buddy8")))
         #expect(signal.reading?.buddyStatuses.first(where: { $0.uid == "buddy7" })?.revealState == .notYet)
         #expect(signal.reading?.mutuallyUnlockedBuddyCount == 1)
-        #expect(BuddyRow.displayLimit > 8)
         viewModel.stop()
     }
 

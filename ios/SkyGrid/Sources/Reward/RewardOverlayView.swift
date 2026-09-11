@@ -79,15 +79,24 @@ struct RewardOverlayView: View {
             }
         }
         .onChange(of: controller?.beat) { _, beat in
+            guard let beat else { return }
+            let revealedCount = RewardRevealPolicy.verifiedUnlockedCount(
+                for: moment.localDate,
+                reading: revealSignal.reading
+            )
+            if let effect = RewardSoundPolicy.effect(
+                for: beat,
+                revealedCount: revealedCount,
+                reducedMotion: reduceMotion
+            ) {
+                SoundEffectPlayer.shared.play(effect)
+            }
             guard beat == .settle else { return }
             UIAccessibility.post(
                 notification: .announcement,
                 argument: accessibilityAnnouncement(
                     for: .settle,
-                    revealedCount: RewardRevealPolicy.verifiedUnlockedCount(
-                        for: moment.localDate,
-                        reading: revealSignal.reading
-                    )
+                    revealedCount: revealedCount
                 )
             )
         }

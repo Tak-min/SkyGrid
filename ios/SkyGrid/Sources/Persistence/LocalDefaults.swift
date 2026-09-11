@@ -37,6 +37,11 @@ enum LocalDefaults {
     private static let logger = Logger(subsystem: "com.takmin.skygrid", category: "persistence")
 #endif
 
+    /// App-wide audio preference. Sound remains supplemental: muting it never
+    /// changes state, animation, haptics, copy, or VoiceOver announcements.
+    @UserDefaultBacked(key: "soundEffectsEnabled", defaultValue: true)
+    static var soundEffectsEnabled: Bool
+
     @UserDefaultBacked(key: "lastKnownTimeZoneIdentifier", defaultValue: nil)
     static var lastKnownTimeZoneIdentifier: String?
 

@@ -166,6 +166,12 @@ final class FriendsViewModel {
                 requestFeedback = .information("You and @\(recipientHandle.value) are already buddies.")
             case .blocked:
                 requestFeedback = .failure("This connection can't be requested right now. Review blocked buddies in Settings.")
+            case .circleFull(let canUpgrade):
+                requestFeedback = .failure(canUpgrade
+                    ? "Free Circle holds 5 buddies. Open Settings → Sky Grid Pro for an unlimited Circle."
+                    : "Your Circle has reached its capacity. Remove a buddy before sending another request.")
+            case .buddyCircleFull:
+                requestFeedback = .failure("This buddy's Circle is at its limit. Ask them to make room—or, on Free, open Settings → Sky Grid Pro for an unlimited Circle.")
             }
             return false
         } catch let error as RepositoryError {
@@ -198,10 +204,12 @@ final class FriendsViewModel {
                 // A fresh pairing is the first moment there is anything for
                 // `onBuddyPostCreated`'s push to notify this person about.
                 await BuddyPairingNotificationPermission.requestIfNeeded()
-            case .circleFull:
-                acceptErrorMessage = "Your buddy circle is full. Remove a buddy before accepting another request."
+            case .circleFull(let canUpgrade):
+                acceptErrorMessage = canUpgrade
+                    ? "Free Circle holds 5 buddies. Open Settings → Sky Grid Pro for an unlimited Circle."
+                    : "Your Circle has reached its capacity. Remove a buddy before accepting another request."
             case .buddyCircleFull:
-                acceptErrorMessage = "This buddy's circle is full right now. They can make room and resend the request."
+                acceptErrorMessage = "This buddy's Circle is at its limit. Ask them to make room—or, on Free, open Settings → Sky Grid Pro for an unlimited Circle."
             case .invalidRequest:
                 acceptErrorMessage = "This request is no longer available. Refresh your buddies and try again."
             }

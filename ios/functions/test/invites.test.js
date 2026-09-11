@@ -7,7 +7,8 @@ const {
   INVITE_LINK_BASE,
   INVITE_RETENTION_AFTER_EXPIRY_MS,
   INVITE_TTL_MS,
-  MAX_ACCEPTED_BUDDIES,
+  FREE_CIRCLE_LIMIT,
+  PRO_CIRCLE_LIMIT,
   applyCircleCap,
   existingFriendshipFrom,
   formatInviteCode,
@@ -205,7 +206,7 @@ test("re-claiming between people who are already buddies spends the code and add
 test("applyCircleCap leaves a no-op decision untouched, since nothing would grow either circle", () => {
   const decision = { outcome: "alreadyBuddies", consumesInvite: true, friendshipAction: "none" };
   assert.deepEqual(
-    applyCircleCap({ decision, inviterAcceptedCount: MAX_ACCEPTED_BUDDIES, claimerAcceptedCount: MAX_ACCEPTED_BUDDIES }),
+    applyCircleCap({ decision, inviterAcceptedCount: FREE_CIRCLE_LIMIT, claimerAcceptedCount: FREE_CIRCLE_LIMIT }),
     decision
   );
 });
@@ -215,8 +216,8 @@ test("applyCircleCap allows a create/promote that lands exactly at the cap", () 
   assert.deepEqual(
     applyCircleCap({
       decision,
-      inviterAcceptedCount: MAX_ACCEPTED_BUDDIES - 1,
-      claimerAcceptedCount: MAX_ACCEPTED_BUDDIES - 1,
+      inviterAcceptedCount: FREE_CIRCLE_LIMIT - 1,
+      claimerAcceptedCount: FREE_CIRCLE_LIMIT - 1,
     }),
     decision
   );
@@ -225,7 +226,7 @@ test("applyCircleCap allows a create/promote that lands exactly at the cap", () 
 test("applyCircleCap refuses when the claimer's own circle would exceed the cap", () => {
   const decision = { outcome: "paired", consumesInvite: true, friendshipAction: "create" };
   assert.deepEqual(
-    applyCircleCap({ decision, inviterAcceptedCount: 0, claimerAcceptedCount: MAX_ACCEPTED_BUDDIES }),
+    applyCircleCap({ decision, inviterAcceptedCount: 0, claimerAcceptedCount: FREE_CIRCLE_LIMIT }),
     { outcome: "circleFull", consumesInvite: false, friendshipAction: "none" }
   );
 });
@@ -233,7 +234,7 @@ test("applyCircleCap refuses when the claimer's own circle would exceed the cap"
 test("applyCircleCap refuses when the inviter's circle would exceed the cap", () => {
   const decision = { outcome: "paired", consumesInvite: true, friendshipAction: "create" };
   assert.deepEqual(
-    applyCircleCap({ decision, inviterAcceptedCount: MAX_ACCEPTED_BUDDIES, claimerAcceptedCount: 0 }),
+    applyCircleCap({ decision, inviterAcceptedCount: FREE_CIRCLE_LIMIT, claimerAcceptedCount: 0 }),
     { outcome: "buddyCircleFull", consumesInvite: false, friendshipAction: "none" }
   );
 });
@@ -243,10 +244,41 @@ test("applyCircleCap reports the claimer's own full circle first when both sides
   assert.deepEqual(
     applyCircleCap({
       decision,
-      inviterAcceptedCount: MAX_ACCEPTED_BUDDIES,
-      claimerAcceptedCount: MAX_ACCEPTED_BUDDIES,
+      inviterAcceptedCount: FREE_CIRCLE_LIMIT,
+      claimerAcceptedCount: FREE_CIRCLE_LIMIT,
     }),
     { outcome: "circleFull", consumesInvite: false, friendshipAction: "none" }
+  );
+});
+
+test("applyCircleCap applies Pro and Free limits independently", () => {
+  const decision = { outcome: "paired", consumesInvite: true, friendshipAction: "create" };
+  assert.deepEqual(
+    applyCircleCap({
+      decision,
+      inviterAcceptedCount: PRO_CIRCLE_LIMIT - 1,
+      claimerAcceptedCount: FREE_CIRCLE_LIMIT,
+      limits: { inviterLimit: PRO_CIRCLE_LIMIT, claimerLimit: FREE_CIRCLE_LIMIT },
+    }),
+    { outcome: "circleFull", consumesInvite: false, friendshipAction: "none" }
+  );
+  assert.deepEqual(
+    applyCircleCap({
+      decision,
+      inviterAcceptedCount: PRO_CIRCLE_LIMIT - 1,
+      claimerAcceptedCount: PRO_CIRCLE_LIMIT - 1,
+      limits: { inviterLimit: PRO_CIRCLE_LIMIT, claimerLimit: PRO_CIRCLE_LIMIT },
+    }),
+    decision
+  );
+  assert.deepEqual(
+    applyCircleCap({
+      decision,
+      inviterAcceptedCount: PRO_CIRCLE_LIMIT,
+      claimerAcceptedCount: 0,
+      limits: { inviterLimit: PRO_CIRCLE_LIMIT, claimerLimit: FREE_CIRCLE_LIMIT },
+    }),
+    { outcome: "buddyCircleFull", consumesInvite: false, friendshipAction: "none" }
   );
 });
 

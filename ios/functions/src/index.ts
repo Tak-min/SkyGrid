@@ -12,7 +12,7 @@ import {
   type RevenueCatSubscriptionEvent,
   type SubscriptionSnapshot,
 } from "./subscriptionState.js";
-import { formatInviteCode } from "./invites.js";
+import { FREE_CIRCLE_LIMIT, formatInviteCode } from "./invites.js";
 import {
   AccountUnavailableError,
   CodeExhaustionError,
@@ -37,11 +37,61 @@ import {
   acceptBuddyRequest,
   requestBuddyByHandle,
 } from "./friendshipStore.js";
+import {
+  CircleEntitlementRequiredError,
+  RevenueCatEntitlementUnavailableError,
+  fetchLiveCircleLimitsByUid,
+  type CircleLimitsByUid,
+} from "./circleEntitlement.js";
 
 admin.initializeApp();
 setGlobalOptions({ region: "us-central1", maxInstances: 2 });
 const revenueCatWebhookAuthorization = defineSecret("REVENUECAT_WEBHOOK_AUTHORIZATION");
+const revenueCatSecretAPIKey = defineSecret("REVENUECAT_SECRET_API_KEY");
 const inviteCallableOptions = { enforceAppCheck: true, region: "asia-northeast1" } as const;
+const circleCapCallableOptions = {
+  ...inviteCallableOptions,
+  secrets: [revenueCatSecretAPIKey],
+};
+
+async function withLiveCircleEntitlements<T>(
+  operation: (limitsByUid: CircleLimitsByUid | undefined) => Promise<T>,
+  nowMs: number,
+): Promise<{ value: T; limitsByUid?: CircleLimitsByUid }> {
+  let limitsByUid: CircleLimitsByUid | undefined;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return { value: await operation(limitsByUid), limitsByUid };
+    } catch (error: unknown) {
+      if (!(error instanceof CircleEntitlementRequiredError)) throw error;
+      const resolved = await fetchLiveCircleLimitsByUid({
+        inviterUid: error.inviterUid,
+        claimerUid: error.claimerUid,
+        apiKey: revenueCatSecretAPIKey.value(),
+        nowMs,
+      });
+      limitsByUid = { ...limitsByUid, ...resolved };
+    }
+  }
+  throw new RevenueCatEntitlementUnavailableError("Circle participants changed during verification.");
+}
+
+function withCallerCircleMetadata<T extends { outcome: string }>(
+  result: T,
+  callerUid: string,
+  limitsByUid: CircleLimitsByUid | undefined,
+): T | (T & { circleLimit: number; canUpgradeCircle: boolean }) {
+  if (result.outcome !== "circleFull") return result;
+  const circleLimit = limitsByUid?.[callerUid] ?? FREE_CIRCLE_LIMIT;
+  return { ...result, circleLimit, canUpgradeCircle: circleLimit === FREE_CIRCLE_LIMIT };
+}
+
+function mapCircleEntitlementError(error: unknown): void {
+  if (error instanceof RevenueCatEntitlementUnavailableError
+    || error instanceof CircleEntitlementRequiredError) {
+    throw new HttpsError("unavailable", "Could not verify Sky Grid Pro access. Try again.");
+  }
+}
 
 /**
  * Deletes one authenticated account. The callable deliberately accepts no UID:
@@ -270,7 +320,7 @@ export const previewInvite = onCall(inviteCallableOptions, async (request) => {
 });
 
 /** Spends a code and pairs the two people, atomically. See `claimInvite` in the store. */
-export const claimInviteCode = onCall(inviteCallableOptions, async (request) => {
+export const claimInviteCode = onCall(circleCapCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
   const nowMs = Date.now();
   await enforceRateLimit(uid, "claim", nowMs);
@@ -282,7 +332,17 @@ export const claimInviteCode = onCall(inviteCallableOptions, async (request) => 
   if (!code) return { outcome: "unknown" };
 
   try {
-    const result = await claimInvite(admin.firestore(), { code, callerUid: uid, nowMs });
+    const resolved = await withLiveCircleEntitlements(
+      (circleLimitsByUid) => claimInvite(admin.firestore(), {
+        code,
+        callerUid: uid,
+        nowMs,
+        circleLimitsByUid,
+        resolveEntitlementIfNeeded: true,
+      }),
+      nowMs,
+    );
+    const result = withCallerCircleMetadata(resolved.value, uid, resolved.limitsByUid);
     // This fallback also covers a claim that promotes an existing pending friendship:
     // no document-create event exists for that transition. A newly-created accepted
     // friendship races the Firestore trigger through the same marker, so only one path
@@ -304,6 +364,7 @@ export const claimInviteCode = onCall(inviteCallableOptions, async (request) => 
     }
     return result;
   } catch (error: unknown) {
+    mapCircleEntitlementError(error);
     if (error instanceof AccountUnavailableError) {
       throw new HttpsError("failed-precondition", "This account is being deleted.");
     }
@@ -348,7 +409,7 @@ export const revokeInvite = onCall(inviteCallableOptions, async (request) => {
  * Firestore create: Rules cannot count accepted edges, so client authority here would
  * permanently bypass the circle cap enforced by both this path and invite claims.
  */
-export const requestBuddy = onCall(inviteCallableOptions, async (request) => {
+export const requestBuddy = onCall(circleCapCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
   const nowMs = Date.now();
   await enforceRateLimit(uid, "buddyRequest", nowMs);
@@ -357,8 +418,19 @@ export const requestBuddy = onCall(inviteCallableOptions, async (request) => {
     throw new HttpsError("invalid-argument", "Invalid request.");
   }
   try {
-    return await requestBuddyByHandle(admin.firestore(), { callerUid: uid, recipientHandle, nowMs });
+    const resolved = await withLiveCircleEntitlements(
+      (circleLimitsByUid) => requestBuddyByHandle(admin.firestore(), {
+        callerUid: uid,
+        recipientHandle,
+        nowMs,
+        circleLimitsByUid,
+        resolveEntitlementIfNeeded: true,
+      }),
+      nowMs,
+    );
+    return withCallerCircleMetadata(resolved.value, uid, resolved.limitsByUid);
   } catch (error: unknown) {
+    mapCircleEntitlementError(error);
     if (error instanceof AccountUnavailableError) {
       throw new HttpsError("failed-precondition", "Choose a handle before adding a buddy.");
     }
@@ -375,7 +447,7 @@ export const requestBuddy = onCall(inviteCallableOptions, async (request) => {
  * Promotes a pending buddy request only when both accepted circles still have room.
  * The transaction owns the status transition, closing the old client-side bypass.
  */
-export const acceptBuddy = onCall(inviteCallableOptions, async (request) => {
+export const acceptBuddy = onCall(circleCapCallableOptions, async (request) => {
   const uid = requireCaller(request.auth?.uid);
   const nowMs = Date.now();
   await enforceRateLimit(uid, "buddyAccept", nowMs);
@@ -384,8 +456,18 @@ export const acceptBuddy = onCall(inviteCallableOptions, async (request) => {
     throw new HttpsError("invalid-argument", "Invalid request.");
   }
   try {
-    return await acceptBuddyRequest(admin.firestore(), { callerUid: uid, pairId });
+    const resolved = await withLiveCircleEntitlements(
+      (circleLimitsByUid) => acceptBuddyRequest(admin.firestore(), {
+        callerUid: uid,
+        pairId,
+        circleLimitsByUid,
+        resolveEntitlementIfNeeded: true,
+      }),
+      nowMs,
+    );
+    return withCallerCircleMetadata(resolved.value, uid, resolved.limitsByUid);
   } catch (error: unknown) {
+    mapCircleEntitlementError(error);
     logger.error("Buddy accept failed.", { uid, errorCode: errorCodeForLog(error) });
     throw new HttpsError("internal", "Could not accept the request.");
   }
@@ -476,7 +558,9 @@ function relationshipID(first: string, second: string): string {
  * iOS configures RevenueCat with the Firebase UID as its App User ID, so the
  * server does not need to accept a client-provided identity. The mirror supports
  * reporting and support tooling only; the app continues to verify entitlement
- * access with RevenueCat before it unlocks Pro.
+ * access with RevenueCat before it unlocks Pro. Circle-cap enforcement also does
+ * not trust this mirror: it queries RevenueCat live only when an operation would
+ * exceed the Free limit.
  */
 export const revenueCatWebhook = onRequest(
   {

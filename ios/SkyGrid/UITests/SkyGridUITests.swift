@@ -206,6 +206,26 @@ final class SkyGridUITests: XCTestCase {
         }
     }
 
+    func testWeeklyRecapAndExportRender() {
+        let scenarios = [
+            ("weekly-recap", "WEEK COMPLETE"),
+            ("share-weekly", "SKY GRID · WEEKLY"),
+        ]
+
+        for (scenario, expectedText) in scenarios {
+            let app = XCUIApplication()
+            app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", scenario]
+            app.launch()
+
+            XCTAssertTrue(app.staticTexts[expectedText].waitForExistence(timeout: 8), scenario)
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = "ui-audit-\(scenario)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            app.terminate()
+        }
+    }
+
     func testLiveActivityStartsForTheDynamicIsland() {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "live-activity"]

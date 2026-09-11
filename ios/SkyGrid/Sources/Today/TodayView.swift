@@ -7,6 +7,8 @@ import UIKit
 struct TodayView: View {
     @State private var viewModel: TodayViewModel
     @State private var shareImage: TodayShareableCard?
+    @State private var comparisonBuddy: TodayViewModel.BuddyStatus?
+    @State private var weeklyRecap: WeeklyRecapSelection?
     @State private var mokuInteraction = 0
     @State private var lastMokuInteraction: TimeInterval = -.infinity
     @State private var ambientMessage: MokuAmbientMessage?
@@ -16,10 +18,12 @@ struct TodayView: View {
     let observedDate: LocalDate
     let onOpenCamera: () -> Void
     let subscriptionPlan: SubscriptionPlan
+    let isPro: Bool
     /// Secondary destinations are owned by the parent navigation stack, leaving the
     /// daily capture and its mosaic as one primary flow rather than peer tabs.
     let onOpenGrid: () -> Void
     let onOpenBuddies: () -> Void
+    let onUpgrade: () -> Void
     /// Lease bookkeeping only — may be called while the sheet is still animating.
     let onSharePresentationChanged: (Bool) -> Void
     /// Runs after UIKit has finished dismissing, so the root may present again.
@@ -34,8 +38,10 @@ struct TodayView: View {
         observedDate: LocalDate,
         onOpenCamera: @escaping () -> Void,
         subscriptionPlan: SubscriptionPlan,
+        isPro: Bool,
         onOpenGrid: @escaping () -> Void,
         onOpenBuddies: @escaping () -> Void,
+        onUpgrade: @escaping () -> Void,
         buddyRefreshToken: Int = 0,
         onSharePresentationChanged: @escaping (Bool) -> Void = { _ in },
         onShareDismissed: @escaping () -> Void = {}
@@ -45,8 +51,10 @@ struct TodayView: View {
         self.observedDate = observedDate
         self.onOpenCamera = onOpenCamera
         self.subscriptionPlan = subscriptionPlan
+        self.isPro = isPro
         self.onOpenGrid = onOpenGrid
         self.onOpenBuddies = onOpenBuddies
+        self.onUpgrade = onUpgrade
         self.buddyRefreshToken = buddyRefreshToken
         self.onSharePresentationChanged = onSharePresentationChanged
         self.onShareDismissed = onShareDismissed
@@ -149,6 +157,24 @@ struct TodayView: View {
             onShareDismissed()
         }) { card in
             ShareSheet(items: [card.image])
+        }
+        .fullScreenCover(item: $comparisonBuddy) { buddy in
+            if let ownPost = viewModel.todayPost, let buddyPost = buddy.post {
+                BuddyComparisonView(
+                    ownPost: ownPost,
+                    buddyPost: buddyPost,
+                    buddyName: buddy.displayName,
+                    imageFetching: imageFetching
+                )
+            }
+        }
+        .fullScreenCover(item: $weeklyRecap) { selection in
+            WeeklyRecapView(
+                posts: selection.posts,
+                imageFetching: imageFetching,
+                onSharePresentationChanged: onSharePresentationChanged,
+                onShareDismissed: onShareDismissed
+            )
         }
     }
 
@@ -359,6 +385,7 @@ struct TodayView: View {
 
             Button {
                 Haptics.navigationConfirmed()
+                SoundEffectPlayer.shared.play(.forwardNavigation)
                 onOpenCamera()
             } label: {
                 Label("Capture the sky", systemImage: "camera")
@@ -424,6 +451,7 @@ struct TodayView: View {
     private var mosaicEntry: some View {
         Button {
             Haptics.navigationConfirmed()
+            SoundEffectPlayer.shared.play(.forwardNavigation)
             onOpenGrid()
         } label: {
             HStack(spacing: SGSpacing.md) {
@@ -462,6 +490,7 @@ struct TodayView: View {
         if viewModel.buddies.isEmpty {
             Button {
                 Haptics.navigationConfirmed()
+                SoundEffectPlayer.shared.play(.forwardNavigation)
                 onOpenBuddies()
             } label: {
                 HStack(spacing: SGSpacing.md) {
@@ -488,10 +517,23 @@ struct TodayView: View {
         } else {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
                 sectionLabel(viewModel.streak.hasPostedToday ? "THIS MORNING, TOGETHER" : "SEALED UNTIL YOU POST")
-                BuddyRow(buddies: viewModel.buddies, today: observedDate, imageFetching: imageFetching)
+                BuddyRow(
+                    buddies: viewModel.buddies,
+                    today: observedDate,
+                    imageFetching: imageFetching,
+                    onSelect: openComparison
+                )
             }
             .skyAnimation(SGMotion.settle, value: viewModel.streak.hasPostedToday)
         }
+    }
+
+    private func openComparison(_ buddy: TodayViewModel.BuddyStatus) {
+        guard isPro else {
+            onUpgrade()
+            return
+        }
+        comparisonBuddy = buddy
     }
 
     private var emptyStateAccessibilityLabel: String {
@@ -513,6 +555,22 @@ struct TodayView: View {
             }
             WeekRhythmView(rhythm: viewModel.weekRhythm, imageFetching: imageFetching, accent: accentColor)
 
+            if WeeklyRecapPolicy.isReady(viewModel.weekRhythm) {
+                Button(action: openWeeklyRecap) {
+                    Label(
+                        isPro ? "Open weekly recap" : "Weekly recap · Pro",
+                        systemImage: isPro ? "rectangle.stack.fill" : "lock.fill"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(SkySecondaryButtonStyle())
+                .accessibilityHint(
+                    isPro
+                        ? "Opens a shareable recap of your last seven mornings"
+                        : "Opens Sky Grid Pro upgrade"
+                )
+            }
+
             NavigationLink {
                 MorningAlarmSettingsView()
             } label: {
@@ -532,6 +590,14 @@ struct TodayView: View {
             }
             .accessibilityLabel("Morning alarm, \(alarmTime)")
         }
+    }
+
+    private func openWeeklyRecap() {
+        guard WeeklyRecapPolicy.canOpen(viewModel.weekRhythm, isPro: isPro) else {
+            onUpgrade()
+            return
+        }
+        weeklyRecap = WeeklyRecapSelection(posts: viewModel.weekRhythm.days.compactMap(\.post))
     }
 
     private var accentColor: SkyColor {
@@ -615,5 +681,10 @@ struct TodayView: View {
 
 private struct TodayShareableCard: Identifiable {
     let image: UIImage
+    let id = UUID()
+}
+
+private struct WeeklyRecapSelection: Identifiable {
+    let posts: [SkyPost]
     let id = UUID()
 }

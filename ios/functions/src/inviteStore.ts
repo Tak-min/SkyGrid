@@ -26,6 +26,10 @@ import {
   rateLimitDecision,
   type RateLimitedAction,
 } from "./rateLimit.js";
+import {
+  limitsOrRequireLiveEntitlements,
+  type CircleLimitsByUid,
+} from "./circleEntitlement.js";
 
 /**
  * Every Firestore access the invite feature makes.
@@ -339,7 +343,13 @@ export interface ClaimResult {
  */
 export async function claimInvite(
   db: Firestore,
-  input: { code: string; callerUid: string; nowMs: number }
+  input: {
+    code: string;
+    callerUid: string;
+    nowMs: number;
+    circleLimitsByUid?: CircleLimitsByUid;
+    resolveEntitlementIfNeeded?: boolean;
+  }
 ): Promise<ClaimResult> {
   const { code, callerUid, nowMs } = input;
 
@@ -409,10 +419,20 @@ export async function claimInvite(
         acceptedQuery(invite.creatorUid),
         acceptedQuery(callerUid),
       ]);
+      const inviterAcceptedCount = countUnblockedAcceptedFriendships(inviterFriendships);
+      const claimerAcceptedCount = countUnblockedAcceptedFriendships(claimerFriendships);
       decision = applyCircleCap({
         decision: preliminaryDecision,
-        inviterAcceptedCount: countUnblockedAcceptedFriendships(inviterFriendships),
-        claimerAcceptedCount: countUnblockedAcceptedFriendships(claimerFriendships),
+        inviterAcceptedCount,
+        claimerAcceptedCount,
+        limits: limitsOrRequireLiveEntitlements({
+          inviterUid: invite.creatorUid,
+          claimerUid: callerUid,
+          inviterAcceptedCount,
+          claimerAcceptedCount,
+          suppliedLimitsByUid: input.circleLimitsByUid,
+          resolveEntitlementIfNeeded: input.resolveEntitlementIfNeeded,
+        }),
       });
     }
 

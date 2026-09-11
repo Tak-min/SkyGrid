@@ -1,7 +1,9 @@
 /**
  * The server-side mirror of the only commercial plan states exposed by the iOS
  * app. This document is informational; RevenueCat remains the entitlement
- * authority in the client, so a delayed webhook can never grant paid features.
+ * authority in the client. Circle-cap decisions that need Pro status query
+ * RevenueCat's Customer API live rather than trusting this asynchronous mirror,
+ * so neither a delayed purchase nor a delayed expiration/refund can decide access.
  */
 export type SubscriptionPlan = "free" | "monthly" | "annual" | "lifetime";
 

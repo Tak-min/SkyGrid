@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var restoreError = false
     @State private var isLinkingApple = false
     @State private var appleLinkError: String?
+    @State private var soundEffectsEnabled = LocalDefaults.soundEffectsEnabled
 
     var body: some View {
         ScrollView {
@@ -66,6 +67,21 @@ struct SettingsView: View {
                         MorningAlarmSettingsView()
                     } label: {
                         settingRow("Morning Alarm", symbol: "alarm", detail: "Set the wake flow that brings you to the sky.")
+                    }
+                }
+
+                settingsSection("EXPERIENCE") {
+                    Toggle(isOn: $soundEffectsEnabled) {
+                        settingRow(
+                            "Sound effects",
+                            symbol: "speaker.wave.2",
+                            detail: "Celebrate saved skies and important moments.",
+                            accessory: .none
+                        )
+                    }
+                    .tint(SGT.accent)
+                    .onChange(of: soundEffectsEnabled) { _, enabled in
+                        LocalDefaults.soundEffectsEnabled = enabled
                     }
                 }
 

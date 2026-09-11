@@ -305,6 +305,7 @@ struct OnboardingCoordinatorView: View {
     private func finish() {
         guard !viewModel.didComplete else { return }
         Haptics.navigationConfirmed()
+        SoundEffectPlayer.shared.play(.forwardNavigation)
         OnboardingAnalytics.record(.completed, step: viewModel.step)
         viewModel.complete()
         showPaywall = false
@@ -314,6 +315,7 @@ struct OnboardingCoordinatorView: View {
     private func finishForFirstCapture() {
         guard !viewModel.didComplete else { return }
         Haptics.navigationConfirmed()
+        SoundEffectPlayer.shared.play(.forwardNavigation)
         OnboardingAnalytics.record(.completed, step: viewModel.step)
         viewModel.completeForFirstCapture()
         showPaywall = false
@@ -323,6 +325,7 @@ struct OnboardingCoordinatorView: View {
     private func advance() {
         guard viewModel.step != .invite else { return }
         Haptics.navigationConfirmed()
+        SoundEffectPlayer.shared.play(.forwardNavigation)
         OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
         withAnimation(viewModel.step == .welcome ? nil : pageAnimation) {
             viewModel.advance()
@@ -332,6 +335,7 @@ struct OnboardingCoordinatorView: View {
     private func goBack() {
         guard viewModel.step != .welcome else { return }
         Haptics.navigationConfirmed()
+        // Backward navigation intentionally stays haptic-only; the swish marks forward progress.
         OnboardingAnalytics.record(.stepBacked, step: viewModel.step)
         withAnimation(viewModel.step == .intention ? nil : pageAnimation) {
             viewModel.goBackOneStep()
@@ -340,6 +344,7 @@ struct OnboardingCoordinatorView: View {
 
     private func skipToPlan() {
         Haptics.navigationConfirmed()
+        SoundEffectPlayer.shared.play(.forwardNavigation)
         OnboardingAnalytics.record(.stepSkipped, step: viewModel.step)
         withAnimation(pageAnimation) {
             viewModel.skipToPlan()
@@ -349,6 +354,7 @@ struct OnboardingCoordinatorView: View {
     private func advanceToInvite() {
         guard viewModel.step != .invite else { return }
         Haptics.navigationConfirmed()
+        SoundEffectPlayer.shared.play(.forwardNavigation)
         OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
         withAnimation(pageAnimation) {
             viewModel.advanceToInvite()

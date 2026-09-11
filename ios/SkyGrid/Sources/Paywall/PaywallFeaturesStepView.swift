@@ -56,6 +56,21 @@ struct PaywallFeaturesStepView: View {
                 detail: "See the photos behind every season, not a colour substitute."
             )
             PaywallBenefit(
+                symbol: "person.3.fill",
+                title: "Grow an unlimited Circle",
+                detail: "Keep as many buddies as you like instead of Free's 5."
+            )
+            PaywallBenefit(
+                symbol: "rectangle.split.2x1.fill",
+                title: "Put two skies side by side",
+                detail: "Open and share a together card after you and a buddy both capture."
+            )
+            PaywallBenefit(
+                symbol: "rectangle.stack.fill",
+                title: "Relive every complete week",
+                detail: "Turn seven mornings into a weekly recap you can share."
+            )
+            PaywallBenefit(
                 symbol: "square.and.arrow.up",
                 title: "A full-year share card",
                 detail: "Export the complete color record when there is a year to share."
@@ -69,7 +84,7 @@ struct PaywallFeaturesStepView: View {
         HStack(alignment: .top, spacing: SGSpacing.sm) {
             Image(systemName: "checkmark.circle")
                 .foregroundStyle(SGT.ink2)
-            Text("No feature is hidden after purchase: Free remains a complete daily ritual, with the most recent photos always available.")
+            Text("Free includes daily capture, the recent archive, and a 5-person Circle. Pro opens the full archive, month view, an unlimited Circle, together cards, and weekly recaps.")
                 .font(SGFont.caption(13))
                 .foregroundStyle(SGT.ink2)
         }

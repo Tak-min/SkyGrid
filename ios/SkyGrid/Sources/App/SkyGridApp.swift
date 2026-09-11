@@ -60,6 +60,9 @@ private enum UIAuditScenario: String {
     case cameraFailure = "camera-failure"
     case shareYear = "share-year"
     case shareMorning = "share-morning"
+    case shareTogether = "share-together"
+    case shareWeekly = "share-weekly"
+    case weeklyRecap = "weekly-recap"
     case liveActivity = "live-activity"
     case milestone
     case milestoneDayOne = "milestone-day-one"
@@ -204,6 +207,39 @@ private struct UIAuditRoot: View {
                 streak: 18,
                 handle: Handle(raw: "morning_auditor")
             ) }
+        } else if scenario == .shareWeekly {
+            ShareCardAuditView { WeeklyRecapExportView(
+                posts: UIAuditData.weeklyPosts,
+                photos: UIAuditData.weeklyPhotos,
+                handle: Handle(raw: "morning_auditor")
+            ) }
+        } else if scenario == .weeklyRecap {
+            WeeklyRecapView(
+                posts: UIAuditData.weeklyPosts,
+                imageFetching: UIAuditImageFetcher(),
+                initialPhotos: UIAuditData.weeklyPhotos
+            )
+        } else if scenario == .shareTogether {
+            let ownPost = UIAuditData.posts[17]
+            let buddyPost = SkyPost(
+                ownerUid: "ui-audit-buddy",
+                localDate: ownPost.localDate,
+                capturedAt: ownPost.capturedAt.addingTimeInterval(11 * 60),
+                uploadedAt: ownPost.uploadedAt.addingTimeInterval(11 * 60),
+                imagePath: "audit/buddy-together.jpg",
+                thumbPath: "audit/buddy-together-thumb.jpg",
+                skyColor: SkyColor(uncheckedHex: "#E7A77E"),
+                minutesFromGoal: 11,
+                reactions: [:]
+            )
+            ShareCardAuditView { TogetherCardExportView(
+                ownPost: ownPost,
+                buddyPost: buddyPost,
+                ownPhoto: UIAuditData.thumbnails[ownPost.localDate],
+                buddyPhoto: UIAuditData.thumbnails[UIAuditData.posts[16].localDate],
+                buddyName: "Mira",
+                handle: Handle(raw: "morning_auditor")
+            ) }
         } else if scenario == .milestone || scenario == .milestoneDayOne {
             let isDayOne = scenario == .milestoneDayOne
             MilestoneView(
@@ -265,8 +301,10 @@ private struct UIAuditRoot: View {
                         observedDate: UIAuditData.today,
                         onOpenCamera: {},
                         subscriptionPlan: .free,
+                        isPro: true,
                         onOpenGrid: {},
-                        onOpenBuddies: {}
+                        onOpenBuddies: {},
+                        onUpgrade: {}
                     )
                 }
             }
@@ -491,6 +529,24 @@ private enum UIAuditData {
 
     static let postsByDate = Dictionary(uniqueKeysWithValues: posts.map { ($0.localDate, $0) })
     static let thumbnails = Dictionary(uniqueKeysWithValues: posts.map {
+        ($0.localDate, thumbnail(for: $0.skyColor))
+    })
+    static let weeklyPosts: [SkyPost] = (0..<7).map { offset in
+        let date = today.adding(days: offset - 6)
+        let color = SkyColor(uncheckedHex: offset.isMultiple(of: 2) ? "#91B6C8" : "#D89B76")
+        return SkyPost(
+            ownerUid: currentUID,
+            localDate: date,
+            capturedAt: fixedClock.now.addingTimeInterval(Double(offset - 6) * 24 * 60 * 60),
+            uploadedAt: fixedClock.now,
+            imagePath: "ui-audit/weekly-\(offset).jpg",
+            thumbPath: "ui-audit/weekly-\(offset)_thumb.jpg",
+            skyColor: color,
+            minutesFromGoal: -8 + offset,
+            reactions: [:]
+        )
+    }
+    static let weeklyPhotos = Dictionary(uniqueKeysWithValues: weeklyPosts.map {
         ($0.localDate, thumbnail(for: $0.skyColor))
     })
     static let postRepository = UIAuditPostRepository(posts: posts)

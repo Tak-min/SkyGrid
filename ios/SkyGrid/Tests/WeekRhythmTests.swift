@@ -50,4 +50,47 @@ struct WeekRhythmCalculatorTests {
         let rhythm = WeekRhythmCalculator.summarize(posts: [], today: today)
         #expect(rhythm.days.allSatisfy { $0.thumbPath == nil })
     }
+
+    @Test("weekly recap is ready only for seven consecutive mornings ending today")
+    func weeklyRecapRequiresFullRollingWeek() {
+        let today = LocalDate(year: 2026, month: 7, day: 29)
+        let sevenPosts = (0..<7).map { Self.post(on: today.adding(days: -$0)) }
+        let sixPosts = Array(sevenPosts.dropLast())
+
+        #expect(WeeklyRecapPolicy.isReady(WeekRhythmCalculator.summarize(posts: sixPosts, today: today)) == false)
+        #expect(WeeklyRecapPolicy.isReady(WeekRhythmCalculator.summarize(posts: sevenPosts, today: today)))
+    }
+
+    @Test("weekly recap keeps the calculator's year-crossing window and ignores outside posts")
+    func weeklyRecapUsesYearCrossingWindow() {
+        let today = LocalDate(year: 2027, month: 1, day: 3)
+        let rollingPosts = (0..<7).map { Self.post(on: today.adding(days: -$0)) }
+        let outside = Self.post(on: today.adding(days: -7))
+        let rhythm = WeekRhythmCalculator.summarize(posts: rollingPosts + [outside], today: today)
+
+        #expect(WeeklyRecapPolicy.isReady(rhythm))
+        #expect(rhythm.days.first?.date == LocalDate(year: 2026, month: 12, day: 28))
+        #expect(rhythm.days.compactMap(\.post).contains(outside) == false)
+    }
+
+    @Test("weekly recap export remains Pro-only after the week is ready")
+    func weeklyRecapRequiresPro() {
+        let today = LocalDate(year: 2026, month: 7, day: 29)
+        let posts = (0..<7).map { Self.post(on: today.adding(days: -$0)) }
+        let rhythm = WeekRhythmCalculator.summarize(posts: posts, today: today)
+
+        #expect(WeeklyRecapPolicy.canOpen(rhythm, isPro: false) == false)
+        #expect(WeeklyRecapPolicy.canOpen(rhythm, isPro: true))
+    }
+
+    @MainActor
+    @Test("weekly recap renders a story-size image even when photos fall back to sky colors")
+    func weeklyRecapRendersStoryImage() {
+        let today = LocalDate(year: 2026, month: 7, day: 29)
+        let posts = (0..<7).map { Self.post(on: today.adding(days: -$0)) }
+
+        let image = ShareCardRenderer.renderWeekly(posts: posts, photos: [:])
+
+        #expect(image?.size == CGSize(width: 1080, height: 1920))
+    }
 }
