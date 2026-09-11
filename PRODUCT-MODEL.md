@@ -1,6 +1,6 @@
 # PRODUCT-MODEL — Sky Grid
 
-最終更新: 2026-09-08 / 更新者: Claude Code
+最終更新: 2026-09-11 / 更新者: Claude Code
 
 ## 0. 北極星指標
 
@@ -37,6 +37,7 @@
 | `skygrid_alarm_schedule_changed` | `ios/SkyGrid/Sources/Notifications/MorningAlarmAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-07 実装。時刻・曜日・UIDは送らず、保存件数/有効件数/backend/成功のみ。実到着未確認 |
 | `skygrid_wake_session_started` / `skygrid_wake_retry_horizon_refilled` / `skygrid_wake_session_ended` | `ios/SkyGrid/Sources/Notifications/MorningAlarmAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-08 実装。分母はsession開始、完了はended reason=`captured`。時刻・alarm ID・写真情報は送らない。実到着未確認 |
 | `skygrid_paywall_value_preview_completed` | `ios/SkyGrid/Sources/Paywall/PaywallAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-07 実装。entry point/step/schema versionのみ。実到着未確認 |
+| `skygrid_weekly_recap_opened` / `skygrid_weekly_recap_shared` | `ios/SkyGrid/Sources/Publishing/WeeklyRecapAnalytics.swift` | Firebase Analytics | GA4 Data API（既存 impersonation 経路） | 2026-09-09 実装。shared / opened で週次リキャップ内の共有意図率を算出。実到着未確認 |
 
 ### 2.1 送信経路の検証結果（2026-09-07 実測・Claude Code）
 
@@ -118,7 +119,7 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 - Today は、本人が投稿済みの場合だけ各バディの当日投稿を読み、成功時に相互公開として表示する。
 - Today 訪問時には、当日未表示の場合に限り約30%の確率で、現在の投稿・buddy・streak状態に合うMokuの短いアンビエント発話を表示する（計測対象外）。
 - 招待リンクは Buddies タブのハンドル取得後に作成・共有でき、受信者の claim はサーバーで即時に pairwise friendship を作成する。
-- 投稿通知は全 accepted / unblocked buddy に送る。招待受諾を招待者へ知らせるトリガーは未実装。
+- 投稿通知は全 accepted / unblocked buddy に送る。招待受諾は `onFriendshipCreated` で招待者へ通知する（2026-09-11 に `firebase functions:list` でデプロイ済みを確認）。
 
 ## 4. 仮説台帳
 
@@ -159,6 +160,20 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 | 2026-09-08 | second-chanceは既存paywallの動的な追加stepとし、専用月額SKUの実intro価格とApple / RevenueCat eligibilityが揃う場合だけ表示する | 通常月額への意図しないintro適用、架空価格、過去課金者への誤表示を防ぐため | 依頼者判断・ASC実測・RevenueCat SDK一次ソース | 仮説14の継続判断で撤回された場合 |
 | 2026-09-08 | second-chance専用イベント、A/B割付、自動停止、効果音は追加しない | 既存step analyticsを使い、依頼者が実測判断する今回の会議決定に従うため | 依頼者判断 | 新しい計測・音響方針が明示された場合 |
 | 2026-09-08 | 2026-08-10確定の「有償クリエイター発注停止・自社ブランドアカウント($0現金・オーガニック投稿のみ)」方針は、ユーザー数が伸びず失敗に終わったと結論づける | 依頼者が運用結果を確認した上での判断。定量指標は本書2章の通り依然未測定のため、この結論は依頼者の定性判断であり、install/first_open の実測データによる裏付けはまだない | 依頼者判断 | 実測データが揃い、オーガニック単独運用の成果を定量的に再評価できる場合、または新しいマーケティング方針が明示された場合 |
+| 2026-09-09 | Proの価値訴求を「アーカイブ軸の強化(A)」「バディ軸への新価値追加(B)」「Circle上限差別化(C)」の3方向すべてで再設計する | 既存Proは自分のアーカイブ閲覧・書き出しという単一軸のみで、報酬が遅く非社交的なため薄いままだった。差別化の核である相互解禁(バディ)に課金価値を重ねる | 依頼者判断 | 実装後の購入確定率が改善せず、代替設計が必要と判断される場合 |
+| 2026-09-09 | 「課金後に機能は隠れない。Freeは完全な日課であり続ける」という既存paywall文言・方針を撤回する | この制約は依頼者が定めたものではなく、AIが無断で導入した方針であり、依頼者の意図に反するため | 依頼者判断 | 依頼者が改めてこの制約を明示的に指示した場合 |
+| 2026-09-09 | 無料Circle上限を5人、Pro Circle上限を15人にする(現行の一律8人ハードキャップ`MAX_ACCEPTED_BUDDIES`を置き換える) | 6人目以降の招待という具体的な購入動機を作りつつ、招待リンクの分母(バイラルループの入口)を大きく狭めない規模として依頼者が判断 | 依頼者判断 | 実測データで招待送信数の顕著な悪化、または購入確定率の改善が見られない場合 |
+| 2026-09-09 | 既存ユーザー向けの移行措置(グランドファザリング)は設けない | 実利用データ(2.1b: 稼働ユーザーはfirst_open 7件のみで依頼者本人+テスター中心)上、上限付近までCircleを使っているユーザーが実質存在しないため | 依頼者判断・GA4実測(2.1b) | 実ユーザー数が増え、5〜8人のCircleを持つ既存無料ユーザーが確認された場合、遡って移行措置を検討する |
+| 2026-09-09 | 方針Bのv1スコープを「バディの過去アーカイブ閲覧」「2人分の比較ビュー/カード」の2機能に限定する | 実装スコープを一度に広げすぎないため。「リビール演出強化」は今回見送り | 依頼者判断 | v1出荷後、追加需要が確認された場合に別途着手 |
+| 2026-09-09 | 方針Aは既存の1年シェアカードに加え、週次リキャップでも報酬を得られるようにする | 既存軸の弱点である「報酬が遠い」を緩和するため。年次カードは維持し置き換えない | 依頼者判断 | 実装後の購入確定率が改善せず、週次リキャップ自体が離脱要因と判明した場合 |
+| 2026-09-09 | 方針A(週次リキャップ)は今回のスコープから外し、C(Circle上限差別化)・B-2(比較ビュー)のみで先に進める | Codex発注結果を検証したところAが実装されておらず記録も残っていなかったため。範囲を広げすぎず検証済みの部分から進める | 依頼者判断・Codex実装検証 | 依頼者がAの着手を改めて指示した場合 |
+| 2026-09-10 | 有償クリエイター獲得を前払い型から前払いなしのレベニューシェア型に転換し、Instagramで実在確認済みの7名に打診(依頼者が最終送信済み) | 08-10確定の有償クリエイター発注(価格不透明)・$0オーガニック単独(09-08失敗判断)のいずれも機能しなかったため、第三の型を試す | 依頼者判断 | 詳細は`dev-notes/influencer-revshare-outreach_2026-09-10.md`。返信率・成立数が判断材料になり次第再評価 |
+| 2026-09-09 | 上記「Aを今回スコープから外す」を撤回し、週次リキャップもCodexへ再発注する | 依頼者が直後に方針転換。動画書き出しへの発展性も合わせて検討したいため | 依頼者判断 | — |
+| 2026-09-09 | 新規paywall計測イベントは追加せず、既存の`skygrid_paywall_*`系イベントのみで観測する | second-chance paywallの前例と同じ方針を踏襲 | 依頼者判断 | 新しい計測方針が明示された場合 |
+| 2026-09-09 | B-1(バディの過去アーカイブ閲覧)は実装しない。バディ軸の強化はB-2(今日の比較カード)と週次リキャップのみで確定させる | 相互解禁は「今日」に紐づく設計であり、他人の過去投稿を能動的に遡る行動には閲覧トリガーが無く実利用が見込みにくい。一方的な閲覧という性質が既存の相互性の信頼設計とも噛み合わない | 依頼者判断 | 実ユーザーからB-1相当の明確な需要が確認された場合、バックログとして再検討する |
+| 2026-09-10 | Circle上限を無料5人・Pro 15人から、無料5人・Pro実質無制限(内部上限100人・UI上は「無制限」と表示)に変更する | 依頼者が15という数字は不十分と再検討。無料5人は購入トリガーとして維持しつつ、Proは真の無制限ではなく乱用防止のための内部上限(100)を保つ | 依頼者判断 | 実運用でPro利用者が100人上限に到達する、または不正利用の兆候が確認された場合 |
+| 2026-09-11 | 計測の読み取り経路(install cohort集計・Analyticsのテスト可能化)の整備は後回しにし、先に人を集めて招待・相互公開のループを回すことを優先する | 実ユーザーがいない現状では、読み取り経路を作っても読む対象が無いため | 依頼者判断 | ユーザー獲得が進み、施策の効果判定に実測が必要になった場合 |
+| 2026-09-09 | 方針A(週次リキャップ)を将来実装する際の提示タイミングは「7回投稿ごと(ローリング週)」とする | 既存の`WeekRhythmCalculator`のローリング週ロジックと相性が良く、実際の利用ペースに合わせられるため | 依頼者判断 | 実装時に別の設計上の制約が判明した場合 |
 
 ## 6. 未解決の不明点
 
@@ -170,6 +185,19 @@ iPhone15,2 / iPhone17,3 / iPhone18,5 の4機種）。
 - second-chance専用SKUのASC作成、米国`$0.99`基準の174地域equalization、RevenueCat `second_chance` offering / `premium` entitlement接続、Webhookマッピングのデプロイ。
 - second-chance提示履歴は端末内でアカウントID別に保持している。再インストール・別端末をまたぐ厳密な生涯1回制御が必要なら、intro eligibilityとは独立したサーバー側提示予約を設計する。
 - 初月オファーと紹介を結合するか。結合する場合、紹介成立を受諾・初回撮影のどこで判定し、招待者と受信者へ何を付与するか。
+- Pro価値訴求の再設計は、Circle上限差別化(無料5人/Pro15人)・2人分の比較ビュー・週次リキャップ(静止画版)の3機能で確定。Codexが実装し、Firebase Functionsは2026-09-09にClaude Codeがデプロイ済み(`dev-notes/pro-value-proposition-decision-record_2026-09-09.md` 14章)。iOSクライアント側(UI・paywall文言)は未ビルド・未提出で、ローカルの変更はcommitしていない。動画書き出しは8章バックログ#2として着手時期未定。バディの過去アーカイブ閲覧(B-1)は不採用決定済み。
+
+## 8. バックログ(依頼者確定・着手時期未定)
+
+| # | タスク | 理由 | 記録日 |
+|---|---|---|---|
+| 1 | **完了(2026-09-11 依頼者確認)**。`9167818` / `80cddb3`「sealed reveal-gateに視覚的な重みを与える」と、作業ツリー上のsealedタイル意匠(identity motif)で対応済み。以下は起票時の記述。Buddy画面(封印状態)の意匠改善。現状 `Friends/BuddiesView.swift` の`.sealed`表現は`lock.fill`の単色SF Symbolのみで、写真・グロー・モーションが無い。2026-09-06のダーク基調全面刷新(`443d9d0`)は配色トークンをカスケードしたが、この情報表現自体は09-05のcritical design audit時点から変化していない。 | プロダクトの唯一の差別化要素(相互解禁)であり、UXの核。マーケティングで人を呼んだ場合に新規ユーザーが最初に触れる差別化ポイントが最も安っぽいままだと、指標が測れる前に離脱リスクが上がる。依頼者も2026-09-09に必要性を明示的に確認済み。 | 2026-09-09 |
+| 2 | 週次リキャップを含む各種シェアカードの動画書き出し対応 | 現状の静止画は既存の`ImageRenderer → UIImage → ShareSheet`に収まる一方、動画にはAVAssetWriter/CoreVideoのフレーム生成、進捗・キャンセル、エンコーダのback-pressure、一時ファイル寿命管理、端末別検証が新たに必要で、今回の週次リキャップ実装とは難易度差が大きいため。 | 2026-09-09 |
+| 3 | 通知の棚卸しと不足分の追加。**実装済み**: ①バディ投稿通知 `onBuddyPostCreated`(「{name} caught the sky. / Yours is still sealed.」、相互公開時「Both skies are in.」、22:00〜5:00は送らない) ②招待受諾通知 `onFriendshipCreated`(「Your invite was claimed.」、デプロイ済み) ③朝のアラーム(AlarmKit、未保存なら5分ごと再鳴動) ④朝のフォローアップ(ローカル「Today's sky / Not captured yet.」) ⑤Live Activity。**不足候補**: (a) ハンドル経由のバディ申請を受け取った側への通知(pendingの作成は通知対象外) (b) `acceptBuddy` で申請が承認されたことを申請者へ知らせる通知(pending→acceptedは更新なので `onDocumentCreated` に掛からない) (c) ストリーク途切れ前のリマインド (d) 週次リキャップ完成の通知。どれを入れるかは依頼者判断。全通知文言は多言語化(#6)の対象に含める。 | 招待受諾以外の関係成立経路に通知が無く、相手の行動が本人に届かないため | 2026-09-11 |
+| 4 | 効果音の音量最適化。実測(ffmpeg volumedetect): `capture_saved` / `mutual_reveal` は平均-30dB、`forward_navigation` -28dB、`recoverable_error` -27dB と小さい一方、`purchase_confirmed` -11dB・`moku_tap` -14dB と音ごとの差も大きい。ピークは既にほぼ0dBなので、単純なゲイン上げでは割れる。コンプレッサー/リミッターで音圧(ラウドネス)を揃えて上げる必要がある。加えて再生は `AudioServicesPlaySystemSound`(`DesignSystem/SoundEffects.swift`)で、音量は着信音量に従い、マナースイッチで無音になり、個別の音量制御ができない。普通に使っていて聞こえる音量にするには、音源の再マスタリングと再生方式(AVAudioPlayer + AVAudioSession `.ambient` 等)の見直しを合わせて検討する。 | ChatGPT-web + Claude Codeで実装した効果音が小さすぎて聞こえないと依頼者が報告 | 2026-09-11 |
+| 5 | 先着N人(例: 100人)にPremium 1〜2か月を無料で贈る施策。演出はルーレットで「1か月無料」が当たる形など遊び心のあるものにする。未決定事項: N・期間・判定のタイミング(初回起動/初回撮影など)・先着枠のサーバー側での厳密な採番(端末側だけでは再インストールで何度でも取れる)・付与方法(App Storeのオファーコード/RevenueCatのプロモーション付与など。Apple審査上、ルーレットは「全員当たる」確定演出にしてギャンブル的表現を避ける必要があるかの確認)。既存のsecond-chance paywall・オンボーディングpaywallとの表示順の整理も要る。 | 最初から課金を迫るとアプリ自体が敬遠され、使われずに終わる可能性が高いと依頼者が判断。初期ユーザーにまず習慣と招待ループを体験させるため | 2026-09-11 |
+| 6 | 英語/日本語の2言語化。**実装はChatGPT-webで行い、Claude Codeは実装しない(依頼者指示)**。(a) 英語UIに混ざった日本語の検出と英語化: 2026-09-11時点の検出結果は `Paywall/PaywallSecondChanceStepView.swift:46`「ちょっと待って！…」、`App/AppStartupController.swift:55` / `:74` のサインイン失敗メッセージの3箇所(コメント除く)。(b) 日本語版の作成: 現状 `.xcstrings` / `.lproj` が無く、`Text("...")` 直書きが約170箇所あるため、String Catalog(`Localizable.xcstrings`)の導入から必要。サーバー側の通知文言(`functions/src/buddyNotifications.ts` / `inviteNotifications.ts`)、ウィジェット/Live Activity、paywall文言、App Storeメタデータも対象。(c) 言語の自動判定: 端末の優先言語(`Locale.preferredLanguages`)が日本語なら日本語、それ以外・判定不能は英語。(d) オンボーディングに言語確認ページを1枚追加(自動判定の結果を初期選択にして「この言語でよいか」を聞き、変更可能にする)。サーバー通知を選択言語で送るには、選んだ言語をFirestoreのユーザー/端末情報に保存する必要がある。 | 英語が公式言語だが日本語が混在して不自然なため、混在を解消しつつ日本語利用者向けに正式な日本語版を用意する | 2026-09-11 |
+| 7 | 古いメモリの一括整理。SkyGrid関連メモリ(プロジェクトmemory 3件、`~/agent-intelligence` 約22件、`claude-harness-migration-windows` 16件、Codex側2件)を全件洗い出し、コード・デプロイ・dev-notesと照合して「現在も正しい/実装で解消済み/方針変更で置換/確認不能」に振り分け、依頼者承認後にsupersede・retractイベントとして一括記録する(元記録は削除・書き換えしない)。既知の陳腐化例: 「バディ投稿のpush通知が無い」(8/2、現在は`onBuddyPostCreated`稼働)、「ExitOfferのオファーコード未作成」(8/1、画面ごと削除済み)。 | 古い記録が現状と矛盾し、次のセッションが誤った前提で作業する原因になるため | 2026-09-11 |
 
 ## 7. App Store release measurement — 2026-09-06
 

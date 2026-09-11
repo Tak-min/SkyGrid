@@ -164,6 +164,21 @@ Rules:
 - Upload/publish failure stops before the reward peak and presents a recoverable action. Confetti is
   evidence of success and must never fire speculatively.
 
+## Sound-effect contract
+
+- Sound is supplemental to visible state, copy, haptics, and VoiceOver. No action, success, failure,
+  or privacy state may be communicated by sound alone.
+- The initial vocabulary has four short cues: saved capture, verified mutual reveal, streak
+  milestone, and recoverable camera/save failure. Routine navigation and taps stay silent.
+- One reward plays one sound: a verified mutual reveal replaces the ordinary saved-capture cue so
+  the two never stack. A milestone may use its own cue only after the milestone is earned.
+- Sounds use short mono PCM CAF assets, cache their system-sound IDs, respect the device's silent
+  setting, and are globally switchable in Settings. UI-audit launches remain silent.
+- Reduce Motion does not mute sound. Its settled-state path receives the same single semantic cue;
+  sound has no spatial-motion dependency.
+- The second-chance paywall has no dedicated sound. New cues require a named semantic state and a
+  recorded source/license trail; decorative coverage of every interaction is out of scope.
+
 ## Reduce Motion and accessibility
 
 With Reduce Motion enabled:
