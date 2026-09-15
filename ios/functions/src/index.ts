@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { setGlobalOptions } from "firebase-functions/v2";
 import {
   FREE_SUBSCRIPTION,
@@ -33,6 +33,11 @@ import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
 import { updateBuddyStreaksForPost } from "./buddyStreakStore.js";
 import { notifyInviterOfClaim } from "./inviteNotificationStore.js";
 import { inviterUidForCreatedFriendship } from "./inviteNotifications.js";
+import { posterHandleFromFriendship } from "./buddyNotifications.js";
+import {
+  notifyRecipientOfBuddyRequest,
+  notifyRequesterOfBuddyApproval,
+} from "./buddyRequestNotificationStore.js";
 import {
   acceptBuddyRequest,
   requestBuddyByHandle,
@@ -746,6 +751,111 @@ export const onPostCreatedUpdateBuddyStreaks = onDocumentCreated(
         error,
       });
       throw error;
+    }
+  },
+);
+
+/**
+ * Notifies the RECIPIENT when a handle-based buddy request is received.
+ * Only fires for newly-created pending friendships (status: "pending"), not for
+ * invite-link claims which create accepted friendships. The existing onFriendshipCreated
+ * trigger handles invite claims, which check `inviterUidForCreatedFriendship` and only
+ * fire for status: "accepted".
+ */
+export const onHandleBuddyRequestCreated = onDocumentCreated(
+  {
+    document: "friendships/{pairId}",
+    region: "asia-northeast1",
+    retry: false,
+  },
+  async (event) => {
+    const { pairId } = event.params;
+    const friendship = event.data?.data();
+    const status = friendship?.status;
+    const requestedBy = friendship?.requestedBy;
+    const requestedByHandle = friendship?.requestedByHandle;
+    const members = friendship?.members;
+
+    // Only fire for pending handle-based requests, not for accepted invite-link claims.
+    // Invite claims are handled by the existing onFriendshipCreated trigger, which
+    // checks inviterUidForCreatedFriendship and only fires for status: "accepted".
+    if (status !== "pending" || typeof requestedBy !== "string" || !Array.isArray(members) || members.length !== 2) {
+      return;
+    }
+
+    const recipientUid = members.find((uid) => uid !== requestedBy);
+    if (typeof recipientUid !== "string") return;
+
+    try {
+      await notifyRecipientOfBuddyRequest(admin.firestore(), admin.messaging(), {
+        recipientUid,
+        pairId,
+        requesterHandle: requestedByHandle ?? null,
+        nowMs: Date.now(),
+      });
+    } catch (error: unknown) {
+      logger.error("Unhandled error notifying a recipient of a buddy request.", {
+        recipientUid,
+        pairId,
+        error,
+      });
+    }
+  },
+);
+
+/**
+ * Notifies the REQUESTER when their pending buddy request is accepted.
+ * Fires when a friendship transitions from status: "pending" to status: "accepted"
+ * via acceptBuddyRequest(). Uses onDocumentUpdated to detect the status change.
+ */
+export const onBuddyRequestAccepted = onDocumentUpdated(
+  {
+    document: "friendships/{pairId}",
+    region: "asia-northeast1",
+    retry: false,
+  },
+  async (event) => {
+    const { pairId } = event.params;
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+
+    // Only fire for transitions from "pending" to "accepted".
+    if (before?.status !== "pending" || after?.status !== "accepted") {
+      return;
+    }
+
+    const requestedBy = after?.requestedBy;
+    const members = after?.members;
+
+    if (typeof requestedBy !== "string" || !Array.isArray(members) || members.length !== 2) {
+      return;
+    }
+
+    const accepterUid = members.find((uid) => uid !== requestedBy);
+    if (typeof accepterUid !== "string") return;
+    // The accepter is by definition never `requestedBy` — `members` is sorted
+    // alphabetically by uid and carries no requester/recipient meaning on its
+    // own, so this must go through the same denormalized-handle lookup every
+    // other notifier uses rather than an ad-hoc positional check.
+    const accepterHandle = posterHandleFromFriendship(accepterUid, {
+      requestedBy,
+      requestedByHandle: after?.requestedByHandle,
+      recipientHandle: after?.recipientHandle,
+    });
+
+    try {
+      await notifyRequesterOfBuddyApproval(admin.firestore(), admin.messaging(), {
+        requesterUid: requestedBy,
+        pairId,
+        accepterHandle: accepterHandle ?? null,
+        nowMs: Date.now(),
+      });
+    } catch (error: unknown) {
+      logger.error("Unhandled error notifying a requester of buddy request approval.", {
+        requesterUid: requestedBy,
+        pairId,
+        error,
+      });
     }
   },
 );

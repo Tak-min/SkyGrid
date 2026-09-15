@@ -9329,6 +9329,134 @@
         }
       }
     },
+    "notification.buddyRequestReceived.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ wants to be buddies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@からバディリクエスト"
+          }
+        }
+      }
+    },
+    "notification.buddyRequestReceived.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Sky Grid to respond."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky Gridを開いて確認しよう"
+          }
+        }
+      }
+    },
+    "notification.buddyRequestApproved.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ approved your request."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@がリクエストを承認したよ"
+          }
+        }
+      }
+    },
+    "notification.buddyRequestApproved.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're buddies now. Capture the sky together."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディになったよ。一緒に空を撮ろう"
+          }
+        }
+      }
+    },
+    "notification.streakAboutToBreak.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your streak is on the line"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ストリークが危ないよ"
+          }
+        }
+      }
+    },
+    "notification.streakAboutToBreak.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post today to keep it alive."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日中に投稿して続けよう"
+          }
+        }
+      }
+    },
+    "notification.weeklyRecapReady.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your weekly recap is ready"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィークリーレビューが完成したよ"
+          }
+        }
+      }
+    },
+    "notification.weeklyRecapReady.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All 7 days. View and share it now."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7日間投稿したよ。確認してシェアしよう"
+          }
+        }
+      }
+    },
     "·": {
       "localizations": {
         "en": {
