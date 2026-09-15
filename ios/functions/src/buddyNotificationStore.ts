@@ -4,6 +4,7 @@ import { logger } from "firebase-functions";
 import {
   activeBuddyUIDs,
   buddyPostNotificationCopy,
+  deviceLanguageFromDoc,
   isWithinQuietHours,
   posterHandleFromFriendship,
   postNotificationMarkerExpireAtMs,
@@ -149,42 +150,59 @@ async function notifyOneBuddy(
   const timezone = recipientDoc.data()?.timezone;
   if (typeof timezone === "string" && isWithinQuietHours(timezone, nowMs)) return;
 
-  const tokens = devicesSnapshot.docs
-    .map((doc) => doc.data().fcmToken as string | undefined)
-    .filter((token): token is string => Boolean(token));
-  if (tokens.length === 0) return;
+  type EligibleDevice = { ref: FirebaseFirestore.DocumentReference; token: string; language: ReturnType<typeof deviceLanguageFromDoc> };
+  const eligibleDevices: EligibleDevice[] = devicesSnapshot.docs
+    .map((doc) => {
+      const token = doc.data().fcmToken as string | undefined;
+      if (!token) return null;
+      return { ref: doc.ref, token, language: deviceLanguageFromDoc(doc.data().language) };
+    })
+    .filter((entry): entry is EligibleDevice => entry !== null);
+  if (eligibleDevices.length === 0) return;
 
-  const copy = buddyPostNotificationCopy({
-    posterHandle,
-    recipientHasPostedToday: recipientPostDoc.exists,
-  });
+  const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+  // Different devices can record different in-app languages, so a single multicast
+  // with one title/body is not correct — group by language and send once per group.
+  for (const language of ["en", "ja"] as const) {
+    const group = eligibleDevices.filter((device) => device.language === language);
+    if (group.length === 0) continue;
 
-  let response;
-  try {
-    response = await messaging.sendEachForMulticast({
-      tokens,
-      notification: { title: copy.title, body: copy.body },
-      data: { type: "buddy_post", posterUid, localDate },
-      apns: {
-        headers: { "apns-collapse-id": collapseId(posterUid, localDate) },
-        payload: { aps: { sound: "default", "thread-id": "buddy-post" } },
-      },
+    const copy = buddyPostNotificationCopy({
+      posterHandle,
+      recipientHasPostedToday: recipientPostDoc.exists,
+      language,
     });
-  } catch (error: unknown) {
-    // FCM outage or a malformed payload — the post is already committed and nothing
-    // here can undo it. Log and move on; this buddy simply misses this one nudge.
-    logger.error("Buddy post notification send failed.", { buddyUid, error });
-    return;
-  }
 
-  const staleIndices = staleTokenIndices(
-    response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
-  );
-  if (staleIndices.length === 0) return;
+    let response;
+    try {
+      response = await messaging.sendEachForMulticast({
+        tokens: group.map((device) => device.token),
+        notification: { title: copy.title, body: copy.body },
+        data: { type: "buddy_post", posterUid, localDate },
+        apns: {
+          headers: { "apns-collapse-id": collapseId(posterUid, localDate) },
+          payload: { aps: { sound: "default", "thread-id": "buddy-post" } },
+        },
+      });
+    } catch (error: unknown) {
+      // FCM outage or a malformed payload — the post is already committed and nothing
+      // here can undo it. Log and move on; this buddy simply misses this one nudge.
+      logger.error("Buddy post notification send failed.", { buddyUid, language, error });
+      continue;
+    }
+
+    const staleIndices = staleTokenIndices(
+      response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
+    );
+    for (const index of staleIndices) {
+      staleRefs.push(group[index].ref);
+    }
+  }
+  if (staleRefs.length === 0) return;
 
   const writer = db.bulkWriter();
-  for (const index of staleIndices) {
-    writer.delete(devicesSnapshot.docs[index].ref);
+  for (const ref of staleRefs) {
+    writer.delete(ref);
   }
   await writer.close();
 }

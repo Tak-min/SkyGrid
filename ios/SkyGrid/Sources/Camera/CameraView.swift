@@ -83,7 +83,7 @@ struct CameraView: View {
                     Text("SKY GRID")
                         .font(SGFont.caption(12))
                         .tracking(1.8)
-                    Text(requiresCaptureToDismiss ? "PHOTO MISSION" : "THIS MORNING")
+                    Text(requiresCaptureToDismiss ? L10n.string("camera.photoMissionAllCaps") : L10n.string("THIS MORNING"))
                         .font(SGFont.caption(11))
                         .foregroundStyle(.white.opacity(0.62))
                 }
@@ -199,7 +199,7 @@ struct CameraView: View {
     private func confirm(image: UIImage) {
         guard !isConfirming else { return }
         guard let draft = viewModel.confirmCapture() else {
-            confirmationError = "Your photo could not be saved."
+            confirmationError = L10n.string("camera.confirmationError.saveFailed")
             SoundEffectPlayer.shared.play(.recoverableError)
             return
         }
@@ -219,7 +219,7 @@ struct CameraView: View {
                 SoundEffectPlayer.shared.play(.recoverableError)
                 isConfirming = false
             } catch {
-                confirmationError = "Your post could not be saved."
+                confirmationError = L10n.string("camera.confirmationError.postFailed")
                 SoundEffectPlayer.shared.play(.recoverableError)
                 isConfirming = false
             }
@@ -303,33 +303,37 @@ struct CameraFailureContent: View {
 }
 
 private extension CameraViewModel.Failure {
+    // Routed through `L10n.string(_:)`: `Text(failure.title/.message/.actionTitle)`
+    // consumes these as stored `String` properties, not `Text("literal")` call
+    // sites, so automatic String Catalog key matching does not apply here (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     var title: String {
         switch self {
-        case .permissionDenied: return "Camera access is off"
-        case .startup: return "Camera unavailable"
-        case .capture: return "That photo didn't work"
-        case .colorDetection: return "We couldn't read the sky"
+        case .permissionDenied: return L10n.string("camera.failure.permissionDenied.title")
+        case .startup: return L10n.string("camera.failure.startup.title")
+        case .capture: return L10n.string("camera.failure.capture.title")
+        case .colorDetection: return L10n.string("camera.failure.colorDetection.title")
         }
     }
 
     var message: String {
         switch self {
         case .permissionDenied:
-            return "Allow camera access in Settings to capture your morning sky."
+            return L10n.string("camera.failure.permissionDenied.message")
         case .startup:
-            return "The camera couldn't get ready. Give it another moment and try again."
+            return L10n.string("camera.failure.startup.message")
         case .capture:
-            return "Nothing was saved. Return to the viewfinder and take another photo."
+            return L10n.string("camera.failure.capture.message")
         case .colorDetection:
-            return "Try another angle with a little more open sky in the frame."
+            return L10n.string("camera.failure.colorDetection.message")
         }
     }
 
     var actionTitle: String {
         switch self {
-        case .permissionDenied: return "Open Settings"
-        case .startup: return "Try camera again"
-        case .capture, .colorDetection: return "Back to camera"
+        case .permissionDenied: return L10n.string("camera.failure.permissionDenied.action")
+        case .startup: return L10n.string("camera.failure.startup.action")
+        case .capture, .colorDetection: return L10n.string("camera.failure.backToCamera.action")
         }
     }
 

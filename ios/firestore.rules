@@ -227,9 +227,10 @@ service cloud.firestore {
       allow get, list: if signedIn() && request.auth.uid == uid;
       allow create, update: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['fcmToken', 'updatedAt', 'platform'])
+        && request.resource.data.keys().hasOnly(['fcmToken', 'updatedAt', 'platform', 'language'])
         && request.resource.data.fcmToken is string
-        && request.resource.data.platform == 'ios';
+        && request.resource.data.platform == 'ios'
+        && (!request.resource.data.keys().hasAny(['language']) || request.resource.data.language in ['en', 'ja']);
       allow delete: if signedIn() && request.auth.uid == uid;
     }
 

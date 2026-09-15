@@ -138,18 +138,19 @@ enum AppleAccountLinkError: LocalizedError {
         return .failed
     }
 
+    // Routed through `L10n.string(_:)` (see `dev-notes/localization-en-ja-stage2_*.md`).
     var errorDescription: String? {
         switch self {
         case .invalidCredential:
-            "Apple could not verify this sign-in. Please try again."
+            L10n.string("error.appleAuth.invalidCredential")
         case .credentialAlreadyLinked:
-            "This Apple Account belongs to another Sky Grid account. Its photos were not merged."
+            L10n.string("error.appleAuth.credentialAlreadyLinked")
         case .identityChanged:
-            "Sky Grid could not preserve this account identity."
+            L10n.string("error.appleAuth.identityChanged")
         case .cancelled:
             ""
         case .failed:
-            "Apple sign-in could not be completed. Please try again."
+            L10n.string("error.appleAuth.failed")
         }
     }
 }

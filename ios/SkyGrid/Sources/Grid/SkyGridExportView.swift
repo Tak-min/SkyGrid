@@ -108,7 +108,7 @@ struct SkyGridExportView: View {
                 .frame(width: 420, alignment: .trailing)
 
             VStack(alignment: .leading, spacing: 12) {
-                Text(count == 1 ? "morning\nsky" : "morning\nskies")
+                Text(count == 1 ? L10n.string("grid.morningSky.singular") : L10n.string("grid.morningSky.plural"))
                     .font(SGFont.fixedSerifTitle(62))
                     .foregroundStyle(SGExport.ink)
                     .fixedSize(horizontal: false, vertical: true)

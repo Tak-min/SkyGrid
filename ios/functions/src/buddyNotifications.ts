@@ -70,17 +70,36 @@ export interface BuddyPostNotificationCopy {
   body: string;
 }
 
+/** The two in-app languages Sky Grid supports server-side. Unknown/missing device
+ * language data always falls back to English — never assume Japanese. */
+export type DeviceLanguage = "en" | "ja";
+
+/** Reads a Firestore device-doc `language` field defensively. Anything other than
+ * the literal string `"ja"` (including `undefined`, `null`, or a stale/garbage
+ * value) resolves to `"en"`. */
+export function deviceLanguageFromDoc(value: unknown): DeviceLanguage {
+  return value === "ja" ? "ja" : "en";
+}
+
 /**
  * House voice: short, declarative, no exclamation points (see `StreakMilestone`
  * headline copy, `MorningFollowUpScheduler`'s "Today's sky" / "Not captured yet.").
  * Never promises a photo — a buddy's sky colour is the only thing the UI ever shows
  * for them (`BuddyTile.swift`); the copy must not read as if more were coming.
+ * Japanese keeps the same understated, declarative register — casual sentence-final
+ * particles (よ/だ), not the exclamation-heavy tone used elsewhere in the app.
  */
 export function buddyPostNotificationCopy(params: {
   posterHandle: string | null;
   recipientHasPostedToday: boolean;
+  language: DeviceLanguage;
 }): BuddyPostNotificationCopy {
-  const name = params.posterHandle ?? "Your buddy";
+  const name = params.posterHandle ?? (params.language === "ja" ? "バディ" : "Your buddy");
+  if (params.language === "ja") {
+    return params.recipientHasPostedToday
+      ? { title: "両方の空がそろったよ", body: `${name}も今朝の空を撮ったよ` }
+      : { title: `${name}が空を撮ったよ`, body: "空はまだ封印中だよ" };
+  }
   return params.recipientHasPostedToday
     ? { title: "Both skies are in.", body: `${name} caught this morning too.` }
     : { title: `${name} caught the sky.`, body: "Yours is still sealed." };

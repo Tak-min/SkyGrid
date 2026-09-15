@@ -136,13 +136,16 @@ struct MorningAlarmSettingsView: View {
         .padding(.top, SGSpacing.lg)
     }
 
+    // Routed through `L10n.string(_:)`: this is a stored `String` property, not a
+    // `Text("literal")` call site, so automatic String Catalog key matching does
+    // not apply (see `dev-notes/localization-en-ja-stage2_*.md`). Japanese has no
+    // singular/plural distinction, so only English branches on `enabled.count == 1`.
     private var headerTitle: String {
         let enabled = viewModel.schedules.filter(\.isEnabled)
-        guard !enabled.isEmpty else { return "No alarms" }
-        let noun = enabled.count == 1 ? "alarm" : "alarms"
-        return viewModel.state.isScheduled
-            ? "\(enabled.count) \(noun) ready"
-            : "\(enabled.count) \(noun)"
+        guard !enabled.isEmpty else { return L10n.string("alarm.header.noAlarms") }
+        let readyKey = enabled.count == 1 ? "alarm.header.readySingular" : "alarm.header.readyPlural"
+        let countKey = enabled.count == 1 ? "alarm.header.countSingular" : "alarm.header.countPlural"
+        return String(format: L10n.string(viewModel.state.isScheduled ? readyKey : countKey), enabled.count)
     }
 
     private var scheduleList: some View {
@@ -219,7 +222,7 @@ struct MorningAlarmSettingsView: View {
             .buttonStyle(.plain)
             .foregroundStyle(SGT.ink3)
             .disabled(viewModel.isWorking)
-            .accessibilityLabel("Delete \(timeString(schedule.minutesAfterMidnight)) alarm")
+            .accessibilityLabel(String(format: L10n.string("alarm.deleteAlarmAccessibility"), timeString(schedule.minutesAfterMidnight)))
         }
         .padding(SGSpacing.lg)
         .quietCard()

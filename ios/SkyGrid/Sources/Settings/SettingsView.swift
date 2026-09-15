@@ -24,24 +24,24 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: SGSpacing.xxl) {
                 settingsHeader
-                settingsSection("ARCHIVE PROTECTION") {
+                settingsSection(L10n.string("settings.section.archiveProtection")) {
                     archiveProtectionRow
                 }
 
-                settingsSection("SKY GRID PRO") {
+                settingsSection(L10n.string("settings.section.skyGridPro")) {
                     if entitlements.isPro {
                         settingRow(
-                            "Sky Grid Pro is active",
+                            L10n.string("settings.row.proActive.title"),
                             symbol: "checkmark.seal",
-                            detail: "Every month in your photo archive is available.",
+                            detail: L10n.string("settings.row.proActive.detail"),
                             accessory: .none
                         )
                     } else {
                         Button { showPaywall = true } label: {
                             settingRow(
-                                "Unlock the full archive",
+                                L10n.string("Unlock the full archive"),
                                 symbol: "square.grid.3x3",
-                                detail: "Keep more than your latest 30 days.",
+                                detail: L10n.string("settings.row.unlockArchive.detail"),
                                 emphasized: true
                             )
                         }
@@ -52,9 +52,9 @@ struct SettingsView: View {
                         // path just as short as it was on the single-screen paywall.
                         Button { Task { await restore() } } label: {
                             settingRow(
-                                "Restore purchases",
+                                L10n.string("Restore purchases"),
                                 symbol: "arrow.clockwise",
-                                detail: isRestoring ? "Checking…" : "Already purchased Pro on this account?",
+                                detail: isRestoring ? L10n.string("settings.row.restore.checking") : L10n.string("settings.row.restore.detail"),
                                 accessory: isRestoring ? .progress : .none
                             )
                         }
@@ -63,15 +63,15 @@ struct SettingsView: View {
                     }
                 }
 
-                settingsSection("MORNING") {
+                settingsSection(L10n.string("settings.section.morning")) {
                     NavigationLink {
                         MorningAlarmSettingsView()
                     } label: {
-                        settingRow("Morning Alarm", symbol: "alarm", detail: "Set the wake flow that brings you to the sky.")
+                        settingRow(L10n.string("settings.row.morningAlarm.title"), symbol: "alarm", detail: L10n.string("settings.row.morningAlarm.detail"))
                     }
                 }
 
-                settingsSection("EXPERIENCE") {
+                settingsSection(L10n.string("settings.section.experience")) {
                     Menu {
                         ForEach(AppLanguage.allCases) { language in
                             Button { localization.select(language) } label: {
@@ -95,9 +95,9 @@ struct SettingsView: View {
 
                     Toggle(isOn: $soundEffectsEnabled) {
                         settingRow(
-                            "Sound effects",
+                            L10n.string("settings.row.soundEffects.title"),
                             symbol: "speaker.wave.2",
-                            detail: "Celebrate saved skies and important moments.",
+                            detail: L10n.string("settings.row.soundEffects.detail"),
                             accessory: .none
                         )
                     }
@@ -107,27 +107,27 @@ struct SettingsView: View {
                     }
                 }
 
-                settingsSection("SAFETY") {
+                settingsSection(L10n.string("settings.section.safety")) {
                     NavigationLink {
                         CommunitySafetyView(uid: uid, friendRepository: friendRepository, userRepository: userRepository)
                     } label: {
-                        settingRow("Community & Safety", symbol: "hand.raised", detail: "Controls for the people you connect with.")
+                        settingRow(L10n.string("Community & Safety"), symbol: "hand.raised", detail: L10n.string("settings.row.communitySafety.detail"))
                     }
                 }
 
-                settingsSection("SUPPORT") {
+                settingsSection(L10n.string("settings.section.support")) {
                     Link(destination: SkyGridWeb.supportURL) {
-                        settingRow("Contact us", symbol: "envelope", detail: "Get help with Sky Grid.", accessory: .external)
+                        settingRow(L10n.string("settings.row.contactUs.title"), symbol: "envelope", detail: L10n.string("settings.row.contactUs.detail"), accessory: .external)
                     }
                     Link(destination: SkyGridWeb.privacyURL) {
-                        settingRow("Privacy Policy", symbol: "lock", detail: "How your photos and data are handled.", accessory: .external)
+                        settingRow(L10n.string("settings.row.privacyPolicy.title"), symbol: "lock", detail: L10n.string("settings.row.privacyPolicy.detail"), accessory: .external)
                     }
                     Link(destination: SkyGridWeb.termsURL) {
-                        settingRow("Terms of Use", symbol: "doc.text", detail: "The terms for using Sky Grid.", accessory: .external)
+                        settingRow(L10n.string("settings.row.termsOfUse.title"), symbol: "doc.text", detail: L10n.string("settings.row.termsOfUse.detail"), accessory: .external)
                     }
                 }
 
-                settingsSection("ACCOUNT") {
+                settingsSection(L10n.string("settings.section.account")) {
                     NavigationLink {
                         AccountDeletionView(
                             uid: uid,
@@ -135,7 +135,7 @@ struct SettingsView: View {
                             onDeleted: onAccountDeleted
                         )
                     } label: {
-                        settingRow("Delete account", symbol: "trash", detail: "Permanently remove your photos and connections.")
+                        settingRow(L10n.string("Delete account"), symbol: "trash", detail: L10n.string("settings.row.deleteAccount.detail"))
                             .foregroundStyle(.red)
                     }
                 }
@@ -161,7 +161,7 @@ struct SettingsView: View {
         .alert("Could not connect Apple", isPresented: appleLinkAlert) {
             Button("Close", role: .cancel) { appleLinkError = nil }
         } message: {
-            Text(appleLinkError ?? "Please try again in a moment.")
+            Text(appleLinkError ?? L10n.string("fallback.pleaseTryAgainInAMoment"))
         }
     }
 
@@ -170,9 +170,9 @@ struct SettingsView: View {
         if FirebaseAuthSession.isAnonymous {
             Button { Task { await linkApple() } } label: {
                 settingRow(
-                    "Back up with Apple",
+                    L10n.string("settings.row.backUpWithApple.title"),
                     symbol: "person.badge.key",
-                    detail: isLinkingApple ? "Connecting…" : "Keep this archive when you reinstall or change devices.",
+                    detail: isLinkingApple ? L10n.string("settings.row.backUpWithApple.connecting") : L10n.string("settings.row.backUpWithApple.detail"),
                     accessory: isLinkingApple ? .progress : .none
                 )
             }
@@ -180,9 +180,9 @@ struct SettingsView: View {
             .disabled(isLinkingApple)
         } else {
             settingRow(
-                "Account backed up",
+                L10n.string("settings.row.accountBackedUp.title"),
                 symbol: "checkmark.shield",
-                detail: "Your Sky Grid archive is connected to Apple.",
+                detail: L10n.string("settings.row.accountBackedUp.detail"),
                 accessory: .none
             )
         }
@@ -394,7 +394,7 @@ private struct CommunitySafetyView: View {
                         Text("We couldn't refresh your blocked list.")
                             .font(SGFont.body(16))
                             .foregroundStyle(SGT.ink)
-                        Text(blocked.isEmpty ? "No block settings have been changed. Check your connection and try again." : "Showing the last confirmed block settings on this device.")
+                        Text(blocked.isEmpty ? L10n.string("settings.blocked.noChangeNotice") : L10n.string("settings.blocked.showingLastConfirmed"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(SGT.ink2)
                         Button("Check again") {
@@ -483,7 +483,7 @@ private struct BlockedBuddyRow: View {
 
     var body: some View {
         HStack {
-            Text(displayName ?? "Buddy")
+            Text(displayName ?? L10n.string("fallback.buddyName"))
                 .foregroundStyle(SGT.ink)
             Spacer()
             Button("Unblock") { Task { await onUnblock() } }

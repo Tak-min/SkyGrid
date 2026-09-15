@@ -1,0 +1,40 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSAlarmKitUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sky Grid uses alarms at the time you choose to help you capture your morning sky."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sky Gridは、指定した時刻にアラームを鳴らし、朝の空の撮影をサポートします。"
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sky Grid uses the camera only to capture your morning sky. Choosing from the photo library is not available."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sky Gridは、朝の空を撮影するためだけにカメラを使用します。フォトライブラリからの選択はご利用いただけません。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

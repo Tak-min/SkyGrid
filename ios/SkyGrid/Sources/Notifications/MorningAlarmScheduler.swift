@@ -38,17 +38,21 @@ enum MorningAlarmKind: Equatable, Sendable {
     case systemAlarm
     case reminder
 
+    // Routed through `L10n.string(_:)`: these are stored `String` properties
+    // consumed via `Text(kind.title)`, not `Text("literal")` call sites, so automatic
+    // String Catalog key matching does not apply (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     var title: String {
         switch self {
-        case .systemAlarm: return "System Alarm"
-        case .reminder: return "Morning Reminder"
+        case .systemAlarm: return L10n.string("alarm.kind.systemAlarm.title")
+        case .reminder: return L10n.string("alarm.kind.reminder.title")
         }
     }
 
     var detail: String {
         switch self {
-        case .systemAlarm: return "An iPhone alarm that sounds even when your phone is locked."
-        case .reminder: return "On this iOS version, it arrives as a regular notification."
+        case .systemAlarm: return L10n.string("alarm.kind.systemAlarm.detail")
+        case .reminder: return L10n.string("alarm.kind.reminder.detail")
         }
     }
 }

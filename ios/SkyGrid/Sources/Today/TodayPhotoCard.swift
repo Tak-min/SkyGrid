@@ -66,7 +66,7 @@ struct TodayPhotoCard: View {
             // One stop, not two: the sync badge is part of the photo's state, and
             // the rest of this screen groups its composite regions the same way.
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(isPreview ? "This morning's photo, waiting to sync" : "This morning's photo")
+            .accessibilityLabel(isPreview ? L10n.string("today.photoCard.waitingToSyncAccessibility") : L10n.string("today.photoCard.accessibility"))
             .task(id: post.imagePath) {
                 await loadImage()
             }

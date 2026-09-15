@@ -50,7 +50,7 @@ struct AddBuddyView: View {
                         ProgressView()
                             .tint(SGT.background)
                     }
-                    Text(viewModel.isSendingRequest ? "Sending…" : "Send request")
+                    Text(viewModel.isSendingRequest ? L10n.string("addBuddy.sending") : L10n.string("addBuddy.sendRequest"))
                 }
                 .frame(maxWidth: .infinity)
             }

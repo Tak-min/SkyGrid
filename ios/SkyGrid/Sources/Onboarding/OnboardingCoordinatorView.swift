@@ -287,28 +287,37 @@ struct OnboardingCoordinatorView: View {
         if forward { advance() } else { goBack() }
     }
 
+    // Routed through `L10n.string(_:)`: `Text(companionLine)` / `.accessibilityValue`
+    // consume this as a stored `String` property, not a `Text("literal")` call site,
+    // so automatic String Catalog key matching does not apply (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     private var companionLine: String {
         switch viewModel.step {
-        case .language: "Choose your language."
-        case .welcome: "One sky is a beginning."
+        case .language: L10n.string("onboarding.companion.language")
+        case .welcome: L10n.string("onboarding.companion.welcome")
         case .intention:
-            viewModel.personalizationProfile.intent.map { "\($0.title) — a good place to begin." }
-                ?? "Let's make this morning yours."
+            viewModel.personalizationProfile.intent.map {
+                String(format: L10n.string("onboarding.companion.intention.answered"), $0.title)
+            } ?? L10n.string("onboarding.companion.intention.unanswered")
         case .pace:
-            viewModel.personalizationProfile.pace.map { "\($0.title) works. I'll follow your pace." }
-                ?? "A pace that feels like you."
+            viewModel.personalizationProfile.pace.map {
+                String(format: L10n.string("onboarding.companion.pace.answered"), $0.title)
+            } ?? L10n.string("onboarding.companion.pace.unanswered")
         case .frequency:
-            viewModel.personalizationProfile.frequency.map { "\($0.title). There's room for real life." }
-                ?? "There's room for real life."
+            viewModel.personalizationProfile.frequency.map {
+                String(format: L10n.string("onboarding.companion.frequency.answered"), $0.title)
+            } ?? L10n.string("onboarding.companion.frequency.unanswered")
         case .privacy:
-            viewModel.personalizationProfile.privacy.map { "\($0.title). Your sky stays yours." }
-                ?? "Your sky. Your circle."
+            viewModel.personalizationProfile.privacy.map {
+                String(format: L10n.string("onboarding.companion.privacy.answered"), $0.title)
+            } ?? L10n.string("onboarding.companion.privacy.unanswered")
         case .reminder:
-            viewModel.personalizationProfile.reminder.map { "\($0.title). You stay in control." }
-                ?? "You choose the nudge."
-        case .wakeGoal: "A time to look up."
-        case .plan: "Your first sky is next."
-        case .invite: "Together is optional. Your sky is yours."
+            viewModel.personalizationProfile.reminder.map {
+                String(format: L10n.string("onboarding.companion.reminder.answered"), $0.title)
+            } ?? L10n.string("onboarding.companion.reminder.unanswered")
+        case .wakeGoal: L10n.string("onboarding.companion.wakeGoal")
+        case .plan: L10n.string("onboarding.companion.plan")
+        case .invite: L10n.string("onboarding.companion.invite")
         }
     }
 

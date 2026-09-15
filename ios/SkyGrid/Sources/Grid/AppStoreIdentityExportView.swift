@@ -36,7 +36,7 @@ struct AppStoreIdentity: View {
                 if let handle {
                     // Labelled rather than a bare "@name", so the person who shared
                     // the card cannot be mistaken for the app's own account.
-                    Text("SHARED BY @\(handle.value)")
+                    Text(String(format: L10n.string("export.sharedByHandle"), handle.value))
                         .font(SGFont.fixedNumeric(20, weight: .semibold))
                         .tracking(1.5)
                         .foregroundStyle(SGExport.inkMuted)

@@ -218,7 +218,7 @@ struct TodayView: View {
             // upsell, so it still shows here.
             if subscriptionPlan.isPaid {
                 planStatusBadge
-                    .accessibilityLabel("Current plan: \(subscriptionPlan.homeLabel)")
+                    .accessibilityLabel(String(format: L10n.string("today.currentPlanLabel"), subscriptionPlan.homeLabel))
             }
 
             Text(recordingStatus)
@@ -283,7 +283,7 @@ struct TodayView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
                         if viewModel.streak.currentStreak > 0 {
-                            Text("\(viewModel.streak.currentStreak) day streak")
+                            Text(String(format: L10n.string("today.streakDayCount"), viewModel.streak.currentStreak))
                                 .font(SGFont.display(34))
                                 .foregroundStyle(.white)
                                 .contentTransition(.numericText())
@@ -428,10 +428,10 @@ struct TodayView: View {
                     .foregroundStyle(SGT.ink2)
                     .accessibilityHidden(true)
             }
-            Text(viewModel.postState == .unavailable ? "We couldn't check today's record." : "Checking today's record…")
+            Text(viewModel.postState == .unavailable ? L10n.string("today.recordCheck.failed") : L10n.string("today.recordCheck.checking"))
                 .font(SGFont.body(16))
                 .foregroundStyle(SGT.ink)
-            Text(viewModel.postState == .unavailable ? "Your archive is unchanged. Check your connection and try again." : "Capture will be available once your existing record is confirmed.")
+            Text(viewModel.postState == .unavailable ? L10n.string("today.recordCheck.unchangedNotice") : L10n.string("today.recordCheck.captureAvailableSoon"))
                 .font(SGFont.caption(13))
                 .foregroundStyle(SGT.ink2)
             if viewModel.postState == .unavailable {
@@ -516,7 +516,7 @@ struct TodayView: View {
             .accessibilityLabel("Invite people you trust. Your skies unlock each other.")
         } else {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
-                sectionLabel(viewModel.streak.hasPostedToday ? "THIS MORNING, TOGETHER" : "SEALED UNTIL YOU POST")
+                sectionLabel(viewModel.streak.hasPostedToday ? L10n.string("today.section.morningTogether") : L10n.string("today.section.sealedUntilPost"))
                 BuddyRow(
                     buddies: viewModel.buddies,
                     today: observedDate,
@@ -538,14 +538,14 @@ struct TodayView: View {
 
     private var emptyStateAccessibilityLabel: String {
         viewModel.streak.currentStreak > 0
-            ? "This morning. \(viewModel.streak.currentStreak) day streak. Capture to keep it."
-            : "This morning. Day one — your first sky is today."
+            ? String(format: L10n.string("today.emptyState.streakAccessibility"), viewModel.streak.currentStreak)
+            : L10n.string("today.emptyState.dayOneAccessibility")
     }
 
     private var rhythmSection: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
             HStack(alignment: .firstTextBaseline) {
-                sectionLabel("THIS WEEK")
+                sectionLabel(L10n.string("today.section.thisWeek"))
                 Spacer()
                 Text("\(viewModel.weekRhythm.postedCount) / 7")
                     .font(SGFont.numeric(14, weight: .medium))
@@ -577,7 +577,7 @@ struct TodayView: View {
                 HStack {
                     Image(systemName: "alarm")
                         .font(.system(size: 15, weight: .medium))
-                    Text("Morning alarm · \(alarmTime)")
+                    Text(String(format: L10n.string("today.morningAlarmLine"), alarmTime))
                         .font(SGFont.body(15))
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -588,7 +588,7 @@ struct TodayView: View {
                 .frame(minHeight: 52)
                 .playfulSurface(accent: SGT.accentSecondary)
             }
-            .accessibilityLabel("Morning alarm, \(alarmTime)")
+            .accessibilityLabel(String(format: L10n.string("today.morningAlarmAccessibility"), alarmTime))
         }
     }
 
@@ -624,9 +624,13 @@ struct TodayView: View {
         String(format: "%02d:%02d", LocalDefaults.wakeGoalMinutes / 60, LocalDefaults.wakeGoalMinutes % 60)
     }
 
+    // Displayed directly to the person (unlike `captureAndUploadLabel`'s
+    // `en_US_POSIX` formatter below, which only ever parses/serializes an internal
+    // time string), so this follows the selected in-app language rather than a
+    // fixed locale — otherwise the date would stay English even in Japanese mode.
     private var todayHeading: String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = (LocalDefaults.selectedLanguageCode.flatMap(AppLanguage.init(rawValue:)) ?? AppLanguage.inferred()).locale
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "EEEE, MMMM d"
         return formatter.string(from: .now)
@@ -634,9 +638,11 @@ struct TodayView: View {
 
     private var recordingStatus: String {
         switch viewModel.postState {
-        case .checking: return "Checking…"
-        case .available: return viewModel.todayPost == nil ? "Not yet" : "Recorded"
-        case .unavailable: return "Unavailable"
+        case .checking: return L10n.string("today.recordingStatus.checking")
+        case .available: return viewModel.todayPost == nil
+            ? L10n.string("today.recordingStatus.notYet")
+            : L10n.string("today.recordingStatus.recorded")
+        case .unavailable: return L10n.string("today.recordingStatus.unavailable")
         }
     }
 
@@ -652,7 +658,11 @@ struct TodayView: View {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "H:mm"
-        return "Captured \(formatter.string(from: post.capturedAt)) / Posted \(formatter.string(from: post.uploadedAt))"
+        return String(
+            format: L10n.string("today.captureAndUploadLabel"),
+            formatter.string(from: post.capturedAt),
+            formatter.string(from: post.uploadedAt)
+        )
     }
 
     private func presentAmbientMessageIfEligible() {

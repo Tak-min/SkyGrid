@@ -38,7 +38,7 @@ struct HandleClaimView: View {
                         ProgressView()
                             .tint(SGT.background)
                     }
-                    Text(isSubmitting ? "Saving…" : "Save handle")
+                    Text(isSubmitting ? L10n.string("handle.saving") : L10n.string("handle.saveHandle"))
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -65,7 +65,7 @@ struct HandleClaimView: View {
 
     private func claim() async {
         guard let handle = Handle(raw: handleInput) else {
-            errorMessage = "Use 3–20 letters, numbers, or underscores."
+            errorMessage = L10n.string("handle.error.invalidFormat")
             return
         }
         isSubmitting = true
@@ -75,13 +75,13 @@ struct HandleClaimView: View {
             try await userRepository.claimHandle(handle, for: uid)
             onClaimed(handle)
         } catch RepositoryError.handleAlreadyTaken {
-            errorMessage = "That handle is already in use."
+            errorMessage = L10n.string("handle.error.alreadyTaken")
         } catch RepositoryError.network {
-            errorMessage = "No connection. Check your network and try again."
+            errorMessage = L10n.string("handle.error.noConnection")
         } catch RepositoryError.permissionDenied {
-            errorMessage = "Sky Grid could not verify this app. Reopen the latest version and try again."
+            errorMessage = L10n.string("handle.error.appCheckFailed")
         } catch {
-            errorMessage = "Could not save your handle. Please try again."
+            errorMessage = L10n.string("handle.error.saveFailed")
         }
     }
 }

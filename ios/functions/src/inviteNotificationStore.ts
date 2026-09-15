@@ -1,7 +1,7 @@
 import { FieldValue, Timestamp, type Firestore } from "firebase-admin/firestore";
 import type { Messaging } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
-import { isWithinQuietHours, staleTokenIndices } from "./buddyNotifications.js";
+import { deviceLanguageFromDoc, isWithinQuietHours, staleTokenIndices } from "./buddyNotifications.js";
 import { inviteClaimedNotificationCopy } from "./inviteNotifications.js";
 
 /**
@@ -71,37 +71,51 @@ export async function notifyInviterOfClaim(
   const timezone = inviterDoc.data()?.timezone;
   if (typeof timezone === "string" && isWithinQuietHours(timezone, nowMs)) return;
 
-  const tokens = devicesSnapshot.docs
-    .map((doc) => doc.data().fcmToken as string | undefined)
-    .filter((token): token is string => Boolean(token));
-  if (tokens.length === 0) return;
+  type EligibleDevice = { ref: FirebaseFirestore.DocumentReference; token: string; language: ReturnType<typeof deviceLanguageFromDoc> };
+  const eligibleDevices: EligibleDevice[] = devicesSnapshot.docs
+    .map((doc) => {
+      const token = doc.data().fcmToken as string | undefined;
+      if (!token) return null;
+      return { ref: doc.ref, token, language: deviceLanguageFromDoc(doc.data().language) };
+    })
+    .filter((entry): entry is EligibleDevice => entry !== null);
+  if (eligibleDevices.length === 0) return;
 
-  const copy = inviteClaimedNotificationCopy();
+  const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+  for (const language of ["en", "ja"] as const) {
+    const group = eligibleDevices.filter((device) => device.language === language);
+    if (group.length === 0) continue;
 
-  let response;
-  try {
-    response = await messaging.sendEachForMulticast({
-      tokens,
-      notification: { title: copy.title, body: copy.body },
-      data: { type: "invite_claimed" },
-      apns: {
-        headers: { "apns-collapse-id": "invite_claimed" },
-        payload: { aps: { sound: "default", "thread-id": "invite-claimed" } },
-      },
-    });
-  } catch (error: unknown) {
-    logger.error("Invite-claim notification send failed.", { inviterUid, error });
-    return;
+    const copy = inviteClaimedNotificationCopy(language);
+
+    let response;
+    try {
+      response = await messaging.sendEachForMulticast({
+        tokens: group.map((device) => device.token),
+        notification: { title: copy.title, body: copy.body },
+        data: { type: "invite_claimed" },
+        apns: {
+          headers: { "apns-collapse-id": "invite_claimed" },
+          payload: { aps: { sound: "default", "thread-id": "invite-claimed" } },
+        },
+      });
+    } catch (error: unknown) {
+      logger.error("Invite-claim notification send failed.", { inviterUid, language, error });
+      continue;
+    }
+
+    const staleIndices = staleTokenIndices(
+      response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
+    );
+    for (const index of staleIndices) {
+      staleRefs.push(group[index].ref);
+    }
   }
-
-  const staleIndices = staleTokenIndices(
-    response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
-  );
-  if (staleIndices.length === 0) return;
+  if (staleRefs.length === 0) return;
 
   const writer = db.bulkWriter();
-  for (const index of staleIndices) {
-    writer.delete(devicesSnapshot.docs[index].ref);
+  for (const ref of staleRefs) {
+    writer.delete(ref);
   }
   await writer.close();
 }

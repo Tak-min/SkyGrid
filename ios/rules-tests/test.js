@@ -702,3 +702,56 @@ describe("firestore.rules invite collections are server-only", () => {
     }
   });
 });
+
+describe("firestore.rules users/{uid}/devices/{tokenId} (per-device language)", () => {
+  function devicePath(uid = OWNER, tokenId = "tok123") {
+    return `users/${uid}/devices/${tokenId}`;
+  }
+
+  it("lets the owner create a device doc with a valid language", async () => {
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    await assertSucceeds(
+      ownerCtx.firestore().doc(devicePath()).set({
+        fcmToken: "tok123",
+        updatedAt: serverTimestamp(),
+        platform: "ios",
+        language: "ja",
+      })
+    );
+  });
+
+  it("lets the owner create a device doc with no language field (backward compatibility)", async () => {
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    await assertSucceeds(
+      ownerCtx.firestore().doc(devicePath()).set({
+        fcmToken: "tok123",
+        updatedAt: serverTimestamp(),
+        platform: "ios",
+      })
+    );
+  });
+
+  it("blocks a device doc with a language value other than 'en' or 'ja'", async () => {
+    const ownerCtx = testEnv.authenticatedContext(OWNER);
+    await assertFails(
+      ownerCtx.firestore().doc(devicePath()).set({
+        fcmToken: "tok123",
+        updatedAt: serverTimestamp(),
+        platform: "ios",
+        language: "fr",
+      })
+    );
+  });
+
+  it("blocks a different signed-in user from creating a device doc under someone else's uid", async () => {
+    const strangerCtx = testEnv.authenticatedContext(STRANGER);
+    await assertFails(
+      strangerCtx.firestore().doc(devicePath(OWNER)).set({
+        fcmToken: "tok123",
+        updatedAt: serverTimestamp(),
+        platform: "ios",
+        language: "en",
+      })
+    );
+  });
+});

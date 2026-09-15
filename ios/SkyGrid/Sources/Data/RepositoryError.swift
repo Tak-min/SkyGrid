@@ -35,28 +35,32 @@ enum RepositoryError: Error, Sendable, LocalizedError {
     case rateLimited(underlying: String)
     case unknown(underlying: String)
 
+    // Routed through `L10n.string(_:)`: these are stored `String?` properties
+    // (via `LocalizedError`), not `Text("literal")` call sites, so automatic
+    // String Catalog key matching does not apply (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     var errorDescription: String? {
         switch self {
         case .notFound:
-            "That record could not be found."
+            L10n.string("error.repository.notFound")
         case .notAuthenticated:
-            "You're signed out. Sign in again to continue."
+            L10n.string("error.repository.notAuthenticated")
         case .handleAlreadyTaken:
-            "That handle is already taken. Try another one."
+            L10n.string("error.repository.handleAlreadyTaken")
         case .alreadyPostedToday:
-            "You've already kept a sky this morning."
+            L10n.string("error.repository.alreadyPostedToday")
         case .captureAlreadyPending:
-            "This morning's photo is still being saved. Give it a moment."
+            L10n.string("error.repository.captureAlreadyPending")
         case .network:
-            "Sky Grid couldn't reach the network."
+            L10n.string("error.repository.network")
         case .permissionDenied:
-            "Sky Grid doesn't have permission to do that right now."
+            L10n.string("error.repository.permissionDenied")
         case .actionNotReady:
-            "That's not possible right now."
+            L10n.string("error.repository.actionNotReady")
         case .rateLimited:
-            "Too many tries."
+            L10n.string("error.repository.rateLimited")
         case .unknown:
-            "Something went wrong on Sky Grid's side."
+            L10n.string("error.repository.unknown")
         }
     }
 
@@ -67,19 +71,19 @@ enum RepositoryError: Error, Sendable, LocalizedError {
         case .notFound, .alreadyPostedToday:
             nil
         case .notAuthenticated:
-            "Your archive is safe and will come back with your account."
+            L10n.string("error.repository.recovery.notAuthenticated")
         case .handleAlreadyTaken:
-            "Handles are unique, so this one belongs to someone else."
+            L10n.string("error.repository.recovery.handleAlreadyTaken")
         case .captureAlreadyPending:
-            "It will finish on its own — you don't need to retake it."
+            L10n.string("error.repository.recovery.captureAlreadyPending")
         case .network:
-            "Check your connection and try again. Nothing in your archive has changed."
+            L10n.string("error.repository.recovery.network")
         case .actionNotReady:
-            "Nothing has changed — try again in a moment."
+            L10n.string("error.repository.recovery.actionNotReady")
         case .rateLimited:
-            "Give it a few minutes and try again."
+            L10n.string("error.repository.recovery.rateLimited")
         case .permissionDenied, .unknown:
-            "Nothing in your archive has changed. Try again in a moment."
+            L10n.string("error.repository.recovery.default")
         }
     }
 

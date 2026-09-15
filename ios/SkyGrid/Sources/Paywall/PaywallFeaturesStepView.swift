@@ -133,7 +133,7 @@ private struct ArchiveGrowthPreview: View {
             .background(SGT.fill, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Archive growth preview: \(stageLabel)")
+        .accessibilityLabel(String(format: L10n.string("paywall.archiveGrowthPreviewAccessibility"), stageLabel))
         .accessibilityHint("Replays the seven day, thirty day, and one year preview")
         .task { await play() }
     }
@@ -146,11 +146,14 @@ private struct ArchiveGrowthPreview: View {
         }
     }
 
+    // Routed through `L10n.string(_:)`: `Text(stageLabel)` consumes this as a
+    // stored `String` property, not a `Text("literal")` call site (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     private var stageLabel: String {
         switch phase {
-        case 0: "Your first 7 mornings"
-        case 1: "A month takes shape"
-        default: "Your year becomes a landscape"
+        case 0: L10n.string("paywall.features.stage.first7Mornings")
+        case 1: L10n.string("paywall.features.stage.monthTakesShape")
+        default: L10n.string("paywall.features.stage.yearBecomesLandscape")
         }
     }
 

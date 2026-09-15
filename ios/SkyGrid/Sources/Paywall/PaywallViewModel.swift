@@ -134,20 +134,24 @@ final class PaywallViewModel {
         }
     }
 
+    // Routed through `L10n.string(_:)`: this is a stored `String` property, not a
+    // `Text("literal")` call site, so automatic String Catalog key matching does not
+    // apply (see `dev-notes/localization-en-ja-stage2_*.md`). Purchase-outcome
+    // copy stays precise over casual per the localization brief's payment exception.
     private static func message(for error: Error) -> String {
         switch error {
         case PurchaseError.configurationMissing:
-            return "Subscriptions are not configured for this build."
+            return L10n.string("paywall.error.configurationMissing")
         case PurchaseError.noOfferingAvailable, PurchaseError.productNotFound:
-            return "Plans could not be loaded. Please try again in a moment."
+            return L10n.string("paywall.error.noOfferingAvailable")
         case PurchaseError.eligibilityUnavailable:
-            return "We couldn’t verify this offer, so no purchase was made. Please try again."
+            return L10n.string("paywall.error.eligibilityUnavailable")
         case PurchaseError.paymentPending:
-            return "Your purchase is waiting for approval. Pro will unlock after Apple confirms it."
+            return L10n.string("paywall.error.paymentPending")
         case PurchaseError.underlying(let message):
             return message
         default:
-            return "Something went wrong. Please try again in a moment."
+            return L10n.string("paywall.error.default")
         }
     }
 }

@@ -67,6 +67,6 @@ final class InviteLinkViewModel {
     }
 
     private static func message(for error: Error) -> String {
-        (error as? RepositoryError)?.errorDescription ?? "Could not load your invite link."
+        (error as? RepositoryError)?.errorDescription ?? L10n.string("invite.link.loadError")
     }
 }

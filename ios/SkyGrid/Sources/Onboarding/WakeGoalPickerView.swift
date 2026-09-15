@@ -88,7 +88,7 @@ struct WakeGoalPickerView: View {
 
             if reminderPreference == .scheduledAlarm {
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                    Text(alarmState.kind == .systemAlarm ? "Photo Mission stays active." : "Reminder fallback")
+                    Text(alarmState.kind == .systemAlarm ? L10n.string("onboarding.wakeGoal.photoMissionActive") : L10n.string("onboarding.wakeGoal.reminderFallback"))
                         .font(SGFont.body(14))
                         .fontWeight(.bold)
                         .foregroundStyle(SGT.ink2)
@@ -111,18 +111,24 @@ struct WakeGoalPickerView: View {
         }
     }
 
+    // Routed through `L10n.string(_:)`: these stored `String` properties are
+    // consumed via `Text(...)`, not `Text("literal")` call sites, so automatic
+    // String Catalog key matching does not apply (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     private var photoMissionDetail: String {
         if alarmState.kind == .systemAlarm {
-            return "Stop silences the current ring. A system alarm returns every 5 minutes until your photo is saved, for up to four hours."
+            return L10n.string("onboarding.wakeGoal.photoMissionDetail.systemAlarm")
         }
-        return "This iOS version uses a regular notification. It cannot require a photo or bypass Silent mode and Focus."
+        return L10n.string("onboarding.wakeGoal.photoMissionDetail.reminder")
     }
 
     private var alarmActionTitle: String {
-        if alarmState.isScheduled { return "Update \(alarmState.kind.title)" }
+        if alarmState.isScheduled {
+            return String(format: L10n.string("onboarding.wakeGoal.updateAlarmAction"), alarmState.kind.title)
+        }
         return reminderPreference == .scheduledAlarm
-            ? "Set a Morning Alarm"
-            : "Set a Gentle Reminder"
+            ? L10n.string("onboarding.wakeGoal.setMorningAlarmAction")
+            : L10n.string("onboarding.wakeGoal.setGentleReminderAction")
     }
 
     private var timeString: String {
@@ -132,11 +138,11 @@ struct WakeGoalPickerView: View {
     private var alarmMessage: String {
         switch alarmState {
         case .denied:
-            return "Permission was not allowed. You can still continue and change this later in Settings."
+            return L10n.string("onboarding.wakeGoal.alarmMessage.denied")
         case .failed:
-            return "It could not be set. You can still continue and try again later in Settings."
+            return L10n.string("onboarding.wakeGoal.alarmMessage.failed")
         default:
-            return "Only choose this if you want Sky Grid to ask for alarm permission now."
+            return L10n.string("onboarding.wakeGoal.alarmMessage.default")
         }
     }
 

@@ -20,7 +20,7 @@ struct TogetherCardExportView: View {
                 .padding(.bottom, 48)
 
             HStack(spacing: 24) {
-                skyPanel(label: "YOU", post: ownPost, photo: ownPhoto)
+                skyPanel(label: L10n.string("buddy.comparison.you"), post: ownPost, photo: ownPhoto)
                 skyPanel(label: buddyName.uppercased(), post: buddyPost, photo: buddyPhoto)
             }
             .frame(width: Self.contentWidth, height: 1050)

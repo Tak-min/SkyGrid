@@ -81,11 +81,11 @@ struct SkyGridView: View {
                     .accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                Text(isCheckingArchive ? "Checking your archive…" : "We couldn't refresh your archive.")
+                Text(isCheckingArchive ? L10n.string("grid.checkingArchive") : L10n.string("grid.refreshArchiveFailed"))
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink)
                 if isArchiveUnavailable {
-                    Text(posts.isEmpty ? "Your photos haven't been changed. Check your connection and try again." : "Showing the last confirmed photos on this device.")
+                    Text(posts.isEmpty ? L10n.string("grid.photosUnchangedNotice") : L10n.string("grid.showingLastConfirmedPhotos"))
                         .font(SGFont.caption(12))
                         .foregroundStyle(SGT.ink2)
                     if let onRetryArchive {
@@ -126,14 +126,14 @@ struct SkyGridView: View {
                 .foregroundStyle(SGT.ink3)
             HStack(spacing: SGSpacing.md) {
                 if let onSelectPreviousYear {
-                    yearButton(symbol: "chevron.left", label: "Show previous year", action: onSelectPreviousYear)
+                    yearButton(symbol: "chevron.left", label: L10n.string("grid.showPreviousYear"), action: onSelectPreviousYear)
                 }
                 Text(String(year))
                     .font(.system(size: 48, weight: .black, design: .rounded))
                     .foregroundStyle(SGT.ink)
                 MokuScreenMark(state: postedCount == 0 ? .waiting : .settled, side: 52)
                 if let onSelectNextYear {
-                    yearButton(symbol: "chevron.right", label: "Show next year", action: onSelectNextYear)
+                    yearButton(symbol: "chevron.right", label: L10n.string("grid.showNextYear"), action: onSelectNextYear)
                 }
             }
         }
@@ -141,7 +141,7 @@ struct SkyGridView: View {
 
     private var gridActions: some View {
         VStack(alignment: .trailing, spacing: SGSpacing.md) {
-            Text(isArchiveUnavailable && posts.isEmpty ? "Not checked" : "\(postedCount)")
+            Text(isArchiveUnavailable && posts.isEmpty ? L10n.string("grid.notChecked") : "\(postedCount)")
                 .font(SGFont.numeric(16, weight: .medium))
                 .foregroundStyle(SGT.ink2)
                 .contentTransition(.numericText())
@@ -166,7 +166,7 @@ struct SkyGridView: View {
                 }
                 .foregroundStyle(SGT.ink2)
                 .disabled(isPreparingShare)
-                .accessibilityLabel(isPreparingShare ? "Preparing Sky Grid to share" : "Share Sky Grid")
+                .accessibilityLabel(isPreparingShare ? L10n.string("grid.preparingToShare") : L10n.string("grid.shareSkyGrid"))
             }
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -219,12 +219,12 @@ struct SkyGridView: View {
                         .font(SGFont.caption(11))
                         .tracking(1.2)
                         .foregroundStyle(SGT.ink3)
-                    Text("\(monthName(for: selectedMonth)) skies")
+                    Text(String(format: L10n.string("grid.monthSkiesSuffix"), monthName(for: selectedMonth)))
                         .font(.system(size: 27, weight: .bold, design: .rounded))
                         .foregroundStyle(SGT.ink)
                 }
                 Spacer()
-                Text(isArchiveUnavailable && posts.isEmpty ? "Not checked" : "\(monthlyPosts.count) photos")
+                Text(isArchiveUnavailable && posts.isEmpty ? L10n.string("grid.notChecked") : String(format: L10n.string("grid.monthlyPhotosCount"), monthlyPosts.count))
                     .font(SGFont.caption(12))
                     .foregroundStyle(SGT.ink3)
             }
@@ -235,7 +235,7 @@ struct SkyGridView: View {
                 ContentUnavailableView(
                     "This month is in your full archive",
                     systemImage: "lock",
-                    description: Text("Unlock Pro to open its \(lockedPhotoCount) saved photo\(lockedPhotoCount == 1 ? "" : "s").")
+                    description: Text(String(format: L10n.string(lockedPhotoCount == 1 ? "grid.unlockProPhotoCount.singular" : "grid.unlockProPhotoCount.plural"), lockedPhotoCount))
                 )
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, SGSpacing.xl)
@@ -252,7 +252,7 @@ struct SkyGridView: View {
                 .id(selectedMonth)
                 .transition(.opacity)
                 if monthlyPosts.isEmpty, !isCheckingArchive, !isArchiveUnavailable {
-                    Text("No captures in \(monthName(for: selectedMonth)) yet.")
+                    Text(String(format: L10n.string("grid.noCapturesInMonth"), monthName(for: selectedMonth)))
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink3)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -371,7 +371,7 @@ private struct MonthlyPhotoGrid: View {
                         ArchivePhotoTile(day: date.day, thumbnail: thumbnails[date], hasPhoto: true, pendingState: nil)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Open photo from \(date.docID)")
+                    .accessibilityLabel(String(format: L10n.string("grid.openPhotoFromDate"), date.docID))
                 } else if let pendingState = pendingStates[date] {
                     // Not tappable: there is no confirmed post yet to open.
                     ArchivePhotoTile(day: date.day, thumbnail: nil, hasPhoto: false, pendingState: pendingState)

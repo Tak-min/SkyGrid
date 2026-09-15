@@ -169,8 +169,9 @@ struct RewardOverlayView: View {
     /// only from `RewardRevealPolicy`'s same-day server-authoritative reading.
     private func accessibilityAnnouncement(for beat: RewardBeat, revealedCount: Int) -> String {
         guard beat == .settle else { return "" }
-        guard revealedCount > 0 else { return "Sky saved." }
-        return "Sky saved. \(revealedCount) buddy \(revealedCount == 1 ? "sky is" : "skies are") revealed."
+        guard revealedCount > 0 else { return L10n.string("reward.skySaved") }
+        let key = revealedCount == 1 ? "reward.skySavedBuddyRevealed.singular" : "reward.skySavedBuddyRevealed.plural"
+        return String(format: L10n.string(key), revealedCount)
     }
 }
 

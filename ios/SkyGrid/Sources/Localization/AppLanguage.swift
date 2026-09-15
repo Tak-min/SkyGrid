@@ -54,6 +54,7 @@ final class LocalizationController {
         guard self.language != language || LocalDefaults.selectedLanguageCode == nil else { return }
         self.language = language
         LocalDefaults.selectedLanguageCode = language.rawValue
+        NotificationCenter.default.post(name: .skyGridLanguageDidChange, object: nil)
         guard resyncNotifications else { return }
         Task { await MorningAlarmScheduler.resyncLocalizedContent() }
     }
@@ -110,4 +111,11 @@ private extension Bundle {
         }
         return languageBundle.sg_localizedString(forKey: key, value: value, table: tableName)
     }
+}
+
+extension Notification.Name {
+    /// Posted whenever `LocalizationController.select(_:)` changes the in-app
+    /// language, so other services (e.g. `FirebaseDeviceRegistrar`) can react without
+    /// `LocalizationController` needing a direct reference to them.
+    static let skyGridLanguageDidChange = Notification.Name("SkyGrid.LanguageDidChange")
 }

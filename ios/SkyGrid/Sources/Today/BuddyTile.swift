@@ -159,7 +159,7 @@ struct BuddyTile: View {
         case .posted, .sealed:
             displayName
         case .notYet:
-            "\(displayName) · not yet"
+            String(format: L10n.string("buddy.tile.notYetSuffix"), displayName)
         }
     }
 

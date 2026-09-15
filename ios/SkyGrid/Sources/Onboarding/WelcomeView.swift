@@ -128,6 +128,6 @@ private struct MokuWelcomeStage: View {
     private var dialogueLine: String {
         dialogueStep == 0
             ? L10n.string("welcome.moku.dialogue.introduction")
-            : "Six quick questions, then we'll shape your morning. Ready?"
+            : L10n.string("welcome.moku.dialogue.sixQuestions")
     }
 }

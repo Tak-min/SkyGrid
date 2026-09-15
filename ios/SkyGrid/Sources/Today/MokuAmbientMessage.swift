@@ -160,8 +160,8 @@ enum MokuAmbientMessagePolicy {
             return mosaicMessages
         case .rhythmSection:
             let text = context.streak == 1
-                ? "One morning kept. That's how a rhythm begins."
-                : "\(context.streak) mornings in a row. Quietly impressive."
+                ? L10n.string("moku.rhythm.oneMorningKept")
+                : String(format: L10n.string("moku.rhythm.streakCount"), context.streak)
             return [MessageTemplate(category: .streak, text: text, state: .delight)]
         case .heading:
             return ambientMessages
@@ -169,47 +169,70 @@ enum MokuAmbientMessagePolicy {
             return [
                 MessageTemplate(
                     category: .photo,
-                    text: "This morning might brighten someone's day.",
+                    text: L10n.string("moku.share.mightBrightenDay"),
                     state: .delight
                 ),
                 MessageTemplate(
                     category: .photo,
-                    text: "A sky like that is worth passing along.",
+                    text: L10n.string("moku.share.worthPassingAlong"),
                     state: .settled
                 ),
             ]
         }
     }
 
-    private static let photoMessages = [
-        MessageTemplate(category: .photo, text: "That color looks like it earned its morning.", state: .delight),
-        MessageTemplate(category: .photo, text: "The sky left a good one for you today.", state: .settled),
-        MessageTemplate(category: .photo, text: "That light has a story in it.", state: .delight),
-    ]
+    // Routed through `L10n.string(_:)` (explicit key lookup), not plain string
+    // literals: every message here is stored as `MokuAmbientMessage.text: String` and
+    // displayed via `Text(text)` (`MokuAmbientBubble.swift`) — a stored-property
+    // consumer, not a `Text("literal")` call site — so SwiftUI's automatic String
+    // Catalog key matching never applies (see `dev-notes/localization-en-ja-stage2_*.md`).
+    //
+    // These are computed `static var`, not `static let`: a `let` would resolve
+    // `L10n.string(...)` exactly once (Swift lazily initializes a `static let` on
+    // first access and caches it for the process lifetime), freezing every message
+    // in whichever language was active the first time it was read — silently
+    // breaking immediate in-app language switching for any category already seen
+    // before a language change. Recomputing on every access keeps them live.
 
-    private static let buddyActivityMessages = [
-        MessageTemplate(category: .buddyActivity, text: "Someone in your circle already looked up today.", state: .delight),
-        MessageTemplate(category: .buddyActivity, text: "Two mornings just found each other.", state: .delight),
-        MessageTemplate(category: .buddyActivity, text: "A familiar sky is waiting beside yours.", state: .settled),
-    ]
+    private static var photoMessages: [MessageTemplate] {
+        [
+            MessageTemplate(category: .photo, text: L10n.string("moku.photo.coloredEarnedMorning"), state: .delight),
+            MessageTemplate(category: .photo, text: L10n.string("moku.photo.skyLeftGoodOne"), state: .settled),
+            MessageTemplate(category: .photo, text: L10n.string("moku.photo.lightHasStory"), state: .delight),
+        ]
+    }
 
-    private static let ambientMessages = [
-        MessageTemplate(category: .ambient, text: "Skies change their mind a lot before noon.", state: .ready),
-        MessageTemplate(category: .ambient, text: "Morning light never repeats itself.", state: .ready),
-        MessageTemplate(category: .ambient, text: "The day looks different when you remember to look up.", state: .settled),
-    ]
+    private static var buddyActivityMessages: [MessageTemplate] {
+        [
+            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.circleAlreadyLookedUp"), state: .delight),
+            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.twoMorningsFoundEachOther"), state: .delight),
+            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.familiarSkyWaiting"), state: .settled),
+        ]
+    }
 
-    private static let beforeCaptureMessages = [
-        MessageTemplate(category: .beforeCapture, text: "Wonder what's up there today.", state: .ready),
-        MessageTemplate(category: .beforeCapture, text: "No rush. The sky is still becoming itself.", state: .settled),
-        MessageTemplate(category: .beforeCapture, text: "Maybe today has a color you haven't met yet.", state: .ready),
-    ]
+    private static var ambientMessages: [MessageTemplate] {
+        [
+            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.skiesChangeMind"), state: .ready),
+            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.morningLightNeverRepeats"), state: .ready),
+            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.dayLooksDifferent"), state: .settled),
+        ]
+    }
 
-    private static let mosaicMessages = [
-        MessageTemplate(category: .mosaic, text: "Your grid is quietly filling in.", state: .ready),
-        MessageTemplate(category: .mosaic, text: "Every little square remembers a morning.", state: .settled),
-        MessageTemplate(category: .mosaic, text: "Peek at how the year is changing color.", state: .ready),
-    ]
+    private static var beforeCaptureMessages: [MessageTemplate] {
+        [
+            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.wonderWhatsUpThere"), state: .ready),
+            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.noRushStillBecoming"), state: .settled),
+            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.maybeNewColor"), state: .ready),
+        ]
+    }
+
+    private static var mosaicMessages: [MessageTemplate] {
+        [
+            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.gridQuietlyFilling"), state: .ready),
+            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.everySquareRemembers"), state: .settled),
+            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.peekYearChangingColor"), state: .ready),
+        ]
+    }
 }
 
 private extension Array {

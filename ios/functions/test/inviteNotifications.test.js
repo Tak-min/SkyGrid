@@ -51,9 +51,15 @@ test("malformed or blocked friendships are not notified", () => {
 });
 
 test("invite notification copy contains no account or invite identifier", () => {
-  const copy = inviteClaimedNotificationCopy();
+  const copy = inviteClaimedNotificationCopy("en");
 
   assert.equal(copy.title, "Your invite was claimed.");
   assert.equal(copy.body, "You’re buddies now. Open Sky Grid to say hi.");
   assert.doesNotMatch(`${copy.title} ${copy.body}`, /uid|handle|code|mira_sky|claimer|inviter/i);
+});
+
+test("invite notification copy is Japanese for language: 'ja'", () => {
+  const copy = inviteClaimedNotificationCopy("ja");
+
+  assert.deepEqual(copy, { title: "招待が使われたよ", body: "バディになったよ。Sky Gridを開いて挨拶しよう" });
 });

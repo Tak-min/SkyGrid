@@ -484,7 +484,7 @@ private struct UIAuditGridScreen: View {
             lockedPhotoCount: 0,
             canShare: true,
             onShare: {},
-            archiveNotice: "Free keeps your most recent 30 days visible.",
+            archiveNotice: L10n.string("archive.freeNotice"),
             onUpgrade: {},
             onSelectPreviousYear: selectedYear > 2000 ? { selectedYear -= 1 } : nil,
             onSelectNextYear: selectedYear < 2026 ? { selectedYear += 1 } : nil

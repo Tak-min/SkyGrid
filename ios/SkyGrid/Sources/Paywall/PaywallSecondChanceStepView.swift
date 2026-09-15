@@ -49,9 +49,9 @@ struct PaywallSecondChanceStepView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
-                    termRow("First month", value: offer.introductoryPriceLabel)
-                    termRow("You save", value: offer.savingsLabel)
-                    termRow("Then each month", value: offer.renewalPriceLabel)
+                    termRow(L10n.string("paywall.secondChance.term.firstMonth"), value: offer.introductoryPriceLabel)
+                    termRow(L10n.string("paywall.secondChance.term.youSave"), value: offer.savingsLabel)
+                    termRow(L10n.string("paywall.secondChance.term.thenEachMonth"), value: offer.renewalPriceLabel)
                 }
                 .padding(SGSpacing.lg)
                 .background(SGT.fill, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -79,7 +79,7 @@ struct PaywallSecondChanceStepView: View {
                 if isPurchasing {
                     ProgressView().tint(SGT.background)
                 } else {
-                    Text("Try the first month for \(offer.introductoryPriceLabel)")
+                    Text(String(format: L10n.string("paywall.tryFirstMonthFor"), offer.introductoryPriceLabel))
                         .frame(maxWidth: .infinity)
                 }
             }

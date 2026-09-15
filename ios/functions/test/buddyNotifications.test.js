@@ -6,6 +6,7 @@ const {
   activeBuddyUIDs,
   posterHandleFromFriendship,
   buddyPostNotificationCopy,
+  deviceLanguageFromDoc,
   isWithinQuietHours,
   staleTokenIndices,
   postNotificationMarkerExpireAtMs,
@@ -59,8 +60,16 @@ test("posterHandleFromFriendship falls back to null for a friendship predating h
 });
 
 test("buddyPostNotificationCopy never promises a photo, only a color reveal", () => {
-  const soloDirection = buddyPostNotificationCopy({ posterHandle: "mira_sky", recipientHasPostedToday: false });
-  const mutual = buddyPostNotificationCopy({ posterHandle: "mira_sky", recipientHasPostedToday: true });
+  const soloDirection = buddyPostNotificationCopy({
+    posterHandle: "mira_sky",
+    recipientHasPostedToday: false,
+    language: "en",
+  });
+  const mutual = buddyPostNotificationCopy({
+    posterHandle: "mira_sky",
+    recipientHasPostedToday: true,
+    language: "en",
+  });
 
   assert.match(soloDirection.title, /mira_sky/);
   assert.doesNotMatch(soloDirection.body + soloDirection.title, /photo|picture|image/i);
@@ -69,9 +78,27 @@ test("buddyPostNotificationCopy never promises a photo, only a color reveal", ()
 });
 
 test("buddyPostNotificationCopy falls back to a generic name when the handle is unknown", () => {
-  const copy = buddyPostNotificationCopy({ posterHandle: null, recipientHasPostedToday: false });
+  const copy = buddyPostNotificationCopy({ posterHandle: null, recipientHasPostedToday: false, language: "en" });
 
   assert.match(copy.title, /your buddy/i);
+});
+
+test("buddyPostNotificationCopy returns Japanese copy for language: 'ja'", () => {
+  const mutual = buddyPostNotificationCopy({ posterHandle: "kai", recipientHasPostedToday: true, language: "ja" });
+  const solo = buddyPostNotificationCopy({ posterHandle: "kai", recipientHasPostedToday: false, language: "ja" });
+  const noHandle = buddyPostNotificationCopy({ posterHandle: null, recipientHasPostedToday: false, language: "ja" });
+
+  assert.deepEqual(mutual, { title: "両方の空がそろったよ", body: "kaiも今朝の空を撮ったよ" });
+  assert.deepEqual(solo, { title: "kaiが空を撮ったよ", body: "空はまだ封印中だよ" });
+  assert.match(noHandle.title, /バディ/);
+});
+
+test("deviceLanguageFromDoc only ever returns 'ja' for the literal string 'ja', otherwise 'en'", () => {
+  assert.equal(deviceLanguageFromDoc("ja"), "ja");
+  assert.equal(deviceLanguageFromDoc("en"), "en");
+  assert.equal(deviceLanguageFromDoc(undefined), "en");
+  assert.equal(deviceLanguageFromDoc(null), "en");
+  assert.equal(deviceLanguageFromDoc("fr"), "en");
 });
 
 test("isWithinQuietHours is true inside the 22:00-05:00 local window and false outside it", () => {

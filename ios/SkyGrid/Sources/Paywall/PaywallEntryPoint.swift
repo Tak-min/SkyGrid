@@ -19,22 +19,25 @@ enum PaywallEntryPoint {
     /// only automatic offer.
     case soloMorning(captureCount: Int)
 
+    // Routed through `L10n.string(_:)`: these are stored `String` properties, not
+    // `Text("literal")` call sites, so automatic String Catalog key matching does
+    // not apply (see `dev-notes/localization-en-ja-stage2_*.md`).
     var headline: String {
         switch self {
         case .onboarding(let profile, let wakeGoalMinutes):
             return PersonalizedMorningPlanBuilder.make(profile: profile, wakeGoalMinutes: wakeGoalMinutes).proLead
         case .home:
-            return "Choose the plan that keeps your mornings in view."
+            return L10n.string("paywall.entry.headline.home")
         case .archive:
-            return "Keep every morning in one continuous Sky Grid."
+            return L10n.string("paywall.entry.headline.archive")
         case .settings:
-            return "Keep the long view of your mornings."
+            return L10n.string("paywall.entry.headline.settings")
         case .ritualMilestone(let captureCount):
-            return "\(captureCount) mornings in. Keep the whole sky record."
+            return String(format: L10n.string("paywall.entry.headline.ritualMilestone"), captureCount)
         case .firstUnlock:
-            return "Your first sky together is revealed. Keep the ritual going."
+            return L10n.string("paywall.entry.headline.firstUnlock")
         case .soloMorning(let captureCount):
-            return "\(captureCount) mornings, just for you. Keep your whole sky record."
+            return String(format: L10n.string("paywall.entry.headline.soloMorning"), captureCount)
         }
     }
 
@@ -72,37 +75,37 @@ enum PaywallEntryPoint {
         guard case .onboarding(let profile, _) = self else { return nil }
         switch profile.frequency ?? .mostMornings {
         case .mostMornings:
-            return "Keep the mornings you return to in one complete record."
+            return L10n.string("paywall.entry.valueNote.mostMornings")
         case .weekdays:
-            return "Keep the weekday rhythm you build in one continuous record."
+            return L10n.string("paywall.entry.valueNote.weekdays")
         case .wheneverItFits:
-            return "Keep every sky you make time for, even when the weeks change."
+            return L10n.string("paywall.entry.valueNote.wheneverItFits")
         }
     }
 
     var firstArchiveBenefit: (title: String, detail: String) {
         guard case .onboarding(let profile, _) = self else {
             return (
-                "Your full archive",
-                "Open every sky photo beyond the Free 30-day view."
+                L10n.string("paywall.entry.archiveBenefit.default.title"),
+                L10n.string("paywall.entry.archiveBenefit.default.detail")
             )
         }
 
         switch profile.intent ?? .steadierRhythm {
         case .steadierRhythm:
             return (
-                "See your rhythm take shape",
-                "Keep every morning beyond the Free 30-day view in one continuous record."
+                L10n.string("paywall.entry.archiveBenefit.steadierRhythm.title"),
+                L10n.string("paywall.entry.archiveBenefit.steadierRhythm.detail")
             )
         case .moreOutside:
             return (
-                "Keep the changing light",
-                "Return to every sky beyond the Free 30-day view, whenever you need a little outside."
+                L10n.string("paywall.entry.archiveBenefit.moreOutside.title"),
+                L10n.string("paywall.entry.archiveBenefit.moreOutside.detail")
             )
         case .seasonalRecord:
             return (
-                "Keep the whole season",
-                "Open every sky beyond the Free 30-day view as the year changes colour."
+                L10n.string("paywall.entry.archiveBenefit.seasonalRecord.title"),
+                L10n.string("paywall.entry.archiveBenefit.seasonalRecord.detail")
             )
         }
     }

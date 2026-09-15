@@ -29,21 +29,29 @@ struct StreakMilestone: Equatable, Sendable, Identifiable {
 
     var isFirstMorning: Bool { streak == 1 }
 
+    // Routed through `L10n.string(_:)` (explicit key lookup) rather than plain string
+    // literals: these values are stored `String` properties consumed elsewhere as
+    // `Text(milestone.title)`, not string literals inside a `Text(...)` call site, so
+    // SwiftUI's automatic String-Catalog key matching never applies to them (see
+    // `dev-notes/localization-en-ja-stage2_*.md`). Resolving the correct language here,
+    // at the source, means every consumer gets already-localized text for free.
     var title: String {
-        isFirstMorning ? "Day one" : "\(streak) days"
+        isFirstMorning
+            ? L10n.string("milestone.title.dayOne")
+            : String(format: L10n.string("milestone.title.streakDays"), streak)
     }
 
     var headline: String {
         switch streak {
-        case 1: return "Your first sky."
-        case 7: return "A full week of mornings."
-        case 14: return "Two weeks. It's a habit now."
-        case 30: return "Thirty mornings in a row."
-        case 50: return "Fifty skies, one at a time."
-        case 100: return "One hundred mornings."
-        case 200: return "Two hundred. Almost a year of skies."
-        case 365: return "A whole year. Every single morning."
-        default: return "\(streak) mornings in a row."
+        case 1: return L10n.string("milestone.headline.streak1")
+        case 7: return L10n.string("milestone.headline.streak7")
+        case 14: return L10n.string("milestone.headline.streak14")
+        case 30: return L10n.string("milestone.headline.streak30")
+        case 50: return L10n.string("milestone.headline.streak50")
+        case 100: return L10n.string("milestone.headline.streak100")
+        case 200: return L10n.string("milestone.headline.streak200")
+        case 365: return L10n.string("milestone.headline.streak365")
+        default: return String(format: L10n.string("milestone.headline.default"), streak)
         }
     }
 }

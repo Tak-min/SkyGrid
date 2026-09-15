@@ -143,7 +143,7 @@ struct BuddiesView: View {
                         Text("We couldn't refresh your buddies.")
                             .font(SGFont.body(16))
                             .foregroundStyle(SGT.ink)
-                        Text(viewModel.friendships.isEmpty ? "Your connections haven't been changed. Check your connection and try again." : "Showing the last confirmed connections on this device.")
+                        Text(viewModel.friendships.isEmpty ? L10n.string("buddy.list.unchangedNotice") : L10n.string("buddy.list.showingLastConfirmed"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(SGT.ink2)
                         Button("Check again", action: viewModel.retryFriendships)
@@ -195,7 +195,7 @@ struct BuddiesView: View {
                             Image(systemName: "paperplane.fill")
                                 .foregroundStyle(SGT.ink3)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(friendship.recipientHandle.map { "@" + $0.value } ?? "Pending invitation")
+                                Text(friendship.recipientHandle.map { "@" + $0.value } ?? L10n.string("friends.pendingInvitationFallback"))
                                     .font(SGFont.body(15))
                                     .foregroundStyle(SGT.ink)
                                 Text("Waiting for them to accept")
@@ -321,9 +321,9 @@ private struct BuddyRitualCard: View {
                     .foregroundStyle(SGT.ink2)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 0) {
-                    BuddyRitualStep(number: "1", label: "Invite")
-                    BuddyRitualStep(number: "2", label: "Capture")
-                    BuddyRitualStep(number: "3", label: "Reveal")
+                    BuddyRitualStep(number: "1", label: L10n.string("buddy.ritual.invite"))
+                    BuddyRitualStep(number: "2", label: L10n.string("buddy.ritual.capture"))
+                    BuddyRitualStep(number: "3", label: L10n.string("buddy.ritual.reveal"))
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -427,7 +427,7 @@ private struct BuddyNameRow: View {
                 }
                 .shadow(color: SGT.ink.opacity(sealedShadowOpacity), radius: 3, y: 1)
             VStack(alignment: .leading, spacing: 3) {
-                Text(profile?.displayName ?? "Buddy")
+                Text(profile?.displayName ?? L10n.string("fallback.buddyName"))
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink)
                 Text(profile?.handle.map { "@" + $0.value } ?? "@…")
@@ -442,7 +442,11 @@ private struct BuddyNameRow: View {
         }
         .frame(minHeight: 56)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(profile?.displayName ?? "Buddy"), \(profile?.handle.map { "at " + $0.value } ?? "handle loading"), \(statusText)")
+        .accessibilityLabel(
+            "\(profile?.displayName ?? L10n.string("accessibility.buddy.fallbackName")), "
+                + "\(profile?.handle.map { String(format: L10n.string("accessibility.buddy.handlePrefix"), $0.value) } ?? L10n.string("accessibility.buddy.handleLoading")), "
+                + "\(statusText)"
+        )
         .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
         .task(id: photoIdentity) { await loadThumbnail(for: photoIdentity) }
             .task {
@@ -500,11 +504,15 @@ private struct BuddyNameRow: View {
         }
     }
 
+    // Routed through `L10n.string(_:)`: `Text(statusText)` (below) and the
+    // `.accessibilityLabel` above both consume this as a stored `String`, not a
+    // `Text("literal")` call site, so automatic String Catalog key matching does not
+    // apply here (see `dev-notes/localization-en-ja-stage2_*.md`).
     private var statusText: String {
         switch revealState {
-        case .sealed: "Sealed until\nyou capture"
-        case .posted: "Captured today"
-        case .notYet: "Not yet today"
+        case .sealed: L10n.string("buddy.status.sealed")
+        case .posted: L10n.string("buddy.status.capturedToday")
+        case .notYet: L10n.string("buddy.status.notYetToday")
         }
     }
 }
@@ -564,13 +572,13 @@ private struct BuddyRelationshipView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                    Text(profile?.displayName ?? "Buddy")
+                    Text(profile?.displayName ?? L10n.string("fallback.buddyName"))
                         .font(SGFont.title(28))
                         .foregroundStyle(SGT.ink)
                     Text(profile?.handle.map { "@" + $0.value } ?? "@…")
                         .font(SGFont.body(15))
                         .foregroundStyle(SGT.ink2)
-                    Text("Connected \(friendship.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                    Text(String(format: L10n.string("buddy.connectedOn"), friendship.createdAt.formatted(date: .abbreviated, time: .omitted)))
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink3)
                 }
@@ -710,19 +718,23 @@ private struct BuddyRelationshipView: View {
         }
     }
 
+    // Routed through `L10n.string(_:)`: `Text(statusTitle)`/`Text(statusDetail)`
+    // consume these as stored `String` properties, not `Text("literal")` call
+    // sites, so automatic String Catalog key matching does not apply (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     private var statusTitle: String {
         switch revealState {
-        case .sealed: "Your sky is still needed"
-        case .posted: "Your skies are revealed"
-        case .notYet: "They haven't captured yet"
+        case .sealed: L10n.string("buddy.detail.status.sealed.title")
+        case .posted: L10n.string("buddy.detail.status.posted.title")
+        case .notYet: L10n.string("buddy.detail.status.notYet.title")
         }
     }
 
     private var statusDetail: String {
         switch revealState {
-        case .sealed: "Capture your own sky to reveal together."
-        case .posted: "You each captured this morning."
-        case .notYet: "Their sky stays private until they do."
+        case .sealed: L10n.string("buddy.detail.status.sealed.detail")
+        case .posted: L10n.string("buddy.detail.status.posted.detail")
+        case .notYet: L10n.string("buddy.detail.status.notYet.detail")
         }
     }
 

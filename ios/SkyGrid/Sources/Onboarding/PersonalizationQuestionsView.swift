@@ -24,7 +24,7 @@ struct PersonalizationQuestionsView: View {
                         .foregroundStyle(SGT.ink2)
                 }
 
-                choiceSection("CHOOSE ONE") {
+                choiceSection(L10n.string("CHOOSE ONE")) {
                     ForEach(MorningIntent.allCases) { intent in
                         ChoiceRow(
                             title: intent.title,
@@ -130,8 +130,8 @@ struct PaceQuestionView: View {
     var body: some View {
         SingleQuestionPage(
             step: 3,
-            heading: "Make the ritual\nyour own.",
-            subheading: "QUESTION 2 OF 6 · How should it feel? You can change this later.",
+            heading: L10n.string("onboarding.question.pace.heading"),
+            subheading: L10n.string("onboarding.question.pace.subheading"),
             onBack: onBack,
             onSkip: onSkip,
             onNext: onNext
@@ -154,8 +154,8 @@ struct FrequencyQuestionView: View {
     var body: some View {
         SingleQuestionPage(
             step: 4,
-            heading: "How often\nfeels right?",
-            subheading: "QUESTION 3 OF 6 · You can change this later.",
+            heading: L10n.string("onboarding.question.frequency.heading"),
+            subheading: L10n.string("onboarding.question.frequency.subheading"),
             onBack: onBack,
             onSkip: onSkip,
             onNext: onNext
@@ -178,8 +178,8 @@ struct PrivacyQuestionView: View {
     var body: some View {
         SingleQuestionPage(
             step: 5,
-            heading: "Keep it private,\nor make room to share.",
-            subheading: "QUESTION 4 OF 6 · Who is this for? Nothing is sent from this answer.",
+            heading: L10n.string("onboarding.question.privacy.heading"),
+            subheading: L10n.string("onboarding.question.privacy.subheading"),
             onBack: onBack,
             onSkip: onSkip,
             onNext: onNext
@@ -202,8 +202,8 @@ struct ReminderQuestionView: View {
     var body: some View {
         SingleQuestionPage(
             step: 6,
-            heading: "What should\nbring you back?",
-            subheading: "QUESTION 5 OF 6 · Nothing is sent from this answer.",
+            heading: L10n.string("onboarding.question.reminder.heading"),
+            subheading: L10n.string("onboarding.question.reminder.subheading"),
             onBack: onBack,
             onSkip: onSkip,
             onNext: onNext

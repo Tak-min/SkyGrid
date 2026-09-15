@@ -268,7 +268,7 @@ struct GridArchiveView: View {
             canShare: !visiblePosts.isEmpty,
             onShare: shareGrid,
             isPreparingShare: viewModel.isPreparingShare,
-            archiveNotice: isPro ? nil : "Free keeps your most recent 30 days visible.",
+            archiveNotice: isPro ? nil : L10n.string("archive.freeNotice"),
             onUpgrade: isPro ? nil : onUpgrade,
             onSelectPreviousYear: onSelectPreviousYear,
             onSelectNextYear: onSelectNextYear,
@@ -333,7 +333,7 @@ private struct ArchivePhotoDetail: View {
                         Text(post.localDate.docID)
                             .font(SGFont.title(30))
                             .foregroundStyle(SGT.ink)
-                        Text("Captured \(post.minutesFromGoalDescription)")
+                        Text(String(format: L10n.string("grid.capturedAt"), post.minutesFromGoalDescription))
                             .font(SGFont.body(15))
                             .foregroundStyle(SGT.ink2)
                     }

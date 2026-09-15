@@ -9,19 +9,23 @@ enum MorningIntent: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var id: String { rawValue }
 
+    // Routed through `L10n.string(_:)`: these are stored `String` properties
+    // consumed via `Text(option.title)`, not `Text("literal")` call sites, so
+    // automatic String Catalog key matching does not apply (see
+    // `dev-notes/localization-en-ja-stage2_*.md`).
     var title: String {
         switch self {
-        case .steadierRhythm: return "A steadier rhythm"
-        case .moreOutside: return "More time outside"
-        case .seasonalRecord: return "A record of the seasons"
+        case .steadierRhythm: return L10n.string("onboarding.intent.steadierRhythm.title")
+        case .moreOutside: return L10n.string("onboarding.intent.moreOutside.title")
+        case .seasonalRecord: return L10n.string("onboarding.intent.seasonalRecord.title")
         }
     }
 
     var detail: String {
         switch self {
-        case .steadierRhythm: return "A small reason to get up at the same time."
-        case .moreOutside: return "One quiet moment under the open sky."
-        case .seasonalRecord: return "A year that gradually becomes visible."
+        case .steadierRhythm: return L10n.string("onboarding.intent.steadierRhythm.detail")
+        case .moreOutside: return L10n.string("onboarding.intent.moreOutside.detail")
+        case .seasonalRecord: return L10n.string("onboarding.intent.seasonalRecord.detail")
         }
     }
 }
@@ -35,17 +39,17 @@ enum RitualPace: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var title: String {
         switch self {
-        case .gentle: return "Gentle"
-        case .structured: return "Structured"
-        case .flexible: return "Flexible"
+        case .gentle: return L10n.string("onboarding.pace.gentle.title")
+        case .structured: return L10n.string("onboarding.pace.structured.title")
+        case .flexible: return L10n.string("onboarding.pace.flexible.title")
         }
     }
 
     var detail: String {
         switch self {
-        case .gentle: return "A reminder, never a reprimand."
-        case .structured: return "A clear time to begin the day."
-        case .flexible: return "Room for the mornings that change."
+        case .gentle: return L10n.string("onboarding.pace.gentle.detail")
+        case .structured: return L10n.string("onboarding.pace.structured.detail")
+        case .flexible: return L10n.string("onboarding.pace.flexible.detail")
         }
     }
 }
@@ -59,17 +63,17 @@ enum RitualFrequency: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var title: String {
         switch self {
-        case .mostMornings: return "Most mornings"
-        case .weekdays: return "Weekdays"
-        case .wheneverItFits: return "When it fits"
+        case .mostMornings: return L10n.string("onboarding.frequency.mostMornings.title")
+        case .weekdays: return L10n.string("onboarding.frequency.weekdays.title")
+        case .wheneverItFits: return L10n.string("onboarding.frequency.wheneverItFits.title")
         }
     }
 
     var detail: String {
         switch self {
-        case .mostMornings: return "A small daily mark, with room to miss one."
-        case .weekdays: return "A consistent start to the days that need it."
-        case .wheneverItFits: return "A record that grows at its own pace."
+        case .mostMornings: return L10n.string("onboarding.frequency.mostMornings.detail")
+        case .weekdays: return L10n.string("onboarding.frequency.weekdays.detail")
+        case .wheneverItFits: return L10n.string("onboarding.frequency.wheneverItFits.detail")
         }
     }
 }
@@ -83,17 +87,17 @@ enum RitualPrivacy: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var title: String {
         switch self {
-        case .privateRitual: return "Just for me"
-        case .shareWithBuddy: return "With a buddy, later"
-        case .decideLater: return "I’ll decide later"
+        case .privateRitual: return L10n.string("onboarding.privacy.privateRitual.title")
+        case .shareWithBuddy: return L10n.string("onboarding.privacy.shareWithBuddy.title")
+        case .decideLater: return L10n.string("onboarding.privacy.decideLater.title")
         }
     }
 
     var detail: String {
         switch self {
-        case .privateRitual: return "Your sky stays your own by default."
-        case .shareWithBuddy: return "Buddies are optional, and reciprocal."
-        case .decideLater: return "Nothing needs to be decided today."
+        case .privateRitual: return L10n.string("onboarding.privacy.privateRitual.detail")
+        case .shareWithBuddy: return L10n.string("onboarding.privacy.shareWithBuddy.detail")
+        case .decideLater: return L10n.string("onboarding.privacy.decideLater.detail")
         }
     }
 }
@@ -107,17 +111,17 @@ enum ReminderPreference: String, CaseIterable, Codable, Sendable, Identifiable {
 
     var title: String {
         switch self {
-        case .noReminder: return "No reminder"
-        case .gentleReminder: return "A gentle reminder"
-        case .scheduledAlarm: return "A scheduled alarm"
+        case .noReminder: return L10n.string("onboarding.reminder.noReminder.title")
+        case .gentleReminder: return L10n.string("onboarding.reminder.gentleReminder.title")
+        case .scheduledAlarm: return L10n.string("onboarding.reminder.scheduledAlarm.title")
         }
     }
 
     var detail: String {
         switch self {
-        case .noReminder: return "I’ll open Sky Grid when I’m ready."
-        case .gentleReminder: return "A quiet nudge at the time I choose."
-        case .scheduledAlarm: return "A dedicated start to the morning."
+        case .noReminder: return L10n.string("onboarding.reminder.noReminder.detail")
+        case .gentleReminder: return L10n.string("onboarding.reminder.gentleReminder.detail")
+        case .scheduledAlarm: return L10n.string("onboarding.reminder.scheduledAlarm.detail")
         }
     }
 }
@@ -202,44 +206,44 @@ enum PersonalizedMorningPlanBuilder {
         // it never blocks reaching it.
         switch profile.intent ?? .steadierRhythm {
         case .steadierRhythm:
-            headline = "A quieter way to keep \(time)."
-            proLead = "Keep the whole record as your rhythm takes shape."
+            headline = String(format: L10n.string("onboarding.plan.headline.steadierRhythm"), time)
+            proLead = L10n.string("onboarding.plan.proLead.steadierRhythm")
         case .moreOutside:
-            headline = "One small reason to step outside at \(time)."
-            proLead = "Keep the changing light beyond the last 30 days."
+            headline = String(format: L10n.string("onboarding.plan.headline.moreOutside"), time)
+            proLead = L10n.string("onboarding.plan.proLead.moreOutside")
         case .seasonalRecord:
-            headline = "A year of skies begins at \(time)."
-            proLead = "Let every morning stay in the same long-view grid."
+            headline = String(format: L10n.string("onboarding.plan.headline.seasonalRecord"), time)
+            proLead = L10n.string("onboarding.plan.proLead.seasonalRecord")
         }
 
         let paceRecommendation: String
         switch profile.pace ?? .gentle {
         case .gentle:
-            paceRecommendation = "Keep it gentle: one photo is enough."
+            paceRecommendation = L10n.string("onboarding.plan.pace.gentle")
         case .structured:
-            paceRecommendation = "Let the time you choose lead to one simple first action."
+            paceRecommendation = L10n.string("onboarding.plan.pace.structured")
         case .flexible:
-            paceRecommendation = "Keep it light. A missed morning is simply an empty square."
+            paceRecommendation = L10n.string("onboarding.plan.pace.flexible")
         }
 
         let frequencyRecommendation: String
         switch profile.frequency ?? .mostMornings {
         case .mostMornings:
-            frequencyRecommendation = "Most mornings are plenty."
+            frequencyRecommendation = L10n.string("onboarding.plan.frequency.mostMornings")
         case .weekdays:
-            frequencyRecommendation = "Keep weekends open and weekdays intentional."
+            frequencyRecommendation = L10n.string("onboarding.plan.frequency.weekdays")
         case .wheneverItFits:
-            frequencyRecommendation = "Return whenever the sky gives you a minute."
+            frequencyRecommendation = L10n.string("onboarding.plan.frequency.wheneverItFits")
         }
 
         let privacyNote: String
         switch profile.privacy ?? .privateRitual {
         case .privateRitual:
-            privacyNote = "Your first sky is private. Sharing is always your choice."
+            privacyNote = L10n.string("onboarding.plan.privacy.privateRitual")
         case .shareWithBuddy:
-            privacyNote = "Add a buddy only when the ritual already feels like yours."
+            privacyNote = L10n.string("onboarding.plan.privacy.shareWithBuddy")
         case .decideLater:
-            privacyNote = "You can decide about buddies after you have a few skies of your own."
+            privacyNote = L10n.string("onboarding.plan.privacy.decideLater")
         }
 
         return PersonalizedMorningPlan(

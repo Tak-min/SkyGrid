@@ -17,7 +17,7 @@ struct MokuAmbientBubble: View {
                     .stroke(SGT.ink.opacity(0.08), lineWidth: 1)
             }
             .shadow(color: SGT.ink.opacity(0.12), radius: 12, y: 5)
-            .accessibilityLabel("Moku says, \(text)")
+            .accessibilityLabel(String(format: L10n.string("moku.saysAccessibility"), text))
             .accessibilityIdentifier("moku.ambientMessage")
             .allowsHitTesting(false)
     }

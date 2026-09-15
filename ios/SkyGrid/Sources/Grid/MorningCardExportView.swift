@@ -131,7 +131,7 @@ struct MorningCardExportView: View {
                     .frame(width: 420, alignment: .trailing)
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(streak == 1 ? "morning\nin a row" : "mornings\nin a row")
+                    Text(streak == 1 ? L10n.string("grid.morningInARow.singular") : L10n.string("grid.morningInARow.plural"))
                         .font(SGFont.fixedSerifTitle(62))
                         .foregroundStyle(SGExport.ink)
                         .fixedSize(horizontal: false, vertical: true)

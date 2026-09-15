@@ -31,7 +31,7 @@ struct InviteClaimView: View {
             switch viewModel.step {
             case .loadingPreview:
                 ProgressView()
-                Text("Checking your invite…")
+                Text(L10n.string("Checking your invite…"))
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink2)
 
@@ -46,7 +46,7 @@ struct InviteClaimView: View {
 
             case .claiming:
                 ProgressView()
-                Text("Connecting you…")
+                Text(L10n.string("Connecting you…"))
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink2)
 
@@ -56,9 +56,9 @@ struct InviteClaimView: View {
             case .failed(let message):
                 terminal(
                     icon: "wifi.slash",
-                    title: "Something went wrong",
+                    title: L10n.string("Something went wrong"),
                     message: message,
-                    primaryTitle: "Try again"
+                    primaryTitle: L10n.string("Try again")
                 ) { Task { await viewModel.loadPreview() } }
             }
 
@@ -77,7 +77,7 @@ struct InviteClaimView: View {
                 Image(systemName: "person.2.fill")
                     .font(.system(size: 40))
                     .foregroundStyle(SGT.ink)
-                Text(preview.creatorHandle.map { "@\($0.value) invited you to Sky Grid" } ?? "You've been invited to Sky Grid")
+                Text(preview.creatorHandle.map { String(format: L10n.string("invite.claim.previewInvitedByHandle"), $0.value) } ?? L10n.string("invite.claim.previewInvitedGeneric"))
                     .font(SGFont.title(24))
                     .foregroundStyle(SGT.ink)
                     .multilineTextAlignment(.center)
@@ -103,49 +103,49 @@ struct InviteClaimView: View {
         case .claimedByYou:
             terminal(
                 icon: "checkmark.circle.fill",
-                title: "Already connected",
-                message: preview.creatorHandle.map { "You and @\($0.value) are already buddies." } ?? "You're already buddies.",
-                primaryTitle: "Done",
+                title: L10n.string("Already connected"),
+                message: preview.creatorHandle.map { String(format: L10n.string("invite.claim.alreadyBuddiesWithHandle"), $0.value) } ?? L10n.string("You’re already buddies."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .ownInvite:
             terminal(
                 icon: "link",
-                title: "This is your own link",
-                message: "Share it with someone else to add them as a buddy.",
-                primaryTitle: "Done",
+                title: L10n.string("This is your own link"),
+                message: L10n.string("Share it with someone else to add them as a buddy."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .expired:
             terminal(
                 icon: "clock.badge.xmark",
-                title: "This link has expired",
-                message: "Ask for a new invite link.",
-                primaryTitle: "Done",
+                title: L10n.string("This link has expired"),
+                message: L10n.string("Ask for a new invite link."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .claimed:
             terminal(
                 icon: "person.crop.circle.badge.xmark",
-                title: "This link has already been used",
-                message: "Ask for a new invite link.",
-                primaryTitle: "Done",
+                title: L10n.string("This link has already been used"),
+                message: L10n.string("Ask for a new invite link."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .revoked:
             terminal(
                 icon: "xmark.circle",
-                title: "This link isn't active",
-                message: "Ask for a new invite link.",
-                primaryTitle: "Done",
+                title: L10n.string("This link isn't active"),
+                message: L10n.string("Ask for a new invite link."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .unknown:
             terminal(
                 icon: "questionmark.circle",
-                title: "This link isn't valid",
-                message: "Double-check the link, or ask for a new one.",
-                primaryTitle: "Done",
+                title: L10n.string("This link isn't valid"),
+                message: L10n.string("Double-check the link, or ask for a new one."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         }
@@ -157,17 +157,17 @@ struct InviteClaimView: View {
         case .paired:
             terminal(
                 icon: "checkmark.circle.fill",
-                title: "You're buddies now",
-                message: "Capture your sky together, and you'll reveal each other's the moment you've each captured.",
-                primaryTitle: "Done",
+                title: L10n.string("You're buddies now"),
+                message: L10n.string("Capture your sky together, and you'll reveal each other's the moment you've each captured."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .alreadyBuddies:
             terminal(
                 icon: "checkmark.circle.fill",
-                title: "Already connected",
-                message: "You're already buddies.",
-                primaryTitle: "Done",
+                title: L10n.string("Already connected"),
+                message: L10n.string("You're already buddies."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .blocked:
@@ -175,39 +175,39 @@ struct InviteClaimView: View {
             // > Community & Safety, and this dead end must not hint at who or why.
             terminal(
                 icon: "xmark.circle",
-                title: "This connection isn't available",
-                message: "This link can't be used right now.",
-                primaryTitle: "Done",
+                title: L10n.string("This connection isn't available"),
+                message: L10n.string("This link can't be used right now."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .expired:
-            terminal(icon: "clock.badge.xmark", title: "This link has expired", message: "Ask for a new invite link.", primaryTitle: "Done", primaryAction: onFinished)
+            terminal(icon: "clock.badge.xmark", title: L10n.string("This link has expired"), message: L10n.string("Ask for a new invite link."), primaryTitle: L10n.string("Done"), primaryAction: onFinished)
         case .revoked:
-            terminal(icon: "xmark.circle", title: "This link isn't active", message: "Ask for a new invite link.", primaryTitle: "Done", primaryAction: onFinished)
+            terminal(icon: "xmark.circle", title: L10n.string("This link isn't active"), message: L10n.string("Ask for a new invite link."), primaryTitle: L10n.string("Done"), primaryAction: onFinished)
         case .claimed:
-            terminal(icon: "person.crop.circle.badge.xmark", title: "This link has already been used", message: "Ask for a new invite link.", primaryTitle: "Done", primaryAction: onFinished)
+            terminal(icon: "person.crop.circle.badge.xmark", title: L10n.string("This link has already been used"), message: L10n.string("Ask for a new invite link."), primaryTitle: L10n.string("Done"), primaryAction: onFinished)
         case .ownInvite:
-            terminal(icon: "link", title: "This is your own link", message: "Share it with someone else to add them as a buddy.", primaryTitle: "Done", primaryAction: onFinished)
+            terminal(icon: "link", title: L10n.string("This is your own link"), message: L10n.string("Share it with someone else to add them as a buddy."), primaryTitle: L10n.string("Done"), primaryAction: onFinished)
         case .circleFull:
             terminal(
                 icon: "person.2.badge.minus",
-                title: "Your circle is full",
+                title: L10n.string("Your circle is full"),
                 message: viewModel.canUpgradeCircle
-                    ? "Free Circle holds 5 buddies. Open Settings → Sky Grid Pro for an unlimited Circle."
-                    : "Your Circle has reached its capacity. Remove a buddy in Settings before joining someone new.",
-                primaryTitle: "Done",
+                    ? L10n.string("invite.claim.circleFull.canUpgrade")
+                    : L10n.string("invite.claim.circleFull.cannotUpgrade"),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .buddyCircleFull:
             terminal(
                 icon: "person.2.badge.minus",
-                title: "This circle is full",
-                message: "Ask them to make room—or, on Free, open Settings → Sky Grid Pro for an unlimited Circle—then try again.",
-                primaryTitle: "Done",
+                title: L10n.string("This circle is full"),
+                message: L10n.string("Ask them to make room—or, on Free, open Settings → Sky Grid Pro for an unlimited Circle—then try again."),
+                primaryTitle: L10n.string("Done"),
                 primaryAction: onFinished
             )
         case .unknown:
-            terminal(icon: "questionmark.circle", title: "This link isn't valid", message: "Double-check the link, or ask for a new one.", primaryTitle: "Done", primaryAction: onFinished)
+            terminal(icon: "questionmark.circle", title: L10n.string("This link isn't valid"), message: L10n.string("Double-check the link, or ask for a new one."), primaryTitle: L10n.string("Done"), primaryAction: onFinished)
         }
     }
 

@@ -38,7 +38,7 @@ struct PaywallPlanStepView: View {
         case .loading:
             VStack(spacing: SGSpacing.md) {
                 ProgressView()
-                Text(entryPoint.requiresEntitlementVerification ? "Checking your Pro access…" : "Loading plans…")
+                Text(entryPoint.requiresEntitlementVerification ? L10n.string("paywall.plan.checkingProAccess") : L10n.string("paywall.plan.loadingPlans"))
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink2)
             }
@@ -212,7 +212,7 @@ private struct PlanOptionRow: View {
                         }
                     }
                     if let equivalent = product.pricePerMonthLabel, product.period == .annual {
-                        Text("Equivalent to \(equivalent) per month")
+                        Text(String(format: L10n.string("paywall.equivalentPerMonth"), equivalent))
                             .font(SGFont.caption(12))
                             .foregroundStyle(SGT.ink2)
                     }

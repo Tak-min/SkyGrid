@@ -98,12 +98,17 @@ enum AppStartupError: Error, Equatable, LocalizedError {
     case firebaseConfigurationMissing
     case backendUnavailable(String)
 
+    // Routed through `L10n.string(_:)`: a stored `String?` property (via
+    // `LocalizedError`), not a `Text("literal")` call site (see
+    // `dev-notes/localization-en-ja-stage2_*.md`). `.firebaseConfigurationMissing`
+    // is a dev-machine misconfiguration, not a real end-user path, but is still
+    // routed for consistency and to keep the mixed-language scan honest.
     var errorDescription: String? {
         switch self {
         case .firebaseConfigurationMissing:
-            "Firebase configuration is missing. Add the GoogleService-Info.plist for com.takmin.skygrid before running Sky Grid."
+            L10n.string("error.appStartup.firebaseConfigMissing")
         case .backendUnavailable(let description):
-            "Sky Grid could not connect. Check your connection and try again. \(description)"
+            String(format: L10n.string("error.appStartup.backendUnavailable"), description)
         }
     }
 }

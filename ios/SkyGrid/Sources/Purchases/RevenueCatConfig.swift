@@ -55,10 +55,11 @@ enum RevenueCatConfigurationError: LocalizedError {
     /// RevenueCat confirms the identity switch.
     case identitySwitchFailed
 
+    // Routed through `L10n.string(_:)` (see `dev-notes/localization-en-ja-stage2_*.md`).
     var errorDescription: String? {
         switch self {
         case .identitySwitchFailed:
-            "Purchase access could not be verified for this account. Please try again."
+            L10n.string("error.revenueCat.identitySwitchFailed")
         }
     }
 }

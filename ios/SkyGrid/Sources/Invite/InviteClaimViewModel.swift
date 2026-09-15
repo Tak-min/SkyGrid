@@ -94,6 +94,6 @@ final class InviteClaimViewModel {
     }
 
     private static func message(for error: Error) -> String {
-        (error as? RepositoryError)?.errorDescription ?? "Something went wrong. Try this link again in a moment."
+        (error as? RepositoryError)?.errorDescription ?? L10n.string("invite.claim.genericError")
     }
 }

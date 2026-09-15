@@ -77,7 +77,7 @@ struct InviteLinkCard: View {
         Text(link.code.formatted)
             .font(SGFont.numeric(22, weight: .semibold))
             .foregroundStyle(SGT.ink)
-            .accessibilityLabel("Invite code \(link.code.formatted)")
+            .accessibilityLabel(String(format: L10n.string("invite.inviteCodeAccessibility"), link.code.formatted))
 
         Text("Share this link with one trusted person. It works until they open it.")
             .font(SGFont.caption(13))

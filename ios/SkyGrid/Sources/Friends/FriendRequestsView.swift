@@ -13,7 +13,7 @@ struct FriendRequestsView: View {
                 ForEach(viewModel.pendingIncoming, id: \.pairId) { friendship in
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(friendship.requestedByHandle.map { "@" + $0.value } ?? "Buddy request")
+                            Text(friendship.requestedByHandle.map { "@" + $0.value } ?? L10n.string("friends.buddyRequestFallback"))
                                 .font(SGFont.body())
                                 .foregroundStyle(SGT.ink)
                             Text("Wants to share morning skies")

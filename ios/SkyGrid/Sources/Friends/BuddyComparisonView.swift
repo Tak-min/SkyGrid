@@ -19,7 +19,7 @@ struct BuddyComparisonView: View {
             VStack(spacing: SGSpacing.xl) {
                 header
                 HStack(spacing: SGSpacing.sm) {
-                    sky(label: "YOU", post: ownPost, photo: ownPhoto)
+                    sky(label: L10n.string("buddy.comparison.you"), post: ownPost, photo: ownPhoto)
                     sky(label: buddyName.uppercased(), post: buddyPost, photo: buddyPhoto)
                 }
                 .frame(maxHeight: 470)
@@ -101,7 +101,7 @@ struct BuddyComparisonView: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(label) sky, captured at \(timeLabel(post.capturedAt))")
+        .accessibilityLabel(String(format: L10n.string("buddy.comparisonSkyAccessibility"), label, timeLabel(post.capturedAt)))
     }
 
     private func loadPhotos() async {

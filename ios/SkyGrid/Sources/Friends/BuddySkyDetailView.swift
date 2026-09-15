@@ -56,7 +56,7 @@ struct BuddySkyDetailView: View {
                 .gesture(magnification)
                 .onTapGesture(count: 2) { toggleZoom() }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(displayName)'s sky this morning")
+                .accessibilityLabel(String(format: L10n.string("buddy.skyThisMorningAccessibility"), displayName))
                 .accessibilityHint("Double tap to zoom")
         } else {
             RoundedRectangle(cornerRadius: 32, style: .continuous)

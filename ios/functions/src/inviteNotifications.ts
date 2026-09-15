@@ -1,6 +1,8 @@
 /** Pure decision logic for friendship-created notifications. Kept free of
  * `firebase-admin` so recipient selection and PII-free copy stay easy to test. */
 
+import type { DeviceLanguage } from "./buddyNotifications.js";
+
 export interface FriendshipCreatedRecord {
   members?: unknown;
   status?: unknown;
@@ -41,7 +43,13 @@ export interface InviteClaimedNotificationCopy {
   body: string;
 }
 
-export function inviteClaimedNotificationCopy(): InviteClaimedNotificationCopy {
+export function inviteClaimedNotificationCopy(language: DeviceLanguage): InviteClaimedNotificationCopy {
+  if (language === "ja") {
+    return {
+      title: "招待が使われたよ",
+      body: "バディになったよ。Sky Gridを開いて挨拶しよう",
+    };
+  }
   return {
     title: "Your invite was claimed.",
     body: "You’re buddies now. Open Sky Grid to say hi.",
