@@ -294,6 +294,9 @@ struct GridArchiveView: View {
         guard !viewModel.isPreparingShare else { return }
         let postedDates = Set(visiblePosts.keys)
         Task {
+            // TODO(growth): pass this user's current invite link once this view
+            // has access to `InviteRepository` — `ShareCardRenderer.render`
+            // already accepts `inviteLinkURL:` and renders it when non-nil.
             guard let photos = await viewModel.loadThumbnailsForSharing(),
                   let image = ShareCardRenderer.render(year: viewModel.year, postedDates: postedDates, photos: photos)
             else { return }

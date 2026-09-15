@@ -115,6 +115,9 @@ struct BuddyComparisonView: View {
     }
 
     private func prepareShareImage() {
+        // TODO(growth): pass this user's current invite link once this view has
+        // access to `InviteRepository` — `ShareCardRenderer.renderTogether`
+        // already accepts `inviteLinkURL:` and renders it when non-nil.
         guard let image = ShareCardRenderer.renderTogether(
             ownPost: ownPost,
             buddyPost: buddyPost,

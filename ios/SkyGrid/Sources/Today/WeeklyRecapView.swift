@@ -122,6 +122,9 @@ struct WeeklyRecapView: View {
 
     private func prepareShareImage() {
         guard !isLoading,
+                // TODO(growth): pass this user's current invite link once this view
+              // has access to `InviteRepository` — `ShareCardRenderer.renderWeekly`
+              // already accepts `inviteLinkURL:` and renders it when non-nil.
               let image = ShareCardRenderer.renderWeekly(
                 posts: posts,
                 photos: photos,

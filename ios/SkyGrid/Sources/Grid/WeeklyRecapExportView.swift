@@ -13,6 +13,7 @@ struct WeeklyRecapExportView: View {
     let posts: [SkyPost]
     let photos: [LocalDate: UIImage]
     var handle: Handle?
+    var inviteLinkURL: URL? = nil
 
     private static let margin: CGFloat = 80
     private static let contentWidth: CGFloat = 1080 - margin * 2
@@ -35,7 +36,7 @@ struct WeeklyRecapExportView: View {
             statement
 
             Spacer(minLength: 36)
-            AppStoreIdentity(handle: handle)
+            AppStoreIdentity(handle: handle, inviteLinkURL: inviteLinkURL)
         }
         .padding(.horizontal, Self.margin)
         .padding(.top, 104)

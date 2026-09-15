@@ -12,10 +12,11 @@ enum ShareCardRenderer {
         year: Int,
         postedDates: Set<LocalDate>,
         photos: [LocalDate: UIImage],
-        handle: Handle? = nil
+        handle: Handle? = nil,
+        inviteLinkURL: URL? = nil
     ) -> UIImage? {
         let renderer = ImageRenderer(
-            content: SkyGridExportView(year: year, postedDates: postedDates, photos: photos, handle: handle)
+            content: SkyGridExportView(year: year, postedDates: postedDates, photos: photos, handle: handle, inviteLinkURL: inviteLinkURL)
         )
         renderer.scale = 1
         return renderer.uiImage
@@ -42,7 +43,8 @@ enum ShareCardRenderer {
         ownPhoto: UIImage?,
         buddyPhoto: UIImage?,
         buddyName: String,
-        handle: Handle? = nil
+        handle: Handle? = nil,
+        inviteLinkURL: URL? = nil
     ) -> UIImage? {
         let renderer = ImageRenderer(content: TogetherCardExportView(
             ownPost: ownPost,
@@ -50,7 +52,8 @@ enum ShareCardRenderer {
             ownPhoto: ownPhoto,
             buddyPhoto: buddyPhoto,
             buddyName: buddyName,
-            handle: handle
+            handle: handle,
+            inviteLinkURL: inviteLinkURL
         ))
         renderer.scale = 1
         return renderer.uiImage
@@ -59,12 +62,14 @@ enum ShareCardRenderer {
     static func renderWeekly(
         posts: [SkyPost],
         photos: [LocalDate: UIImage],
-        handle: Handle? = nil
+        handle: Handle? = nil,
+        inviteLinkURL: URL? = nil
     ) -> UIImage? {
         let renderer = ImageRenderer(content: WeeklyRecapExportView(
             posts: posts,
             photos: photos,
-            handle: handle
+            handle: handle,
+            inviteLinkURL: inviteLinkURL
         ))
         renderer.scale = 1
         return renderer.uiImage

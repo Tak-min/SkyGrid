@@ -36,6 +36,9 @@ struct SkyGridExportView: View {
     /// The person's handle, for attribution. `nil` renders the app's mark alone —
     /// a handle is never synthesised.
     var handle: Handle?
+    /// The sharer's personal invite link, threaded straight through to
+    /// `AppStoreIdentity`. `nil` renders unchanged.
+    var inviteLinkURL: URL? = nil
 
     private static let margin: CGFloat = 80
     private static let contentWidth: CGFloat = 1080 - margin * 2
@@ -63,7 +66,7 @@ struct SkyGridExportView: View {
 
             Spacer(minLength: 36)
 
-            AppStoreIdentity(handle: handle)
+            AppStoreIdentity(handle: handle, inviteLinkURL: inviteLinkURL)
         }
         .padding(.horizontal, Self.margin)
         .padding(.top, 104)

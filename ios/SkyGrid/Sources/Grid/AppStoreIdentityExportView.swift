@@ -20,6 +20,13 @@ import SwiftUI
 /// the `SGExport` boundary allowlist documented in `DesignSystem/ExportTheme.swift`.
 struct AppStoreIdentity: View {
     let handle: Handle?
+    /// The sharer's personal invite link. Optional and additive — when `nil` this
+    /// view renders exactly as it always has, so every existing caller keeps
+    /// working unchanged. When present, it turns the exported image itself into
+    /// a working invite: a friend who only ever sees the shared photo (not the
+    /// app) can still find their way to install and pair with this specific
+    /// person, the same growth loop Locket/BeReal-style apps already rely on.
+    var inviteLinkURL: URL? = nil
 
     private static let cornerRadius: CGFloat = 32
 
@@ -47,6 +54,15 @@ struct AppStoreIdentity: View {
                 Text("on the App Store")
                     .font(SGFont.fixedCaption(24))
                     .foregroundStyle(SGExport.inkMuted)
+                if let inviteLinkURL {
+                    // Bare link, no label — this is a printed URL on an exported
+                    // image, not an interactive control, and a bare link reads
+                    // faster than a link plus explanatory copy at this scale.
+                    Text(inviteLinkURL.absoluteString.replacingOccurrences(of: "https://", with: ""))
+                        .font(SGFont.fixedCaption(18))
+                        .foregroundStyle(SGExport.inkMuted)
+                        .lineLimit(1)
+                }
             }
 
             Spacer(minLength: 18)

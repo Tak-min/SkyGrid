@@ -10,6 +10,7 @@ struct TogetherCardExportView: View {
     let buddyPhoto: UIImage?
     let buddyName: String
     var handle: Handle?
+    var inviteLinkURL: URL? = nil
 
     private static let margin: CGFloat = 80
     private static let contentWidth: CGFloat = 1080 - margin * 2
@@ -39,7 +40,7 @@ struct TogetherCardExportView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer(minLength: 36)
-            AppStoreIdentity(handle: handle)
+            AppStoreIdentity(handle: handle, inviteLinkURL: inviteLinkURL)
         }
         .padding(.horizontal, Self.margin)
         .padding(.top, 104)
