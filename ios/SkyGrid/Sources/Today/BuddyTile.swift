@@ -36,6 +36,12 @@ struct BuddyTile: View {
     let imageFetching: any ImageFetching
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var thumbnail: UIImage?
+    // Drives the sealed tile's slow "breathing" glow (see the sealed overlay
+    // below). A plain `@State` toggled in `.onAppear`, not a value-based
+    // `.animation(value:)` trigger tied to `revealState`, because the pulse must
+    // keep repeating for as long as the tile stays sealed, not just once per
+    // state transition.
+    @State private var isSealedPulsing = false
 
     private var isPosted: Bool {
         if case .posted = revealState { return true }
@@ -74,9 +80,27 @@ struct BuddyTile: View {
                 }
                 .overlay {
                     if case .sealed = revealState {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(SGT.ink3)
+                        // A blurred duplicate of the same glyph sits behind the
+                        // crisp one purely for a soft glow — not a second symbol,
+                        // just the cheapest way to fake luminosity without a new
+                        // asset or design token.
+                        ZStack {
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(SGT.ink3.opacity(0.35))
+                                .blur(radius: 4)
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(SGT.ink3)
+                                .opacity(isSealedPulsing ? 1 : 0.85)
+                        }
+                        .scaleEffect(isSealedPulsing ? 1.03 : 1)
+                        .onAppear {
+                            guard !reduceMotion else { return }
+                            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                                isSealedPulsing = true
+                            }
+                        }
                     }
                 }
                 .scaleEffect(isPosted ? 1 : 0.92)
@@ -139,7 +163,11 @@ struct BuddyTile: View {
         case .posted(let post):
             AnyShapeStyle(post.skyColor.color)
         case .sealed:
-            AnyShapeStyle(SGT.ghostFaint)
+            // A radial gradient between the same two existing ghost tokens reads
+            // as gentle depth rather than the flat single-color fill this used to
+            // be — no new tokens, just a different combination of the ones this
+            // file already uses.
+            AnyShapeStyle(RadialGradient(colors: [SGT.ghostFaint, SGT.ghost], center: .center, startRadius: 4, endRadius: 34))
         case .notYet:
             AnyShapeStyle(SGT.ghost)
         }
