@@ -1,0 +1,114 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "language.choose.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose your language" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "言語を選んでね" } }
+      }
+    },
+    "language.choose.detail" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Pick the language you want to use in Sky Grid." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Sky Gridで使う言語を選んでね。" } }
+      }
+    },
+    "language.confirm.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Does this language look right?" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "この言語でいい？" } }
+      }
+    },
+    "language.confirm.detail" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You can change it now or anytime in Settings." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ここでも、あとで設定からでも変えられるよ。" } }
+      }
+    },
+    "language.continue" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This works" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "これでいい" } }
+      }
+    },
+    "language.english" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "English" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "英語" } }
+      }
+    },
+    "language.japanese" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Japanese" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "日本語" } }
+      }
+    },
+    "settings.language.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "言語" } }
+      }
+    },
+    "welcome.moku.introduction" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A little late for introductions, but I'm Moku! Take one sky photo. Watch your year take shape." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "自己紹介が遅れたけど、Mokuっていうんだ！空を1枚撮って、1年の形を作っていこう。" } }
+      }
+    },
+    "welcome.moku.dialogue.introduction" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A little late for introductions, but I'm Moku!" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "自己紹介が遅れたけど、Mokuっていうんだ！" } }
+      }
+    },
+    "startup.newAccount.error" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "We couldn't prepare a new account. Check your connection and try again." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "新しいアカウントを準備できませんでした。通信を確認して、もう一度お試しください。" } }
+      }
+    },
+    "startup.appleSignIn.error" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "We couldn't finish signing in with Apple. Please try again." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "Apple へのサインインを完了できませんでした。もう一度お試しください。" } }
+      }
+    },
+    "paywall.secondChance.headline" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Wait—want to try your first month?" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ちょっと待って！\n最初の1か月を\n試してみない？" } }
+      }
+    },
+    "notification.captureSky" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Capture the sky" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "空を撮ろう" } }
+      }
+    },
+    "notification.skyStillWaiting" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your sky is still waiting" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "まだ空が待ってるよ" } }
+      }
+    },
+    "notification.openCamera" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open camera" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "カメラを開く" } }
+      }
+    },
+    "notification.todaysSky" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Today's sky" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "今日の空" } }
+      }
+    },
+    "notification.notCapturedYet" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not captured yet." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "まだ撮ってないよ。" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

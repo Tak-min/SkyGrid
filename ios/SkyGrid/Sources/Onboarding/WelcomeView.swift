@@ -6,14 +6,14 @@ struct WelcomeView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
-                OnboardingProgress(step: 1, total: 9)
+                OnboardingProgress(step: 2, total: 10)
                 MokuWelcomeStage()
                 VStack(alignment: .leading, spacing: SGSpacing.md) {
                     Text("Keep one\nmorning sky.")
                         .font(.system(size: 42, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("Meet Moku, your little morning companion. Take one sky photo. Watch your year take shape.")
+                    Text(L10n.string("welcome.moku.introduction"))
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -127,7 +127,7 @@ private struct MokuWelcomeStage: View {
 
     private var dialogueLine: String {
         dialogueStep == 0
-            ? "Hi! I'm Moku."
+            ? L10n.string("welcome.moku.dialogue.introduction")
             : "Six quick questions, then we'll shape your morning. Ready?"
     }
 }

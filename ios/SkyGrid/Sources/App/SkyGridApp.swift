@@ -5,6 +5,11 @@ import UIKit
 struct SkyGridApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var startup = AppStartupController()
+    @State private var localization = LocalizationController()
+
+    init() {
+        LocalizationBundleOverride.install()
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -19,6 +24,8 @@ struct SkyGridApp: App {
                 AppStartupView(startup: startup, appRouter: appDelegate.appRouter)
 #endif
             }
+            .environment(localization)
+            .environment(\.locale, localization.language.locale)
             .onOpenURL { url in
                 appDelegate.appRouter.handle(url: url)
             }

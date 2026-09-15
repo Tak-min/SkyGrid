@@ -13,7 +13,7 @@ struct PersonalizationQuestionsView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 onboardingNavigation
-                OnboardingProgress(step: 2, total: 9)
+                OnboardingProgress(step: 3, total: 10)
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text("What would make\nmornings easier?")
@@ -88,7 +88,7 @@ private struct SingleQuestionPage<Content: View>: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 navigation
-                OnboardingProgress(step: step, total: 9)
+                OnboardingProgress(step: step + 1, total: 10)
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text(heading)

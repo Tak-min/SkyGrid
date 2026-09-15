@@ -23,7 +23,7 @@ struct OnboardingInviteView: View {
                         .frame(minHeight: 44)
                 }
 
-                OnboardingProgress(step: 9, total: 9)
+                OnboardingProgress(step: 10, total: 10)
 
                 VStack(alignment: .leading, spacing: SGSpacing.md) {
                     Label("MORNINGS TOGETHER", systemImage: "person.2.fill")

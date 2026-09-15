@@ -43,7 +43,7 @@ struct PaywallSecondChanceStepView: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
 
-                Text("ちょっと待って！\n最初の1か月を\n試してみない？")
+                Text(L10n.string("paywall.secondChance.headline"))
                     .font(SGFont.display(28))
                     .foregroundStyle(SGT.ink)
                     .fixedSize(horizontal: false, vertical: true)

@@ -2,6 +2,7 @@ import Observation
 import SwiftUI
 
 enum OnboardingStep: String, Equatable {
+    case language
     case welcome
     case intention
     case pace
@@ -16,10 +17,14 @@ enum OnboardingStep: String, Equatable {
 @MainActor
 @Observable
 final class OnboardingViewModel {
-    private(set) var step: OnboardingStep = .welcome
+    private(set) var step: OnboardingStep
     var wakeGoalMinutes: Int = LocalDefaults.wakeGoalMinutes
     var personalizationProfile = LocalDefaults.personalizationProfile
     private(set) var didComplete = false
+
+    init(step: OnboardingStep = .welcome) {
+        self.step = step
+    }
 
     func advanceToIntention() {
         step = .intention
@@ -59,6 +64,7 @@ final class OnboardingViewModel {
 
     func advance() {
         switch step {
+        case .language: step = .welcome
         case .welcome: step = .intention
         case .intention: step = .pace
         case .pace: step = .frequency
@@ -73,7 +79,8 @@ final class OnboardingViewModel {
 
     func goBackOneStep() {
         switch step {
-        case .welcome: break
+        case .language: break
+        case .welcome: step = .language
         case .intention: step = .welcome
         case .pace: step = .intention
         case .frequency: step = .pace
@@ -111,7 +118,7 @@ final class OnboardingViewModel {
 /// for reaching their first morning.
 struct OnboardingCoordinatorView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var viewModel = OnboardingViewModel()
+    @State private var viewModel = OnboardingViewModel(step: .language)
     @State private var showPaywall = false
     @State private var companionInteraction = 0
     let purchases: any PurchasesServicing
@@ -123,11 +130,13 @@ struct OnboardingCoordinatorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if viewModel.step != .welcome {
+            if viewModel.step != .language && viewModel.step != .welcome {
                 companionRail
             }
             Group {
             switch viewModel.step {
+            case .language:
+                LanguageSelectionView(onNext: advance)
             case .welcome:
                 WelcomeView(onNext: advance)
             case .intention:
@@ -280,6 +289,7 @@ struct OnboardingCoordinatorView: View {
 
     private var companionLine: String {
         switch viewModel.step {
+        case .language: "Choose your language."
         case .welcome: "One sky is a beginning."
         case .intention:
             viewModel.personalizationProfile.intent.map { "\($0.title) — a good place to begin." }
@@ -327,17 +337,17 @@ struct OnboardingCoordinatorView: View {
         Haptics.navigationConfirmed()
         SoundEffectPlayer.shared.play(.forwardNavigation)
         OnboardingAnalytics.record(.stepAdvanced, step: viewModel.step)
-        withAnimation(viewModel.step == .welcome ? nil : pageAnimation) {
+        withAnimation(viewModel.step == .language || viewModel.step == .welcome ? nil : pageAnimation) {
             viewModel.advance()
         }
     }
 
     private func goBack() {
-        guard viewModel.step != .welcome else { return }
+        guard viewModel.step != .language else { return }
         Haptics.navigationConfirmed()
         // Backward navigation intentionally stays haptic-only; the swish marks forward progress.
         OnboardingAnalytics.record(.stepBacked, step: viewModel.step)
-        withAnimation(viewModel.step == .intention ? nil : pageAnimation) {
+        withAnimation(viewModel.step == .welcome || viewModel.step == .intention ? nil : pageAnimation) {
             viewModel.goBackOneStep()
         }
     }

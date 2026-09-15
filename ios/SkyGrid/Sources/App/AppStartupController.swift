@@ -52,7 +52,7 @@ final class AppStartupController {
             await establishSession()
         } catch {
             state = .authenticationRequired
-            authenticationError = "新しいアカウントを準備できませんでした。通信を確認して、もう一度お試しください。"
+            authenticationError = L10n.string("startup.newAccount.error")
         }
     }
 
@@ -71,7 +71,7 @@ final class AppStartupController {
             authenticationError = error.localizedDescription
         } catch {
             state = .authenticationRequired
-            authenticationError = "Apple へのサインインを完了できませんでした。もう一度お試しください。"
+            authenticationError = L10n.string("startup.appleSignIn.error")
         }
     }
 

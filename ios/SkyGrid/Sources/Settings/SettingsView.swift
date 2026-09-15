@@ -5,6 +5,7 @@ import SwiftUI
 /// Info.plist so the app never invents a support address it cannot receive.
 struct SettingsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(LocalizationController.self) private var localization
     let uid: String
     let accountDeletionService: any AccountDeleting
     let friendRepository: any FriendRepository
@@ -71,6 +72,27 @@ struct SettingsView: View {
                 }
 
                 settingsSection("EXPERIENCE") {
+                    Menu {
+                        ForEach(AppLanguage.allCases) { language in
+                            Button { localization.select(language) } label: {
+                                if localization.language == language {
+                                    Label(language.displayName, systemImage: "checkmark")
+                                } else {
+                                    Text(language.displayName)
+                                }
+                            }
+                        }
+                    } label: {
+                        settingRow(
+                            L10n.string("settings.language.title", language: localization.language),
+                            symbol: "globe",
+                            detail: localization.language.displayName,
+                            accessory: .disclosure
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.string("settings.language.title", language: localization.language))
+
                     Toggle(isOn: $soundEffectsEnabled) {
                         settingRow(
                             "Sound effects",

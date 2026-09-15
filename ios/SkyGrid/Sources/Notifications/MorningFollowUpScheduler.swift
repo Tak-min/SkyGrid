@@ -96,8 +96,8 @@ enum MorningFollowUpScheduler {
         ) {
             guard deliveryDay.docID != LocalDefaults.lastCapturedLocalDateID else { continue }
             let content = UNMutableNotificationContent()
-            content.title = "Today's sky"
-            content.body = "Not captured yet."
+            content.title = L10n.string("notification.todaysSky")
+            content.body = L10n.string("notification.notCapturedYet")
             content.sound = .default
             let request = UNNotificationRequest(
                 identifier: identifier(for: deliveryDay),

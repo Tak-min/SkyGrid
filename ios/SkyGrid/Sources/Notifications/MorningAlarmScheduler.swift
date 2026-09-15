@@ -634,6 +634,42 @@ enum MorningAlarmScheduler {
     /// idempotent (cancel-then-reschedule under one fixed identifier), so calling this
     /// unconditionally on every cold launch is safe and does not re-prompt for
     /// authorization once it has already been granted.
+    /// Rebuilds system-owned morning copy after the in-app language changes.
+    /// Normal resync intentionally skips schedule entries whose times are unchanged;
+    /// language is different because the OS snapshots alert/notification strings at
+    /// scheduling time, so those entries must be explicitly replaced.
+    static func resyncLocalizedContent() async {
+        await migrateScheduleModelIfNeeded()
+        guard LocalDefaults.morningAlarmEnabled else { return }
+
+        let schedules = LocalDefaults.morningAlarmSchedules
+        let minutes = LocalDefaults.wakeGoalMinutes
+        if #available(iOS 26.0, *), LocalDefaults.morningAlarmBackend != "reminder" {
+            if schedules.isEmpty {
+                _ = await scheduleAlarmKit(minutes: minutes)
+            } else {
+                let manager = AlarmManager.shared
+                for schedule in schedules where schedule.isEnabled {
+                    _ = try? await manager.schedule(
+                        id: schedule.id,
+                        configuration: alarmKitConfiguration(schedule: schedule)
+                    )
+                }
+                await refreshMorningRitualFollowUps(minutes: minutes, schedules: schedules)
+            }
+            return
+        }
+
+        await cancelAllReminderSchedules()
+        if schedules.isEmpty {
+            _ = await scheduleReminder(minutes: normalizeWakeGoalMinutes(minutes))
+            await refreshMorningRitualFollowUps(minutes: minutes)
+        } else {
+            _ = await scheduleReminders(schedules: schedules)
+            await refreshMorningRitualFollowUps(minutes: minutes, schedules: schedules)
+        }
+    }
+
     static func resyncIfNeeded() async {
         await migrateScheduleModelIfNeeded()
         guard LocalDefaults.morningAlarmEnabled else { return }
@@ -818,7 +854,7 @@ enum MorningAlarmScheduler {
 
     private static func reminderContent() -> UNMutableNotificationContent {
         let content = UNMutableNotificationContent()
-        content.title = "Capture the sky"
+        content.title = L10n.string("notification.captureSky")
         content.body = ""
         content.sound = .default
         content.categoryIdentifier = notificationIdentifier
@@ -935,21 +971,21 @@ private extension MorningAlarmScheduler {
         fireDate: Date
     ) -> AlarmManager.AlarmConfiguration<SkyGridAlarmMetadata> {
         let cameraButton = AlarmButton(
-            text: "Capture the sky",
+            text: L10n.resource("notification.captureSky"),
             textColor: .white,
             systemImageName: "camera"
         )
         let alert: AlarmPresentation.Alert
         if #available(iOS 26.1, *) {
             alert = AlarmPresentation.Alert(
-                title: "Your sky is still waiting",
+                title: L10n.resource("notification.skyStillWaiting"),
                 secondaryButton: cameraButton,
                 secondaryButtonBehavior: .custom
             )
         } else {
             alert = AlarmPresentation.Alert(
-                title: "Your sky is still waiting",
-                stopButton: AlarmButton(text: "Open camera", textColor: .white, systemImageName: "camera"),
+                title: L10n.resource("notification.skyStillWaiting"),
+                stopButton: AlarmButton(text: L10n.resource("notification.openCamera"), textColor: .white, systemImageName: "camera"),
                 secondaryButton: cameraButton,
                 secondaryButtonBehavior: .custom
             )
@@ -1196,17 +1232,17 @@ private extension MorningAlarmScheduler {
     }
 
     static func makeAlertPresentation() -> AlarmPresentation.Alert {
-        let cameraButton = AlarmButton(text: "Capture the sky", textColor: .white, systemImageName: "camera")
+        let cameraButton = AlarmButton(text: L10n.resource("notification.captureSky"), textColor: .white, systemImageName: "camera")
         if #available(iOS 26.1, *) {
             return AlarmPresentation.Alert(
-                title: "Capture the sky",
+                title: L10n.resource("notification.captureSky"),
                 secondaryButton: cameraButton,
                 secondaryButtonBehavior: .custom
             )
         }
         return AlarmPresentation.Alert(
-            title: "Capture the sky",
-            stopButton: AlarmButton(text: "Open camera", textColor: .white, systemImageName: "camera"),
+            title: L10n.resource("notification.captureSky"),
+            stopButton: AlarmButton(text: L10n.resource("notification.openCamera"), textColor: .white, systemImageName: "camera"),
             secondaryButton: cameraButton,
             secondaryButtonBehavior: .custom
         )

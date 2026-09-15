@@ -42,6 +42,10 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "soundEffectsEnabled", defaultValue: true)
     static var soundEffectsEnabled: Bool
 
+    /// Explicit in-app language choice. `nil` means device-language inference is still active.
+    @UserDefaultBacked(key: "selectedLanguageCode", defaultValue: nil)
+    static var selectedLanguageCode: String?
+
     @UserDefaultBacked(key: "lastKnownTimeZoneIdentifier", defaultValue: nil)
     static var lastKnownTimeZoneIdentifier: String?
 
