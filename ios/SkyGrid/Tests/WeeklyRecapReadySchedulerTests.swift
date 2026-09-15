@@ -69,12 +69,15 @@ struct WeeklyRecapReadySchedulerTests {
 extension SkyPost {
     static func fixture(localDate: LocalDate) -> SkyPost {
         SkyPost(
-            docID: localDate.docID,
+            ownerUid: "uid",
             localDate: localDate,
-            postedAt: .now,
-            color: .init(hue: 0.5, saturation: 0.5, brightness: 0.5),
-            photoOverrides: nil,
-            thumbPath: nil
+            capturedAt: Date(),
+            uploadedAt: Date(),
+            imagePath: "image.jpg",
+            thumbPath: "thumb.jpg",
+            skyColor: SkyColor(uncheckedHex: "#9DB7C5"),
+            minutesFromGoal: 0,
+            reactions: [:]
         )
     }
 }

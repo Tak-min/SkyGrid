@@ -3,7 +3,6 @@ import type { Messaging } from "firebase-admin/messaging";
 import { logger } from "firebase-functions";
 import {
   deviceLanguageFromDoc,
-  isWithinQuietHours,
   staleTokenIndices,
 } from "./buddyNotifications.js";
 import {
@@ -75,8 +74,10 @@ export async function notifyRecipientOfBuddyRequest(
   // The recipient's account was deleted.
   if (!recipientDoc.exists) return;
 
-  const timezone = recipientDoc.data()?.timezone;
-  if (typeof timezone === "string" && isWithinQuietHours(timezone, nowMs)) return;
+  // Deliberately NOT quiet-hours-gated, unlike the recurring daily post
+  // notification: this is a one-shot event with no later retry, so dropping it
+  // during 22:00-05:00 would silence it forever rather than just delaying it,
+  // which is a worse outcome than one off-hours push for an event this rare.
 
   type EligibleDevice = { ref: FirebaseFirestore.DocumentReference; token: string; language: ReturnType<typeof deviceLanguageFromDoc> };
   const eligibleDevices: EligibleDevice[] = devicesSnapshot.docs
@@ -178,8 +179,8 @@ export async function notifyRequesterOfBuddyApproval(
   // The requester's account was deleted.
   if (!requesterDoc.exists) return;
 
-  const timezone = requesterDoc.data()?.timezone;
-  if (typeof timezone === "string" && isWithinQuietHours(timezone, nowMs)) return;
+  // See the matching comment in notifyRecipientOfBuddyRequest — this is a
+  // one-shot event with no retry, so it is not quiet-hours-gated.
 
   type EligibleDevice = { ref: FirebaseFirestore.DocumentReference; token: string; language: ReturnType<typeof deviceLanguageFromDoc> };
   const eligibleDevices: EligibleDevice[] = devicesSnapshot.docs

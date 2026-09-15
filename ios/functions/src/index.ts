@@ -33,6 +33,7 @@ import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
 import { updateBuddyStreaksForPost } from "./buddyStreakStore.js";
 import { notifyInviterOfClaim } from "./inviteNotificationStore.js";
 import { inviterUidForCreatedFriendship } from "./inviteNotifications.js";
+import { posterHandleFromFriendship } from "./buddyNotifications.js";
 import {
   notifyRecipientOfBuddyRequest,
   notifyRequesterOfBuddyApproval,
@@ -831,11 +832,16 @@ export const onBuddyRequestAccepted = onDocumentUpdated(
     }
 
     const accepterUid = members.find((uid) => uid !== requestedBy);
-    const accepterHandle = members.find((uid) => uid !== requestedBy) === members[0]
-      ? after?.requestedByHandle
-      : after?.recipientHandle;
-
     if (typeof accepterUid !== "string") return;
+    // The accepter is by definition never `requestedBy` — `members` is sorted
+    // alphabetically by uid and carries no requester/recipient meaning on its
+    // own, so this must go through the same denormalized-handle lookup every
+    // other notifier uses rather than an ad-hoc positional check.
+    const accepterHandle = posterHandleFromFriendship(accepterUid, {
+      requestedBy,
+      requestedByHandle: after?.requestedByHandle,
+      recipientHandle: after?.recipientHandle,
+    });
 
     try {
       await notifyRequesterOfBuddyApproval(admin.firestore(), admin.messaging(), {
