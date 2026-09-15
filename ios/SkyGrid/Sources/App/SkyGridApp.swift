@@ -739,6 +739,7 @@ private final class UIAuditUserRepository: UserRepository {
     func findUid(forHandle handle: Handle) async throws -> String? {
         profiles.first(where: { $0.value.handle == handle })?.key
     }
+    func setReferralCode(_ code: String, for uid: String) async throws {}
 }
 
 @MainActor

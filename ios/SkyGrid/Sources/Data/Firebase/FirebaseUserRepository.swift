@@ -73,6 +73,16 @@ final class FirebaseUserRepository: UserRepository {
         }
     }
 
+    func setReferralCode(_ code: String, for uid: String) async throws {
+        do {
+            try await firestore.collection("users")
+                .document(uid)
+                .setDataAsync(["referralCode": code], merge: true)
+        } catch {
+            throw FirebaseRepositoryError.map(error)
+        }
+    }
+
     func claimHandle(_ handle: Handle, for uid: String) async throws {
         let handleDocument = firestore.collection("handles").document(handle.value)
         let profileDocument = firestore.collection("users").document(uid)

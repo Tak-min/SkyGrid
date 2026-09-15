@@ -2065,6 +2065,22 @@
         }
       }
     },
+    "Referral code (optional)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Referral code (optional)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "紹介コード（任意）"
+          }
+        }
+      }
+    },
     "Remove": {
       "localizations": {
         "en": {

@@ -19,4 +19,9 @@ protocol UserRepository: Sendable {
     func claimHandle(_ handle: Handle, for uid: String) async throws
 
     func findUid(forHandle handle: Handle) async throws -> String?
+
+    /// Records which creator/ambassador (if any) a new user came from. Free-text,
+    /// unvalidated — this is an attribution hint, not an identity boundary, so it
+    /// merges into the existing profile document rather than gating anything.
+    func setReferralCode(_ code: String, for uid: String) async throws
 }

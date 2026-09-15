@@ -6,18 +6,33 @@ import SwiftUI
 /// existing Buddies-tab privacy boundary and the server's `createInvite` contract.
 struct OnboardingInviteView: View {
     @State private var handle: Handle?
+    @State private var referralCode: String = ""
 
     let uid: String
     let userRepository: any UserRepository
     let inviteRepository: any InviteRepository
     let onSkip: () -> Void
 
+    /// Records a non-empty referral code (fire-and-forget, no validation — this is
+    /// an attribution hint, not a gate) before handing off to `onSkip`. Both exit
+    /// points on this screen ("Not now" and the primary button) funnel through
+    /// here so whatever was typed is captured regardless of which one is tapped.
+    private func finishOnboarding() {
+        let trimmedCode = referralCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedCode.isEmpty {
+            Task {
+                try? await userRepository.setReferralCode(trimmedCode, for: uid)
+            }
+        }
+        onSkip()
+    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
                     Spacer()
-                    Button("Not now", action: onSkip)
+                    Button("Not now", action: finishOnboarding)
                         .font(SGFont.caption(14))
                         .foregroundStyle(SGT.ink2)
                         .frame(minHeight: 44)
@@ -46,7 +61,18 @@ struct OnboardingInviteView: View {
                     InviteLinkCard(inviteRepository: inviteRepository, placement: .onboarding)
                 }
 
-                Button(handle == nil ? "Skip for now" : "Start Sky Grid", action: onSkip)
+                // Optional, unvalidated attribution hint — kept low-emphasis so it
+                // never competes with the invite mechanic above for attention.
+                TextField("Referral code (optional)", text: $referralCode)
+                    .font(SGFont.caption(13))
+                    .foregroundStyle(SGT.ink2)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(.horizontal, SGSpacing.md)
+                    .frame(minHeight: 36)
+                    .background(SGT.ghostFaint, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                Button(handle == nil ? "Skip for now" : "Start Sky Grid", action: finishOnboarding)
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink2)
                     .frame(maxWidth: .infinity)

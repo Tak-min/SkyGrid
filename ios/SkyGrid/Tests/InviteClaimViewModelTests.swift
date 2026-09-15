@@ -42,6 +42,7 @@ private final class FakeUserRepository: UserRepository {
     func createOrUpdateProfile(_ profile: UserProfile) async throws {}
     func claimHandle(_ handle: Handle, for uid: String) async throws {}
     func findUid(forHandle handle: Handle) async throws -> String? { nil }
+    func setReferralCode(_ code: String, for uid: String) async throws {}
 }
 
 @Suite("InviteClaimViewModel")
