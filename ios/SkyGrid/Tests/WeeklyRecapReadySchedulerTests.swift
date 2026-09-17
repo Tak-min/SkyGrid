@@ -3,6 +3,7 @@ import Testing
 @testable import SkyGrid
 
 @Suite("WeeklyRecapReadyScheduler")
+@MainActor
 struct WeeklyRecapReadySchedulerTests {
     private let today = LocalDate(year: 2026, month: 8, day: 9)
 

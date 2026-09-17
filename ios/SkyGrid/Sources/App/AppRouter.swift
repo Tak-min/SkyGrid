@@ -20,6 +20,16 @@ final class AppRouter {
     /// important route (VISION.md §3, pain #2) instead of coexisting with it.
     var pendingBuddyRevealRoute = false
 
+    /// Buddy request, approval, and invite-claim pushes open the relationship hub,
+    /// not the Today reveal feed. Kept independently pending so a cold launch does
+    /// not lose it while authentication/onboarding is resolving.
+    var pendingBuddiesRoute = false
+
+    /// Set when the user taps a local "weekly recap ready" notification. The
+    /// Today screen consumes this after its seven-day rhythm has loaded so a cold
+    /// launch cannot lose the deep link while Firebase is starting.
+    var pendingWeeklyRecapRoute = false
+
     /// Bumped by `NotificationRouter` on *any* buddy-post push arrival — tapped or
     /// merely delivered while foregrounded — so `TodayView` can re-resolve the buddy
     /// strip via `TodayViewModel.refreshBuddiesNow()`. A counter rather than a `Bool`

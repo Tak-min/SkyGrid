@@ -24,6 +24,7 @@ struct SkyGridApp: App {
                 AppStartupView(startup: startup, appRouter: appDelegate.appRouter)
 #endif
             }
+            .environment(appDelegate.appRouter)
             .environment(localization)
             .environment(\.locale, localization.language.locale)
             .onOpenURL { url in
@@ -224,6 +225,7 @@ private struct UIAuditRoot: View {
             WeeklyRecapView(
                 posts: UIAuditData.weeklyPosts,
                 imageFetching: UIAuditImageFetcher(),
+                inviteRepository: UIAuditInviteRepository(),
                 initialPhotos: UIAuditData.weeklyPhotos
             )
         } else if scenario == .shareTogether {
@@ -281,6 +283,7 @@ private struct UIAuditRoot: View {
                             year: 2026,
                             postRepository: auditPostRepository,
                             imageFetching: UIAuditImageFetcher(),
+                            inviteRepository: UIAuditInviteRepository(),
                             isPro: true,
                             today: UIAuditData.today,
                             onUpgrade: {}
@@ -305,6 +308,7 @@ private struct UIAuditRoot: View {
                             ? UIAuditData.recoveringTodayViewModel()
                             : UIAuditData.todayViewModel(),
                         imageFetching: UIAuditImageFetcher(),
+                        inviteRepository: UIAuditInviteRepository(),
                         observedDate: UIAuditData.today,
                         onOpenCamera: {},
                         subscriptionPlan: .free,

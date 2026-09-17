@@ -101,6 +101,62 @@ enum LocalDefaults {
         }
     }
 
+    @UserDefaultBacked(key: "earlyAdopterRevealShownAccountIDs", defaultValue: nil)
+    private static var earlyAdopterRevealShownAccountIDsData: Data?
+
+    /// Presentation history only, mirroring `hasPresentedSecondChancePaywall`. The
+    /// server-side grant status (`earlyAdopterGrants/{uid}.status`) is the source of
+    /// truth for whether the reward was actually granted; this only prevents the
+    /// one-time celebratory reveal from reappearing on every launch.
+    static func hasShownEarlyAdopterReveal(for accountID: String) -> Bool {
+        earlyAdopterRevealShownAccountIDs.contains(accountID)
+    }
+
+    static func markEarlyAdopterRevealShown(for accountID: String) {
+        var accountIDs = earlyAdopterRevealShownAccountIDs
+        accountIDs.insert(accountID)
+        earlyAdopterRevealShownAccountIDs = accountIDs
+    }
+
+    private static var earlyAdopterRevealShownAccountIDs: Set<String> {
+        get {
+            guard let data = earlyAdopterRevealShownAccountIDsData,
+                  let values = try? JSONDecoder().decode(Set<String>.self, from: data)
+            else { return [] }
+            return values
+        }
+        set {
+            earlyAdopterRevealShownAccountIDsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
+    @UserDefaultBacked(key: "todayWalkthroughShownAccountIDs", defaultValue: nil)
+    private static var todayWalkthroughShownAccountIDsData: Data?
+
+    /// Presentation history for the first-visit Today walkthrough — shown once per
+    /// account, mirroring `hasShownEarlyAdopterReveal`.
+    static func hasShownTodayWalkthrough(for accountID: String) -> Bool {
+        todayWalkthroughShownAccountIDs.contains(accountID)
+    }
+
+    static func markTodayWalkthroughShown(for accountID: String) {
+        var accountIDs = todayWalkthroughShownAccountIDs
+        accountIDs.insert(accountID)
+        todayWalkthroughShownAccountIDs = accountIDs
+    }
+
+    private static var todayWalkthroughShownAccountIDs: Set<String> {
+        get {
+            guard let data = todayWalkthroughShownAccountIDsData,
+                  let values = try? JSONDecoder().decode(Set<String>.self, from: data)
+            else { return [] }
+            return values
+        }
+        set {
+            todayWalkthroughShownAccountIDsData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
     @UserDefaultBacked(key: "personalizationProfile", defaultValue: nil)
     private static var personalizationProfileData: Data?
 
@@ -136,6 +192,12 @@ enum LocalDefaults {
     /// successful post (DESIGN.md's daily reward motion contract).
     @UserDefaultBacked(key: "lastRewardPlayedLocalDate", defaultValue: nil)
     static var lastRewardPlayedLocalDate: String?
+
+    /// Last rolling-week end date that produced a recap-ready notification. A
+    /// seven-day cooldown prevents an always-posting user from receiving a new
+    /// "recap ready" banner every day as the window advances.
+    @UserDefaultBacked(key: "lastWeeklyRecapNotificationLocalDate", defaultValue: nil)
+    static var lastWeeklyRecapNotificationLocalDate: String?
 
     /// Set the first time `AppReviewPromptPolicy` decides a completed capture is
     /// a good moment to call SwiftUI's `requestReview` environment action. Not
@@ -356,5 +418,6 @@ enum LocalDefaults {
         morningWakeSession = nil
         openCameraAfterMorningAlarm = false
         lastCapturedLocalDateID = nil
+        lastWeeklyRecapNotificationLocalDate = nil
     }
 }

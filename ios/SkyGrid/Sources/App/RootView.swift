@@ -57,6 +57,18 @@ struct RootView: View {
     /// its growing mosaic in one causal home while retaining every existing screen.
     @State private var homeDestination: HomeDestination?
     @State private var hasHandledInitialHomeRoute = false
+    /// Independent of `presentations` (camera/reward/milestone/paywall/invite): this
+    /// is a rare, one-time, historical reveal for the handful of early-adopter
+    /// accounts a retroactive grant script touches, not part of the ordinary
+    /// per-capture presentation flow those cases arbitrate. Gated on
+    /// `presentations.isAvailable` in `checkEarlyAdopterReveal` purely to avoid
+    /// stacking a second presentation on top of one of those, not because it
+    /// participates in their priority resolution.
+    @State private var showEarlyAdopterReveal = false
+    /// Mirrors `showEarlyAdopterReveal`: a one-time, once-per-account presentation
+    /// that does not participate in `presentations`' priority arbitration, only
+    /// avoids stacking on top of whatever else is already showing.
+    @State private var showTodayWalkthrough = false
     let onAccountDeleted: () -> Void
 
     private var showCamera: Bool {
@@ -95,6 +107,7 @@ struct RootView: View {
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
                         consumePendingBuddyRevealIfNeeded()
+                        consumePendingBuddiesRouteIfNeeded()
                         resolvePendingPresentations(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
@@ -103,6 +116,7 @@ struct RootView: View {
                         refreshObservedLocalDate(services: services)
                         consumePendingCameraRequestIfNeeded()
                         consumePendingBuddyRevealIfNeeded()
+                        consumePendingBuddiesRouteIfNeeded()
                         resolvePendingPresentations(services: services)
                         Task { await reconcileMorningRitual(services: services) }
                     }
@@ -127,6 +141,7 @@ struct RootView: View {
                     .onChange(of: destination) { _, _ in
                         consumePendingCameraRequestIfNeeded()
                         consumePendingBuddyRevealIfNeeded()
+                        consumePendingBuddiesRouteIfNeeded()
                         resolvePendingPresentations(services: services)
                     }
                     .onChange(of: services.entitlements.status) { _, _ in
@@ -182,6 +197,7 @@ struct RootView: View {
                     revealSignal: revealSignal
                 ),
                 imageFetching: services.imageFetching,
+                inviteRepository: services.inviteRepository,
                 observedDate: today,
                 onOpenCamera: { showCamera = true },
                 subscriptionPlan: services.entitlements.plan,
@@ -207,6 +223,7 @@ struct RootView: View {
                         currentYear: services.clock.today().year,
                         postRepository: services.postRepository,
                         imageFetching: services.imageFetching,
+                        inviteRepository: services.inviteRepository,
                         uploadQueue: services.uploadQueue,
                         isPro: services.entitlements.isPro,
                         today: services.clock.today(),
@@ -332,14 +349,36 @@ struct RootView: View {
         }
         .task { consumePendingCameraRequestIfNeeded() }
         .task { consumePendingBuddyRevealIfNeeded() }
+        .task { consumePendingBuddiesRouteIfNeeded() }
         .task { openInitialHomeRouteIfNeeded() }
         .task { presentSecondChanceScreenshotFixtureIfNeeded() }
+        .task(id: services.currentUid) {
+            await checkEarlyAdopterReveal(services: services)
+        }
+        .task(id: services.currentUid) {
+            await checkTodayWalkthrough(services: services)
+        }
+        .fullScreenCover(isPresented: $showTodayWalkthrough) {
+            TodayWalkthroughView {
+                LocalDefaults.markTodayWalkthroughShown(for: services.currentUid)
+                showTodayWalkthrough = false
+            }
+        }
+        .sheet(isPresented: $showEarlyAdopterReveal) {
+            EarlyAdopterRevealView {
+                LocalDefaults.markEarlyAdopterRevealShown(for: services.currentUid)
+                showEarlyAdopterReveal = false
+            }
+        }
         .onChange(of: router.buddyRevealRefreshTicks) { _, _ in
             // A buddy-post push that arrived while this app was already foregrounded
             // is not a tap — nobody navigated — but the strip should still catch up.
             // Safe to react to directly, unlike `pendingBuddyRevealRoute`: this only
             // ever changes while the app (and this observing view) is already alive.
             buddyRefreshToken += 1
+        }
+        .onChange(of: router.pendingBuddiesRoute) { _, _ in
+            consumePendingBuddiesRouteIfNeeded()
         }
         .task { resolvePendingPresentations(services: services) }
     }
@@ -832,6 +871,13 @@ struct RootView: View {
         }
     }
 
+    private func consumePendingBuddiesRouteIfNeeded() {
+        guard destination == .today, router.pendingBuddiesRoute,
+              presentations.isAvailable, homeDestination == nil else { return }
+        router.pendingBuddiesRoute = false
+        homeDestination = .buddies
+    }
+
     /// Mirrors `consumePendingCameraRequestIfNeeded()`'s multi-hook re-check pattern —
     /// see that function's doc comment for the exact failure it exists to avoid. A
     /// plain `.onChange(of: router.pendingBuddyRevealRoute)` would silently miss a
@@ -873,6 +919,40 @@ struct RootView: View {
     private func presentSecondChanceScreenshotFixtureIfNeeded() {
         guard Self.isSecondChanceScreenshotFixture, !showPaywall else { return }
         presentPaywall(from: .onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: LocalDefaults.wakeGoalMinutes))
+    }
+
+    /// Checks the one-off retroactive early-adopter grant, once per account, and
+    /// arms the standalone reveal sheet. Deliberately outside `presentations`
+    /// (camera/reward/milestone/paywall/invite): this fires at most once ever for a
+    /// small, historical set of accounts, not on every capture like those cases, so
+    /// it doesn't belong in their priority arbitration. It only checks
+    /// `presentations.isAvailable` here, at read time, to avoid stacking a second
+    /// presentation on screen — a race against a same-session reward/milestone is
+    /// rare enough (the grant already happened before this launch) that a single
+    /// missed check is an acceptable trade for not touching that coordinator's logic.
+    private func checkEarlyAdopterReveal(services: AppServices) async {
+        let uid = services.currentUid
+        guard !uid.isEmpty,
+              !LocalDefaults.hasShownEarlyAdopterReveal(for: uid),
+              presentations.isAvailable
+        else { return }
+        let isGranted = await EarlyAdopterGrantRepository().checkGrantStatus(uid: uid)
+        guard isGranted else { return }
+        showEarlyAdopterReveal = true
+    }
+
+    /// Shows the first-visit Today walkthrough once per account, right after
+    /// onboarding. Deliberately outside `presentations` (camera/reward/milestone/
+    /// paywall/invite) for the same reason `showEarlyAdopterReveal` is: this fires
+    /// at most once ever per account and does not participate in that priority
+    /// arbitration, it only avoids stacking on top of whatever is already showing.
+    private func checkTodayWalkthrough(services: AppServices) async {
+        let uid = services.currentUid
+        guard !uid.isEmpty,
+              !LocalDefaults.hasShownTodayWalkthrough(for: uid),
+              presentations.isAvailable
+        else { return }
+        showTodayWalkthrough = true
     }
 
     /// The single entry point every lifecycle hook and modal-dismissal callback calls

@@ -1,3 +1,4 @@
+import AVFoundation
 import FirebaseAppCheck
 import FirebaseCore
 import FirebaseMessaging
@@ -23,6 +24,24 @@ final class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate {
         let router = NotificationRouter(appRouter: appRouter)
         notificationRouter = router
         UNUserNotificationCenter.current().delegate = router
+
+        // Set up audio session for sound effects once at app startup. The .ambient
+        // category respects the device's silent switch (matching the prior
+        // AudioToolbox system-sound behavior) and .mixWithOthers allows other apps'
+        // audio to continue playing (e.g. Spotify). This is set exactly once here,
+        // not on every play() call, to avoid repeated audio session reconfiguration.
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.ambient, options: .mixWithOthers)
+            try audioSession.setActive(true)
+        } catch {
+            // Audio session setup is best-effort; sound-effect failures never block
+            // the app or user interaction. Visibly state changes and VoiceOver
+            // announcements remain primary (sound is additive reinforcement).
+        }
+
+        // Prewarm all sounds to avoid first-play latency.
+        SoundEffectPlayer.shared.prewarmAllSounds()
 
         let launchArguments = ProcessInfo.processInfo.arguments
         let hasFirebaseConfig = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil

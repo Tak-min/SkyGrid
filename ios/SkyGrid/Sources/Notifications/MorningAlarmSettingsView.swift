@@ -20,6 +20,19 @@ final class MorningAlarmSettingsViewModel {
         )
     }
 
+    /// Keep the list stable and chronological. Persisted schedules are edited in
+    /// creation order, which made a newly added 07:30 alarm appear above an
+    /// existing 06:00 alarm and look as if the wrong row had been updated.
+    var displaySchedules: [MorningAlarmSchedule] {
+        schedules.sorted { lhs, rhs in
+            if lhs.isEnabled != rhs.isEnabled { return lhs.isEnabled && !rhs.isEnabled }
+            if lhs.minutesAfterMidnight != rhs.minutesAfterMidnight {
+                return lhs.minutesAfterMidnight < rhs.minutesAfterMidnight
+            }
+            return lhs.id.uuidString < rhs.id.uuidString
+        }
+    }
+
     func refresh() async {
         MorningAlarmScheduler.migrateScheduleModelIfNeeded()
         schedules = LocalDefaults.morningAlarmSchedules
@@ -101,7 +114,8 @@ struct MorningAlarmSettingsView: View {
             .padding(.horizontal, SGSpacing.xl)
             .padding(.vertical, SGSpacing.lg)
         }
-        .background(SGT.background)
+        .background(MokuColor.nightStage.ignoresSafeArea())
+        .preferredColorScheme(.dark)
         .navigationTitle("Morning Alarms")
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.refresh() }
@@ -159,7 +173,7 @@ struct MorningAlarmSettingsView: View {
                 if viewModel.isWorking { ProgressView() }
             }
 
-            ForEach(viewModel.schedules) { schedule in
+            ForEach(viewModel.displaySchedules) { schedule in
                 alarmRow(schedule)
             }
 
@@ -354,7 +368,8 @@ private struct MorningAlarmEditor: View {
                 }
                 .padding(SGSpacing.xl)
             }
-            .background(SGT.background)
+            .background(MokuColor.nightStage.ignoresSafeArea())
+            .preferredColorScheme(.dark)
             .navigationTitle("Alarm")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

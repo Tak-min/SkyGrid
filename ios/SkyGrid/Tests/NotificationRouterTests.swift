@@ -33,4 +33,12 @@ struct NotificationRouterTests {
 
         #expect(NotificationRouter.isMorningNotificationIdentifier(identifier))
     }
+
+    @Test("recognizes weekly recap ready identifiers")
+    func recognizesWeeklyRecapIdentifier() {
+        let identifier = WeeklyRecapReadyScheduler.identifierPrefix + "2026-09-05"
+
+        #expect(NotificationRouter.isWeeklyRecapNotificationIdentifier(identifier))
+        #expect(!NotificationRouter.isWeeklyRecapNotificationIdentifier("com.takmin.skygrid.unrelated"))
+    }
 }

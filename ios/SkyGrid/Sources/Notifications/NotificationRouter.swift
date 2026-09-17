@@ -21,6 +21,10 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
             || identifier.hasPrefix(MorningFollowUpScheduler.identifierPrefix)
     }
 
+    nonisolated static func isWeeklyRecapNotificationIdentifier(_ identifier: String) -> Bool {
+        identifier.hasPrefix(WeeklyRecapReadyScheduler.identifierPrefix)
+    }
+
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -28,10 +32,11 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
     ) {
         let identifier = response.notification.request.identifier
         let isMorningNotification = Self.isMorningNotificationIdentifier(identifier)
+        let isWeeklyRecapNotification = Self.isWeeklyRecapNotificationIdentifier(identifier)
         let userInfo = response.notification.request.content.userInfo
-        let buddyPost = BuddyPushPayload.parse(userInfo)
+        let pushPayload = BuddyPushPayload.parse(userInfo)
 
-        guard isMorningNotification || buddyPost != nil else {
+        guard isMorningNotification || isWeeklyRecapNotification || pushPayload != nil else {
             completionHandler()
             return
         }
@@ -39,9 +44,19 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
             if isMorningNotification {
                 self?.appRouter.pendingRoute = .camera
             }
-            if buddyPost != nil {
+            switch pushPayload {
+            case .buddyPost:
                 self?.appRouter.pendingBuddyRevealRoute = true
                 self?.appRouter.buddyRevealRefreshTicks += 1
+            case .buddyRequestReceived, .buddyRequestApproved, .inviteClaimed:
+                self?.appRouter.pendingBuddiesRoute = true
+            case .streakBreakReminder, .personalStreakBreakReminder:
+                self?.appRouter.pendingRoute = .camera
+            case nil:
+                break
+            }
+            if isWeeklyRecapNotification {
+                self?.appRouter.pendingWeeklyRecapRoute = true
             }
             completionHandler()
         }
@@ -64,7 +79,7 @@ final class NotificationRouter: NSObject, UNUserNotificationCenterDelegate {
         // A buddy-post push that arrives while the app is already foregrounded is not
         // tapped — nobody navigates — but the buddy strip should still catch up, so
         // this bumps the same refresh counter `didReceive` bumps on a tap.
-        if BuddyPushPayload.parse(notification.request.content.userInfo) != nil {
+        if case .buddyPost = BuddyPushPayload.parse(notification.request.content.userInfo) {
             Task { @MainActor [weak self] in
                 self?.appRouter.buddyRevealRefreshTicks += 1
             }
