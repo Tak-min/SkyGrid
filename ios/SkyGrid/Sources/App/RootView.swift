@@ -262,7 +262,7 @@ struct RootView: View {
                             homeDestination = .buddies
                         }
                     }
-                    .accessibilityLabel("Explore Sky Grid and Buddies")
+                    .accessibilityLabel(L10n.string("Explore Sky Grid and Buddies"))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -270,7 +270,7 @@ struct RootView: View {
                     } label: {
                         Image(systemName: "gearshape")
                     }
-                    .accessibilityLabel("Open settings")
+                    .accessibilityLabel(L10n.string("Open settings"))
                 }
             }
         }

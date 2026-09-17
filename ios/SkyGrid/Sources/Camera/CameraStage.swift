@@ -128,7 +128,7 @@ struct CameraCaptureControls: View {
         }
         .frame(width: 64)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Current sky color")
+        .accessibilityLabel(L10n.string("Current sky color"))
     }
 }
 

@@ -28,16 +28,16 @@ struct PostStatusBanner: View {
 
     var body: some View {
         if pending.contains(where: { $0.state == .postConflict }) {
-            Text("A saved photo needs review before it can send.")
+            Text(L10n.string("A saved photo needs review before it can send."))
                 .font(SGFont.caption())
                 .foregroundStyle(SGT.ink2)
         } else if let stale = staleUnrecoverable {
             HStack(spacing: SGSpacing.md) {
-                Text("A saved photo is too old to send now")
+                Text(L10n.string("A saved photo is too old to send now"))
                     .font(SGFont.caption())
                     .foregroundStyle(SGT.ink2)
                 Spacer()
-                Button("Remove", role: .destructive) { onDiscardStale(stale.queueID) }
+                Button(L10n.string("Remove"), role: .destructive) { onDiscardStale(stale.queueID) }
                     .font(SGFont.caption(13))
             }
             .padding(.horizontal, 16)
@@ -45,11 +45,11 @@ struct PostStatusBanner: View {
             .quietCard()
         } else if pending.contains(where: { $0.state == .failed || $0.state == .postFailed }) {
             HStack(spacing: SGSpacing.md) {
-                Text("Photo is saved on this device")
+                Text(L10n.string("Photo is saved on this device"))
                     .font(SGFont.caption())
                     .foregroundStyle(SGT.ink2)
                 Spacer()
-                Button("Retry now", action: onRetry)
+                Button(L10n.string("Retry now"), action: onRetry)
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink)
             }
@@ -57,11 +57,11 @@ struct PostStatusBanner: View {
             .padding(.vertical, 10)
             .quietCard()
         } else if pending.contains(where: { $0.state == .stagedPost }) {
-            Text("Saving your post…")
+            Text(L10n.string("Saving your post…"))
                 .font(SGFont.caption())
                 .foregroundStyle(SGT.ink3)
         } else if pending.contains(where: { $0.state == .pendingLocal || $0.state == .uploading }) {
-            Text("Sending…")
+            Text(L10n.string("Sending…"))
                 .font(SGFont.caption())
                 .foregroundStyle(SGT.ink3)
         }

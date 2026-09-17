@@ -32,7 +32,7 @@ struct TodayPhotoCard: View {
                         .aspectRatio(contentMode: .fill)
                         .overlay(alignment: .bottom) {
                             if isPreview {
-                                Label("Photo is waiting to sync", systemImage: "icloud.slash")
+                                Label(L10n.string("Photo is waiting to sync"), systemImage: "icloud.slash")
                                     .font(SGFont.caption(12))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, SGSpacing.md)
@@ -48,10 +48,10 @@ struct TodayPhotoCard: View {
                     VStack(spacing: SGSpacing.sm) {
                         if imageUnavailable {
                             Image(systemName: "icloud.slash")
-                            Text("Photo is waiting to sync")
+                            Text(L10n.string("Photo is waiting to sync"))
                         } else {
                             ProgressView()
-                            Text("Loading your photo")
+                            Text(L10n.string("Loading your photo"))
                         }
                     }
                     .font(SGFont.caption(13))

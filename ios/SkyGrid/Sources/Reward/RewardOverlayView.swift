@@ -29,14 +29,14 @@ struct RewardOverlayView: View {
             if let controller {
                 VStack {
                     content(controller: controller)
-                    Button("Continue") {
+                    Button(L10n.string("Continue")) {
                         controller.cancel()
                         onDone()
                     }
                     .buttonStyle(SkySecondaryButtonStyle())
                     .padding(.horizontal, SGSpacing.xl)
                     .padding(.bottom, SGSpacing.lg)
-                    .accessibilityHint("Your sky is already saved")
+                    .accessibilityHint(L10n.string("reward.continueHint"))
                 }
             }
         }

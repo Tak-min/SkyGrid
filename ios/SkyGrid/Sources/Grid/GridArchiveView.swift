@@ -363,7 +363,7 @@ private struct ArchivePhotoDetail: View {
             .background(MokuColor.nightStage)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close", action: { dismiss() })
+                    Button(L10n.string("Close"), action: { dismiss() })
                 }
             }
         }

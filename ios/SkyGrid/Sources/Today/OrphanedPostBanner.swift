@@ -18,10 +18,10 @@ struct OrphanedPostBanner: View {
                     .foregroundStyle(SGT.ink2)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("This morning's photo never finished saving")
+                    Text(L10n.string("today.orphaned.title"))
                         .font(SGFont.caption())
                         .foregroundStyle(SGT.ink)
-                    Text("The photo didn't reach the cloud, so this record is empty.")
+                    Text(L10n.string("today.orphaned.description"))
                         .font(SGFont.caption(12))
                         .foregroundStyle(SGT.ink2)
                 }
@@ -34,13 +34,13 @@ struct OrphanedPostBanner: View {
                 if isRecovering {
                     ProgressView()
                 } else {
-                    Text("Clear and retake")
+                    Text(L10n.string("Clear and retake"))
                 }
             }
             .font(SGFont.caption(13))
             .foregroundStyle(.red)
             .disabled(isRecovering)
-            .accessibilityLabel("Clear this record and take a new photo")
+            .accessibilityLabel(L10n.string("Clear this record and take a new photo"))
 
             if let errorMessage {
                 Text(errorMessage)
@@ -51,11 +51,11 @@ struct OrphanedPostBanner: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .quietCard()
-        .alert("Clear this record?", isPresented: $showingConfirmation) {
-            Button("Clear this record", role: .destructive, action: onRetake)
-            Button("Cancel", role: .cancel) {}
+        .alert(L10n.string("Clear this record?"), isPresented: $showingConfirmation) {
+            Button(L10n.string("Clear this record"), role: .destructive, action: onRetake)
+            Button(L10n.string("Cancel"), role: .cancel) {}
         } message: {
-            Text("This deletes the empty record so you can record this morning again. This can't be undone.")
+            Text(L10n.string("today.orphaned.confirmMessage"))
         }
     }
 }

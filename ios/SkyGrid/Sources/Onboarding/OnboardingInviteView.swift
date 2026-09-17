@@ -17,13 +17,13 @@ struct OnboardingInviteView: View {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
                     Button(action: onBack) {
-                        Label("Back", systemImage: "chevron.left")
+                        Label(L10n.string("Back"), systemImage: "chevron.left")
                             .frame(minHeight: 44)
                     }
                     .font(SGFont.caption(14))
                     .foregroundStyle(SGT.ink2)
                     Spacer()
-                    Label("ONE LAST STEP", systemImage: "person.2.fill")
+                    Label(L10n.string("onboarding.invite.progressLabel"), systemImage: "person.2.fill")
                         .font(SGFont.caption(11))
                         .tracking(1.3)
                         .foregroundStyle(SGT.ink3)
@@ -32,14 +32,14 @@ struct OnboardingInviteView: View {
                 OnboardingProgress(step: 10, total: 10)
 
                 VStack(alignment: .leading, spacing: SGSpacing.md) {
-                    Label("MORNINGS TOGETHER", systemImage: "person.2.fill")
+                    Label(L10n.string("MORNINGS TOGETHER"), systemImage: "person.2.fill")
                         .font(SGFont.caption(11))
                         .tracking(1.3)
                         .foregroundStyle(SGT.ink3)
-                    Text("Reveal your skies\ntogether.")
+                    Text(L10n.string("onboarding.invite.headline"))
                         .font(.system(size: 38, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
-                    Text("Invite people you trust. Each sky stays sealed until you've each captured the same morning.")
+                    Text(L10n.string("Invite people you trust. You won't see each other's sky until you've both captured that morning."))
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink2)
                 }
@@ -59,12 +59,12 @@ struct OnboardingInviteView: View {
                 }
 
                 Text(hasUsableInvite
-                     ? "Your invite link and readable code are ready to share."
-                     : "Create your handle and wait for your invite link before continuing.")
+                     ? L10n.string("onboarding.invite.ready")
+                     : L10n.string("onboarding.invite.waiting"))
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink2)
 
-                Button("Continue to Sky Grid", action: onContinue)
+                Button(L10n.string("onboarding.invite.continueButton"), action: onContinue)
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.accentInk)
                     .frame(maxWidth: .infinity)

@@ -18,7 +18,7 @@ struct PersonalizationQuestionsView: View {
                     Text("What would make\nmornings easier?")
                         .font(.system(size: 38, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
-                    Text("QUESTION 1 OF 6 · Choose a direction. This stays on your device.")
+                    Text(L10n.string("QUESTION 1 OF 6 · Choose a direction. This stays on your device."))
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink2)
                 }
@@ -205,16 +205,16 @@ struct ReminderQuestionView: View {
 
 private func onboardingBackButton(action: @escaping () -> Void) -> some View {
     Button(action: action) {
-        Label("Back", systemImage: "chevron.left")
+        Label(L10n.string("Back"), systemImage: "chevron.left")
             .labelStyle(.titleAndIcon)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
     }
-    .accessibilityHint("Returns to the previous setup step")
+    .accessibilityHint(L10n.string("Returns to the previous setup step"))
 }
 
 private func onboardingContinueButton(action: @escaping () -> Void) -> some View {
-    Button("Continue", action: action)
+    Button(L10n.string("Continue"), action: action)
         .frame(maxWidth: .infinity)
         .buttonStyle(SkyPrimaryButtonStyle())
         .padding(.horizontal, SGSpacing.xl)

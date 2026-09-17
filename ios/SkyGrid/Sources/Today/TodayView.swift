@@ -321,8 +321,8 @@ struct TodayView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Say hello to Moku")
-                    .accessibilityHint("Moku says hello back")
+                    .accessibilityLabel(L10n.string("Say hello to Moku"))
+                    .accessibilityHint(L10n.string("Moku says hello back"))
                     .accessibilityIdentifier("moku.play")
                 }
                 .frame(width: ambientMessage == nil ? 142 : 350, height: 156, alignment: .bottomTrailing)
@@ -363,11 +363,11 @@ struct TodayView: View {
                 Button {
                     prepareShareImage(for: post)
                 } label: {
-                    Label("Share this morning", systemImage: "square.and.arrow.up")
+                    Label(L10n.string("today.share.label"), systemImage: "square.and.arrow.up")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SkySecondaryButtonStyle())
-                .accessibilityHint("Opens the share sheet with this morning's card as an image")
+                .accessibilityHint(L10n.string("Opens the share sheet with this morning's card as an image"))
 
                 if viewModel.todayIntegrity == .orphaned {
                     OrphanedPostBanner(
@@ -396,7 +396,7 @@ struct TodayView: View {
                 // show: the number that gets someone out of bed is what they stand
                 // to lose, not an unknown time.
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                    Text("THIS MORNING")
+                    Text(L10n.string("today.empty.thisMorning"))
                         .font(SGFont.caption(12))
                         .foregroundStyle(.white.opacity(0.82))
                     if viewModel.streak.currentStreak > 0 {
@@ -405,14 +405,14 @@ struct TodayView: View {
                             .foregroundStyle(.white)
                             .contentTransition(.numericText())
                             .skyAnimation(SGMotion.exchange, value: viewModel.streak.currentStreak)
-                        Text("day streak · capture to keep it")
+                        Text(L10n.string("today.empty.streakCaption"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(.white.opacity(0.88))
                     } else {
-                        Text("Day one")
+                        Text(L10n.string("Day one"))
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("your first sky is today")
+                        Text(L10n.string("today.empty.firstSkyCaption"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(.white.opacity(0.88))
                     }
@@ -434,7 +434,7 @@ struct TodayView: View {
                 SoundEffectPlayer.shared.play(.forwardNavigation)
                 onOpenCamera()
             } label: {
-                Label("Capture the sky", systemImage: "camera")
+                Label(L10n.string("Capture the sky"), systemImage: "camera")
                     .frame(maxWidth: .infinity)
             }
                 .buttonStyle(SkyPrimaryButtonStyle())
@@ -475,7 +475,7 @@ struct TodayView: View {
                 .font(SGFont.caption(13))
                 .foregroundStyle(SGT.ink2)
             if viewModel.postState == .unavailable {
-                Button("Check again") {
+                Button(L10n.string("Check again")) {
                     viewModel.retryPostObservation()
                 }
                 .font(SGFont.body(15))
@@ -500,10 +500,10 @@ struct TodayView: View {
                     .foregroundStyle(accentColor.color)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("YOUR MOSAIC")
+                    Text(L10n.string("today.mosaic.label"))
                         .font(SGFont.caption(11))
                         .tracking(1.1)
-                    Text("See every sky become part of the year")
+                    Text(L10n.string("See all your sky photos from the year"))
                         .font(SGFont.body(15))
                 }
                 Spacer()
@@ -517,7 +517,7 @@ struct TodayView: View {
             .playfulSurface(accent: accentColor.color)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Your mosaic. See every sky become part of the year.")
+        .accessibilityLabel(L10n.string("today.mosaic.accessibilityLabel"))
     }
 
     /// The buddy strip sits between the morning record and the week rhythm: below
@@ -537,9 +537,9 @@ struct TodayView: View {
                     Image(systemName: "person.2")
                         .font(.system(size: 15, weight: .medium))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Invite people you trust")
+                        Text(L10n.string("Invite people you trust"))
                             .font(SGFont.body(15))
-                        Text("your skies unlock each other")
+                        Text(L10n.string("today.buddy.tagline"))
                             .font(SGFont.caption(12))
                             .foregroundStyle(SGT.ink3)
                     }
@@ -553,7 +553,7 @@ struct TodayView: View {
                 .playfulSurface(accent: SGT.accentSecondary)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Invite people you trust. Your skies unlock each other.")
+            .accessibilityLabel(L10n.string("today.buddy.accessibilityLabel"))
         } else {
             VStack(alignment: .leading, spacing: SGSpacing.md) {
                 sectionLabel(viewModel.streak.hasPostedToday ? L10n.string("today.section.morningTogether") : L10n.string("today.section.sealedUntilPost"))

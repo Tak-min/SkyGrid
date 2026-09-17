@@ -160,7 +160,7 @@ struct SkyGridView: View {
                         }
                         .font(SGFont.caption(13))
                     } else {
-                        Label("Share", systemImage: "square.and.arrow.up")
+                        Label(L10n.string("Share"), systemImage: "square.and.arrow.up")
                             .font(SGFont.caption(13))
                     }
                 }
@@ -208,7 +208,7 @@ struct SkyGridView: View {
                 .aspectRatio(1, contentMode: .fit)
             }
         }
-        .accessibilityLabel("A calendar grid of your sky photos")
+        .accessibilityLabel(L10n.string("A calendar grid of your sky photos"))
     }
 
     private var monthlyArchive: some View {

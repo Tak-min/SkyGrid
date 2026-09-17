@@ -14,11 +14,11 @@ struct WakeGoalPickerView: View {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
                     Button(action: onBack) {
-                        Label("Back", systemImage: "chevron.left")
+                        Label(L10n.string("Back"), systemImage: "chevron.left")
                             .frame(minHeight: 44)
                             .contentShape(Rectangle())
                     }
-                    .accessibilityHint("Returns to the previous setup step")
+                    .accessibilityHint(L10n.string("Returns to the previous setup step"))
                     Spacer()
                 }
                 .font(SGFont.caption(14))
@@ -29,7 +29,7 @@ struct WakeGoalPickerView: View {
                 Text("The time your\nmorning begins")
                     .font(.system(size: 38, weight: .black, design: .rounded))
                     .foregroundStyle(SGT.ink)
-                Text("QUESTION 6 OF 6 · A time is enough for now. You can always change it.")
+                Text(L10n.string("onboarding.wakeGoal.instructionLabel"))
                     .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink2)
                 Text(timeString)
@@ -54,7 +54,7 @@ struct WakeGoalPickerView: View {
                 if reminderPreference != .noReminder {
                     reminderControls
                 } else {
-                    Label("You chose no reminder. Capture is always ready from Today.", systemImage: "sun.horizon")
+                    Label(L10n.string("onboarding.wakeGoal.noReminderLabel"), systemImage: "sun.horizon")
                         .font(SGFont.caption())
                         .foregroundStyle(SGT.ink2)
                         .padding(SGSpacing.lg)
@@ -62,7 +62,7 @@ struct WakeGoalPickerView: View {
                 }
 
                 Button(action: advance) {
-                    Text("Save time and continue")
+                    Text(L10n.string("Save time and continue"))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SkyPrimaryButtonStyle())
@@ -76,7 +76,7 @@ struct WakeGoalPickerView: View {
     private var reminderControls: some View {
         VStack(alignment: .leading, spacing: SGSpacing.sm) {
             if alarmState.isScheduled {
-                Label("Set for every day at this time", systemImage: "checkmark.circle.fill")
+                Label(L10n.string("onboarding.wakeGoal.alarmScheduled"), systemImage: "checkmark.circle.fill")
                     .font(SGFont.caption())
                     .foregroundStyle(SGT.ink2)
             } else {

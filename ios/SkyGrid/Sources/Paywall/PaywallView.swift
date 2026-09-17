@@ -69,13 +69,13 @@ struct PaywallView: View {
             .toolbar {
                 if step != flow.first && step != .secondChance {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Back", action: goBack)
+                        Button(L10n.string("Back"), action: goBack)
                             .foregroundStyle(SGT.ink2)
                             .disabled(viewModel.isPurchasing)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Close") { resolveExit(.close) }
+                    Button(L10n.string("Close")) { resolveExit(.close) }
                         .foregroundStyle(SGT.ink2)
                         .disabled(viewModel.isPurchasing)
                 }

@@ -15,11 +15,11 @@ struct PersonalizedPlanView: View {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
                     Button(action: onEditAnswers) {
-                        Label("Edit answers", systemImage: "chevron.left")
+                        Label(L10n.string("Edit answers"), systemImage: "chevron.left")
                             .frame(minHeight: 44)
                             .contentShape(Rectangle())
                     }
-                    .accessibilityHint("Returns to your wake-time answer")
+                    .accessibilityHint(L10n.string("Returns to your wake-time answer"))
                     Spacer()
                 }
                 .font(SGFont.caption(14))
@@ -31,7 +31,7 @@ struct PersonalizedPlanView: View {
                     .frame(maxWidth: .infinity)
 
                 VStack(alignment: .leading, spacing: SGSpacing.md) {
-                    Text("YOUR MORNING PLAN")
+                    Text(L10n.string("onboarding.plan.sectionLabel"))
                         .font(SGFont.caption(11))
                         .tracking(1.5)
                         .foregroundStyle(SGT.ink3)
@@ -48,18 +48,18 @@ struct PersonalizedPlanView: View {
                     Label(plan.privacyNote, systemImage: "lock")
                         .font(SGFont.caption(14))
                         .foregroundStyle(SGT.ink2)
-                    Label("Camera access is only requested when you choose Capture.", systemImage: "camera")
+                    Label(L10n.string("Camera access is only requested when you choose Capture."), systemImage: "camera")
                         .font(SGFont.caption(14))
                         .foregroundStyle(SGT.ink2)
                 }
                 .padding(SGSpacing.lg)
                 .quietCard()
 
-                Button("Continue to invite a buddy", action: onStartFirstSky)
+                Button(L10n.string("onboarding.plan.continueButton"), action: onStartFirstSky)
                     .frame(maxWidth: .infinity)
                     .buttonStyle(SkyPrimaryButtonStyle())
 
-                Text("Create your invite link before your first sky. You can share it now or use the code later.")
+                Text(L10n.string("onboarding.plan.inviteHint"))
                     .font(SGFont.caption(12))
                     .foregroundStyle(SGT.ink3)
                     .frame(maxWidth: .infinity, alignment: .center)

@@ -41,17 +41,17 @@ struct WeeklyRecapView: View {
                     if isLoading {
                         HStack(spacing: SGSpacing.sm) {
                             ProgressView().controlSize(.small)
-                            Text("Preparing…")
+                            Text(L10n.string("Preparing…"))
                         }
                         .frame(maxWidth: .infinity)
                     } else {
-                        Text("View weekly recap")
+                        Text(L10n.string("today.weekly.viewButton"))
                             .frame(maxWidth: .infinity)
                     }
                 }
                 .buttonStyle(SkyPrimaryButtonStyle())
                 .disabled(isLoading)
-                .accessibilityHint("Opens the share sheet with your seven-morning recap as an image")
+                .accessibilityHint(L10n.string("Opens the share sheet with your seven-morning recap as an image"))
             }
             .padding(SGSpacing.lg)
         }
@@ -93,7 +93,7 @@ struct WeeklyRecapView: View {
                     .frame(width: 44, height: 44)
                     .background(MokuColor.cloud.opacity(0.14), in: Circle())
             }
-            .accessibilityLabel("Close")
+            .accessibilityLabel(L10n.string("Close"))
         }
     }
 
@@ -109,7 +109,7 @@ struct WeeklyRecapView: View {
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Weekly recap preview with seven morning skies")
+        .accessibilityLabel(L10n.string("today.weekly.previewLabel"))
     }
 
     private func loadPhotos() async {

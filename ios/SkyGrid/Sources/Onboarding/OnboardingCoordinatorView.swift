@@ -247,7 +247,7 @@ struct OnboardingCoordinatorView: View {
         .background(SGT.accentSecondary.opacity(0.055))
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Setup page")
+        .accessibilityLabel(L10n.string("onboarding.coordinator.accessibilityLabel"))
         // The visible companion line, not `step.rawValue`: that is an analytics key
         // (`wake_goal`) and VoiceOver read it aloud verbatim.
         .accessibilityValue(companionLine)

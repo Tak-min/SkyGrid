@@ -30,7 +30,7 @@ struct ShutterButton: View {
             .shadow(color: .black.opacity(0.22), radius: 16, y: 8)
         }
         .buttonStyle(ShutterButtonStyle())
-        .accessibilityLabel("Capture the sky")
+        .accessibilityLabel(L10n.string("Capture the sky"))
         .disabled(isWorking)
     }
 }

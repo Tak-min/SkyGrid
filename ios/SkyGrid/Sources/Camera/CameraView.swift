@@ -168,7 +168,7 @@ struct CameraView: View {
             failure: failure,
             isRecovering: isRecovering,
             onPrimaryAction: { handleFailureAction(failure) },
-            closeTitle: requiresCaptureToDismiss ? "End today's wake-up" : "Close camera",
+            closeTitle: requiresCaptureToDismiss ? L10n.string("camera.closeButton.endCapture") : L10n.string("Close camera"),
             onClose: {
                 guard requiresCaptureToDismiss else {
                     onDismiss()
@@ -191,7 +191,7 @@ struct CameraView: View {
                 .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 1))
         }
         .foregroundStyle(.white)
-        .accessibilityLabel("Close camera")
+        .accessibilityLabel(L10n.string("Close camera"))
         .disabled(isCapturing || isConfirming)
     }
 
@@ -214,7 +214,7 @@ struct CameraView: View {
                 // create-only rule means retrying this same draft can never
                 // succeed. Say so plainly instead of the generic message, which
                 // read as "try again" when trying again cannot help.
-                confirmationError = "You've already recorded today's sky."
+                confirmationError = L10n.string("camera.alreadyPosted")
                 SoundEffectPlayer.shared.play(.recoverableError)
                 isConfirming = false
             } catch {
@@ -248,7 +248,7 @@ struct CameraFailureContent: View {
     let failure: CameraViewModel.Failure
     let isRecovering: Bool
     let onPrimaryAction: () -> Void
-    var closeTitle = "Close camera"
+    var closeTitle = L10n.string("Close camera")
     let onClose: () -> Void
 
     var body: some View {
@@ -495,7 +495,7 @@ private struct CameraAuditHeader: View {
                 .foregroundStyle(.white)
                 .frame(width: 44, height: 44)
                 .background(.white.opacity(0.1), in: Circle())
-                .accessibilityLabel("Close camera")
+                .accessibilityLabel(L10n.string("Close camera"))
         }
     }
 }

@@ -25,14 +25,14 @@ struct WelcomeView: View {
             VStack(spacing: SGSpacing.sm) {
                 Button(action: onNext) {
                     HStack {
-                        Text("Get started")
+                        Text(L10n.string("Get started"))
                         Image(systemName: "arrow.right")
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SkyPrimaryButtonStyle())
                 .accessibilityIdentifier("onboarding.getStarted")
-                Text("A little sky. A morning that's yours.")
+                Text(L10n.string("A little sky. A morning that's yours."))
                     .font(SGFont.caption(12))
                     .foregroundStyle(SGT.ink3)
             }
@@ -81,8 +81,8 @@ private struct MokuWelcomeStage: View {
                 }
                 .buttonStyle(.plain)
                 .offset(y: -16)
-                .accessibilityLabel("Say hello to Moku")
-                .accessibilityHint("Moku says hello back. You can get started at any time.")
+                .accessibilityLabel(L10n.string("Say hello to Moku"))
+                .accessibilityHint(L10n.string("Moku says hello back. You can get started at any time."))
                 .accessibilityIdentifier("moku.play")
 
                 Text(dialogueLine)
@@ -108,7 +108,7 @@ private struct MokuWelcomeStage: View {
             // collide with the front tile rows — illegible in dark mode, where
             // both are low-contrast greys. Reserve the projected depth instead.
             .frame(height: 286)
-            Text("Tap Moku to say hello")
+            Text(L10n.string("onboarding.welcome.mokuCaption"))
                 .font(SGFont.caption(12))
                 .foregroundStyle(SGT.ink3)
         }
