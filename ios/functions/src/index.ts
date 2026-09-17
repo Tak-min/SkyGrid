@@ -4,6 +4,7 @@ import { logger } from "firebase-functions";
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import { setGlobalOptions } from "firebase-functions/v2";
 import {
   FREE_SUBSCRIPTION,
@@ -30,7 +31,12 @@ import {
 } from "./inviteStore.js";
 import type { RateLimitedAction } from "./rateLimit.js";
 import { notifyBuddiesOfPost } from "./buddyNotificationStore.js";
+import { notifyEarlyAdopterGrantCompleted } from "./earlyAdopterGrantNotificationStore.js";
+import { claimEarlyAdopterSlot, completeGrant, isEligible } from "./earlyAdopterGrantStore.js";
 import { updateBuddyStreaksForPost } from "./buddyStreakStore.js";
+import { notifyStreakBreakReminders } from "./streakBreakReminderStore.js";
+import { notifyPersonalStreakBreakReminders } from "./streakBreakReminderStore.js";
+import { updatePersonalStreakForPost } from "./personalStreakStore.js";
 import { notifyInviterOfClaim } from "./inviteNotificationStore.js";
 import { inviterUidForCreatedFriendship } from "./inviteNotifications.js";
 import { posterHandleFromFriendship } from "./buddyNotifications.js";
@@ -665,17 +671,15 @@ export const revenueCatWebhook = onRequest(
  * is single-region `asia-northeast1` (`dev-notes/firebase-backend-provisioning_2026-07-29.md`),
  * and a Firestore-triggered (Eventarc) function must run in the same region as the
  * database it watches — unlike the `onCall`/`onRequest` functions above, whose region
- * only affects client latency. `retry: false`: `notifyBuddiesOfPost` already claims an
- * idempotency marker before sending anything and is documented to never throw, so a
- * retried delivery of the same event would only ever hit the "already claimed" path —
- * there is nothing a retry could fix that this function's own error handling doesn't
- * already cover, and retrying would just extend how long a truly stuck event lingers.
+ * only affects client latency. Recipient-scoped markers use a short send lease and
+ * are finalized only after FCM success, so unexpected trigger failures can retry
+ * without replaying a completed notification.
  */
 export const onBuddyPostCreated = onDocumentCreated(
   {
     document: "users/{uid}/posts/{localDate}",
     region: "asia-northeast1",
-    retry: false,
+    retry: true,
   },
   async (event) => {
     const { uid: posterUid, localDate } = event.params;
@@ -686,10 +690,8 @@ export const onBuddyPostCreated = onDocumentCreated(
         nowMs: Date.now(),
       });
     } catch (error: unknown) {
-      // `notifyBuddiesOfPost` is documented to never throw; this is a last-resort net
-      // so a truly unexpected failure here can never surface as a failed trigger for
-      // a post that already succeeded and is not going anywhere.
-      logger.error("Unhandled error notifying buddies of a post.", { posterUid, localDate, error });
+      logger.error("Unhandled error notifying buddies of a post; will retry.", { posterUid, localDate, error });
+      throw error;
     }
   },
 );
@@ -755,6 +757,99 @@ export const onPostCreatedUpdateBuddyStreaks = onDocumentCreated(
   },
 );
 
+/** Maintains the server-owned personal streak used by background reminders. */
+export const onPostCreatedUpdatePersonalStreak = onDocumentCreated(
+  {
+    document: "users/{uid}/posts/{localDate}",
+    region: "asia-northeast1",
+    retry: true,
+  },
+  async (event) => {
+    await updatePersonalStreakForPost(admin.firestore(), {
+      uid: event.params.uid,
+      localDate: event.params.localDate,
+    });
+  },
+);
+
+/**
+ * Checks mutual buddy streaks hourly. The reminder store resolves each member's
+ * local date/timezone, so one UTC schedule covers users in every region without
+ * creating a function per timezone. Its recipient/date marker makes overlapping
+ * scheduler deliveries harmless.
+ */
+export const onStreakBreakReminder = onSchedule(
+  {
+    schedule: "0 * * * *",
+    timeZone: "Etc/UTC",
+    region: "asia-northeast1",
+    retryCount: 3,
+  },
+  async () => {
+    // `allSettled`, not sequential `await`s: mutual and personal reminders now
+    // share one daily marker per user (mutual runs first and wins ties — see
+    // `streakBreakReminderStore.ts`), but they must stay failure-independent.
+    // A rejection thrown from the mutual half used to propagate straight out of
+    // a plain `await`, skipping the personal half's run for that entire hour —
+    // and since the send window is exactly `localHour === 20`, a skipped run
+    // could drop a user's personal reminder for the whole day once the
+    // scheduler's bounded retries were exhausted.
+    const nowMs = Date.now();
+    const results = await Promise.allSettled([
+      notifyStreakBreakReminders(admin.firestore(), admin.messaging(), { nowMs }),
+      notifyPersonalStreakBreakReminders(admin.firestore(), admin.messaging(), { nowMs }),
+    ]);
+    const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected");
+    if (failures.length > 0) {
+      for (const failure of failures) {
+        logger.error("A streak break reminder half failed; the scheduler will retry.", { error: failure.reason });
+      }
+      throw new AggregateError(failures.map((failure) => failure.reason), "One or more streak break reminder halves failed.");
+    }
+  },
+);
+
+/**
+ * Live half of the "first 100 users get 60 days free Pro" campaign. Fires on EVERY post
+ * creation (deliberately does not try to detect "first post" — see
+ * `earlyAdopterGrantStore.claimEarlyAdopterSlot`'s doc comment for why); only the true
+ * first successful claim for a given uid ever proceeds past `claimEarlyAdopterSlot`.
+ *
+ * Two phases, intentionally not blurred:
+ *  - Phase 1 (eligibility + slot claim) has no external side effects — safe to `throw`
+ *    and let Eventarc retry (`retry: true`).
+ *  - Phase 2 (`completeGrant`, which calls RevenueCat) may retry a pending claim after
+ *    a Firestore failure. Every attempt uses the same stored expiry, so a repeated call
+ *    cannot extend the 60-day grant.
+ *
+ * The retroactive batch CLI (`tools/grantEarlyAdopter.ts`) claims slots from the exact
+ * same `campaigns/earlyAdopter100` counter via the same `claimEarlyAdopterSlot`, so the
+ * two paths can never collectively exceed the 100-slot limit.
+ */
+export const onPostCreatedClaimEarlyAdopterSlot = onDocumentCreated(
+  {
+    document: "users/{uid}/posts/{localDate}",
+    region: "asia-northeast1",
+    retry: true,
+    secrets: [revenueCatSecretAPIKey],
+  },
+  async (event) => {
+    const { uid } = event.params;
+    const db = admin.firestore();
+    try {
+      if (!(await isEligible(db, uid))) return;
+      const result = await claimEarlyAdopterSlot(db, uid, { source: "live" });
+      if (result !== "claimed" && result !== "resume") return;
+    } catch (error: unknown) {
+      logger.error("Unhandled error claiming an early adopter slot; will retry.", { uid, error });
+      throw error;
+    }
+
+    // Past this point the slot and its immutable planned expiry are persisted.
+    await completeGrant(db, uid, { apiKey: revenueCatSecretAPIKey.value() });
+  },
+);
+
 /**
  * Notifies the RECIPIENT when a handle-based buddy request is received.
  * Only fires for newly-created pending friendships (status: "pending"), not for
@@ -766,7 +861,7 @@ export const onHandleBuddyRequestCreated = onDocumentCreated(
   {
     document: "friendships/{pairId}",
     region: "asia-northeast1",
-    retry: false,
+    retry: true,
   },
   async (event) => {
     const { pairId } = event.params;
@@ -786,11 +881,15 @@ export const onHandleBuddyRequestCreated = onDocumentCreated(
     const recipientUid = members.find((uid) => uid !== requestedBy);
     if (typeof recipientUid !== "string") return;
 
+    const createdAt = friendship?.createdAt;
+    const requestEventMs = createdAt instanceof admin.firestore.Timestamp ? createdAt.toMillis() : Date.now();
+
     try {
       await notifyRecipientOfBuddyRequest(admin.firestore(), admin.messaging(), {
         recipientUid,
         pairId,
         requesterHandle: requestedByHandle ?? null,
+        requestEventMs,
         nowMs: Date.now(),
       });
     } catch (error: unknown) {
@@ -799,61 +898,79 @@ export const onHandleBuddyRequestCreated = onDocumentCreated(
         pairId,
         error,
       });
+      throw error;
     }
   },
 );
 
 /**
- * Notifies the REQUESTER when their pending buddy request is accepted.
- * Fires when a friendship transitions from status: "pending" to status: "accepted"
- * via acceptBuddyRequest(). Uses onDocumentUpdated to detect the status change.
+ * Sends approval only for the explicit handle-request acceptance transition.
+ * `acceptanceKind` is written atomically with that transition, so an invite claim
+ * that happens to promote an old pending edge can never be mislabeled as an
+ * approval. Keeping delivery in a retryable Firestore trigger also prevents the
+ * relationship from succeeding while a transient FCM failure is silently lost.
  */
-export const onBuddyRequestAccepted = onDocumentUpdated(
+export const onHandleBuddyRequestAccepted = onDocumentUpdated(
   {
     document: "friendships/{pairId}",
+    region: "asia-northeast1",
+    retry: true,
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (
+      before?.status !== "pending"
+      || after?.status !== "accepted"
+      || after?.acceptanceKind !== "handle_request"
+    ) return;
+
+    const requesterUid = after.requestedBy;
+    const accepterUid = after.acceptedBy;
+    if (typeof requesterUid !== "string" || typeof accepterUid !== "string" || requesterUid === accepterUid) return;
+    const accepterHandle = posterHandleFromFriendship(accepterUid, {
+      requestedBy: requesterUid,
+      requestedByHandle: after.requestedByHandle,
+      recipientHandle: after.recipientHandle,
+    });
+    const acceptedAt = after.acceptedAt;
+    const requestEventMs = acceptedAt instanceof admin.firestore.Timestamp ? acceptedAt.toMillis() : Date.now();
+    await notifyRequesterOfBuddyApproval(admin.firestore(), admin.messaging(), {
+      requesterUid,
+      pairId: event.params.pairId,
+      accepterHandle,
+      requestEventMs,
+      nowMs: Date.now(),
+    });
+  },
+);
+
+/**
+ * Notifies a user when their early adopter grant is marked as "granted".
+ * Fires when earlyAdopterGrants/{uid}.status transitions to "granted".
+ * Uses onDocumentUpdated to fire only for the final completion status, not on other transitions.
+ */
+export const onEarlyAdopterGrantCompleted = onDocumentUpdated(
+  {
+    document: "earlyAdopterGrants/{uid}",
     region: "asia-northeast1",
     retry: false,
   },
   async (event) => {
-    const { pairId } = event.params;
+    const { uid } = event.params;
     const before = event.data?.before.data();
     const after = event.data?.after.data();
 
-    // Only fire for transitions from "pending" to "accepted".
-    if (before?.status !== "pending" || after?.status !== "accepted") {
+    // Only fire when status transitions TO "granted" (not on any other transition).
+    if (before?.status === "granted" || after?.status !== "granted") {
       return;
     }
-
-    const requestedBy = after?.requestedBy;
-    const members = after?.members;
-
-    if (typeof requestedBy !== "string" || !Array.isArray(members) || members.length !== 2) {
-      return;
-    }
-
-    const accepterUid = members.find((uid) => uid !== requestedBy);
-    if (typeof accepterUid !== "string") return;
-    // The accepter is by definition never `requestedBy` — `members` is sorted
-    // alphabetically by uid and carries no requester/recipient meaning on its
-    // own, so this must go through the same denormalized-handle lookup every
-    // other notifier uses rather than an ad-hoc positional check.
-    const accepterHandle = posterHandleFromFriendship(accepterUid, {
-      requestedBy,
-      requestedByHandle: after?.requestedByHandle,
-      recipientHandle: after?.recipientHandle,
-    });
 
     try {
-      await notifyRequesterOfBuddyApproval(admin.firestore(), admin.messaging(), {
-        requesterUid: requestedBy,
-        pairId,
-        accepterHandle: accepterHandle ?? null,
-        nowMs: Date.now(),
-      });
+      await notifyEarlyAdopterGrantCompleted(admin.firestore(), admin.messaging(), { uid });
     } catch (error: unknown) {
-      logger.error("Unhandled error notifying a requester of buddy request approval.", {
-        requesterUid: requestedBy,
-        pairId,
+      logger.error("Unhandled error notifying early adopter of grant completion.", {
+        uid,
         error,
       });
     }
