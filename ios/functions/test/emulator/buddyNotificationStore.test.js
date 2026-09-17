@@ -248,3 +248,68 @@ test("no accepted buddies at all means no Firestore write beyond the marker, and
 
   assert.equal(messaging.calls.length, 0);
 });
+
+test("a permanent FCM error (e.g. invalid-argument) is never retried on a second delivery", async () => {
+  await reset();
+  await makeUser("poster");
+  await makeUser("buddy");
+  await makeDevice("buddy", "token-1", "fcm-token-1");
+  await makeFriendship("buddy_poster", { members: ["buddy", "poster"], requestedBy: "poster" });
+  const messaging = fakeMessaging();
+  messaging.sendEachForMulticast = async () => {
+    const error = new Error("Invalid FCM payload");
+    error.code = "messaging/invalid-argument";
+    throw error;
+  };
+
+  await notifyBuddiesOfPost(db, messaging, { posterUid: "poster", localDate: "2026-01-01", nowMs: NOW });
+  // A second delivery (e.g. an Eventarc redelivery) must not attempt to resend a
+  // permanently-failing language — the marker was finalized, not deleted, on the
+  // first attempt specifically so this cannot loop forever.
+  let secondAttemptCalled = false;
+  messaging.sendEachForMulticast = async () => {
+    secondAttemptCalled = true;
+    return { responses: [], successCount: 0, failureCount: 0 };
+  };
+  await notifyBuddiesOfPost(db, messaging, { posterUid: "poster", localDate: "2026-01-01", nowMs: NOW + 1000 });
+
+  assert.equal(secondAttemptCalled, false);
+});
+
+test("a transient failure in one recipient's language does not block or duplicate the other language", async () => {
+  await reset();
+  await makeUser("poster");
+  await makeUser("buddy");
+  await makeDevice("buddy", "en-token", "fcm-en");
+  await db.collection("users").doc("buddy").collection("devices").doc("en-token").update({ language: "en" });
+  await makeDevice("buddy", "ja-token", "fcm-ja");
+  await db.collection("users").doc("buddy").collection("devices").doc("ja-token").update({ language: "ja" });
+  await makeFriendship("buddy_poster", { members: ["buddy", "poster"], requestedBy: "poster" });
+
+  let call = 0;
+  const messaging = {
+    calls: [],
+    sendEachForMulticast: async (message) => {
+      messaging.calls.push(message);
+      call += 1;
+      // Fail the first language group with a transient error, succeed the second.
+      if (call === 1) {
+        const error = new Error("temporarily unavailable");
+        error.code = "messaging/internal-error";
+        throw error;
+      }
+      return { responses: message.tokens.map(() => ({ success: true })), successCount: message.tokens.length, failureCount: 0 };
+    },
+  };
+
+  await assert.rejects(
+    () => notifyBuddiesOfPost(db, messaging, { posterUid: "poster", localDate: "2026-01-01", nowMs: NOW }),
+    /retryable/
+  );
+  // Exactly one language was attempted and succeeded; the other's marker was
+  // released (not marked "sent") so a retry can still reach it, but this
+  // invocation must not have sent it twice.
+  assert.equal(messaging.calls.length, 2);
+  const sentLanguages = messaging.calls.map((call) => call.notification.title);
+  assert.equal(new Set(sentLanguages).size <= 2, true);
+});

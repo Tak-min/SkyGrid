@@ -13,8 +13,8 @@ import {
 /**
  * Handles all Firestore/FCM operations for buddy request notifications.
  * Both (a) request received and (b) request approved use this module.
- * Never throws — logs and returns on failure, following the same discipline
- * as `buddyNotificationStore.ts`.
+ * Transient FCM send failures are thrown after releasing the marker lease, allowing
+ * the Firestore trigger to retry without duplicating a successful delivery.
  */
 
 const USERS = "users";
@@ -31,27 +31,22 @@ export interface NotifyRecipientOfBuddyRequestParams {
   recipientUid: string;
   pairId: string;
   requesterHandle: string | null;
+  /** The friendship document's `createdAt`, in ms — see the doc comment on
+   * `claimNotificationMarker` for why this, not just `pairId`, is part of the
+   * marker key. */
+  requestEventMs: number;
   nowMs: number;
 }
 
 /**
  * Notifies the RECIPIENT when a handle-based buddy request is received.
- * Uses `pairId` as the idempotent marker key (per ordered pair of accounts).
  */
 export async function notifyRecipientOfBuddyRequest(
   db: Firestore,
   messaging: Pick<Messaging, "sendEachForMulticast">,
   params: NotifyRecipientOfBuddyRequestParams
 ): Promise<void> {
-  const { recipientUid, pairId, requesterHandle, nowMs } = params;
-
-  if (!(await claimNotificationMarker(db, recipientUid, pairId, "request_received", nowMs))) {
-    logger.info("Buddy request received notification already claimed for this pair; skipping.", {
-      recipientUid,
-      pairId,
-    });
-    return;
-  }
+  const { recipientUid, pairId, requesterHandle, requestEventMs, nowMs } = params;
 
   let recipientDoc;
   let devicesSnapshot;
@@ -90,9 +85,19 @@ export async function notifyRecipientOfBuddyRequest(
   if (eligibleDevices.length === 0) return;
 
   const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+  let anyRetryableFailure = false;
   for (const language of ["en", "ja"] as const) {
     const group = eligibleDevices.filter((device) => device.language === language);
     if (group.length === 0) continue;
+
+    if (!(await claimNotificationMarker(db, recipientUid, pairId, "request_received", requestEventMs, language, nowMs))) {
+      logger.info("Buddy request received notification already claimed for this pair/event/language; skipping.", {
+        recipientUid,
+        pairId,
+        language,
+      });
+      continue;
+    }
 
     const copy = buddyRequestReceivedNotificationCopy({
       requesterHandle,
@@ -111,52 +116,57 @@ export async function notifyRecipientOfBuddyRequest(
         },
       });
     } catch (error: unknown) {
-      logger.error("Buddy request received notification send failed.", { recipientUid, language, error });
+      const permanent = isPermanentFcmError(error);
+      logger.error("Buddy request received notification send failed.", { recipientUid, language, permanent, error });
+      await finishNotificationMarker(db, recipientUid, pairId, "request_received", requestEventMs, language, permanent);
+      if (!permanent) anyRetryableFailure = true;
       continue;
     }
 
     const staleIndices = staleTokenIndices(
       response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
     );
+    const delivered = response.successCount > 0;
+    await finishNotificationMarker(db, recipientUid, pairId, "request_received", requestEventMs, language, delivered);
+    if (!delivered && staleIndices.length < response.responses.length) {
+      anyRetryableFailure = true;
+    }
     for (const index of staleIndices) {
       staleRefs.push(group[index].ref);
     }
   }
-  if (staleRefs.length === 0) return;
-
-  const writer = db.bulkWriter();
-  for (const ref of staleRefs) {
-    writer.delete(ref);
+  if (staleRefs.length > 0) {
+    const writer = db.bulkWriter();
+    for (const ref of staleRefs) {
+      writer.delete(ref);
+    }
+    await writer.close();
   }
-  await writer.close();
+  if (anyRetryableFailure) {
+    throw new Error(`Buddy request received notification had a retryable send failure for pair ${pairId}.`);
+  }
 }
 
 export interface NotifyRequesterOfBuddyApprovalParams {
   requesterUid: string;
   pairId: string;
   accepterHandle: string | null;
+  /** The friendship document's `acceptedAt`, in ms — see the doc comment on
+   * `claimNotificationMarker` for why this, not just `pairId`, is part of the
+   * marker key. */
+  requestEventMs: number;
   nowMs: number;
 }
 
 /**
  * Notifies the REQUESTER when their pending buddy request is accepted.
- * Uses `pairId` as the idempotent marker key, keyed separately from
- * "request_received" so both notifications can fire independently.
  */
 export async function notifyRequesterOfBuddyApproval(
   db: Firestore,
   messaging: Pick<Messaging, "sendEachForMulticast">,
   params: NotifyRequesterOfBuddyApprovalParams
 ): Promise<void> {
-  const { requesterUid, pairId, accepterHandle, nowMs } = params;
-
-  if (!(await claimNotificationMarker(db, requesterUid, pairId, "request_approved", nowMs))) {
-    logger.info("Buddy request approved notification already claimed for this pair; skipping.", {
-      requesterUid,
-      pairId,
-    });
-    return;
-  }
+  const { requesterUid, pairId, accepterHandle, requestEventMs, nowMs } = params;
 
   let requesterDoc;
   let devicesSnapshot;
@@ -193,9 +203,19 @@ export async function notifyRequesterOfBuddyApproval(
   if (eligibleDevices.length === 0) return;
 
   const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+  let anyRetryableFailure = false;
   for (const language of ["en", "ja"] as const) {
     const group = eligibleDevices.filter((device) => device.language === language);
     if (group.length === 0) continue;
+
+    if (!(await claimNotificationMarker(db, requesterUid, pairId, "request_approved", requestEventMs, language, nowMs))) {
+      logger.info("Buddy request approved notification already claimed for this pair/event/language; skipping.", {
+        requesterUid,
+        pairId,
+        language,
+      });
+      continue;
+    }
 
     const copy = buddyRequestApprovedNotificationCopy({
       accepterHandle,
@@ -214,50 +234,138 @@ export async function notifyRequesterOfBuddyApproval(
         },
       });
     } catch (error: unknown) {
-      logger.error("Buddy request approved notification send failed.", { requesterUid, language, error });
+      const permanent = isPermanentFcmError(error);
+      logger.error("Buddy request approved notification send failed.", { requesterUid, language, permanent, error });
+      await finishNotificationMarker(db, requesterUid, pairId, "request_approved", requestEventMs, language, permanent);
+      if (!permanent) anyRetryableFailure = true;
       continue;
     }
 
     const staleIndices = staleTokenIndices(
       response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
     );
+    const delivered = response.successCount > 0;
+    await finishNotificationMarker(db, requesterUid, pairId, "request_approved", requestEventMs, language, delivered);
+    if (!delivered && staleIndices.length < response.responses.length) {
+      anyRetryableFailure = true;
+    }
     for (const index of staleIndices) {
       staleRefs.push(group[index].ref);
     }
   }
-  if (staleRefs.length === 0) return;
-
-  const writer = db.bulkWriter();
-  for (const ref of staleRefs) {
-    writer.delete(ref);
+  if (staleRefs.length > 0) {
+    const writer = db.bulkWriter();
+    for (const ref of staleRefs) {
+      writer.delete(ref);
+    }
+    await writer.close();
   }
-  await writer.close();
+  if (anyRetryableFailure) {
+    throw new Error(`Buddy request approved notification had a retryable send failure for pair ${pairId}.`);
+  }
 }
 
-/** `false` means a marker already existed — the caller must not send anything. */
+/**
+ * Claims a short-lived send lease; a successful send is finalized separately.
+ *
+ * The marker key includes `requestEventMs` (the friendship doc's `createdAt`
+ * for a received request, `acceptedAt` for an approval) and `language`, not
+ * just `pairId`. `pairId` alone is stable across a reject-then-re-request
+ * cycle — `removeFriendship` deletes the friendship document, and a later
+ * request recreates one with the same deterministic pair ID — so a marker
+ * keyed only on `pairId` stayed "sent" from the first request and silently
+ * suppressed the notification for every subsequent request to the same pair
+ * within the 7-day retention window. Folding in the event's own timestamp
+ * gives each request/approval its own marker while still deduplicating
+ * retries of that same event (the timestamp is stable across retries).
+ */
 async function claimNotificationMarker(
   db: Firestore,
   uid: string,
   pairId: string,
   notificationType: "request_received" | "request_approved",
+  requestEventMs: number,
+  language: string,
   nowMs: number
 ): Promise<boolean> {
   const markerRef = db
     .collection(USERS)
     .doc(uid)
     .collection(BUDDY_REQUEST_NOTIFICATION_MARKERS)
-    .doc(`${pairId}_${notificationType}`);
+    .doc(`${pairId}_${notificationType}_${requestEventMs}_${language}`);
   try {
-    await markerRef.create({
-      createdAt: FieldValue.serverTimestamp(),
-      expireAt: Timestamp.fromMillis(nowMs + BUDDY_REQUEST_NOTIFICATION_MARKER_RETENTION_MS),
+    await db.runTransaction(async (transaction) => {
+      const existing = await transaction.get(markerRef);
+      const data = existing.data();
+      if (existing.exists && data?.state === "sent") throw new Error("already-sent");
+      const activeLease = data?.state === "sending"
+        && data.leaseUntil instanceof Timestamp
+        && data.leaseUntil.toMillis() > nowMs;
+      if (activeLease) throw new Error("already-sending");
+      const payload = {
+        createdAt: data?.createdAt ?? FieldValue.serverTimestamp(),
+        expireAt: Timestamp.fromMillis(nowMs + BUDDY_REQUEST_NOTIFICATION_MARKER_RETENTION_MS),
+        state: "sending",
+        leaseUntil: Timestamp.fromMillis(nowMs + 5 * 60 * 1000),
+      };
+      if (existing.exists) transaction.update(markerRef, payload);
+      else transaction.create(markerRef, payload);
     });
     return true;
   } catch (error: unknown) {
+    if (error instanceof Error && (error.message === "already-sent" || error.message === "already-sending")) return false;
     if (isAlreadyExistsError(error)) return false;
     logger.error("Could not claim the buddy request notification marker.", { uid, pairId, notificationType, error });
     return false;
   }
+}
+
+/** `sent: true` also covers a permanent (non-retryable) FCM error — see
+ * `isPermanentFcmError` and the matching comment in `buddyNotificationStore.ts`. */
+async function finishNotificationMarker(
+  db: Firestore,
+  uid: string,
+  pairId: string,
+  notificationType: "request_received" | "request_approved",
+  requestEventMs: number,
+  language: string,
+  sent: boolean,
+): Promise<void> {
+  const markerRef = db
+    .collection(USERS)
+    .doc(uid)
+    .collection(BUDDY_REQUEST_NOTIFICATION_MARKERS)
+    .doc(`${pairId}_${notificationType}_${requestEventMs}_${language}`);
+  try {
+    if (sent) await markerRef.update({ state: "sent", leaseUntil: null });
+    else await markerRef.delete();
+  } catch (error: unknown) {
+    logger.error("Could not finalize the buddy request notification marker.", {
+      uid,
+      pairId,
+      notificationType,
+      language,
+      sent,
+      error,
+    });
+  }
+}
+
+const PERMANENT_FCM_ERROR_CODES = new Set([
+  "messaging/invalid-argument",
+  "messaging/invalid-recipient",
+  "messaging/mismatched-credential",
+  "messaging/sender-id-mismatch",
+  "messaging/third-party-auth-error",
+  "messaging/authentication-error",
+]);
+
+/** Mirrors `buddyNotificationStore.ts`'s helper of the same name — kept as a
+ * separate copy rather than a shared import so each store's retry policy can
+ * diverge later without coordinating a shared module. */
+function isPermanentFcmError(error: unknown): boolean {
+  const code = (error as { code?: unknown })?.code;
+  return typeof code === "string" && PERMANENT_FCM_ERROR_CODES.has(code);
 }
 
 function isAlreadyExistsError(error: unknown): boolean {

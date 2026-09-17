@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "friendships",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "streakCurrent",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "invites",
       "queryScope": "COLLECTION",
       "fields": [
@@ -46,6 +60,12 @@
     },
     {
       "collectionGroup": "buddyRequestNotifications",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "streakBreakNotifications",
       "fieldPath": "expireAt",
       "ttl": true,
       "indexes": []

@@ -21,10 +21,8 @@ import {
  * without Functions, Auth, or App Check. `index.ts`'s `onBuddyPostCreated` is the thin
  * trigger shell around this.
  *
- * **Never throws.** This runs from a Firestore-triggered function: the post it is
- * reacting to is already committed, and nothing about a notification failing may ever
- * be reported back as if the post itself had failed. Every failure path here logs and
- * returns rather than propagating.
+ * Transient FCM send failures are thrown only after the send lease is released, so
+ * Eventarc can retry without replaying recipients already finalized as `sent`.
  */
 
 const USERS = "users";
@@ -51,20 +49,6 @@ export async function notifyBuddiesOfPost(
   params: NotifyBuddiesOfPostParams
 ): Promise<void> {
   const { posterUid, localDate, nowMs } = params;
-
-  if (!(await claimNotificationMarker(db, posterUid, localDate, nowMs))) {
-    // Already sent for this exact (poster, localDate) — an Eventarc retry, or a
-    // delete-then-recapture through OrphanedPostRecovery. Costing at most one
-    // notification per real post matters more than never missing a retry: a missed
-    // send here is not the recipient's only chance to find out, since their own
-    // foreground return re-resolves the buddy strip anyway
-    // (`TodayViewModel.refreshBuddiesNow`).
-    logger.info("Buddy post notification already claimed for this post; skipping.", {
-      posterUid,
-      localDate,
-    });
-    return;
-  }
 
   let friendshipDocs;
   try {
@@ -94,29 +78,121 @@ export async function notifyBuddiesOfPost(
   );
 }
 
-/** `false` means a marker already existed — the caller must not send anything. */
+/**
+ * Claims a recipient-*and-language*-scoped marker. The old implementation
+ * claimed one marker per recipient before knowing which language groups had
+ * eligible devices: a send failure in one language marked the whole recipient
+ * "sent" the instant any other language succeeded, silently and permanently
+ * dropping the failed language's notification (see `notifyOneBuddy`). Scoping
+ * the marker to `${posterUid}_${localDate}_${language}` makes each language's
+ * delivery and retry fully independent, and also fixes the original problem
+ * this comment used to describe: a new buddy added after the first fan-out can
+ * still receive that day's post, since each recipient/language pair is judged
+ * on its own.
+ *
+ * A short lease gives concurrent Eventarc deliveries one sender while allowing a
+ * crashed/failed delivery to be retried. The marker is promoted to `sent` only
+ * after FCM reports at least one successful delivery, or after a permanent
+ * (non-retryable) FCM error — see `isPermanentFcmError` and `finishNotificationMarker`.
+ */
 async function claimNotificationMarker(
   db: Firestore,
+  recipientUid: string,
   posterUid: string,
   localDate: string,
+  language: string,
   nowMs: number
 ): Promise<boolean> {
-  const markerRef = db.collection(USERS).doc(posterUid).collection(NOTIFICATION_MARKERS).doc(localDate);
+  const markerRef = db.collection(USERS).doc(recipientUid).collection(NOTIFICATION_MARKERS).doc(`${posterUid}_${localDate}_${language}`);
+  const leaseUntil = Timestamp.fromMillis(nowMs + 5 * 60 * 1000);
   try {
-    await markerRef.create({
-      createdAt: FieldValue.serverTimestamp(),
-      expireAt: Timestamp.fromMillis(postNotificationMarkerExpireAtMs(nowMs)),
+    await db.runTransaction(async (transaction) => {
+      const existing = await transaction.get(markerRef);
+      const data = existing.data();
+      if (existing.exists && data?.state === "sent") {
+        throw new Error("already-sent");
+      }
+      const activeLease = data?.state === "sending"
+        && data.leaseUntil instanceof Timestamp
+        && data.leaseUntil.toMillis() > nowMs;
+      if (activeLease) throw new Error("already-sending");
+      const payload = {
+        createdAt: data?.createdAt ?? FieldValue.serverTimestamp(),
+        expireAt: Timestamp.fromMillis(postNotificationMarkerExpireAtMs(nowMs)),
+        state: "sending",
+        leaseUntil,
+      };
+      if (existing.exists) transaction.update(markerRef, payload);
+      else transaction.create(markerRef, payload);
     });
     return true;
   } catch (error: unknown) {
+    if (error instanceof Error && (error.message === "already-sent" || error.message === "already-sending")) return false;
     if (isAlreadyExistsError(error)) return false;
     // An unexpected write failure (permissions, transient outage) must not be
     // mistaken for "already sent" — that would silently and permanently suppress a
     // real notification. Log and treat as "could not claim, do not send this time";
     // the marker was never created, so a later retry can still claim it.
-    logger.error("Could not claim the buddy post notification marker.", { posterUid, localDate, error });
+    logger.error("Could not claim the buddy post notification marker.", { posterUid, localDate, language, error });
     return false;
   }
+}
+
+/**
+ * `sent: true` means "never attempt this recipient/language/date again" — either
+ * it was actually delivered, or it failed with a permanent (non-retryable) FCM
+ * error (see `isPermanentFcmError`). `sent: false` deletes the marker so a
+ * genuinely transient failure can be claimed again by the next delivery.
+ */
+async function finishNotificationMarker(
+  db: Firestore,
+  recipientUid: string,
+  posterUid: string,
+  localDate: string,
+  language: string,
+  sent: boolean,
+): Promise<void> {
+  const markerRef = db.collection(USERS).doc(recipientUid).collection(NOTIFICATION_MARKERS).doc(`${posterUid}_${localDate}_${language}`);
+  try {
+    if (sent) {
+      await markerRef.update({ state: "sent", leaseUntil: null });
+    } else {
+      await markerRef.delete();
+    }
+  } catch (error: unknown) {
+    logger.error("Could not finalize the buddy post notification marker.", {
+      recipientUid,
+      posterUid,
+      localDate,
+      language,
+      sent,
+      error,
+    });
+  }
+}
+
+/**
+ * `sendEachForMulticast` can throw at the top level — distinct from a per-token
+ * failure in `response.responses[i].error`, which `staleTokenIndices` already
+ * handles. A request-shape or credential error fails identically on every
+ * retry: rethrowing it would have Eventarc hammer the same failure for its
+ * entire retry window (up to 24h), re-reading friendships/devices every attempt
+ * for no benefit. Everything else (rate limits, transient outages, unrecognized
+ * codes, bare network errors) is treated as retryable, which is the safer
+ * default when in doubt.
+ */
+const PERMANENT_FCM_ERROR_CODES = new Set([
+  "messaging/invalid-argument",
+  "messaging/invalid-recipient",
+  "messaging/mismatched-credential",
+  "messaging/sender-id-mismatch",
+  "messaging/third-party-auth-error",
+  "messaging/authentication-error",
+]);
+
+function isPermanentFcmError(error: unknown): boolean {
+  const code = (error as { code?: unknown })?.code;
+  return typeof code === "string" && PERMANENT_FCM_ERROR_CODES.has(code);
 }
 
 async function notifyOneBuddy(
@@ -132,17 +208,29 @@ async function notifyOneBuddy(
 ): Promise<void> {
   const { posterUid, buddyUid, localDate, nowMs, posterHandle } = params;
 
-  const [recipientDoc, recipientPostDoc, devicesSnapshot] = await Promise.all([
-    db.collection(USERS).doc(buddyUid).get(),
-    db.collection(USERS).doc(buddyUid).collection(POSTS).doc(localDate).get(),
-    db
-      .collection(USERS)
-      .doc(buddyUid)
-      .collection(DEVICES)
-      .orderBy("updatedAt", "desc")
-      .limit(MAX_TOKENS_PER_RECIPIENT)
-      .get(),
-  ]);
+  // No marker claim here — moved into the per-language loop below, now that
+  // each language claims and finalizes independently. Reads are cheap and
+  // idempotent, so concurrent Eventarc deliveries doing them twice is fine;
+  // only the actual send needs the transactional gate.
+  let recipientDoc: FirebaseFirestore.DocumentSnapshot;
+  let recipientPostDoc: FirebaseFirestore.DocumentSnapshot;
+  let devicesSnapshot: FirebaseFirestore.QuerySnapshot;
+  try {
+    [recipientDoc, recipientPostDoc, devicesSnapshot] = await Promise.all([
+      db.collection(USERS).doc(buddyUid).get(),
+      db.collection(USERS).doc(buddyUid).collection(POSTS).doc(localDate).get(),
+      db
+        .collection(USERS)
+        .doc(buddyUid)
+        .collection(DEVICES)
+        .orderBy("updatedAt", "desc")
+        .limit(MAX_TOKENS_PER_RECIPIENT)
+        .get(),
+    ]);
+  } catch (error: unknown) {
+    logger.error("Could not read recipient data for a buddy post notification.", { buddyUid, posterUid, localDate, error });
+    return;
+  }
 
   // The recipient account was deleted between the friendship read and here.
   if (!recipientDoc.exists) return;
@@ -161,11 +249,25 @@ async function notifyOneBuddy(
   if (eligibleDevices.length === 0) return;
 
   const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+  let anyRetryableFailure = false;
   // Different devices can record different in-app languages, so a single multicast
   // with one title/body is not correct — group by language and send once per group.
+  // Each language claims, sends, and finalizes its own marker (see
+  // `claimNotificationMarker`), so one language's failure can never block or
+  // falsely complete another.
   for (const language of ["en", "ja"] as const) {
     const group = eligibleDevices.filter((device) => device.language === language);
     if (group.length === 0) continue;
+
+    if (!(await claimNotificationMarker(db, buddyUid, posterUid, localDate, language, nowMs))) {
+      logger.info("Buddy post notification already claimed for this recipient, post, and language; skipping.", {
+        buddyUid,
+        posterUid,
+        localDate,
+        language,
+      });
+      continue;
+    }
 
     const copy = buddyPostNotificationCopy({
       posterHandle,
@@ -185,26 +287,41 @@ async function notifyOneBuddy(
         },
       });
     } catch (error: unknown) {
-      // FCM outage or a malformed payload — the post is already committed and nothing
-      // here can undo it. Log and move on; this buddy simply misses this one nudge.
-      logger.error("Buddy post notification send failed.", { buddyUid, language, error });
+      const permanent = isPermanentFcmError(error);
+      logger.error("Buddy post notification send failed.", { buddyUid, language, permanent, error });
+      // Permanent: mark this language handled so it is never retried — retrying
+      // an invalid-argument/credential error forever would only burn quota.
+      // Transient: release the marker so the next delivery can claim it again.
+      await finishNotificationMarker(db, buddyUid, posterUid, localDate, language, permanent);
+      if (!permanent) anyRetryableFailure = true;
       continue;
     }
 
     const staleIndices = staleTokenIndices(
       response.responses.map((entry) => ({ success: entry.success, errorCode: entry.error?.code }))
     );
+    const delivered = response.successCount > 0;
+    await finishNotificationMarker(db, buddyUid, posterUid, localDate, language, delivered);
+    // `sendEachForMulticast` can resolve even when every token failed. Stale
+    // registrations are terminal and are deleted below; any other failed token
+    // is retryable, so release the lease and ask Eventarc to redeliver.
+    if (!delivered && staleIndices.length < response.responses.length) {
+      anyRetryableFailure = true;
+    }
     for (const index of staleIndices) {
       staleRefs.push(group[index].ref);
     }
   }
-  if (staleRefs.length === 0) return;
-
-  const writer = db.bulkWriter();
-  for (const ref of staleRefs) {
-    writer.delete(ref);
+  if (staleRefs.length > 0) {
+    const writer = db.bulkWriter();
+    for (const ref of staleRefs) {
+      writer.delete(ref);
+    }
+    await writer.close();
   }
-  await writer.close();
+  if (anyRetryableFailure) {
+    throw new Error(`Buddy post notification had a retryable send failure for recipient ${buddyUid} (poster ${posterUid}, ${localDate}).`);
+  }
 }
 
 /** `apns-collapse-id` is capped at 64 bytes by APNs; UID + date length never gets

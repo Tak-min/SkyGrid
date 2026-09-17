@@ -217,7 +217,12 @@ export async function acceptBuddyRequest(
       return { outcome: decision.outcome };
     }
 
-    transaction.update(friendshipRef, { status: "accepted" });
+    transaction.update(friendshipRef, {
+      status: "accepted",
+      acceptedBy: callerUid,
+      acceptedAt: Timestamp.now(),
+      acceptanceKind: "handle_request",
+    });
     return { outcome: "accepted" as const };
   });
 }

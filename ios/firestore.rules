@@ -249,6 +249,19 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Early adopter grant status is admin-SDK-only (written by the grant script and
+    // notifications trigger). Clients may read their own grant document to check status.
+    match /earlyAdopterGrants/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Campaign counters (e.g. the early-adopter 100-slot quota) are admin-SDK-only —
+    // never a client read or write surface, not even the owner's own progress.
+    match /campaigns/{id} {
+      allow read, write: if false;
+    }
+
     // Invite codes and their rate-limit counters are callable-only. Keep these
     // recursive matches explicit so a future top-level rule cannot accidentally
     // treat either server-owned namespace as ordinary client data.
