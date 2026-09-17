@@ -9825,6 +9825,2135 @@
         }
       }
     }
+,
+    "buddies.checking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking your circle…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サークルを確認中…"
+          }
+        }
+      }
+    },
+    "buddies.enterInviteCode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a buddy's invite code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディの招待コードを入力"
+          }
+        }
+      }
+    },
+    "buddies.blockOrReport": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block or report"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロックまたは通報"
+          }
+        }
+      }
+    },
+    "buddies.yourCircle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR CIRCLE"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたのサークル"
+          }
+        }
+      }
+    },
+    "buddies.refreshError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't refresh your buddies."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディを更新できませんでした。"
+          }
+        }
+      }
+    },
+    "common.checkAgain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度確認"
+          }
+        }
+      }
+    },
+    "buddies.inviteSettingsError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't load your invite settings."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待設定を読み込めませんでした。"
+          }
+        }
+      }
+    },
+    "buddies.inviteSettingsErrorDetail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your handle hasn't been changed. Check your connection and try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハンドルは変更されていません。通信状況を確認してもう一度お試しください。"
+          }
+        }
+      }
+    },
+    "buddies.checkInviteSettingsAgain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check invite settings again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待設定をもう一度確認"
+          }
+        }
+      }
+    },
+    "buddies.incomingRequests": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INCOMING REQUESTS"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "届いているリクエスト"
+          }
+        }
+      }
+    },
+    "buddies.sentRequests": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SENT REQUESTS"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信したリクエスト"
+          }
+        }
+      }
+    },
+    "buddies.waiting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for them to accept"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相手の承認を待っています"
+          }
+        }
+      }
+    },
+    "buddies.knowHandle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Know their exact handle?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハンドルが分かる?"
+          }
+        }
+      }
+    },
+    "buddies.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buddies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディ"
+          }
+        }
+      }
+    },
+    "buddies.morningTogether": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MORNING TOGETHER"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝を一緒に"
+          }
+        }
+      }
+    },
+    "buddies.morningTogether.collapsedDescription": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your skies stay sealed until you've each captured this morning."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "お互いに今朝撮影するまで、空は非公開のままです。"
+          }
+        }
+      }
+    },
+    "buddies.morningTogether.skiesRevealed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skies revealed together."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空が一緒に公開されました。"
+          }
+        }
+      }
+    },
+    "buddies.morningTogether.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite people you trust. Each sky stays private until you've each captured that morning."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "信頼できる人を招待しましょう。お互いにその朝撮影するまで、それぞれの空は非公開のままです。"
+          }
+        }
+      }
+    },
+    "buddy.viewTheirSky": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View their sky"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相手の空を見る"
+          }
+        }
+      }
+    },
+    "buddy.photoZoomHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens their photo. Double tap or pinch the photo to zoom."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相手の写真を開きます。ダブルタップまたはピンチで拡大できます。"
+          }
+        }
+      }
+    },
+    "buddy.together": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TOGETHER"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一緒に"
+          }
+        }
+      }
+    },
+    "buddy.safety": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safety and reporting"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安全設定と通報"
+          }
+        }
+      }
+    },
+    "buddy.removing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removing…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除中…"
+          }
+        }
+      }
+    },
+    "buddy.removeFromCircle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from your circle"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サークルから削除"
+          }
+        }
+      }
+    },
+    "buddy.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buddy"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディ"
+          }
+        }
+      }
+    },
+    "buddy.alert.removeTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove this buddy?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このバディを削除しますか?"
+          }
+        }
+      }
+    },
+    "buddy.alert.remove": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        }
+      }
+    },
+    "buddy.alert.keep": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "そのまま"
+          }
+        }
+      }
+    },
+    "buddy.alert.removeMessage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You will no longer reveal each other's skies. You can reconnect later with a new request."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "お互いの空は表示されなくなります。後で新しいリクエストで再びつながることができます。"
+          }
+        }
+      }
+    },
+    "buddy.safety.block": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロック"
+          }
+        }
+      }
+    },
+    "buddy.safety.postConcern": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A post I’m concerned about"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "気になる投稿を報告"
+          }
+        }
+      }
+    },
+    "buddy.safety.reviewNotice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We will review it and act when needed."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容を確認し、必要に応じて対応します。"
+          }
+        }
+      }
+    },
+    "buddy.safety.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Safety"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安全設定"
+          }
+        }
+      }
+    },
+    "buddy.safety.alert.blockTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block this buddy?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このバディをブロックしますか?"
+          }
+        }
+      }
+    },
+    "buddy.safety.alert.block": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロック"
+          }
+        }
+      }
+    },
+    "common.cancel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
+        }
+      }
+    },
+    "buddy.safety.alert.blockMessage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You will no longer see each other's posts or connection."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "お互いの投稿やつながりが表示されなくなります。"
+          }
+        }
+      }
+    },
+    "buddy.safety.alert.reportReceived": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Received"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "受け付けました"
+          }
+        }
+      }
+    },
+    "buddy.safety.alert.reportWillReview": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We will review it."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容を確認します。"
+          }
+        }
+      }
+    },
+    "common.close": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        }
+      }
+    },
+    "buddy.safety.alert.reportFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not send"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信できませんでした"
+          }
+        }
+      }
+    },
+    "common.pleaseTryAgainInAMoment": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please try again in a moment."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "しばらくしてからもう一度お試しください。"
+          }
+        }
+      }
+    },
+    "buddy.comparison.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Same morning, two skies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同じ朝、ふたつの空"
+          }
+        }
+      }
+    },
+    "buddy.comparison.subtitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Both captured · both revealed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "どちらも撮影・公開済み"
+          }
+        }
+      }
+    },
+    "buddy.comparison.shareButton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share together"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一緒にシェア"
+          }
+        }
+      }
+    },
+    "buddy.comparison.shareHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the share sheet with both revealed skies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "公開された両方の空を含む共有シートを開きます"
+          }
+        }
+      }
+    },
+    "buddy.comparison.headerTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TOGETHER"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一緒に"
+          }
+        }
+      }
+    },
+    "buddySkyDetail.doubleTapToZoom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double tap to zoom"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダブルタップで拡大"
+          }
+        }
+      }
+    },
+    "buddySkyDetail.loadingFailed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This sky could not be loaded"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この空を読み込めませんでした"
+          }
+        }
+      }
+    },
+    "buddySkyDetail.loading": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading their sky"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相手の空を読み込み中"
+          }
+        }
+      }
+    },
+    "invite.header": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "INVITE A BUDDY"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディを招待"
+          }
+        }
+      }
+    },
+    "invite.preparing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing your invite link…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待リンクを準備中…"
+          }
+        }
+      }
+    },
+    "invite.linkRevoked": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This link no longer works."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このリンクはもう使用できません。"
+          }
+        }
+      }
+    },
+    "invite.getNewLink": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get a new link"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しいリンクを取得"
+          }
+        }
+      }
+    },
+    "invite.tryAgain": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度試す"
+          }
+        }
+      }
+    },
+    "invite.alert.revokeTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop sharing this link?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このリンクの共有を停止しますか?"
+          }
+        }
+      }
+    },
+    "invite.alert.stopSharing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop sharing"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共有を停止"
+          }
+        }
+      }
+    },
+    "invite.alert.revokeMessage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anyone who already has this code will no longer be able to use it."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このコードをすでに持っている人も、今後は使用できなくなります。"
+          }
+        }
+      }
+    },
+    "invite.groupCode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Group code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グループコード"
+          }
+        }
+      }
+    },
+    "invite.shareLink": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share link"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リンクを共有"
+          }
+        }
+      }
+    },
+    "invite.stopSharing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop sharing this link"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このリンクの共有を停止"
+          }
+        }
+      }
+    },
+    "invite.code.header": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JOIN WITH A CODE"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードで参加"
+          }
+        }
+      }
+    },
+    "invite.code.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste your buddy's invite code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディの招待コードを貼り付け"
+          }
+        }
+      }
+    },
+    "invite.code.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If a link from Instagram or LINE did not open Sky Grid, enter the readable code from the message instead."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "InstagramやLINEのリンクでSky Gridが開かない場合は、メッセージ内の読み取り可能なコードを入力してください。"
+          }
+        }
+      }
+    },
+    "invite.code.paste": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste from clipboard"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリップボードから貼り付け"
+          }
+        }
+      }
+    },
+    "invite.code.check": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check invite code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待コードを確認"
+          }
+        }
+      }
+    },
+    "invite.code.navigationTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待コード"
+          }
+        }
+      }
+    },
+    "invite.code.noPastedCode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is no invite code in the clipboard."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリップボードに招待コードがありません。"
+          }
+        }
+      }
+    },
+    "invite.code.invalidCode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the 10-character code from the invite message."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待メッセージ内の10文字のコードを入力してください。"
+          }
+        }
+      }
+    },
+    "alarm.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morning Alarms"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "モーニングアラーム"
+          }
+        }
+      }
+    },
+    "alarm.header.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use a different rhythm for weekdays, weekends, or any morning that needs its own start."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平日、週末、または特別な朝ごとに、それぞれ異なるリズムを設定できます。"
+          }
+        }
+      }
+    },
+    "alarm.schedule.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR SCHEDULE"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スケジュール"
+          }
+        }
+      }
+    },
+    "settings.row.unlockArchive.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unlock the full archive"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全アーカイブを解放"
+          }
+        }
+      }
+    },
+    "settings.row.restore.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore purchases"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購入を復元"
+          }
+        }
+      }
+    },
+    "settings.row.communitySafety.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Community & Safety"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コミュニティと安全"
+          }
+        }
+      }
+    },
+    "settings.row.deleteAccount.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除"
+          }
+        }
+      }
+    },
+    "settings.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        }
+      }
+    },
+    "settings.alert.restore.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not restore purchases"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購入を復元できませんでした"
+          }
+        }
+      }
+    },
+    "settings.alert.appleLink.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not connect Apple"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appleに接続できませんでした"
+          }
+        }
+      }
+    },
+    "settings.appleLink.mismatchError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account could not be connected safely. Your photos were not changed."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを安全に接続できませんでした。写真は変更されていません。"
+          }
+        }
+      }
+    },
+    "settings.appleLink.failureError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't finish connecting Apple. Please try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appleとの接続を完了できませんでした。もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "settings.header.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR RITUAL"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの習慣"
+          }
+        }
+      }
+    },
+    "settings.header.subtitleAccessible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage your alarm, archive, privacy, and account."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アラーム、アーカイブ、プライバシー、アカウントを管理します。"
+          }
+        }
+      }
+    },
+    "settings.header.title2": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your morning,\nyour controls."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの朝を、\nあなたの手で。"
+          }
+        }
+      }
+    },
+    "settings.header.subtitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarm, archive, privacy, and support stay within reach."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アラーム、アーカイブ、プライバシー、サポートにすぐアクセスできます。"
+          }
+        }
+      }
+    },
+    "communitySafety.info.flagging": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can flag a post you are concerned about from each buddy's safety menu."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "気になる投稿は、各バディの安全設定メニューから報告できます。"
+          }
+        }
+      }
+    },
+    "communitySafety.info.blocking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocking hides your connection and each other's posts."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロックすると、お互いのつながりと投稿が非表示になります。"
+          }
+        }
+      }
+    },
+    "communitySafety.blocked.refreshError": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "We couldn't refresh your blocked list."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロックリストを更新できませんでした。"
+          }
+        }
+      }
+    },
+    "communitySafety.blocked.checking": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking blocked buddies…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロックしたバディを確認中…"
+          }
+        }
+      }
+    },
+    "communitySafety.blocked.sectionTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BLOCKED"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロック済み"
+          }
+        }
+      }
+    },
+    "communitySafety.blocked.empty": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No blocked buddies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロックしたバディはいません"
+          }
+        }
+      }
+    },
+    "communitySafety.alert.unblockError.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not unblock"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロックを解除できませんでした"
+          }
+        }
+      }
+    },
+    "communitySafety.blocked.unblockButton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unblock"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブロック解除"
+          }
+        }
+      }
+    },
+    "accountDeletion.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting your account removes your photos, Sky Grid, and buddy connections. Active App Store subscriptions continue until you cancel them in Apple subscription settings."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除すると、写真、Sky Grid、バディとのつながりがすべて削除されます。有効なApp Storeのサブスクリプションは、Appleのサブスクリプション設定で解約するまで継続します。"
+          }
+        }
+      }
+    },
+    "accountDeletion.deleteButton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除"
+          }
+        }
+      }
+    },
+    "accountDeletion.progress.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deleting your account…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除中…"
+          }
+        }
+      }
+    },
+    "accountDeletion.progress.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your photos and connections are being removed securely."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真とつながりを安全に削除しています。"
+          }
+        }
+      }
+    },
+    "accountDeletion.navigationTitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete account"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除"
+          }
+        }
+      }
+    },
+    "accountDeletion.alert.confirmation.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete your account?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除しますか?"
+          }
+        }
+      }
+    },
+    "accountDeletion.alert.confirmation.delete": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        }
+      }
+    },
+    "accountDeletion.alert.confirmation.message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This cannot be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この操作は取り消せません。"
+          }
+        }
+      }
+    },
+    "accountDeletion.alert.failure.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not delete account"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントを削除できませんでした"
+          }
+        }
+      }
+    },
+    "onboarding.invite.progressLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ONE LAST STEP"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り1ステップ"
+          }
+        }
+      }
+    },
+    "onboarding.invite.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveal your skies\ntogether."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一緒に\n空を公開しよう。"
+          }
+        }
+      }
+    },
+    "onboarding.invite.ready": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your invite link and readable code are ready to share."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招待リンクと読み取り可能なコードの準備ができました。"
+          }
+        }
+      }
+    },
+    "onboarding.invite.waiting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your handle and wait for your invite link before continuing."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続ける前に、ハンドルを作成して招待リンクの準備を待ってください。"
+          }
+        }
+      }
+    },
+    "onboarding.invite.continueButton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue to Sky Grid"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky Gridを始める"
+          }
+        }
+      }
+    },
+    "onboarding.wakeGoal.instructionLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QUESTION 6 OF 6 · A time is enough for now. You can always change it."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "質問 6/6 ・ 今は時刻だけで十分です。後からいつでも変更できます。"
+          }
+        }
+      }
+    },
+    "onboarding.wakeGoal.noReminderLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You chose no reminder. Capture is always ready from Today."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リマインダーなしを選択しました。撮影はいつでもTodayから行えます。"
+          }
+        }
+      }
+    },
+    "onboarding.wakeGoal.alarmScheduled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set for every day at this time"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日この時刻に設定済み"
+          }
+        }
+      }
+    },
+    "onboarding.plan.sectionLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR MORNING PLAN"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの朝のプラン"
+          }
+        }
+      }
+    },
+    "onboarding.plan.continueButton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue to invite a buddy"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続けてバディを招待"
+          }
+        }
+      }
+    },
+    "onboarding.plan.inviteHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your invite link before your first sky. You can share it now or use the code later."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最初の空を撮る前に招待リンクを作成しましょう。今すぐ共有しても、後でコードを使ってもかまいません。"
+          }
+        }
+      }
+    },
+    "onboarding.welcome.mokuCaption": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Moku to say hello"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mokuをタップして挨拶しよう"
+          }
+        }
+      }
+    },
+    "onboarding.coordinator.accessibilityLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup page"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セットアップページ"
+          }
+        }
+      }
+    },
+    "today.share.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share this morning"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今朝の記録をシェア"
+          }
+        }
+      }
+    },
+    "today.empty.thisMorning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "THIS MORNING"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今朝"
+          }
+        }
+      }
+    },
+    "today.empty.streakCaption": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "day streak · capture to keep it"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連続記録 ・ 撮影して継続しよう"
+          }
+        }
+      }
+    },
+    "today.empty.firstSkyCaption": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "your first sky is today"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最初の空は今日"
+          }
+        }
+      }
+    },
+    "today.mosaic.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "YOUR MOSAIC"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたのモザイク"
+          }
+        }
+      }
+    },
+    "today.mosaic.accessibilityLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your mosaic. See every sky become part of the year."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたのモザイク。すべての空が1年の一部になる様子を見られます。"
+          }
+        }
+      }
+    },
+    "today.buddy.tagline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "your skies unlock each other"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "お互いの空が解除し合う"
+          }
+        }
+      }
+    },
+    "today.buddy.accessibilityLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite people you trust. Your skies unlock each other."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "信頼できる人を招待しましょう。お互いの空が解除し合います。"
+          }
+        }
+      }
+    },
+    "today.orphaned.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This morning's photo never finished saving"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今朝の写真の保存が完了しませんでした"
+          }
+        }
+      }
+    },
+    "today.orphaned.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The photo didn't reach the cloud, so this record is empty."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真がクラウドに届かなかったため、この記録は空です。"
+          }
+        }
+      }
+    },
+    "today.orphaned.confirmMessage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This deletes the empty record so you can record this morning again. This can't be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この空の記録を削除して、今朝をもう一度記録できるようにします。この操作は取り消せません。"
+          }
+        }
+      }
+    },
+    "today.weekly.viewButton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View weekly recap"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週間リキャップを見る"
+          }
+        }
+      }
+    },
+    "today.weekly.previewLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly recap preview with seven morning skies"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7枚の朝の空を含む週間リキャップのプレビュー"
+          }
+        }
+      }
+    },
+    "camera.closeButton.endCapture": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End today's wake-up"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の撮影を終了"
+          }
+        }
+      }
+    },
+    "camera.alreadyPosted": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've already recorded today's sky."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日の空はすでに記録済みです。"
+          }
+        }
+      }
+    },
+    "reward.continueHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your sky is already saved"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの空はすでに保存されています"
+          }
+        }
+      }
+    },
+    "Invite people you trust. You won't see each other's sky until you've both captured that morning.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite people you trust. You won't see each other's sky until you've both captured that morning."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "信頼できる人を招待しましょう。お互いにその朝撮影するまで、相手の空は見られません。"
+          }
+        }
+      }
+    },
+    "See all your sky photos from the year": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See all your sky photos from the year"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1年分の空の写真をすべて見る"
+          }
+        }
+      }
+    }
   },
   "version": "1.0"
 }
