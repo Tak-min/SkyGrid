@@ -9776,6 +9776,54 @@
           }
         }
       }
+    },
+    "paywall.billing.thenPerYear": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Then %@ per year. Auto-renews unless cancelled."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その後は%@で毎年更新されます。解約しない限り自動更新されます。"
+          }
+        }
+      }
+    },
+    "paywall.billing.perMonth": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ per month. Auto-renews unless cancelled."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月額%@。解約しない限り自動更新されます。"
+          }
+        }
+      }
+    },
+    "paywall.billing.onePaymentNoRenewal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One payment. No renewal."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一回のお支払いのみ。更新はありません。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

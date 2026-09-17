@@ -57,14 +57,16 @@ struct RevenueCatService: PurchasesServicing {
             // The catalog is deliberately restricted to the three paid variants
             // that correspond to Sky Grid's four-state model (plus Free).
             guard [.monthly, .annual, .lifetime].contains(period) else { return nil }
+            let currencyCode = pkg.storeProduct.priceFormatter?.currencyCode
+            let priceLabel = Self.localizedPrice(pkg.storeProduct.price, currencyCode: currencyCode)
             let pricePerMonth = pkg.storeProduct.pricePerMonth?.decimalValue
             let pricePerMonthLabel = pricePerMonth.flatMap { ppm in
-                pkg.storeProduct.priceFormatter?.string(from: ppm as NSDecimalNumber)
+                Self.localizedPrice(ppm, currencyCode: currencyCode)
             }
             return PurchaseProduct(
                 id: pkg.identifier,
                 title: pkg.storeProduct.localizedTitle,
-                priceLabel: pkg.storeProduct.localizedPriceString,
+                priceLabel: priceLabel,
                 periodLabel: Self.periodLabel(for: period),
                 offeringID: offering.identifier,
                 storeProductID: pkg.storeProduct.productIdentifier,
@@ -72,10 +74,7 @@ struct RevenueCatService: PurchasesServicing {
                 pricePerMonth: pricePerMonth,
                 pricePerMonthLabel: pricePerMonthLabel,
                 price: pkg.storeProduct.price,
-                billingDescription: Self.billingDescription(
-                    price: pkg.storeProduct.localizedPriceString,
-                    period: period
-                )
+                billingDescription: Self.billingDescription(price: priceLabel, period: period)
             )
         }
         guard !products.isEmpty else {
@@ -108,10 +107,7 @@ struct RevenueCatService: PurchasesServicing {
               discount.subscriptionPeriod.unit == .month,
               discount.subscriptionPeriod.value == 1,
               discount.numberOfPeriods == 1,
-              discount.price < package.storeProduct.price,
-              let savings = package.storeProduct.priceFormatter?.string(
-                  from: (package.storeProduct.price - discount.price) as NSDecimalNumber
-              )
+              discount.price < package.storeProduct.price
         else {
             // No product, no intro metadata, or terms other than the approved
             // one-month pay-as-you-go discount all mean “do not show”.
@@ -123,12 +119,16 @@ struct RevenueCatService: PurchasesServicing {
         )
         switch eligibility {
         case .eligible:
+            let currencyCode = package.storeProduct.priceFormatter?.currencyCode
             let product = Self.purchaseProduct(from: package, offeringID: offering.identifier)
             return SecondChanceOffer(
                 product: product,
-                introductoryPriceLabel: discount.localizedPriceString,
-                savingsLabel: savings,
-                renewalPriceLabel: package.storeProduct.localizedPriceString
+                introductoryPriceLabel: Self.localizedPrice(discount.price, currencyCode: currencyCode),
+                savingsLabel: Self.localizedPrice(
+                    package.storeProduct.price - discount.price,
+                    currencyCode: currencyCode
+                ),
+                renewalPriceLabel: Self.localizedPrice(package.storeProduct.price, currencyCode: currencyCode)
             )
         case .ineligible, .noIntroOfferExists:
             return nil
@@ -261,25 +261,38 @@ struct RevenueCatService: PurchasesServicing {
             for: package.packageType,
             productID: package.storeProduct.productIdentifier
         )
+        let currencyCode = package.storeProduct.priceFormatter?.currencyCode
+        let priceLabel = localizedPrice(package.storeProduct.price, currencyCode: currencyCode)
         let pricePerMonth = package.storeProduct.pricePerMonth?.decimalValue
         return PurchaseProduct(
             id: package.identifier,
             title: package.storeProduct.localizedTitle,
-            priceLabel: package.storeProduct.localizedPriceString,
+            priceLabel: priceLabel,
             periodLabel: periodLabel(for: period),
             offeringID: offeringID,
             storeProductID: package.storeProduct.productIdentifier,
             period: period,
             pricePerMonth: pricePerMonth,
-            pricePerMonthLabel: pricePerMonth.flatMap {
-                package.storeProduct.priceFormatter?.string(from: $0 as NSDecimalNumber)
-            },
+            pricePerMonthLabel: pricePerMonth.map { localizedPrice($0, currencyCode: currencyCode) },
             price: package.storeProduct.price,
-            billingDescription: billingDescription(
-                price: package.storeProduct.localizedPriceString,
-                period: period
-            )
+            billingDescription: billingDescription(price: priceLabel, period: period)
         )
+    }
+
+    /// The app's currently-selected in-app language, falling back to the device's
+    /// preferred language the same way `L10n.string` resolves it — kept in sync so a
+    /// price and the text around it are always formatted for the same language,
+    /// independent of the device's system locale (see `AppLanguage.swift`).
+    private static func currentAppLanguage() -> AppLanguage {
+        LocalDefaults.selectedLanguageCode.flatMap(AppLanguage.init(rawValue:)) ?? AppLanguage.inferred()
+    }
+
+    /// Formats a raw StoreKit/RevenueCat price using the app's selected language
+    /// rather than `Product.localizedPriceString`/`priceFormatter`, both of which are
+    /// pinned to the device's system locale. `currencyCode` still comes from the
+    /// store (the App Store storefront decides currency, not the display language).
+    private static func localizedPrice(_ price: Decimal, currencyCode: String?) -> String {
+        price.formatted(.currency(code: currencyCode ?? "USD").locale(currentAppLanguage().locale))
     }
 
     /// RevenueCat's standard package types remain the primary source. A custom
@@ -309,9 +322,9 @@ struct RevenueCatService: PurchasesServicing {
 
     private static func billingDescription(price: String, period: PurchasePeriod) -> String? {
         switch period {
-        case .annual: return "Then \(price) per year. Auto-renews unless cancelled."
-        case .monthly: return "\(price) per month. Auto-renews unless cancelled."
-        case .lifetime: return "One payment. No renewal."
+        case .annual: return String(format: L10n.string("paywall.billing.thenPerYear"), price)
+        case .monthly: return String(format: L10n.string("paywall.billing.perMonth"), price)
+        case .lifetime: return L10n.string("paywall.billing.onePaymentNoRenewal")
         case .unknown: return nil
         }
     }
