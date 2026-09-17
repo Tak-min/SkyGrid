@@ -16,10 +16,16 @@ final class InviteLinkViewModel {
 
     private let inviteRepository: any InviteRepository
     private let placement: InviteAnalytics.Placement
+    private let onLinkReady: ((InviteLink) -> Void)?
 
-    init(inviteRepository: any InviteRepository, placement: InviteAnalytics.Placement = .buddiesTab) {
+    init(
+        inviteRepository: any InviteRepository,
+        placement: InviteAnalytics.Placement = .buddiesTab,
+        onLinkReady: ((InviteLink) -> Void)? = nil
+    ) {
         self.inviteRepository = inviteRepository
         self.placement = placement
+        self.onLinkReady = onLinkReady
     }
 
     /// Always asks for the caller's existing live link (`fresh: false`) — the invite
@@ -39,6 +45,7 @@ final class InviteLinkViewModel {
             if !link.isReused {
                 InviteAnalytics.record(.linkCreated, placement: placement)
             }
+            onLinkReady?(link)
             linkState = .ready(link)
         } catch {
             linkState = .failed(Self.message(for: error))

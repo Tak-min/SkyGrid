@@ -17,8 +17,10 @@ struct OnboardingFlowTests {
         viewModel.advance() // plan
 
         #expect(viewModel.step == .plan)
+        viewModel.advance()
+        #expect(viewModel.step == .invite)
         viewModel.goBackOneStep()
-        #expect(viewModel.step == .wakeGoal)
+        #expect(viewModel.step == .plan)
     }
 
     @Test("first-sky completion persists camera-first paywall ordering")

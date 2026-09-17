@@ -25,47 +25,52 @@ struct InviteClaimView: View {
     }
 
     var body: some View {
-        VStack(spacing: SGSpacing.lg) {
-            Spacer(minLength: SGSpacing.xl)
+        ZStack {
+            MokuColor.nightStage.ignoresSafeArea()
 
-            switch viewModel.step {
-            case .loadingPreview:
-                ProgressView()
-                Text(L10n.string("Checking your invite…"))
-                    .font(SGFont.body(16))
-                    .foregroundStyle(SGT.ink2)
+            VStack(spacing: SGSpacing.lg) {
+                Spacer(minLength: SGSpacing.xl)
 
-            case .preview(let preview):
-                previewContent(preview)
+                switch viewModel.step {
+                case .loadingPreview:
+                    ProgressView()
+                    Text(L10n.string("Checking your invite…"))
+                        .font(SGFont.body(16))
+                        .foregroundStyle(SGT.ink2)
 
-            case .needsHandle:
-                HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
-                    viewModel.handleClaimed(handle)
+                case .preview(let preview):
+                    previewContent(preview)
+
+                case .needsHandle:
+                    HandleClaimView(uid: viewModel.uid, userRepository: viewModel.userRepository) { handle in
+                        viewModel.handleClaimed(handle)
+                    }
+                    .padding(.horizontal, SGSpacing.md)
+
+                case .claiming:
+                    ProgressView()
+                    Text(L10n.string("Connecting you…"))
+                        .font(SGFont.body(16))
+                        .foregroundStyle(SGT.ink2)
+
+                case .result(let outcome):
+                    resultContent(outcome)
+
+                case .failed(let message):
+                    terminal(
+                        icon: "wifi.slash",
+                        title: L10n.string("Something went wrong"),
+                        message: message,
+                        primaryTitle: L10n.string("Try again")
+                    ) { Task { await viewModel.loadPreview() } }
                 }
-                .padding(.horizontal, SGSpacing.md)
 
-            case .claiming:
-                ProgressView()
-                Text(L10n.string("Connecting you…"))
-                    .font(SGFont.body(16))
-                    .foregroundStyle(SGT.ink2)
-
-            case .result(let outcome):
-                resultContent(outcome)
-
-            case .failed(let message):
-                terminal(
-                    icon: "wifi.slash",
-                    title: L10n.string("Something went wrong"),
-                    message: message,
-                    primaryTitle: L10n.string("Try again")
-                ) { Task { await viewModel.loadPreview() } }
+                Spacer(minLength: SGSpacing.xl)
             }
-
-            Spacer(minLength: SGSpacing.xl)
+            .padding(SGSpacing.lg)
         }
-        .padding(SGSpacing.lg)
         .presentationDetents([.medium])
+        .preferredColorScheme(.dark)
         .task { await viewModel.loadPreview() }
     }
 
@@ -73,29 +78,39 @@ struct InviteClaimView: View {
     private func previewContent(_ preview: InvitePreview) -> some View {
         switch preview.state {
         case .open:
-            VStack(spacing: SGSpacing.sm) {
+            VStack(spacing: SGSpacing.md) {
                 Image(systemName: "person.2.fill")
-                    .font(.system(size: 40))
+                    .font(.system(size: 52))
+                    .foregroundStyle(SGT.accentSecondary)
+                    .padding(.vertical, SGSpacing.sm)
+
+                Text("Welcome!")
+                    .font(SGFont.title(28))
                     .foregroundStyle(SGT.ink)
+
                 Text(preview.creatorHandle.map { String(format: L10n.string("invite.claim.previewInvitedByHandle"), $0.value) } ?? L10n.string("invite.claim.previewInvitedGeneric"))
-                    .font(SGFont.title(24))
+                    .font(SGFont.body(16))
                     .foregroundStyle(SGT.ink)
                     .multilineTextAlignment(.center)
+
                 Text("Your skies stay softly blurred to each other until you've both captured the morning.")
-                    .font(SGFont.body(15))
+                    .font(SGFont.body(14))
                     .foregroundStyle(SGT.ink2)
                     .multilineTextAlignment(.center)
             }
-            Button("Become buddies") { viewModel.beginClaim() }
-                .buttonStyle(.borderedProminent)
-                // `SGT.ink` is a TEXT token and adapts: near-black in light, near-white in
-                // dark. Using it as a prominent FILL therefore produced a white capsule
-                // with `borderedProminent`'s automatic white label in dark mode. The
-                // accent/accentInk pair is the app's primary-action fill and is fixed,
-                // so it reads the same in both appearances.
-                .tint(SGT.accent)
-                .foregroundStyle(SGT.accentInk)
-                .frame(minHeight: 44)
+            .padding(.vertical, SGSpacing.lg)
+
+            Button {
+                viewModel.beginClaim()
+            } label: {
+                Text("Join")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(SGT.accent)
+            .foregroundStyle(SGT.accentInk)
+            .frame(minHeight: 44)
+
             Button("Not now") { onFinished() }
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
@@ -218,12 +233,12 @@ struct InviteClaimView: View {
         primaryTitle: String,
         primaryAction: @escaping () -> Void
     ) -> some View {
-        VStack(spacing: SGSpacing.sm) {
+        VStack(spacing: SGSpacing.md) {
             Image(systemName: icon)
-                .font(.system(size: 40))
-                .foregroundStyle(SGT.ink)
+                .font(.system(size: 48))
+                .foregroundStyle(SGT.accentSecondary)
             Text(title)
-                .font(SGFont.title(22))
+                .font(SGFont.title(24))
                 .foregroundStyle(SGT.ink)
                 .multilineTextAlignment(.center)
             Text(message)

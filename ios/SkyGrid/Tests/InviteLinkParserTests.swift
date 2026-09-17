@@ -79,4 +79,15 @@ struct InviteLinkParserTests {
         #expect(router.pendingInviteCode?.value == "ABCDE12345")
         #expect(LocalDefaults.pendingInviteCode == "ABCDE12345")
     }
+
+    @Test("recovers an invite from the complete shared message")
+    func parsesSharedMessage() {
+        let message = "Join my sky\nInvite code: ABCDE-12345\nhttps://skygrid.my/i/ABCDE12345"
+        #expect(InviteLinkParser.code(fromSharedText: message)?.value == "ABCDE12345")
+    }
+
+    @Test("does not guess a code from unrelated clipboard text")
+    func rejectsUnrelatedSharedText() {
+        #expect(InviteLinkParser.code(fromSharedText: "hello from LINE") == nil)
+    }
 }

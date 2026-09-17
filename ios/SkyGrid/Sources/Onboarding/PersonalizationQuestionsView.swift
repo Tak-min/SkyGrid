@@ -6,7 +6,6 @@ import SwiftUI
 struct PersonalizationQuestionsView: View {
     @Binding var profile: PersonalizationProfile
     let onBack: () -> Void
-    let onSkip: () -> Void
     let onNext: () -> Void
 
     var body: some View {
@@ -48,8 +47,6 @@ struct PersonalizationQuestionsView: View {
         HStack {
             onboardingBackButton(action: onBack)
             Spacer()
-            Button("Skip setup", action: onSkip)
-                .frame(minHeight: 44)
         }
         .font(SGFont.caption(14))
         .foregroundStyle(SGT.ink2)
@@ -80,7 +77,6 @@ private struct SingleQuestionPage<Content: View>: View {
     let heading: String
     let subheading: String
     let onBack: () -> Void
-    let onSkip: () -> Void
     let onNext: () -> Void
     @ViewBuilder let content: Content
 
@@ -113,8 +109,6 @@ private struct SingleQuestionPage<Content: View>: View {
         HStack {
             onboardingBackButton(action: onBack)
             Spacer()
-            Button("Skip setup", action: onSkip)
-                .frame(minHeight: 44)
         }
         .font(SGFont.caption(14))
         .foregroundStyle(SGT.ink2)
@@ -124,7 +118,6 @@ private struct SingleQuestionPage<Content: View>: View {
 struct PaceQuestionView: View {
     @Binding var profile: PersonalizationProfile
     let onBack: () -> Void
-    let onSkip: () -> Void
     let onNext: () -> Void
 
     var body: some View {
@@ -133,7 +126,6 @@ struct PaceQuestionView: View {
             heading: L10n.string("onboarding.question.pace.heading"),
             subheading: L10n.string("onboarding.question.pace.subheading"),
             onBack: onBack,
-            onSkip: onSkip,
             onNext: onNext
         ) {
             ForEach(RitualPace.allCases) { pace in
@@ -148,7 +140,6 @@ struct PaceQuestionView: View {
 struct FrequencyQuestionView: View {
     @Binding var profile: PersonalizationProfile
     let onBack: () -> Void
-    let onSkip: () -> Void
     let onNext: () -> Void
 
     var body: some View {
@@ -157,7 +148,6 @@ struct FrequencyQuestionView: View {
             heading: L10n.string("onboarding.question.frequency.heading"),
             subheading: L10n.string("onboarding.question.frequency.subheading"),
             onBack: onBack,
-            onSkip: onSkip,
             onNext: onNext
         ) {
             ForEach(RitualFrequency.allCases) { frequency in
@@ -172,7 +162,6 @@ struct FrequencyQuestionView: View {
 struct PrivacyQuestionView: View {
     @Binding var profile: PersonalizationProfile
     let onBack: () -> Void
-    let onSkip: () -> Void
     let onNext: () -> Void
 
     var body: some View {
@@ -181,7 +170,6 @@ struct PrivacyQuestionView: View {
             heading: L10n.string("onboarding.question.privacy.heading"),
             subheading: L10n.string("onboarding.question.privacy.subheading"),
             onBack: onBack,
-            onSkip: onSkip,
             onNext: onNext
         ) {
             ForEach(RitualPrivacy.allCases) { privacy in
@@ -196,7 +184,6 @@ struct PrivacyQuestionView: View {
 struct ReminderQuestionView: View {
     @Binding var profile: PersonalizationProfile
     let onBack: () -> Void
-    let onSkip: () -> Void
     let onNext: () -> Void
 
     var body: some View {
@@ -205,7 +192,6 @@ struct ReminderQuestionView: View {
             heading: L10n.string("onboarding.question.reminder.heading"),
             subheading: L10n.string("onboarding.question.reminder.subheading"),
             onBack: onBack,
-            onSkip: onSkip,
             onNext: onNext
         ) {
             ForEach(ReminderPreference.allCases) { reminder in

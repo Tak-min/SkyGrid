@@ -13,17 +13,25 @@ struct InviteLinkCard: View {
     @State private var showRevokeConfirmation = false
     private let placement: InviteAnalytics.Placement
 
-    init(inviteRepository: any InviteRepository, placement: InviteAnalytics.Placement = .buddiesTab) {
-        _viewModel = State(initialValue: InviteLinkViewModel(inviteRepository: inviteRepository, placement: placement))
+    init(
+        inviteRepository: any InviteRepository,
+        placement: InviteAnalytics.Placement = .buddiesTab,
+        onLinkReady: ((InviteLink) -> Void)? = nil
+    ) {
+        _viewModel = State(initialValue: InviteLinkViewModel(
+            inviteRepository: inviteRepository,
+            placement: placement,
+            onLinkReady: onLinkReady
+        ))
         self.placement = placement
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: SGSpacing.sm) {
-            Label("INVITE A BUDDY", systemImage: "link")
+        VStack(alignment: .leading, spacing: SGSpacing.md) {
+            Text("INVITE A BUDDY")
                 .font(SGFont.caption(11))
                 .tracking(1.2)
-                .foregroundStyle(SGT.ink3)
+                .foregroundStyle(SGT.accentSecondary)
 
             switch viewModel.linkState {
             case .loading:
@@ -42,7 +50,7 @@ struct InviteLinkCard: View {
                         .foregroundStyle(SGT.ink)
                     Button("Get a new link") { Task { await viewModel.load() } }
                         .font(SGFont.body(15))
-                        .foregroundStyle(SGT.ink)
+                        .foregroundStyle(SGT.accent)
                         .frame(minHeight: 44)
                 }
             case .failed(let message):
@@ -52,7 +60,7 @@ struct InviteLinkCard: View {
                         .foregroundStyle(SGT.ink2)
                     Button("Try again") { Task { await viewModel.load() } }
                         .font(SGFont.body(15))
-                        .foregroundStyle(SGT.ink)
+                        .foregroundStyle(SGT.accent)
                         .frame(minHeight: 44)
                 }
             }
@@ -74,65 +82,180 @@ struct InviteLinkCard: View {
 
     @ViewBuilder
     private func readyContent(link: InviteLink) -> some View {
-        Text(link.code.formatted)
-            .font(SGFont.numeric(22, weight: .semibold))
-            .foregroundStyle(SGT.ink)
-            .accessibilityLabel(String(format: L10n.string("invite.inviteCodeAccessibility"), link.code.formatted))
+        VStack(alignment: .leading, spacing: SGSpacing.sm) {
+            Text("Group code")
+                .font(SGFont.caption(11))
+                .tracking(1.0)
+                .foregroundStyle(SGT.ink2)
 
-        Text("Share this link with one trusted person. It works until they open it.")
-            .font(SGFont.caption(13))
-            .foregroundStyle(SGT.ink2)
+            HStack(spacing: SGSpacing.sm) {
+                Text(link.code.formatted)
+                    .font(SGFont.numeric(24, weight: .semibold))
+                    .foregroundStyle(SGT.ink)
+                    .accessibilityLabel(String(format: L10n.string("invite.inviteCodeAccessibility"), link.code.formatted))
 
-        inviteActionsLayout {
-            ShareLink(item: link.url) {
-                Label("Share", systemImage: "square.and.arrow.up")
-                    .font(SGFont.body(15))
+                Spacer()
+
+                Button {
+                    UIPasteboard.general.string = link.code.formatted
+                    showCopiedConfirmation = true
+                    InviteAnalytics.record(.codeCopied, placement: placement)
+                } label: {
+                    Image(systemName: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundStyle(SGT.accentSecondary)
+                .frame(minHeight: 44)
+                .animation(.default, value: showCopiedConfirmation)
+                .task(id: showCopiedConfirmation) {
+                    guard showCopiedConfirmation else { return }
+                    try? await Task.sleep(for: .seconds(2))
+                    showCopiedConfirmation = false
+                }
             }
-            .buttonStyle(.borderedProminent)
-            // See `InviteClaimView`: `SGT.ink` adapts and is a text colour, so as a
-            // prominent fill it went white-on-white in dark mode.
-            .tint(SGT.accent)
-            .foregroundStyle(SGT.accentInk)
-            .simultaneousGesture(TapGesture().onEnded {
-                // ShareLink has no completion callback, only this tap — recorded on
-                // the intent to share, not confirmed delivery.
-                InviteAnalytics.record(.linkShared, placement: placement)
-            })
+            .padding(SGSpacing.md)
+            .background(Color.clear)
+        }
 
-            Button {
-                UIPasteboard.general.string = link.code.formatted
-                showCopiedConfirmation = true
-                InviteAnalytics.record(.codeCopied, placement: placement)
-            } label: {
-                Label(showCopiedConfirmation ? "Copied" : "Copy code", systemImage: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
-                    .font(SGFont.body(15))
+        ShareLink(item: shareText(for: link)) {
+            HStack(spacing: SGSpacing.sm) {
+                Image(systemName: "square.and.arrow.up")
+                Text("Share link")
             }
-            .buttonStyle(.bordered)
+            .font(SGFont.body(15))
+            .frame(maxWidth: .infinity)
         }
-        .frame(minHeight: 44)
-        .animation(.default, value: showCopiedConfirmation)
-        .task(id: showCopiedConfirmation) {
-            // Installing a real app from a link loses the code (no deferred deep
-            // link), so "Copy code" is the recovery path for a recipient to paste it
-            // back in after they install — the confirmation just needs to be seen,
-            // not to persist.
-            guard showCopiedConfirmation else { return }
-            try? await Task.sleep(for: .seconds(2))
-            showCopiedConfirmation = false
-        }
+        .buttonStyle(.borderedProminent)
+        .tint(SGT.accent)
+        .foregroundStyle(SGT.accentInk)
+        .simultaneousGesture(TapGesture().onEnded {
+            // ShareLink has no completion callback, only this tap — recorded on
+            // the intent to share, not confirmed delivery.
+            InviteAnalytics.record(.linkShared, placement: placement)
+        })
 
         Button("Stop sharing this link", role: .destructive) {
             showRevokeConfirmation = true
         }
         .font(SGFont.caption(13))
+        .foregroundStyle(.red)
         .disabled(viewModel.isRevoking)
     }
 
-    private var inviteActionsLayout: AnyLayout {
-        if dynamicTypeSize.isAccessibilitySize {
-            AnyLayout(VStackLayout(alignment: .leading, spacing: SGSpacing.sm))
-        } else {
-            AnyLayout(HStackLayout(spacing: SGSpacing.sm))
+    /// Some social apps drop the universal-link handoff when a URL is shared on
+    /// its own. Keeping the canonical URL and a readable code in the same plain
+    /// text payload gives the recipient a reliable recovery path in Sky Grid.
+    private func shareText(for link: InviteLink) -> String {
+        "Join me on Sky Grid — we can reveal our morning skies together.\n\nInvite code: \(link.code.formatted)\n\(link.url.absoluteString)"
+    }
+}
+
+/// Lets a recipient recover an invite when Instagram, LINE, or another social
+/// app strips the universal-link handoff. The sender's share text includes this
+/// same readable code, so the recipient can paste or type it after installing.
+struct InviteCodeRecoveryView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var codeText = ""
+    @State private var errorMessage: String?
+    @State private var claimCode: InviteCode?
+
+    let uid: String
+    let inviteRepository: any InviteRepository
+    let userRepository: any UserRepository
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: SGSpacing.lg) {
+                    Label("JOIN WITH A CODE", systemImage: "person.2.fill")
+                        .font(SGFont.caption(11))
+                        .tracking(1.3)
+                        .foregroundStyle(SGT.ink3)
+
+                    Text("Paste your buddy's invite code")
+                        .font(SGFont.title(30))
+                        .foregroundStyle(SGT.ink)
+
+                    Text("If a link from Instagram or LINE did not open Sky Grid, enter the readable code from the message instead.")
+                        .font(SGFont.body(15))
+                        .foregroundStyle(SGT.ink2)
+
+                    TextField("AB12C-3DE45", text: $codeText)
+                        .font(SGFont.numeric(24, weight: .semibold))
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .keyboardType(.asciiCapable)
+                        .submitLabel(.continue)
+                        .padding(.horizontal, SGSpacing.md)
+                        .frame(minHeight: 58)
+                        .background(SGT.fill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(errorMessage == nil ? SGT.rule : Color.red.opacity(0.65), lineWidth: 1)
+                        }
+                        .onSubmit { continueWithCode() }
+
+                    if let errorMessage {
+                        Label(errorMessage, systemImage: "exclamationmark.circle")
+                            .font(SGFont.caption(13))
+                            .foregroundStyle(.red)
+                    }
+
+                    Button {
+                        pasteFromClipboard()
+                    } label: {
+                        Label("Paste from clipboard", systemImage: "doc.on.clipboard")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(SkySecondaryButtonStyle())
+
+                    Button("Check invite code", action: continueWithCode)
+                        .frame(maxWidth: .infinity)
+                        .buttonStyle(SkyPrimaryButtonStyle())
+                        .disabled(codeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .accessibilityIdentifier("inviteCodeRecovery.continue")
+                }
+                .padding(SGSpacing.xl)
+            }
+            .background(SGT.background)
+            .navigationTitle("Invite code")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
         }
+        .sheet(item: $claimCode) { code in
+            InviteClaimView(
+                code: code,
+                uid: uid,
+                inviteRepository: inviteRepository,
+                userRepository: userRepository,
+                onFinished: {
+                    claimCode = nil
+                    dismiss()
+                }
+            )
+        }
+    }
+
+    private func pasteFromClipboard() {
+        guard let pasted = UIPasteboard.general.string, !pasted.isEmpty else {
+            errorMessage = "There is no invite code in the clipboard."
+            return
+        }
+        codeText = pasted
+        errorMessage = nil
+    }
+
+    private func continueWithCode() {
+        let trimmed = codeText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let code = InviteLinkParser.code(fromSharedText: trimmed) else {
+            errorMessage = "Enter the 10-character code from the invite message."
+            return
+        }
+        errorMessage = nil
+        claimCode = code
     }
 }

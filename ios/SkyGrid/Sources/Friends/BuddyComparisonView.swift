@@ -7,6 +7,7 @@ struct BuddyComparisonView: View {
     let buddyPost: SkyPost
     let buddyName: String
     let imageFetching: any ImageFetching
+    let inviteRepository: any InviteRepository
 
     @Environment(\.dismiss) private var dismiss
     @State private var ownPhoto: UIImage?
@@ -115,18 +116,20 @@ struct BuddyComparisonView: View {
     }
 
     private func prepareShareImage() {
-        // TODO(growth): pass this user's current invite link once this view has
-        // access to `InviteRepository` — `ShareCardRenderer.renderTogether`
-        // already accepts `inviteLinkURL:` and renders it when non-nil.
-        guard let image = ShareCardRenderer.renderTogether(
-            ownPost: ownPost,
-            buddyPost: buddyPost,
-            ownPhoto: ownPhoto,
-            buddyPhoto: buddyPhoto,
-            buddyName: buddyName,
-            handle: LocalDefaults.handle.flatMap(Handle.init(raw:))
-        ) else { return }
-        shareImage = TogetherShareableCard(image: image)
+        Task {
+            let inviteLink = try? await inviteRepository.createInvite(fresh: false)
+            let image = ShareCardRenderer.renderTogether(
+                ownPost: ownPost,
+                buddyPost: buddyPost,
+                ownPhoto: ownPhoto,
+                buddyPhoto: buddyPhoto,
+                buddyName: buddyName,
+                handle: LocalDefaults.handle.flatMap(Handle.init(raw:)),
+                inviteLinkURL: inviteLink?.url
+            )
+            guard let image else { return }
+            shareImage = TogetherShareableCard(image: image)
+        }
     }
 
     private func timeLabel(_ date: Date) -> String {

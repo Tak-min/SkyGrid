@@ -2,6 +2,16 @@ import Testing
 import Foundation
 @testable import SkyGrid
 
+/// This suite never shares an invite link — it only exercises orphaned-post
+/// recovery — so every method is unreachable by construction.
+@MainActor
+private final class UnusedInviteRepository: InviteRepository {
+    func createInvite(fresh: Bool) async throws -> InviteLink { fatalError("not used by OrphanedPostRecoveryTests") }
+    func previewInvite(code: InviteCode) async throws -> InvitePreview { fatalError("not used by OrphanedPostRecoveryTests") }
+    func claimInvite(code: InviteCode) async throws -> InviteClaim { fatalError("not used by OrphanedPostRecoveryTests") }
+    func revokeInvite(code: InviteCode) async throws -> InviteRevocation { fatalError("not used by OrphanedPostRecoveryTests") }
+}
+
 /// Waits for `condition` to become true instead of a fixed `Task.yield()` count.
 ///
 /// A fixed yield count is a race: it assumes the observation `Task` gets scheduled
@@ -343,6 +353,7 @@ struct CollectionObservationStateTests {
             year: 2026,
             postRepository: ValueThenUnavailablePosts(post: post),
             imageFetching: FailingImageFetcher(),
+            inviteRepository: UnusedInviteRepository(),
             isPro: true,
             today: date,
             selectedMonth: 8

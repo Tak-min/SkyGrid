@@ -17,6 +17,7 @@ struct BuddiesView: View {
     @State private var safetyRoute: BuddySafetyRoute?
     @State private var relationshipRoute: BuddyRelationshipRoute?
     @State private var isHandleRequestExpanded = false
+    @State private var showInviteCodeRecovery = false
 
     init(
         uid: String,
@@ -41,22 +42,25 @@ struct BuddiesView: View {
     }
 
     var body: some View {
-        List {
-            Section {
-                MokuScreenMark(
-                    state: viewModel.accepted.isEmpty ? .ready : .settled,
-                    side: 70,
-                    caption: viewModel.accepted.isEmpty
-                        ? "Moku is saving a spot for your first sky buddy."
-                        : "Your circle opens one real morning at a time."
-                )
-                .padding(.vertical, SGSpacing.sm)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .playfulSurface(accent: SGT.accentSecondary)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-            }
+        ZStack {
+            MokuColor.nightStage.ignoresSafeArea()
+
+            List {
+                Section {
+                    MokuScreenMark(
+                        state: viewModel.accepted.isEmpty ? .ready : .settled,
+                        side: 70,
+                        caption: viewModel.accepted.isEmpty
+                            ? "Moku is saving a spot for your first sky buddy."
+                            : "Your circle opens one real morning at a time."
+                    )
+                    .padding(.vertical, SGSpacing.sm)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .playfulSurface(accent: SGT.accentSecondary)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                }
 
             Section {
                 if viewModel.friendshipState == .checking, viewModel.accepted.isEmpty {
@@ -95,6 +99,21 @@ struct BuddiesView: View {
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
+                }
+
+                Section {
+                    Button {
+                        showInviteCodeRecovery = true
+                    } label: {
+                        Label("Enter a buddy's invite code", systemImage: "number.square")
+                            .font(SGFont.body(15))
+                            .foregroundStyle(SGT.ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(minHeight: 44)
+                    }
+                    .listRowBackground(SGT.fill)
+                    .listRowSeparator(.hidden)
+                    .accessibilityIdentifier("buddies.enterInviteCode")
                 }
             }
 
@@ -240,39 +259,51 @@ struct BuddiesView: View {
                     .listRowInsets(EdgeInsets())
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(PlayfulStageBackdrop(accent: SGT.accentSecondary))
-        .contentMargins(.top, SGSpacing.sm, for: .scrollContent)
-        .listSectionSpacing(.custom(SGSpacing.xl))
-        .playfulEntrance()
-        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: SGSpacing.xl) }
-        .navigationTitle("Buddies")
-        // This view is one tab inside the root NavigationStack. An inline title
-        // avoids List reserving a large-title gap when tab selection changes.
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(item: $safetyRoute) { route in
-            BuddySafetyView(
-                ownerUid: viewModel.uid,
-                subjectUid: route.subjectUid,
-                friendRepository: viewModel.friendRepository,
-                contentSafetyRepository: contentSafetyRepository
-            )
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
+                .contentMargins(.top, SGSpacing.sm, for: .scrollContent)
+                .listSectionSpacing(.custom(SGSpacing.xl))
+                .playfulEntrance()
+                .safeAreaInset(edge: .bottom) { Color.clear.frame(height: SGSpacing.xl) }
+                .navigationTitle("Buddies")
+                // This view is one tab inside the root NavigationStack. An inline title
+                // avoids List reserving a large-title gap when tab selection changes.
+                .navigationBarTitleDisplayMode(.inline)
+                .navigationDestination(item: $safetyRoute) { route in
+                    BuddySafetyView(
+                        ownerUid: viewModel.uid,
+                        subjectUid: route.subjectUid,
+                        friendRepository: viewModel.friendRepository,
+                        contentSafetyRepository: contentSafetyRepository
+                    )
+                }
+                .navigationDestination(item: $relationshipRoute) { route in
+                    BuddyRelationshipView(
+                        ownerUid: viewModel.uid,
+                        friendship: route.friendship,
+                        subjectUid: route.subjectUid,
+                        revealState: route.revealState,
+                        imageFetching: imageFetching,
+                        friendRepository: viewModel.friendRepository,
+                        userRepository: viewModel.userRepository,
+                        contentSafetyRepository: contentSafetyRepository,
+                        today: clock.today()
+                    )
+                }
+                .sheet(isPresented: $showInviteCodeRecovery) {
+                    InviteCodeRecoveryView(
+                        uid: viewModel.uid,
+                        inviteRepository: inviteRepository,
+                        userRepository: viewModel.userRepository
+                    )
+                }
+        .task {
+            viewModel.start()
+            await BuddyPairingNotificationPermission.requestIfNeeded()
         }
-        .navigationDestination(item: $relationshipRoute) { route in
-            BuddyRelationshipView(
-                ownerUid: viewModel.uid,
-                friendship: route.friendship,
-                subjectUid: route.subjectUid,
-                revealState: route.revealState,
-                imageFetching: imageFetching,
-                friendRepository: viewModel.friendRepository,
-                userRepository: viewModel.userRepository,
-                contentSafetyRepository: contentSafetyRepository,
-                today: clock.today()
-            )
+                .onDisappear { viewModel.stop() }
         }
-        .task { viewModel.start() }
-        .onDisappear { viewModel.stop() }
+        .preferredColorScheme(.dark)
     }
 
     private func revealState(for uid: String) -> TodayViewModel.BuddyRevealState {

@@ -23,4 +23,25 @@ enum InviteLinkParser {
         else { return nil }
         return InviteCode(raw: url.pathComponents[2])
     }
+
+    /// Recovers a code from the complete share message copied from LINE,
+    /// Instagram, or Messages. Those apps commonly put surrounding copy around the
+    /// URL/code, so treating the whole clipboard as a raw code cannot work.
+    static func code(fromSharedText text: String) -> InviteCode? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let direct = InviteCode(raw: trimmed) { return direct }
+
+        if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) {
+            let range = NSRange(trimmed.startIndex..., in: trimmed)
+            for match in detector.matches(in: trimmed, range: range) {
+                if let url = match.url, let code = code(from: url) { return code }
+            }
+        }
+
+        let separators = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-")).inverted
+        for candidate in trimmed.components(separatedBy: separators) where !candidate.isEmpty {
+            if let code = InviteCode(raw: candidate) { return code }
+        }
+        return nil
+    }
 }

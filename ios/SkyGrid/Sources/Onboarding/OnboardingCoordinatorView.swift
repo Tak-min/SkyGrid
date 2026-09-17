@@ -92,12 +92,6 @@ final class OnboardingViewModel {
         }
     }
 
-    func skipToPlan() {
-        personalizationProfile = PersonalizationProfile()
-        wakeGoalMinutes = LocalDefaults.wakeGoalMinutes
-        step = .plan
-    }
-
     func complete() {
         guard !didComplete else { return }
         didComplete = true
@@ -142,40 +136,35 @@ struct OnboardingCoordinatorView: View {
             case .intention:
                 PersonalizationQuestionsView(
                     profile: $viewModel.personalizationProfile,
-                    onBack: goBack,
-                    onSkip: skipToPlan
+                    onBack: goBack
                 ) {
                     advance()
                 }
             case .pace:
                 PaceQuestionView(
                     profile: $viewModel.personalizationProfile,
-                    onBack: goBack,
-                    onSkip: skipToPlan
+                    onBack: goBack
                 ) {
                     advance()
                 }
             case .frequency:
                 FrequencyQuestionView(
                     profile: $viewModel.personalizationProfile,
-                    onBack: goBack,
-                    onSkip: skipToPlan
+                    onBack: goBack
                 ) {
                     advance()
                 }
             case .privacy:
                 PrivacyQuestionView(
                     profile: $viewModel.personalizationProfile,
-                    onBack: goBack,
-                    onSkip: skipToPlan
+                    onBack: goBack
                 ) {
                     advance()
                 }
             case .reminder:
                 ReminderQuestionView(
                     profile: $viewModel.personalizationProfile,
-                    onBack: goBack,
-                    onSkip: skipToPlan
+                    onBack: goBack
                 ) {
                     advance()
                 }
@@ -191,7 +180,7 @@ struct OnboardingCoordinatorView: View {
                 PersonalizedPlanView(
                     profile: viewModel.personalizationProfile,
                     wakeGoalMinutes: viewModel.wakeGoalMinutes,
-                    onStartFirstSky: finishForFirstCapture,
+                    onStartFirstSky: advanceToInvite,
                     onEditAnswers: goBack
                 )
             case .invite:
@@ -199,7 +188,8 @@ struct OnboardingCoordinatorView: View {
                     uid: uid,
                     userRepository: userRepository,
                     inviteRepository: inviteRepository,
-                    onSkip: finish
+                    onBack: goBack,
+                    onContinue: finishForFirstCapture
                 )
             }
             }
@@ -256,35 +246,12 @@ struct OnboardingCoordinatorView: View {
         .padding(.bottom, SGSpacing.xs)
         .background(SGT.accentSecondary.opacity(0.055))
         .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 24)
-                .onEnded { value in
-                    guard abs(value.translation.width) > abs(value.translation.height),
-                          abs(value.translation.width) > 56 else { return }
-                    navigateFromRail(forward: value.translation.width < 0)
-                }
-        )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Setup page")
         // The visible companion line, not `step.rawValue`: that is an analytics key
         // (`wake_goal`) and VoiceOver read it aloud verbatim.
         .accessibilityValue(companionLine)
-        // Announced as adjustable only where adjusting actually moves. The alarm,
-        // plan and invite steps keep their explicit buttons, so advertising an
-        // increment there promised a control that silently did nothing.
-        .modifier(RailAdjustableAction(isEnabled: isRailNavigable, navigate: navigateFromRail))
         .accessibilityIdentifier("onboarding.companionRail")
-    }
-
-    /// The preference questions are optional. Alarm scheduling and plan/free
-    /// decisions retain their explicit buttons, including their busy guards.
-    private var isRailNavigable: Bool {
-        [.intention, .pace, .frequency, .privacy, .reminder].contains(viewModel.step)
-    }
-
-    private func navigateFromRail(forward: Bool) {
-        guard isRailNavigable else { return }
-        if forward { advance() } else { goBack() }
     }
 
     // Routed through `L10n.string(_:)`: `Text(companionLine)` / `.accessibilityValue`
@@ -361,14 +328,6 @@ struct OnboardingCoordinatorView: View {
         }
     }
 
-    private func skipToPlan() {
-        Haptics.navigationConfirmed()
-        SoundEffectPlayer.shared.play(.forwardNavigation)
-        OnboardingAnalytics.record(.stepSkipped, step: viewModel.step)
-        withAnimation(pageAnimation) {
-            viewModel.skipToPlan()
-        }
-    }
 
     private func advanceToInvite() {
         guard viewModel.step != .invite else { return }
@@ -382,26 +341,5 @@ struct OnboardingCoordinatorView: View {
 
     private var pageAnimation: Animation? {
         reduceMotion || !MokuMotionPolicy.animationsEnabled ? nil : .easeOut(duration: 0.18)
-    }
-}
-
-/// Attaches the adjustable action only when it can do something. A conditional
-/// modifier rather than a no-op closure: VoiceOver announces the trait itself.
-private struct RailAdjustableAction: ViewModifier {
-    let isEnabled: Bool
-    let navigate: (Bool) -> Void
-
-    func body(content: Content) -> some View {
-        if isEnabled {
-            content.accessibilityAdjustableAction { direction in
-                switch direction {
-                case .increment: navigate(true)
-                case .decrement: navigate(false)
-                @unknown default: break
-                }
-            }
-        } else {
-            content
-        }
     }
 }

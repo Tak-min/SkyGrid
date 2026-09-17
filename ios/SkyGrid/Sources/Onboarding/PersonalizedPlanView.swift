@@ -55,11 +55,11 @@ struct PersonalizedPlanView: View {
                 .padding(SGSpacing.lg)
                 .quietCard()
 
-                Button("Start my first sky", action: onStartFirstSky)
+                Button("Continue to invite a buddy", action: onStartFirstSky)
                     .frame(maxWidth: .infinity)
                     .buttonStyle(SkyPrimaryButtonStyle())
 
-                Text("Take one real photo first. Your archive options come after your first sky lands in the grid.")
+                Text("Create your invite link before your first sky. You can share it now or use the code later.")
                     .font(SGFont.caption(12))
                     .foregroundStyle(SGT.ink3)
                     .frame(maxWidth: .infinity, alignment: .center)

@@ -1,41 +1,32 @@
 import SwiftUI
 
-/// The final onboarding choice puts the mutual-reveal mechanic in front of every
-/// new account without making social participation a condition of using Sky Grid.
-/// A handle is only collected after the person chooses to invite, matching the
-/// existing Buddies-tab privacy boundary and the server's `createInvite` contract.
+/// The final onboarding step prepares a recoverable invite link and readable code.
+/// It cannot be skipped forward, but the person can go back and edit earlier setup.
 struct OnboardingInviteView: View {
     @State private var handle: Handle?
-    @State private var referralCode: String = ""
+    @State private var hasUsableInvite = false
 
     let uid: String
     let userRepository: any UserRepository
     let inviteRepository: any InviteRepository
-    let onSkip: () -> Void
-
-    /// Records a non-empty referral code (fire-and-forget, no validation — this is
-    /// an attribution hint, not a gate) before handing off to `onSkip`. Both exit
-    /// points on this screen ("Not now" and the primary button) funnel through
-    /// here so whatever was typed is captured regardless of which one is tapped.
-    private func finishOnboarding() {
-        let trimmedCode = referralCode.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmedCode.isEmpty {
-            Task {
-                try? await userRepository.setReferralCode(trimmedCode, for: uid)
-            }
-        }
-        onSkip()
-    }
+    let onBack: () -> Void
+    let onContinue: () -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 HStack {
+                    Button(action: onBack) {
+                        Label("Back", systemImage: "chevron.left")
+                            .frame(minHeight: 44)
+                    }
+                    .font(SGFont.caption(14))
+                    .foregroundStyle(SGT.ink2)
                     Spacer()
-                    Button("Not now", action: finishOnboarding)
-                        .font(SGFont.caption(14))
-                        .foregroundStyle(SGT.ink2)
-                        .frame(minHeight: 44)
+                    Label("ONE LAST STEP", systemImage: "person.2.fill")
+                        .font(SGFont.caption(11))
+                        .tracking(1.3)
+                        .foregroundStyle(SGT.ink3)
                 }
 
                 OnboardingProgress(step: 10, total: 10)
@@ -56,27 +47,32 @@ struct OnboardingInviteView: View {
                 if handle == nil {
                     HandleClaimView(uid: uid, userRepository: userRepository) { claimedHandle in
                         handle = claimedHandle
+                        hasUsableInvite = false
+                        Task { await BuddyPairingNotificationPermission.requestIfNeeded() }
                     }
                 } else {
-                    InviteLinkCard(inviteRepository: inviteRepository, placement: .onboarding)
+                    InviteLinkCard(
+                        inviteRepository: inviteRepository,
+                        placement: .onboarding,
+                        onLinkReady: { _ in hasUsableInvite = true }
+                    )
                 }
 
-                // Optional, unvalidated attribution hint — kept low-emphasis so it
-                // never competes with the invite mechanic above for attention.
-                TextField("Referral code (optional)", text: $referralCode)
+                Text(hasUsableInvite
+                     ? "Your invite link and readable code are ready to share."
+                     : "Create your handle and wait for your invite link before continuing.")
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink2)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .padding(.horizontal, SGSpacing.md)
-                    .frame(minHeight: 36)
-                    .background(SGT.ghostFaint, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-                Button(handle == nil ? "Skip for now" : "Start Sky Grid", action: finishOnboarding)
+                Button("Continue to Sky Grid", action: onContinue)
                     .font(SGFont.body(16))
-                    .foregroundStyle(SGT.ink2)
+                    .foregroundStyle(SGT.accentInk)
                     .frame(maxWidth: .infinity)
-                    .frame(minHeight: 44)
+                    .frame(minHeight: 52)
+                    .background(SGT.accent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .disabled(handle == nil || !hasUsableInvite)
+                    .opacity(handle == nil || !hasUsableInvite ? 0.45 : 1)
+                    .accessibilityIdentifier("onboarding.continueWithInvite")
             }
             .padding(SGSpacing.xl)
             .padding(.bottom, SGSpacing.xl)
