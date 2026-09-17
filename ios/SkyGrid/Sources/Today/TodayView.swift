@@ -13,7 +13,6 @@ struct TodayView: View {
     @State private var mokuInteraction = 0
     @State private var lastMokuInteraction: TimeInterval = -.infinity
     @State private var ambientMessage: MokuAmbientMessage?
-    @State private var showWalkthrough = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppRouter.self) private var appRouter
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -97,24 +96,10 @@ struct TodayView: View {
             .safeAreaInset(edge: .bottom) {
                 Color.clear.frame(height: SGSpacing.xl)
             }
-
-            if showWalkthrough {
-                TodayWalkthroughView {
-                    LocalDefaults.markTodayWalkthroughShown(for: viewModel.accountID)
-                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
-                        showWalkthrough = false
-                    }
-                }
-                .transition(.opacity)
-                .zIndex(20)
-            }
         }
         .onAppear {
             presentAmbientMessageIfEligible()
             consumePendingWeeklyRecapIfPossible()
-            if !LocalDefaults.hasShownTodayWalkthrough(for: viewModel.accountID) {
-                showWalkthrough = true
-            }
         }
         .task(id: observedDate) { viewModel.start(for: observedDate) }
         .onChange(of: viewModel.postState) { _, state in
