@@ -12,11 +12,18 @@ struct InviteLinkCard: View {
     @State private var showCopiedConfirmation = false
     @State private var showRevokeConfirmation = false
     private let placement: InviteAnalytics.Placement
+    /// Fires on the same tap that records `.linkShared` below — SwiftUI's
+    /// `ShareLink` has no completion callback, so "tapped Share" is the best
+    /// available signal that the person took the link out of the app. Used by
+    /// `OnboardingInviteView` to require that tap (not just link generation)
+    /// before onboarding can continue.
+    private let onShareIntent: (() -> Void)?
 
     init(
         inviteRepository: any InviteRepository,
         placement: InviteAnalytics.Placement = .buddiesTab,
-        onLinkReady: ((InviteLink) -> Void)? = nil
+        onLinkReady: ((InviteLink) -> Void)? = nil,
+        onShareIntent: (() -> Void)? = nil
     ) {
         _viewModel = State(initialValue: InviteLinkViewModel(
             inviteRepository: inviteRepository,
@@ -24,6 +31,7 @@ struct InviteLinkCard: View {
             onLinkReady: onLinkReady
         ))
         self.placement = placement
+        self.onShareIntent = onShareIntent
     }
 
     var body: some View {
@@ -132,6 +140,7 @@ struct InviteLinkCard: View {
             // ShareLink has no completion callback, only this tap — recorded on
             // the intent to share, not confirmed delivery.
             InviteAnalytics.record(.linkShared, placement: placement)
+            onShareIntent?()
         })
 
         Button(L10n.string("invite.stopSharing"), role: .destructive) {

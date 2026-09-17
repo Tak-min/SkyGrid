@@ -54,13 +54,15 @@ struct OnboardingInviteView: View {
                     InviteLinkCard(
                         inviteRepository: inviteRepository,
                         placement: .onboarding,
-                        onLinkReady: { _ in hasUsableInvite = true }
+                        onShareIntent: { hasUsableInvite = true }
                     )
                 }
 
-                Text(hasUsableInvite
-                     ? L10n.string("onboarding.invite.ready")
-                     : L10n.string("onboarding.invite.waiting"))
+                Text(
+                    hasUsableInvite ? L10n.string("onboarding.invite.ready")
+                    : handle == nil ? L10n.string("onboarding.invite.waiting")
+                    : L10n.string("onboarding.invite.needsShare")
+                )
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink2)
 

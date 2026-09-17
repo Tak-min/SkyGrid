@@ -11554,18 +11554,34 @@
         }
       }
     },
-    "onboarding.invite.ready": {
+    "onboarding.invite.needsShare": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your invite link and readable code are ready to share."
+            "value": "Share your invite link with someone to continue — Sky Grid needs to know at least one person has it."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "招待リンクと読み取り可能なコードの準備ができました。"
+            "value": "続けるには、招待リンクを誰かに共有してください。少なくとも1人に届いたことが必要です。"
+          }
+        }
+      }
+    },
+    "onboarding.invite.ready": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thanks for sharing — you're all set to continue."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "共有ありがとう — これで続けられます。"
           }
         }
       }
@@ -11575,13 +11591,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Create your handle and wait for your invite link before continuing."
+            "value": "Claim your handle to create your invite link."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "続ける前に、ハンドルを作成して招待リンクの準備を待ってください。"
+            "value": "招待リンクを作るために、まずハンドルを作成してください。"
           }
         }
       }
