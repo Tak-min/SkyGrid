@@ -303,7 +303,6 @@ struct BuddiesView: View {
         }
                 .onDisappear { viewModel.stop() }
         }
-        .preferredColorScheme(.dark)
     }
 
     private func revealState(for uid: String) -> TodayViewModel.BuddyRevealState {

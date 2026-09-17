@@ -115,7 +115,6 @@ struct MorningAlarmSettingsView: View {
             .padding(.vertical, SGSpacing.lg)
         }
         .background(MokuColor.nightStage.ignoresSafeArea())
-        .preferredColorScheme(.dark)
         .navigationTitle(L10n.string("alarm.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.refresh() }
@@ -369,7 +368,6 @@ private struct MorningAlarmEditor: View {
                 .padding(SGSpacing.xl)
             }
             .background(MokuColor.nightStage.ignoresSafeArea())
-            .preferredColorScheme(.dark)
             .navigationTitle("Alarm")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

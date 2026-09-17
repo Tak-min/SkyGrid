@@ -78,7 +78,6 @@ struct BuddyFeedViewerView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
         .accessibilityIdentifier("buddy.feed.viewer")
     }
 

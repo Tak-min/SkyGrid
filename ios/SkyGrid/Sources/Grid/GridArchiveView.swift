@@ -290,7 +290,6 @@ struct GridArchiveView: View {
             onRetryArchive: viewModel.retryObservation
         )
             .navigationBarTitleDisplayMode(.inline)
-            .preferredColorScheme(.dark)
             .sheet(item: $shareItem) { item in
                 ShareSheet(items: [item.image])
             }
@@ -367,7 +366,6 @@ private struct ArchivePhotoDetail: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
 }
 

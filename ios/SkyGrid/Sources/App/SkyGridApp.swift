@@ -6,6 +6,7 @@ struct SkyGridApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var startup = AppStartupController()
     @State private var localization = LocalizationController()
+    @State private var appearance = AppearanceController()
 
     init() {
         LocalizationBundleOverride.install()
@@ -27,6 +28,8 @@ struct SkyGridApp: App {
             .environment(appDelegate.appRouter)
             .environment(localization)
             .environment(\.locale, localization.language.locale)
+            .environment(appearance)
+            .preferredColorScheme(appearance.mode.colorScheme)
             .onOpenURL { url in
                 appDelegate.appRouter.handle(url: url)
             }

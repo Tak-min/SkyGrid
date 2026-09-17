@@ -70,7 +70,6 @@ struct InviteClaimView: View {
             .padding(SGSpacing.lg)
         }
         .presentationDetents([.medium])
-        .preferredColorScheme(.dark)
         .task { await viewModel.loadPreview() }
     }
 

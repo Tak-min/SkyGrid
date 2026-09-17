@@ -6,6 +6,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(LocalizationController.self) private var localization
+    @Environment(AppearanceController.self) private var appearance
     let uid: String
     let accountDeletionService: any AccountDeleting
     let friendRepository: any FriendRepository
@@ -93,6 +94,27 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(L10n.string("settings.language.title", language: localization.language))
 
+                    Menu {
+                        ForEach(AppAppearance.allCases) { mode in
+                            Button { appearance.select(mode) } label: {
+                                if appearance.mode == mode {
+                                    Label(mode.displayName, systemImage: "checkmark")
+                                } else {
+                                    Text(mode.displayName)
+                                }
+                            }
+                        }
+                    } label: {
+                        settingRow(
+                            L10n.string("settings.appearance.title"),
+                            symbol: "circle.lefthalf.filled",
+                            detail: appearance.mode.displayName,
+                            accessory: .disclosure
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(L10n.string("settings.appearance.title"))
+
                     Toggle(isOn: $soundEffectsEnabled) {
                         settingRow(
                             L10n.string("settings.row.soundEffects.title"),
@@ -144,7 +166,6 @@ struct SettingsView: View {
             .playfulEntrance()
         }
         .background(MokuColor.nightStage.ignoresSafeArea())
-        .preferredColorScheme(.dark)
         .navigationTitle(L10n.string("settings.title"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPaywall) {
