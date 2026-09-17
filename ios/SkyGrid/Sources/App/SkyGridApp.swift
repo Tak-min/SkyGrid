@@ -6,7 +6,6 @@ struct SkyGridApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var startup = AppStartupController()
     @State private var localization = LocalizationController()
-    @State private var appearance = AppearanceController()
 
     init() {
         LocalizationBundleOverride.install()
@@ -28,8 +27,12 @@ struct SkyGridApp: App {
             .environment(appDelegate.appRouter)
             .environment(localization)
             .environment(\.locale, localization.language.locale)
-            .environment(appearance)
-            .preferredColorScheme(appearance.mode.colorScheme)
+            // The app is dark-only by design (a light-mode pass shipped in ebf7bfc
+            // read as a broken color-inverted dark mode on-device and was pulled).
+            // This single root-level modifier is the only place color scheme is
+            // set — see the removed per-screen `.preferredColorScheme(.dark)` calls
+            // this replaced, which used to race and cause screens to flash light/dark.
+            .preferredColorScheme(.dark)
             .onOpenURL { url in
                 appDelegate.appRouter.handle(url: url)
             }

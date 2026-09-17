@@ -46,12 +46,6 @@ enum LocalDefaults {
     @UserDefaultBacked(key: "selectedLanguageCode", defaultValue: nil)
     static var selectedLanguageCode: String?
 
-    /// Explicit in-app appearance choice (`AppAppearance.rawValue`). `nil` means no
-    /// explicit choice has been made yet, and `AppearanceController` defaults to
-    /// `.system`.
-    @UserDefaultBacked(key: "selectedAppearanceMode", defaultValue: nil)
-    static var selectedAppearanceMode: String?
-
     @UserDefaultBacked(key: "lastKnownTimeZoneIdentifier", defaultValue: nil)
     static var lastKnownTimeZoneIdentifier: String?
 
