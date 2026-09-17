@@ -8,13 +8,17 @@ struct TodayView: View {
     @State private var viewModel: TodayViewModel
     @State private var shareImage: TodayShareableCard?
     @State private var comparisonBuddy: TodayViewModel.BuddyStatus?
+    @State private var buddyFeedSelection: BuddyFeedSelection?
     @State private var weeklyRecap: WeeklyRecapSelection?
     @State private var mokuInteraction = 0
     @State private var lastMokuInteraction: TimeInterval = -.infinity
     @State private var ambientMessage: MokuAmbientMessage?
+    @State private var showWalkthrough = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(AppRouter.self) private var appRouter
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let imageFetching: any ImageFetching
+    let inviteRepository: any InviteRepository
     let observedDate: LocalDate
     let onOpenCamera: () -> Void
     let subscriptionPlan: SubscriptionPlan
@@ -35,6 +39,7 @@ struct TodayView: View {
     init(
         viewModel: TodayViewModel,
         imageFetching: any ImageFetching,
+        inviteRepository: any InviteRepository,
         observedDate: LocalDate,
         onOpenCamera: @escaping () -> Void,
         subscriptionPlan: SubscriptionPlan,
@@ -48,6 +53,7 @@ struct TodayView: View {
     ) {
         _viewModel = State(initialValue: viewModel)
         self.imageFetching = imageFetching
+        self.inviteRepository = inviteRepository
         self.observedDate = observedDate
         self.onOpenCamera = onOpenCamera
         self.subscriptionPlan = subscriptionPlan
@@ -67,35 +73,11 @@ struct TodayView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: SGSpacing.xxl) {
                     heading
-                        .mokuAmbientBubble(
-                            ambientMessage,
-                            at: .heading,
-                            alignment: .bottomTrailing,
-                            offset: CGSize(width: 0, height: 44)
-                        )
                     morningRecord
                         .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
                     mosaicEntry
-                        .mokuAmbientBubble(
-                            ambientMessage,
-                            at: .mosaicEntry,
-                            alignment: .topTrailing,
-                            offset: CGSize(width: -8, height: -34)
-                        )
                     buddySection
-                        .mokuAmbientBubble(
-                            ambientMessage,
-                            at: .buddySection,
-                            alignment: .topTrailing,
-                            offset: CGSize(width: -8, height: -34)
-                        )
                     rhythmSection
-                        .mokuAmbientBubble(
-                            ambientMessage,
-                            at: .rhythmSection,
-                            alignment: .topTrailing,
-                            offset: CGSize(width: -8, height: -34)
-                        )
                     PostStatusBanner(
                         pending: viewModel.pendingSummary,
                         today: observedDate,
@@ -115,9 +97,32 @@ struct TodayView: View {
             .safeAreaInset(edge: .bottom) {
                 Color.clear.frame(height: SGSpacing.xl)
             }
+
+            if showWalkthrough {
+                TodayWalkthroughView {
+                    LocalDefaults.markTodayWalkthroughShown(for: viewModel.accountID)
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
+                        showWalkthrough = false
+                    }
+                }
+                .transition(.opacity)
+                .zIndex(20)
+            }
         }
-        .onAppear { presentAmbientMessageIfEligible() }
+        .onAppear {
+            presentAmbientMessageIfEligible()
+            consumePendingWeeklyRecapIfPossible()
+            if !LocalDefaults.hasShownTodayWalkthrough(for: viewModel.accountID) {
+                showWalkthrough = true
+            }
+        }
         .task(id: observedDate) { viewModel.start(for: observedDate) }
+        .onChange(of: viewModel.postState) { _, state in
+            let statusResolved = state != .checking
+            guard statusResolved else { return }
+            guard ambientMessage == nil else { return }
+            presentAmbientMessageIfEligible()
+        }
         .onChange(of: observedDate) { _, _ in
             ambientMessage = nil
             presentAmbientMessageIfEligible()
@@ -135,6 +140,36 @@ struct TodayView: View {
         }
         .onChange(of: buddyRefreshToken) { _, _ in
             viewModel.refreshBuddiesNow()
+        }
+        .onChange(of: viewModel.streak) { _, streak in
+            // Keep the device-side nudge in sync with the same observed streak that
+            // drives the home UI. This covers offline launches and cancels the old
+            // reminder immediately after a successful capture.
+            Task {
+                await StreakAboutToBreakScheduler.refreshReminder(
+                    hasPostedToday: streak.hasPostedToday,
+                    currentStreak: streak.currentStreak,
+                    today: observedDate
+                )
+            }
+        }
+        .onChange(of: viewModel.weekRhythm) { _, rhythm in
+            guard isPro, WeeklyRecapPolicy.isReady(rhythm) else { return }
+            // The recap is an image today (the video variant is intentionally not
+            // announced until it exists). Scheduler identifiers make this safe when
+            // the listener re-emits the same seven-day snapshot.
+            let posts = rhythm.days.compactMap(\.post)
+            Task {
+                await WeeklyRecapReadyScheduler.notifyRecapReady(
+                    endDate: observedDate,
+                    posts: posts,
+                    imageFetching: imageFetching
+                )
+            }
+            consumePendingWeeklyRecapIfPossible()
+        }
+        .onChange(of: appRouter.pendingWeeklyRecapRoute) { _, _ in
+            consumePendingWeeklyRecapIfPossible()
         }
         // The lease flag follows the binding on both edges. This does NOT by itself
         // rescue a share sheet that resolved but was never presented: the falling
@@ -164,14 +199,37 @@ struct TodayView: View {
                     ownPost: ownPost,
                     buddyPost: buddyPost,
                     buddyName: buddy.displayName,
-                    imageFetching: imageFetching
+                    imageFetching: imageFetching,
+                    inviteRepository: inviteRepository
                 )
             }
+        }
+        .fullScreenCover(item: $buddyFeedSelection) { selection in
+            BuddyFeedViewerView(
+                buddies: selection.buddies,
+                selectedUID: selection.selectedUID,
+                ownPost: viewModel.todayPost,
+                imageFetching: imageFetching,
+                isPro: isPro,
+                onCompare: { buddy in
+                    buddyFeedSelection = nil
+                    DispatchQueue.main.async {
+                        comparisonBuddy = buddy
+                    }
+                },
+                onUpgrade: {
+                    buddyFeedSelection = nil
+                    DispatchQueue.main.async {
+                        onUpgrade()
+                    }
+                }
+            )
         }
         .fullScreenCover(item: $weeklyRecap) { selection in
             WeeklyRecapView(
                 posts: selection.posts,
                 imageFetching: imageFetching,
+                inviteRepository: inviteRepository,
                 onSharePresentationChanged: onSharePresentationChanged,
                 onShareDismissed: onShareDismissed
             )
@@ -243,33 +301,34 @@ struct TodayView: View {
             // One stable character lives outside the changing photo/empty state.
             // Incoming and outgoing record content never instantiate another Moku.
             .overlay(alignment: .topTrailing) {
-                Button {
-                    let now = ProcessInfo.processInfo.systemUptime
-                    guard now - lastMokuInteraction >= 1.15 else { return }
-                    lastMokuInteraction = now
-                    mokuInteraction += 1
-                } label: {
-                    MokuView(
-                        state: ambientMessage?.mokuState ?? (viewModel.todayPost == nil ? .ready : .settled),
-                        side: 108,
-                        interaction: mokuInteraction
-                    )
-                    .frame(width: 132, height: 138)
-                    .contentShape(Rectangle())
+                HStack(alignment: .bottom, spacing: -18) {
+                    if let ambientMessage {
+                        MokuAmbientBubble(text: ambientMessage.text)
+                            .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .trailing)))
+                    }
+                    Button {
+                        let now = ProcessInfo.processInfo.systemUptime
+                        guard now - lastMokuInteraction >= 1.15 else { return }
+                        lastMokuInteraction = now
+                        mokuInteraction += 1
+                    } label: {
+                        MokuView(
+                            state: ambientMessage?.mokuState ?? (viewModel.todayPost == nil ? .ready : .settled),
+                            side: 108,
+                            interaction: mokuInteraction
+                        )
+                        .frame(width: 132, height: 138)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Say hello to Moku")
+                    .accessibilityHint("Moku says hello back")
+                    .accessibilityIdentifier("moku.play")
                 }
-                .buttonStyle(.plain)
+                .frame(width: ambientMessage == nil ? 142 : 350, height: 156, alignment: .bottomTrailing)
                 .padding(.trailing, 12)
                 .offset(y: -8)
-                .accessibilityLabel("Say hello to Moku")
-                .accessibilityHint("Moku says hello back")
-                .accessibilityIdentifier("moku.play")
             }
-            .mokuAmbientBubble(
-                ambientMessage,
-                at: .morningRecord,
-                alignment: .topLeading,
-                offset: CGSize(width: 12, height: -12)
-            )
             .padding(.top, 16)
     }
 
@@ -309,12 +368,6 @@ struct TodayView: View {
                 }
                 .buttonStyle(SkySecondaryButtonStyle())
                 .accessibilityHint("Opens the share sheet with this morning's card as an image")
-                .mokuAmbientBubble(
-                    ambientMessage,
-                    at: .shareButton,
-                    alignment: .topTrailing,
-                    offset: CGSize(width: -8, height: -56)
-                )
 
                 if viewModel.todayIntegrity == .orphaned {
                     OrphanedPostBanner(
@@ -376,13 +429,6 @@ struct TodayView: View {
                     fallback: emptySkyGradient
                 )
             }
-            .mokuAmbientBubble(
-                ambientMessage,
-                at: .emptyMorningRecord,
-                alignment: .topLeading,
-                offset: CGSize(width: 16, height: 16)
-            )
-
             Button {
                 Haptics.navigationConfirmed()
                 SoundEffectPlayer.shared.play(.forwardNavigation)
@@ -391,13 +437,7 @@ struct TodayView: View {
                 Label("Capture the sky", systemImage: "camera")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(SkyPrimaryButtonStyle())
-            .mokuAmbientBubble(
-                ambientMessage,
-                at: .captureButton,
-                alignment: .topTrailing,
-                offset: CGSize(width: -8, height: -56)
-            )
+                .buttonStyle(SkyPrimaryButtonStyle())
         }
     }
 
@@ -521,19 +561,19 @@ struct TodayView: View {
                     buddies: viewModel.buddies,
                     today: observedDate,
                     imageFetching: imageFetching,
-                    onSelect: openComparison
+                    onSelect: openBuddyFeed
                 )
             }
             .skyAnimation(SGMotion.settle, value: viewModel.streak.hasPostedToday)
         }
     }
 
-    private func openComparison(_ buddy: TodayViewModel.BuddyStatus) {
-        guard isPro else {
-            onUpgrade()
-            return
-        }
-        comparisonBuddy = buddy
+    private func openBuddyFeed(_ buddy: TodayViewModel.BuddyStatus) {
+        guard buddy.post != nil else { return }
+        buddyFeedSelection = BuddyFeedSelection(
+            buddies: viewModel.buddies,
+            selectedUID: buddy.uid
+        )
     }
 
     private var emptyStateAccessibilityLabel: String {
@@ -600,6 +640,14 @@ struct TodayView: View {
         weeklyRecap = WeeklyRecapSelection(posts: viewModel.weekRhythm.days.compactMap(\.post))
     }
 
+    private func consumePendingWeeklyRecapIfPossible() {
+        guard appRouter.pendingWeeklyRecapRoute,
+              WeeklyRecapPolicy.canOpen(viewModel.weekRhythm, isPro: isPro),
+              weeklyRecap == nil else { return }
+        appRouter.pendingWeeklyRecapRoute = false
+        openWeeklyRecap()
+    }
+
     private var accentColor: SkyColor {
         viewModel.todayPost?.skyColor ?? SkyColor(uncheckedHex: "#9DB7C5")
     }
@@ -621,7 +669,9 @@ struct TodayView: View {
     }
 
     private var alarmTime: String {
-        String(format: "%02d:%02d", LocalDefaults.wakeGoalMinutes / 60, LocalDefaults.wakeGoalMinutes % 60)
+        let minutes = LocalDefaults.morningAlarmSchedules.firstWakeMinutes(on: observedDate.weekday)
+            ?? LocalDefaults.wakeGoalMinutes
+        return String(format: "%02d:%02d", minutes / 60, minutes % 60)
     }
 
     // Displayed directly to the person (unlike `captureAndUploadLabel`'s
@@ -666,6 +716,10 @@ struct TodayView: View {
     }
 
     private func presentAmbientMessageIfEligible() {
+        // The daily slot is reserved only after the primary post status is known.
+        // On a cold launch `.onAppear` often wins the race with the Firestore
+        // listener; consuming the slot there made Moku silently disappear for the
+        // rest of the day before the user had seen a resolved Today screen.
         let context = MokuAmbientMessage.Context(
             isPostStatusKnown: viewModel.postState != .checking,
             hasPostedToday: viewModel.todayPost != nil,
@@ -673,6 +727,7 @@ struct TodayView: View {
             hasBuddyPostToday: viewModel.buddies.contains { $0.post != nil },
             streak: viewModel.streak.currentStreak
         )
+        guard MokuAmbientMessagePolicy.canConsumeDailySlot(for: context) else { return }
         guard let selection = MokuAmbientMessagePolicy.randomSelectionForVisit(
             context: context,
             today: observedDate,
@@ -697,4 +752,10 @@ private struct TodayShareableCard: Identifiable {
 private struct WeeklyRecapSelection: Identifiable {
     let posts: [SkyPost]
     let id = UUID()
+}
+
+private struct BuddyFeedSelection: Identifiable {
+    let buddies: [TodayViewModel.BuddyStatus]
+    let selectedUID: String
+    var id: String { selectedUID + ":" + buddies.map(\.uid).joined(separator: ",") }
 }

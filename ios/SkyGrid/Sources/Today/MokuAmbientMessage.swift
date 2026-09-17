@@ -43,6 +43,13 @@ enum MokuAmbientMessagePolicy {
         !reduceMotion && MokuMotionPolicy.animationsEnabled
     }
 
+    /// A visit may spend the once-per-day slot only after the Today data source
+    /// has answered. This keeps a cold launch from consuming the slot while the
+    /// first Firestore snapshot is still in flight.
+    static func canConsumeDailySlot(for context: MokuAmbientMessage.Context) -> Bool {
+        context.isPostStatusKnown
+    }
+
     static func eligibleAnchors(for context: MokuAmbientMessage.Context) -> [MokuAmbientMessage.Anchor] {
         var anchors: [MokuAmbientMessage.Anchor] = [.mosaicEntry, .heading]
 

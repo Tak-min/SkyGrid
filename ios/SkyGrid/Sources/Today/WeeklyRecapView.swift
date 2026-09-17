@@ -5,6 +5,7 @@ import UIKit
 struct WeeklyRecapView: View {
     private let posts: [SkyPost]
     private let imageFetching: any ImageFetching
+    private let inviteRepository: any InviteRepository
     private let onSharePresentationChanged: (Bool) -> Void
     private let onShareDismissed: () -> Void
 
@@ -17,12 +18,14 @@ struct WeeklyRecapView: View {
     init(
         posts: [SkyPost],
         imageFetching: any ImageFetching,
+        inviteRepository: any InviteRepository,
         initialPhotos: [LocalDate: UIImage] = [:],
         onSharePresentationChanged: @escaping (Bool) -> Void = { _ in },
         onShareDismissed: @escaping () -> Void = {}
     ) {
         self.posts = Array(posts.sorted { $0.localDate < $1.localDate }.prefix(7))
         self.imageFetching = imageFetching
+        self.inviteRepository = inviteRepository
         self.onSharePresentationChanged = onSharePresentationChanged
         self.onShareDismissed = onShareDismissed
         _photos = State(initialValue: initialPhotos)
@@ -38,11 +41,11 @@ struct WeeklyRecapView: View {
                     if isLoading {
                         HStack(spacing: SGSpacing.sm) {
                             ProgressView().controlSize(.small)
-                            Text("Preparing skies…")
+                            Text("Preparing…")
                         }
                         .frame(maxWidth: .infinity)
                     } else {
-                        Label("Share weekly recap", systemImage: "square.and.arrow.up")
+                        Text("View weekly recap")
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -73,12 +76,13 @@ struct WeeklyRecapView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text("WEEK COMPLETE")
+                Text("Weekly recap ready")
                     .font(SGFont.caption(11))
                     .tracking(1.8)
                     .foregroundStyle(MokuColor.cloud.opacity(0.58))
-                Text("Seven mornings, one sky story")
-                    .font(SGFont.body(15))
+                Text("Seven mornings captured")
+                    .font(SGFont.body(18))
+                    .fontWeight(.semibold)
                     .foregroundStyle(MokuColor.cloud)
             }
             Spacer()
@@ -121,18 +125,19 @@ struct WeeklyRecapView: View {
     }
 
     private func prepareShareImage() {
-        guard !isLoading,
-                // TODO(growth): pass this user's current invite link once this view
-              // has access to `InviteRepository` — `ShareCardRenderer.renderWeekly`
-              // already accepts `inviteLinkURL:` and renders it when non-nil.
-              let image = ShareCardRenderer.renderWeekly(
+        guard !isLoading else { return }
+        Task {
+            let inviteLink = try? await inviteRepository.createInvite(fresh: false)
+            let image = ShareCardRenderer.renderWeekly(
                 posts: posts,
                 photos: photos,
-                handle: LocalDefaults.handle.flatMap(Handle.init(raw:))
-              )
-        else { return }
-        shareImage = WeeklyRecapShareableCard(image: image)
-        WeeklyRecapAnalytics.record(.shared)
+                handle: LocalDefaults.handle.flatMap(Handle.init(raw:)),
+                inviteLinkURL: inviteLink?.url
+            )
+            guard let image else { return }
+            shareImage = WeeklyRecapShareableCard(image: image)
+            WeeklyRecapAnalytics.record(.shared)
+        }
     }
 }
 

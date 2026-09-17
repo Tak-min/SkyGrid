@@ -30,10 +30,16 @@ import UIKit
 /// different channels: this view answers "what can I show", the push answers "should
 /// I go remind you to look."
 struct BuddyTile: View {
+    enum Style {
+        case compact
+        case featured
+    }
+
     let displayName: String
     let revealState: TodayViewModel.BuddyRevealState
     let streak: BuddyStreakDisplayPolicy.Display?
     let imageFetching: any ImageFetching
+    var style: Style = .compact
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var thumbnail: UIImage?
     // Drives the sealed tile's slow "breathing" glow (see the sealed overlay
@@ -49,61 +55,23 @@ struct BuddyTile: View {
     }
 
     var body: some View {
+        Group {
+            switch style {
+            case .compact:
+                compactContent
+            case .featured:
+                featuredContent
+            }
+        }
+        .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .task(id: photoIdentity) { await loadThumbnail(for: photoIdentity) }
+    }
+
+    private var compactContent: some View {
         VStack(spacing: 6) {
-            Circle()
-                .fill(tileFill)
-                .frame(width: 58, height: 58)
-                .overlay {
-                    // Gated on `isPosted`, not just `thumbnail != nil`: a fetched photo
-                    // must never keep showing once `revealState` reverts to `.sealed`
-                    // (e.g. `recoverOrphanedPost()` clears the viewer's own post, which
-                    // re-seals every buddy on the next refresh — see
-                    // `TodayViewModel.performRefreshBuddies`). `photoIdentity`'s `.task`
-                    // below already clears `thumbnail` on that same transition; this is
-                    // belt-and-suspenders so a stale render can never leak through even
-                    // if that clearing is ever skipped or racing.
-                    if isPosted, let thumbnail {
-                        Image(uiImage: thumbnail)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 58, height: 58)
-                            .clipShape(Circle())
-                    }
-                }
-                .overlay(Circle().strokeBorder(strokeColor, lineWidth: 1))
-                .overlay {
-                    if case .sealed = revealState {
-                        Circle()
-                            .strokeBorder(SGT.ink3.opacity(0.18), lineWidth: 2)
-                            .padding(-4)
-                    }
-                }
-                .overlay {
-                    if case .sealed = revealState {
-                        // A blurred duplicate of the same glyph sits behind the
-                        // crisp one purely for a soft glow — not a second symbol,
-                        // just the cheapest way to fake luminosity without a new
-                        // asset or design token.
-                        ZStack {
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(SGT.ink3.opacity(0.35))
-                                .blur(radius: 4)
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(SGT.ink3)
-                                .opacity(isSealedPulsing ? 1 : 0.85)
-                        }
-                        .scaleEffect(isSealedPulsing ? 1.03 : 1)
-                        .onAppear {
-                            guard !reduceMotion else { return }
-                            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
-                                isSealedPulsing = true
-                            }
-                        }
-                    }
-                }
-                .scaleEffect(isPosted ? 1 : 0.92)
+            skyArtwork(width: 58, height: 58, cornerRadius: 29, isCircle: true)
             Text(caption)
                 .font(SGFont.caption(11))
                 .foregroundStyle(SGT.ink3)
@@ -115,10 +83,84 @@ struct BuddyTile: View {
                     .lineLimit(1)
             }
         }
-        .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel)
-        .task(id: photoIdentity) { await loadThumbnail(for: photoIdentity) }
+    }
+
+    /// A larger, photo-first tile for Today. The circle avatar implied a social
+    /// profile; the morning sky is the relationship, so give it enough surface to
+    /// read as a real post and make the tap affordance obvious.
+    private var featuredContent: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.sm) {
+            skyArtwork(width: 148, height: 132, cornerRadius: 18, isCircle: false)
+            HStack(alignment: .firstTextBaseline, spacing: SGSpacing.xs) {
+                Text(caption)
+                    .font(SGFont.body(15))
+                    .foregroundStyle(SGT.ink)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                if isPosted {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(SGT.ink3)
+                        .accessibilityHidden(true)
+                }
+            }
+            if let streak {
+                Text(streak.text)
+                    .font(SGFont.numeric(11, weight: .medium))
+                    .foregroundStyle(SGT.ink2)
+                    .lineLimit(1)
+            }
+        }
+        .padding(SGSpacing.sm)
+        .frame(width: 172, alignment: .leading)
+        .background(SGT.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(isPosted ? SGT.accentSecondary.opacity(0.48) : SGT.rule.opacity(0.72), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.18), radius: 12, y: 6)
+    }
+
+    @ViewBuilder
+    private func skyArtwork(width: CGFloat, height: CGFloat, cornerRadius: CGFloat, isCircle: Bool) -> some View {
+        let shape = RoundedRectangle(cornerRadius: isCircle ? min(width, height) / 2 : cornerRadius, style: .continuous)
+        shape
+            .fill(tileFill)
+            .frame(width: width, height: height)
+            .overlay {
+                // Gated on `isPosted`, not just `thumbnail != nil`: a fetched photo
+                // must never keep showing once `revealState` reverts to `.sealed`.
+                if isPosted, let thumbnail {
+                    Image(uiImage: thumbnail)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: width, height: height)
+                        .clipShape(shape)
+                }
+            }
+            .overlay(shape.strokeBorder(strokeColor, lineWidth: 1))
+            .overlay {
+                if case .sealed = revealState {
+                    ZStack {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: style == .featured ? 19 : 15, weight: .semibold))
+                            .foregroundStyle(SGT.ink3.opacity(0.35))
+                            .blur(radius: 4)
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: style == .featured ? 19 : 15, weight: .semibold))
+                            .foregroundStyle(SGT.ink3)
+                            .opacity(isSealedPulsing ? 1 : 0.85)
+                    }
+                    .scaleEffect(isSealedPulsing ? 1.03 : 1)
+                    .onAppear {
+                        guard !reduceMotion else { return }
+                        withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                            isSealedPulsing = true
+                        }
+                    }
+                }
+            }
+            .scaleEffect(isPosted ? 1 : 0.96)
     }
 
     /// `nil` while sealed/not-yet. `.task(id:)` cancels and restarts whenever this

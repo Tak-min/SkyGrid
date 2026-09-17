@@ -49,14 +49,16 @@ struct MilestoneView: View {
     }
 
     private var headline: some View {
-        VStack(spacing: SGSpacing.sm) {
+        VStack(spacing: SGSpacing.md) {
             Text(moment.milestone.title)
-                .font(SGFont.display(64))
+                .font(SGFont.display(68, weight: .black))
+                .tracking(-0.8)
                 .foregroundStyle(SGT.ink)
             HStack(spacing: SGSpacing.sm) {
                 Text(moment.milestone.headline)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                MokuScreenMark(state: .delight, side: 54)
+                    .font(SGFont.body(18))
+                    .fontWeight(.semibold)
+                MokuScreenMark(state: .delight, side: 48)
             }
                 .foregroundStyle(SGT.ink2)
                 .multilineTextAlignment(.center)
@@ -98,14 +100,11 @@ struct MilestoneView: View {
             // the gate `InviteLinkCard`'s own doc comment describes; `moment.handle`
             // is already resolved by the presenter, so no extra fetch is needed here.
             if moment.handle != nil {
-                // The dark colour scheme is already applied to the whole view in
-                // `body` — no need to reassert it here.
                 InviteLinkCard(inviteRepository: inviteRepository, placement: .milestone)
             }
 
             Button("Done", action: onDone)
-                .font(SGFont.body(16))
-                .foregroundStyle(SGT.ink2)
+                .buttonStyle(SkySecondaryButtonStyle())
         }
     }
 

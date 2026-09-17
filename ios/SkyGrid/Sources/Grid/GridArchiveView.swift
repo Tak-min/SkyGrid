@@ -26,6 +26,7 @@ final class GridArchiveViewModel {
     let year: Int
     private let postRepository: any PostRepository
     private let imageFetching: any ImageFetching
+    private let inviteRepository: any InviteRepository
     /// Optional so existing preview/audit and test call sites that never enqueue an
     /// upload (and therefore have no outbox to reflect) don't need to construct one
     /// — matches `TodayViewModel`'s `streakSignal`/`revealSignal` optionality.
@@ -43,6 +44,7 @@ final class GridArchiveViewModel {
         year: Int,
         postRepository: any PostRepository,
         imageFetching: any ImageFetching,
+        inviteRepository: any InviteRepository,
         uploadQueue: UploadQueue? = nil,
         isPro: Bool,
         today: LocalDate,
@@ -52,6 +54,7 @@ final class GridArchiveViewModel {
         self.year = year
         self.postRepository = postRepository
         self.imageFetching = imageFetching
+        self.inviteRepository = inviteRepository
         self.uploadQueue = uploadQueue
         self.isPro = isPro
         self.today = today
@@ -141,6 +144,14 @@ final class GridArchiveViewModel {
     /// bandwidth cost (see `ImageProcessor`). Sharing is an explicit action, so a
     /// short awaited load behind a visible button state is the right trade. Returns
     /// `nil` if cancelled (e.g. the archive left the screen mid-load).
+    /// Reuses the account's existing invite link (never mints a fresh one just for a
+    /// share card) — matches the pattern used everywhere else invite links are shown.
+    /// Returns `nil` on any failure; callers already treat a nil invite link as
+    /// "render the card without one" rather than blocking the share.
+    func currentInviteLinkURL() async -> URL? {
+        (try? await inviteRepository.createInvite(fresh: false))?.url
+    }
+
     func loadThumbnailsForSharing() async -> [LocalDate: UIImage]? {
         isPreparingShare = true
         defer {
@@ -229,6 +240,7 @@ struct GridArchiveView: View {
         year: Int,
         postRepository: any PostRepository,
         imageFetching: any ImageFetching,
+        inviteRepository: any InviteRepository,
         uploadQueue: UploadQueue? = nil,
         isPro: Bool,
         today: LocalDate,
@@ -242,6 +254,7 @@ struct GridArchiveView: View {
             year: year,
             postRepository: postRepository,
             imageFetching: imageFetching,
+            inviteRepository: inviteRepository,
             uploadQueue: uploadQueue,
             isPro: isPro,
             today: today,
@@ -277,6 +290,7 @@ struct GridArchiveView: View {
             onRetryArchive: viewModel.retryObservation
         )
             .navigationBarTitleDisplayMode(.inline)
+            .preferredColorScheme(.dark)
             .sheet(item: $shareItem) { item in
                 ShareSheet(items: [item.image])
             }
@@ -294,12 +308,15 @@ struct GridArchiveView: View {
         guard !viewModel.isPreparingShare else { return }
         let postedDates = Set(visiblePosts.keys)
         Task {
-            // TODO(growth): pass this user's current invite link once this view
-            // has access to `InviteRepository` — `ShareCardRenderer.render`
-            // already accepts `inviteLinkURL:` and renders it when non-nil.
-            guard let photos = await viewModel.loadThumbnailsForSharing(),
-                  let image = ShareCardRenderer.render(year: viewModel.year, postedDates: postedDates, photos: photos)
-            else { return }
+            guard let photos = await viewModel.loadThumbnailsForSharing() else { return }
+            let inviteLinkURL = await viewModel.currentInviteLinkURL()
+            let image = ShareCardRenderer.render(
+                year: viewModel.year,
+                postedDates: postedDates,
+                photos: photos,
+                inviteLinkURL: inviteLinkURL
+            )
+            guard let image else { return }
             shareItem = ShareItem(image: image)
         }
     }
@@ -343,13 +360,14 @@ private struct ArchivePhotoDetail: View {
                 }
                 .padding(SGSpacing.xl)
             }
-            .background(SGT.background)
+            .background(MokuColor.nightStage)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Close", action: { dismiss() })
                 }
             }
         }
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -366,6 +384,7 @@ struct SkyGridArchiveTab: View {
     private let currentYear: Int
     private let postRepository: any PostRepository
     private let imageFetching: any ImageFetching
+    private let inviteRepository: any InviteRepository
     private let uploadQueue: UploadQueue?
     private let isPro: Bool
     private let today: LocalDate
@@ -377,6 +396,7 @@ struct SkyGridArchiveTab: View {
         currentYear: Int,
         postRepository: any PostRepository,
         imageFetching: any ImageFetching,
+        inviteRepository: any InviteRepository,
         uploadQueue: UploadQueue? = nil,
         isPro: Bool,
         today: LocalDate,
@@ -386,6 +406,7 @@ struct SkyGridArchiveTab: View {
         self.currentYear = currentYear
         self.postRepository = postRepository
         self.imageFetching = imageFetching
+        self.inviteRepository = inviteRepository
         self.uploadQueue = uploadQueue
         self.isPro = isPro
         self.today = today
@@ -399,6 +420,7 @@ struct SkyGridArchiveTab: View {
             year: selectedYear,
             postRepository: postRepository,
             imageFetching: imageFetching,
+            inviteRepository: inviteRepository,
             uploadQueue: uploadQueue,
             isPro: isPro,
             today: today,

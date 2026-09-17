@@ -1,4 +1,4 @@
-import AudioToolbox
+import AVFoundation
 import Foundation
 import Testing
 @testable import SkyGrid
@@ -6,22 +6,22 @@ import Testing
 @MainActor
 @Suite("SoundEffectPlayer")
 struct SoundEffectPlayerTests {
-    @Test("muted playback does not resolve or create a sound")
+    @Test("muted playback does not resolve or create a player")
     func muteIsAHardGate() {
         var resolved = false
         var created = false
-        var played: [SystemSoundID] = []
+        var played = false
         let player = SoundEffectPlayer(
             isPlaybackEnabled: { false },
             resourceURL: { _ in resolved = true; return URL(fileURLWithPath: "/sound.caf") },
-            makeSoundID: { _ in created = true; return 41 },
-            playSoundID: { played.append($0) }
+            makePlayer: { _ in created = true; return dummyPlayer() },
+            playPlayer: { _ in played = true }
         )
 
         #expect(!player.play(.captureSaved))
         #expect(!resolved)
         #expect(!created)
-        #expect(played.isEmpty)
+        #expect(!played)
     }
 
     @Test("missing assets fail quietly")
@@ -30,34 +30,34 @@ struct SoundEffectPlayerTests {
         let player = SoundEffectPlayer(
             isPlaybackEnabled: { true },
             resourceURL: { _ in nil },
-            makeSoundID: { _ in created = true; return 42 },
-            playSoundID: { _ in }
+            makePlayer: { _ in created = true; return dummyPlayer() },
+            playPlayer: { _ in }
         )
 
         #expect(!player.play(.recoverableError))
         #expect(!created)
     }
 
-    @Test("created system sound IDs are cached and released")
-    func cachesAndReleasesSoundIDs() {
+    @Test("created players are cached and released")
+    func cachesAndReleasesPlayers() {
         var creationCount = 0
-        var played: [SystemSoundID] = []
-        var disposed: [SystemSoundID] = []
+        var playCount = 0
+        var releaseCount = 0
         let player = SoundEffectPlayer(
             isPlaybackEnabled: { true },
             resourceURL: { _ in URL(fileURLWithPath: "/sound.caf") },
-            makeSoundID: { _ in creationCount += 1; return 43 },
-            playSoundID: { played.append($0) },
-            disposeSoundID: { disposed.append($0) }
+            makePlayer: { _ in creationCount += 1; return dummyPlayer() },
+            playPlayer: { _ in playCount += 1 },
+            releasePlayer: { _ in releaseCount += 1 }
         )
 
         #expect(player.play(.captureSaved))
         #expect(player.play(.captureSaved))
         #expect(creationCount == 1)
-        #expect(played == [43, 43])
+        #expect(playCount == 2)
 
         player.releaseResources()
-        #expect(disposed == [43])
+        #expect(releaseCount == 1)
     }
 
     @Test("sound asset names stay complete and stable")
@@ -83,6 +83,19 @@ struct SoundEffectPlayerTests {
             ) != nil)
         }
     }
+}
+
+// MARK: - Test Helpers
+
+/// Create a dummy AVAudioPlayer for testing. Uses a real bundled sound file
+/// to satisfy AVAudioPlayer's initialization requirements.
+@MainActor
+private func dummyPlayer() -> AVAudioPlayer? {
+    guard let url = Bundle.main.url(
+        forResource: "moku_tap",
+        withExtension: "caf"
+    ) else { return nil }
+    return try? AVAudioPlayer(contentsOf: url)
 }
 
 @Suite("RewardSoundPolicy")

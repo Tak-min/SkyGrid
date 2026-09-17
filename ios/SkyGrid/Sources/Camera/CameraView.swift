@@ -134,7 +134,6 @@ struct CameraView: View {
                 }
                 .foregroundStyle(.white)
                 Spacer()
-                MokuScreenMark(state: .settled, side: 42)
                 if !requiresCaptureToDismiss { closeButton }
             }
         } viewfinder: {
@@ -142,7 +141,7 @@ struct CameraView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         } controls: {
-            VStack(spacing: SGSpacing.sm) {
+            VStack(spacing: SGSpacing.md) {
                 Text("KEEP THIS SKY")
                     .font(SGFont.caption(12))
                     .tracking(1.4)
@@ -255,41 +254,50 @@ struct CameraFailureContent: View {
     var body: some View {
         GeometryReader { proxy in
             ScrollView(showsIndicators: false) {
-                VStack(spacing: SGSpacing.xl) {
-                    MokuView(state: .error, side: 100)
+                VStack(spacing: SGSpacing.xxl) {
+                    Spacer()
+                        .frame(height: SGSpacing.lg)
 
-                    VStack(spacing: SGSpacing.sm) {
+                    MokuView(state: .error, side: 120)
+
+                    VStack(spacing: SGSpacing.md) {
                         Text(failure.title)
-                            .font(.system(size: 30, weight: .black, design: .rounded))
+                            .font(SGFont.display(48, weight: .black))
+                            .tracking(-0.5)
                         Text(failure.message)
-                            .font(SGFont.body(15))
-                            .foregroundStyle(.white.opacity(0.74))
+                            .font(SGFont.body(16))
+                            .foregroundStyle(.white.opacity(0.72))
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    VStack(spacing: SGSpacing.sm) {
+                    Spacer()
+
+                    VStack(spacing: SGSpacing.md) {
                         Button(action: onPrimaryAction) {
                             Group {
                                 if isRecovering {
-                                    ProgressView().tint(.black)
+                                    ProgressView().tint(.white)
                                 } else {
                                     Text(failure.actionTitle)
                                 }
                             }
                             .font(SGFont.body(16))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, minHeight: 54)
-                            .background(.white, in: Capsule())
+                            .background(SGT.accent, in: Capsule())
                         }
                         .buttonStyle(.plain)
                         .disabled(isRecovering)
 
                         Button(closeTitle, action: onClose)
                             .font(SGFont.body(15))
-                            .foregroundStyle(.white.opacity(0.82))
+                            .foregroundStyle(.white.opacity(0.72))
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
+
+                    Spacer()
+                        .frame(height: SGSpacing.lg)
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: 340)
@@ -524,16 +532,16 @@ private struct CameraChoiceButtonStyle: ButtonStyle {
             .font(SGFont.body(16))
             .lineLimit(1)
             .minimumScaleFactor(0.75)
-            .foregroundStyle(emphasized ? Color.black : Color.white)
+            .foregroundStyle(Color.white)
             .frame(maxWidth: .infinity, minHeight: 54)
-            .background(emphasized ? Color.white : Color.white.opacity(0.16), in: Capsule())
+            .background(emphasized ? SGT.accent : Color.white.opacity(0.16), in: Capsule())
             .overlay {
                 if !emphasized {
                     Capsule().strokeBorder(.white.opacity(0.42), lineWidth: 1)
                 }
             }
-            .opacity(configuration.isPressed ? 0.72 : 1)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
-            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: configuration.isPressed)
+            .opacity(configuration.isPressed ? 0.82 : 1)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }

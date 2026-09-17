@@ -6,6 +6,8 @@ import SwiftUI
 ///
 /// Each tile's state already encodes the reveal gate (see `BuddyTile`), so this row
 /// is purely layout — it no longer needs to know whether the viewer has posted.
+/// Revealed skies use a photo-first card rather than a tiny avatar: the buddy is a
+/// core product action, not metadata below the morning record.
 struct BuddyRow: View {
     let buddies: [TodayViewModel.BuddyStatus]
     let today: LocalDate
@@ -19,7 +21,7 @@ struct BuddyRow: View {
                     if buddy.post != nil {
                         Button { onSelect(buddy) } label: { tile(for: buddy) }
                             .buttonStyle(.plain)
-                            .accessibilityHint("Opens the Pro comparison for both skies")
+                            .accessibilityHint("Opens the buddy sky feed")
                     } else {
                         tile(for: buddy)
                     }
@@ -41,7 +43,8 @@ struct BuddyRow: View {
                     buddyName: buddy.displayName
                 )
                 : nil,
-            imageFetching: imageFetching
+            imageFetching: imageFetching,
+            style: .featured
         )
     }
 }

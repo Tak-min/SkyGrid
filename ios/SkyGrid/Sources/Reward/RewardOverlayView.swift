@@ -109,7 +109,19 @@ struct RewardOverlayView: View {
             for: moment.localDate,
             reading: revealSignal.reading
         )
-        VStack(spacing: SGSpacing.lg) {
+        VStack(spacing: SGSpacing.xl) {
+            VStack(spacing: SGSpacing.md) {
+                if beat != .settle {
+                    Text("SAVED")
+                        .font(SGFont.title(42))
+                        .tracking(-0.4)
+                        .foregroundStyle(SGT.accent)
+                        .opacity(beat == .captureConfirmation || beat == .pixelDerivation ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.2), value: beat)
+                }
+            }
+            .frame(height: beat == .settle ? 0 : nil)
+
             ZStack {
                 RewardMosaicLandingView(
                     sourceThumbnail: sourceThumbnail,
@@ -124,16 +136,14 @@ struct RewardOverlayView: View {
                     ConfettiView(
                         palette: [
                             moment.skyColor.color,
-                            MokuColor.dawnSpark,
-                            MokuColor.cloud
+                            SGT.accent,
+                            SGT.accentSecondary
                         ],
                         seed: UInt64(bitPattern: Int64(moment.localDate.docID.hashValue))
                     )
                     .frame(width: 220, height: 220)
                 }
                 if reduceMotion, beat != .settle {
-                    // The Reduce Motion equivalent of confetti: a static halo, not a
-                    // moving burst, shown for up to 500 ms per DESIGN.md.
                     Circle()
                         .fill(moment.skyColor.color.opacity(0.35))
                         .frame(width: 160, height: 160)
@@ -142,6 +152,7 @@ struct RewardOverlayView: View {
                     .offset(y: 116)
             }
             .frame(height: 310)
+
             if beat == .settle, revealedCount > 0 {
                 RewardBuddyRevealStrip(
                     statuses: revealSignal.reading?.buddyStatuses ?? [],

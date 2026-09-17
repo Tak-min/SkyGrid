@@ -1,4 +1,4 @@
-import AudioToolbox
+import AVFoundation
 import Foundation
 import UIKit
 
@@ -16,19 +16,20 @@ enum AppSoundEffect: String, CaseIterable {
     static let fileExtension = "caf"
 }
 
-/// Low-latency playback for short UI sounds. The system-sound path respects the
-/// device's silent setting, and IDs are cached after first use to avoid decoding on
-/// each reward. All decisions remain injectable so tests never play host audio.
+/// Low-latency playback for short UI sounds. Uses AVAudioPlayer routed through the app's
+/// audio session (media-volume-controlled) rather than system sounds. Respects the device's
+/// silent setting via the .ambient audio category. All decisions remain injectable so tests
+/// never play host audio.
 @MainActor
 final class SoundEffectPlayer {
     static let shared = SoundEffectPlayer()
 
     private let isPlaybackEnabled: @MainActor () -> Bool
     private let resourceURL: (AppSoundEffect) -> URL?
-    private let makeSoundID: (URL) -> SystemSoundID?
-    private let playSoundID: (SystemSoundID) -> Void
-    private let disposeSoundID: (SystemSoundID) -> Void
-    private var soundIDs: [AppSoundEffect: SystemSoundID] = [:]
+    private let makePlayer: (URL) -> AVAudioPlayer?
+    private let playPlayer: (AVAudioPlayer) -> Void
+    private let releasePlayer: (AVAudioPlayer) -> Void
+    private var players: [AppSoundEffect: AVAudioPlayer] = [:]
 
     init(
         isPlaybackEnabled: @escaping @MainActor () -> Bool = {
@@ -42,23 +43,29 @@ final class SoundEffectPlayer {
                 withExtension: AppSoundEffect.fileExtension
             )
         },
-        makeSoundID: @escaping (URL) -> SystemSoundID? = { url in
-            var soundID: SystemSoundID = 0
-            let status = AudioServicesCreateSystemSoundID(url as CFURL, &soundID)
-            return status == kAudioServicesNoError ? soundID : nil
+        makePlayer: @escaping (URL) -> AVAudioPlayer? = { url in
+            do {
+                let player = try AVAudioPlayer(contentsOf: url)
+                player.volume = 1.0
+                player.prepareToPlay()
+                return player
+            } catch {
+                return nil
+            }
         },
-        playSoundID: @escaping (SystemSoundID) -> Void = { soundID in
-            AudioServicesPlaySystemSound(soundID)
+        playPlayer: @escaping (AVAudioPlayer) -> Void = { player in
+            player.currentTime = 0
+            player.play()
         },
-        disposeSoundID: @escaping (SystemSoundID) -> Void = { soundID in
-            AudioServicesDisposeSystemSoundID(soundID)
+        releasePlayer: @escaping (AVAudioPlayer) -> Void = { player in
+            player.stop()
         }
     ) {
         self.isPlaybackEnabled = isPlaybackEnabled
         self.resourceURL = resourceURL
-        self.makeSoundID = makeSoundID
-        self.playSoundID = playSoundID
-        self.disposeSoundID = disposeSoundID
+        self.makePlayer = makePlayer
+        self.playPlayer = playPlayer
+        self.releasePlayer = releasePlayer
     }
 
     /// Returns whether playback was accepted. Missing/corrupt resources fail
@@ -67,24 +74,38 @@ final class SoundEffectPlayer {
     func play(_ effect: AppSoundEffect) -> Bool {
         guard isPlaybackEnabled() else { return false }
 
-        if let soundID = soundIDs[effect] {
-            playSoundID(soundID)
+        if let player = players[effect] {
+            playPlayer(player)
             return true
         }
 
         guard let url = resourceURL(effect),
-              let soundID = makeSoundID(url)
+              let player = makePlayer(url)
         else { return false }
 
-        soundIDs[effect] = soundID
-        playSoundID(soundID)
+        players[effect] = player
+        playPlayer(player)
         return true
     }
 
+    /// Prewarm all sounds at app startup to avoid first-play latency.
+    /// Called from AppDelegate.didFinishLaunchingWithOptions.
+    func prewarmAllSounds() {
+        for effect in AppSoundEffect.allCases {
+            // Silently ignore missing/corrupt resources during prewarm;
+            // users still get a working app even if a particular sound fails to load.
+            if let url = resourceURL(effect), players[effect] == nil {
+                if let player = makePlayer(url) {
+                    players[effect] = player
+                }
+            }
+        }
+    }
+
     /// Explicit rather than `deinit`: the production singleton lives for the app
-    /// process, while tests can deterministically prove cached IDs are disposed.
+    /// process, while tests can deterministically prove cached players are released.
     func releaseResources() {
-        soundIDs.values.forEach(disposeSoundID)
-        soundIDs.removeAll()
+        players.values.forEach(releasePlayer)
+        players.removeAll()
     }
 }

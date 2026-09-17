@@ -406,6 +406,15 @@ private struct MokuArtwork: View {
             limbContext.translateBy(x: joint.x, y: joint.y)
             limbContext.rotate(by: .degrees(angle))
             limbContext.translateBy(x: -joint.x, y: -joint.y)
+            // The original ink-only limbs disappeared against the near-black
+            // camera/reward stage, especially at small sizes. A quiet cloud outline
+            // keeps the hand/foot silhouette readable without changing Moku's
+            // pixel language; the inner ink still preserves the dark limb identity.
+            let outline = rect.insetBy(dx: -max(1.5, armThickness * 0.3), dy: -max(1.5, armThickness * 0.3))
+            limbContext.fill(
+                Path(roundedRect: outline, cornerRadius: armThickness * 0.3),
+                with: .color(MokuColor.cloud.opacity(0.96))
+            )
             limbContext.fill(
                 Path(roundedRect: rect, cornerRadius: armThickness * 0.18),
                 with: .color(MokuColor.ink)

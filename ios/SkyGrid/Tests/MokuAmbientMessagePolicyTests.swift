@@ -45,6 +45,14 @@ struct MokuAmbientMessagePolicyTests {
         )
 
         #expect(MokuAmbientMessagePolicy.eligibleAnchors(for: context) == [.mosaicEntry, .heading])
+        #expect(!MokuAmbientMessagePolicy.canConsumeDailySlot(for: context))
+    }
+
+    @Test("resolved post state may consume the daily slot")
+    func resolvedPostStateCanConsumeDailySlot() {
+        #expect(MokuAmbientMessagePolicy.canConsumeDailySlot(
+            for: context(posted: false, buddies: false, buddyPosted: false, streak: 0)
+        ))
     }
 
     @Test("the probability gate is thirty percent")

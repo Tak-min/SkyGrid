@@ -54,6 +54,7 @@ final class TodayViewModel {
     private(set) var orphanedPostRecoveryError: String?
 
     private let uid: String
+    var accountID: String { uid }
     private let postRepository: any PostRepository
     private let userRepository: any UserRepository
     private let friendRepository: any FriendRepository
