@@ -946,11 +946,29 @@ struct RootView: View {
     /// paywall/invite) for the same reason `showEarlyAdopterReveal` is: this fires
     /// at most once ever per account and does not participate in that priority
     /// arbitration, it only avoids stacking on top of whatever is already showing.
+    /// Races `consumePendingCameraRequestIfNeeded()`, which also runs from a
+    /// `.task` attached to this same view and independently decides to present
+    /// the camera. That decision needs an async network read (or, on the
+    /// `wantsCameraFromAlarm`/`wantsCameraFromOnboarding` fast path, still hops
+    /// through its own `Task`) before it calls `presentations.present(.camera)` —
+    /// so at the instant this guard runs, `presentations.isAvailable` can still
+    /// read `true` even though a camera presentation is already inbound. Two
+    /// `fullScreenCover`s requested back-to-back like that is what produced the
+    /// reported bug: a blank white screen, or a walkthrough/camera stuck on top
+    /// of each other with unresponsive buttons. The walkthrough is a one-time,
+    /// non-urgent reveal — deferring it to a later, quieter launch (it re-checks
+    /// every time `services.currentUid` starts a fresh session) is a strictly
+    /// safer trade than racing the first-capture camera flow for the same slot.
     private func checkTodayWalkthrough(services: AppServices) async {
         let uid = services.currentUid
+        let hasPendingCameraRoute = router.pendingRoute == .camera
+            || LocalDefaults.openCameraAfterMorningAlarm
+            || LocalDefaults.openCameraAfterOnboarding
+            || cameraRouteTask != nil
         guard !uid.isEmpty,
               !LocalDefaults.hasShownTodayWalkthrough(for: uid),
-              presentations.isAvailable
+              presentations.isAvailable,
+              !hasPendingCameraRoute
         else { return }
         showTodayWalkthrough = true
     }
