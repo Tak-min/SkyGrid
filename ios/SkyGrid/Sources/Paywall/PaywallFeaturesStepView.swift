@@ -31,12 +31,12 @@ struct PaywallFeaturesStepView: View {
             freeChoice
         } cta: {
             Button(action: onAdvance) {
-                Text("See plans and pricing")
+                Text(L10n.string("See plans and pricing"))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SkyPrimaryButtonStyle())
 
-            Button("Continue with Free", action: onContinueWithFree)
+            Button(L10n.string("Continue with Free"), action: onContinueWithFree)
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
         }
@@ -52,28 +52,28 @@ struct PaywallFeaturesStepView: View {
             )
             PaywallBenefit(
                 symbol: "square.grid.3x3",
-                title: "Browse a month at a time",
-                detail: "See the photos behind every season, not a colour substitute."
+                title: L10n.string("paywall.features.month.title"),
+                detail: L10n.string("paywall.features.month.detail")
             )
             PaywallBenefit(
                 symbol: "person.3.fill",
-                title: "Grow an unlimited Circle",
-                detail: "Keep as many buddies as you like instead of Free's 5."
+                title: L10n.string("paywall.features.circle.title"),
+                detail: L10n.string("paywall.features.circle.detail")
             )
             PaywallBenefit(
                 symbol: "rectangle.split.2x1.fill",
-                title: "Put two skies side by side",
-                detail: "Open and share a together card after you and a buddy both capture."
+                title: L10n.string("paywall.features.together.title"),
+                detail: L10n.string("paywall.features.together.detail")
             )
             PaywallBenefit(
                 symbol: "rectangle.stack.fill",
-                title: "Relive every complete week",
-                detail: "Turn seven mornings into a weekly recap you can share."
+                title: L10n.string("paywall.features.weekly.title"),
+                detail: L10n.string("paywall.features.weekly.detail")
             )
             PaywallBenefit(
                 symbol: "square.and.arrow.up",
-                title: "A full-year share card",
-                detail: "Export the complete color record when there is a year to share."
+                title: L10n.string("paywall.features.yearShare.title"),
+                detail: L10n.string("paywall.features.yearShare.detail")
             )
         }
         .padding(SGSpacing.lg)
@@ -84,7 +84,7 @@ struct PaywallFeaturesStepView: View {
         HStack(alignment: .top, spacing: SGSpacing.sm) {
             Image(systemName: "checkmark.circle")
                 .foregroundStyle(SGT.ink2)
-            Text("Free includes daily capture, the recent archive, and a 5-person Circle. Pro opens the full archive, month view, an unlimited Circle, together cards, and weekly recaps.")
+            Text(L10n.string("paywall.features.freeDescription"))
                 .font(SGFont.caption(13))
                 .foregroundStyle(SGT.ink2)
         }
@@ -134,7 +134,7 @@ private struct ArchiveGrowthPreview: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(String(format: L10n.string("paywall.archiveGrowthPreviewAccessibility"), stageLabel))
-        .accessibilityHint("Replays the seven day, thirty day, and one year preview")
+                    .accessibilityHint(L10n.string("Replays the seven day, thirty day, and one year preview"))
         .task { await play() }
     }
 

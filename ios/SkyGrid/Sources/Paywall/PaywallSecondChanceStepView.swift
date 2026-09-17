@@ -25,14 +25,14 @@ struct PaywallSecondChanceStepView: View {
         switch state {
         case .idle, .loading:
             status(
-                title: "Checking your App Store offer…",
-                detail: "We’re verifying the real price and whether Apple can apply it to this account.",
+                title: L10n.string("paywall.secondChance.status.checking.title"),
+                detail: L10n.string("paywall.secondChance.status.checking.detail"),
                 showsSpinner: true
             )
         case .disconnected:
             status(
-                title: "You appear to be offline.",
-                detail: "We couldn’t verify the offer with the App Store. Check your connection and try again.",
+                title: L10n.string("paywall.secondChance.status.offline.title"),
+                detail: L10n.string("paywall.secondChance.status.offline.detail"),
                 showsSpinner: false
             )
         case .unavailable:
@@ -56,7 +56,7 @@ struct PaywallSecondChanceStepView: View {
                 .padding(SGSpacing.lg)
                 .background(SGT.fill, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 
-                Text("Your subscription renews monthly at the regular price shown above unless cancelled. Cancel anytime in your App Store subscriptions.")
+                Text(L10n.string("paywall.secondChance.renewalNotice"))
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -88,14 +88,14 @@ struct PaywallSecondChanceStepView: View {
 
             legalAndFree
         case .disconnected:
-            Button("Try again", action: onRetry)
+            Button(L10n.string("Try again"), action: onRetry)
                 .buttonStyle(SkyPrimaryButtonStyle())
-            Button("Continue with Free", action: onContinueWithFree)
+            Button(L10n.string("Continue with Free"), action: onContinueWithFree)
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
                 .frame(minHeight: 44)
         case .idle, .loading:
-            Button("Continue with Free", action: onContinueWithFree)
+            Button(L10n.string("Continue with Free"), action: onContinueWithFree)
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
                 .frame(minHeight: 44)
@@ -136,16 +136,16 @@ struct PaywallSecondChanceStepView: View {
     private var legalAndFree: some View {
         VStack(spacing: SGSpacing.md) {
             HStack(spacing: SGSpacing.md) {
-                Link("Terms of Use", destination: PaywallLegal.termsURL)
+                Link(L10n.string("Terms of Use"), destination: PaywallLegal.termsURL)
                 if let privacyURL = PaywallLegal.privacyURL {
                     Text("·").foregroundStyle(SGT.ink3)
-                    Link("Privacy Policy", destination: privacyURL)
+                    Link(L10n.string("Privacy Policy"), destination: privacyURL)
                 }
             }
             .font(SGFont.caption(12))
             .foregroundStyle(SGT.ink3)
 
-            Button("Continue with Free", action: onContinueWithFree)
+            Button(L10n.string("Continue with Free"), action: onContinueWithFree)
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
                 .frame(minHeight: 44)

@@ -15,12 +15,12 @@ struct PaywallValueStepView: View {
             hero
         } cta: {
             Button(action: onAdvance) {
-                Text("See what Pro opens")
+                Text(L10n.string("See plans and pricing"))
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(SkyPrimaryButtonStyle())
 
-            Button("Continue with Free", action: onContinueWithFree)
+            Button(L10n.string("Continue with Free"), action: onContinueWithFree)
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
         }
@@ -38,7 +38,7 @@ struct PaywallValueStepView: View {
                 .font(.system(size: entryPoint.isAutomaticReminder ? 30 : 34, weight: .black, design: .rounded))
                 .foregroundStyle(SGT.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Keep the newest 30 days free. Upgrade only when you want the long view.")
+            Text(L10n.string("Keep the newest 30 days free. Upgrade only when you want the long view."))
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
             if let personalizedValueNote = entryPoint.personalizedValueNote {

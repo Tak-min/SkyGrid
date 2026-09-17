@@ -143,7 +143,8 @@ struct SettingsView: View {
             .padding(SGSpacing.xl)
             .playfulEntrance()
         }
-        .background(PlayfulStageBackdrop(accent: SGT.accent))
+        .background(MokuColor.nightStage.ignoresSafeArea())
+        .preferredColorScheme(.dark)
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPaywall) {
