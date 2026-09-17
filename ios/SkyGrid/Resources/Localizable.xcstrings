@@ -38,13 +38,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A little sky. A morning that's yours."
+            "value": "A sky photo for your morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "小さな空。あなただけの朝。"
+            "value": "朝の空を、1枚残そう。"
           }
         }
       }
@@ -182,13 +182,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alarm, archive, privacy, and support stay within reach."
+            "value": "Quick access to alarms, archive, privacy, and support."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アラーム、アーカイブ、プライバシー、サポートはいつでもすぐそこに。"
+            "value": "アラーム、アーカイブ、プライバシー、サポートにすぐアクセスできます。"
           }
         }
       }
@@ -1164,7 +1164,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sky GridとBuddiesを見る"
+            "value": "Sky Gridとバディを見る"
           }
         }
       }
@@ -1318,13 +1318,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invite people you trust. Each sky stays sealed until you've each captured the same morning."
+            "value": "Invite people you trust. You won't see each other's sky until you've both captured that morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "信頼できる人を招待しよう。同じ朝にお互い撮るまで、空は封印されたまま。"
+            "value": "信頼できる人を招待しよう。その朝にお互いが撮影するまで、相手の空は表示されないよ。"
           }
         }
       }
@@ -1334,13 +1334,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invite people you trust. Your skies unlock each other."
+            "value": "Invite people you trust. Capture to see each other's skies."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "信頼できる人を招待しよう。お互いの空が解禁されます。"
+            "value": "信頼できる人を招待しよう。お互いに撮影すると、相手の空を見られるよ。"
           }
         }
       }
@@ -1430,13 +1430,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep one\nmorning sky."
+            "value": "Save one\nmorning sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空をひとつ、\n残しておこう。"
+            "value": "朝の空を1枚、\n残そう。"
           }
         }
       }
@@ -1446,13 +1446,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the newest 30 days free. Upgrade only when you want the long view."
+            "value": "Keep the latest 30 days free. Upgrade when you want to keep more."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "直近30日は無料のまま。長期の記録が欲しくなったらアップグレードしよう。"
+            "value": "直近30日は無料のまま。もっと長く記録を残したくなったらアップグレードしよう。"
           }
         }
       }
@@ -2022,13 +2022,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "QUESTION 6 OF 6 · A time is enough for now. You can always change it."
+            "value": "QUESTION 6 OF 6 · Choose a time for now. You can change it later."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "質問 6/6 · とりあえず時間だけでOK。あとでいつでも変えられるよ。"
+            "value": "質問 6/6 · ひとまず時間を選んでね。あとでいつでも変更できるよ。"
           }
         }
       }
@@ -2262,13 +2262,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reveal your skies\ntogether."
+            "value": "See each other's\nskies."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空を、\n一緒に解禁しよう。"
+            "value": "お互いの空を\n見よう。"
           }
         }
       }
@@ -2374,13 +2374,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Same morning, two skies"
+            "value": "Two skies from the same morning"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "同じ朝、2つの空"
+            "value": "同じ朝に撮った2つの空"
           }
         }
       }
@@ -2454,13 +2454,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "See every sky become part of the year"
+            "value": "See all your sky photos from the year"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべての空が、1年の一部になっていく"
+            "value": "1年分の空の写真を見よう"
           }
         }
       }
@@ -2486,13 +2486,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "See what Pro opens"
+            "value": "See what's included with Pro"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Proで何が解禁されるか見てみよう"
+            "value": "Proで使える機能を見る"
           }
         }
       }
@@ -2566,13 +2566,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Seven mornings, one sky story"
+            "value": "Your last seven mornings"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "7つの朝、ひとつの空の物語"
+            "value": "7日分の朝の空"
           }
         }
       }
@@ -2726,13 +2726,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skies revealed together."
+            "value": "You can now see each other's skies."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空が、2人そろって解禁。"
+            "value": "お互いの空を見られるようになったよ。"
           }
         }
       }
@@ -2966,13 +2966,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Take one real photo first. Your archive options come after your first sky lands in the grid."
+            "value": "Take your first photo. Archive options will appear after it's added to your Sky Grid."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "まずは実際に1枚撮ってみよう。アーカイブの選択肢は、はじめての空がグリッドに入ったあとに出てくるよ。"
+            "value": "まずは1枚撮ってみよう。Sky Gridに最初の写真が追加されると、アーカイブの設定が表示されるよ。"
           }
         }
       }
@@ -3014,13 +3014,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The time your\nmorning begins"
+            "value": "Your morning\nstart time"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたの朝が\nはじまる時間"
+            "value": "朝をはじめる\n時間"
           }
         }
       }
@@ -3270,13 +3270,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock the full archive"
+            "value": "Access the full archive"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アーカイブ全体を解禁"
+            "value": "すべてのアーカイブを見る"
           }
         }
       }
@@ -3286,13 +3286,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use a different rhythm for weekdays, weekends, or any morning that needs its own start."
+            "value": "Set different times for weekdays, weekends, or specific mornings."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "平日、週末、特別な朝ごとに、違うリズムを使えるよ。"
+            "value": "平日や週末など、曜日に合わせて時間を変えられるよ。"
           }
         }
       }
@@ -3590,13 +3590,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "YOUR MOSAIC"
+            "value": "YOUR SKY GRID"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたのモザイク"
+            "value": "あなたのSKY GRID"
           }
         }
       }
@@ -3606,13 +3606,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "YOUR RITUAL"
+            "value": "YOUR ROUTINE"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたの習慣"
+            "value": "あなたのルーティン"
           }
         }
       }
@@ -3622,13 +3622,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "YOUR ROLLING WEEK, COMPLETE"
+            "value": "YOUR WEEK IS COMPLETE"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1週間分、コンプリート"
+            "value": "1週間分そろったよ"
           }
         }
       }
@@ -3798,13 +3798,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your morning,\nyour controls."
+            "value": "Set up your\nmorning your way."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたの朝は、\nあなたの手の中に。"
+            "value": "自分に合った\n朝の設定をしよう。"
           }
         }
       }
@@ -3814,13 +3814,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your mornings,\nkept together."
+            "value": "Keep your morning\nphotos together."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたの朝を、\nまとめて残そう。"
+            "value": "朝の写真を\nまとめて残そう。"
           }
         }
       }
@@ -3830,13 +3830,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your mosaic. See every sky become part of the year."
+            "value": "Your Sky Grid. See all your sky photos from the year."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたのモザイク。すべての空が、1年の一部になっていきます。"
+            "value": "あなたのSky Grid。1年分の空の写真を見よう。"
           }
         }
       }
@@ -3878,13 +3878,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your skies stay sealed until you've each captured this morning."
+            "value": "You won't see each other's skies until you've both captured this morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "お互いに今朝の空を撮るまで、空は封印されたまま。"
+            "value": "今朝お互いに撮影するまで、相手の空は見られないよ。"
           }
         }
       }
@@ -3894,13 +3894,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your skies stay softly blurred to each other until you've both captured the morning."
+            "value": "Your skies stay blurred until you've both captured this morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "お互いに今朝の空を撮るまで、空はぼんやりとしか見えないよ。"
+            "value": "今朝お互いに撮影するまで、相手の空はぼかして表示されるよ。"
           }
         }
       }
@@ -4358,13 +4358,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Capture your own sky to reveal together."
+            "value": "Capture your own sky to see each other's."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "自分の空を撮って、一緒に解禁しよう。"
+            "value": "自分の空を撮ると、お互いの空を見られるよ。"
           }
         }
       }
@@ -4374,13 +4374,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your sky is still needed"
+            "value": "Capture your sky to continue"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "あなたの空がまだ必要だよ"
+            "value": "あなたも空を撮ってね"
           }
         }
       }
@@ -4454,13 +4454,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reveal"
+            "value": "View"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "解禁"
+            "value": "見る"
           }
         }
       }
@@ -4518,13 +4518,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sealed until\nyou capture"
+            "value": "Hidden until\nyou capture"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "撮るまで\n封印中"
+            "value": "撮るまで\n非表示"
           }
         }
       }
@@ -5078,13 +5078,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Handles are unique, so this one belongs to someone else."
+            "value": "That handle is already in use."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ハンドルは一意なので、これはすでに他の人のものです。"
+            "value": "そのハンドルはすでに使われています。"
           }
         }
       }
@@ -5110,13 +5110,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your archive is safe and will come back with your account."
+            "value": "Your archive is safe and will be available again when you sign in."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "アーカイブは安全に保管されていて、アカウントと一緒に戻ってきます。"
+            "value": "アーカイブは保存されています。サインインすると、また利用できます。"
           }
         }
       }
@@ -5542,13 +5542,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock Pro to open its %lld saved photos."
+            "value": "Upgrade to Pro to view %lld saved photos."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Proで%lld枚の保存済み写真を解禁しよう。"
+            "value": "Proにアップグレードすると、保存済みの写真%lld枚を見られます。"
           }
         }
       }
@@ -5558,13 +5558,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock Pro to open its %lld saved photo."
+            "value": "Upgrade to Pro to view %lld saved photo."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Proで%lld枚の保存済み写真を解禁しよう。"
+            "value": "Proにアップグレードすると、保存済みの写真%lld枚を見られます。"
           }
         }
       }
@@ -5990,13 +5990,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Two hundred. Almost a year of skies."
+            "value": "Two hundred mornings."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "200回。もうすぐ1年分の空。"
+            "value": "200日達成。"
           }
         }
       }
@@ -6022,13 +6022,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A whole year. Every single morning."
+            "value": "A full year of mornings."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "まるまる1年。毎朝欠かさず。"
+            "value": "1年間、毎朝続いたよ。"
           }
         }
       }
@@ -6038,13 +6038,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fifty skies, one at a time."
+            "value": "Fifty mornings."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "50枚の空、ひとつずつ。"
+            "value": "50日達成。"
           }
         }
       }
@@ -6102,13 +6102,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The day looks different when you remember to look up."
+            "value": "Take a moment to look at today's sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "見上げることを忘れなければ、1日は違って見える。"
+            "value": "今日の空をちょっと見てみよう。"
           }
         }
       }
@@ -6118,13 +6118,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Morning light never repeats itself."
+            "value": "Every morning sky looks a little different."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "朝の光は、二度と同じにならない。"
+            "value": "朝の空は、毎日少しずつ違うよ。"
           }
         }
       }
@@ -6134,13 +6134,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skies change their mind a lot before noon."
+            "value": "The sky can change a lot before noon."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空って、お昼前によく気が変わるよね。"
+            "value": "お昼までに空が大きく変わることもあるよ。"
           }
         }
       }
@@ -6150,13 +6150,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Maybe today has a color you haven't met yet."
+            "value": "Maybe today's sky has a new color."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日はまだ出会ってない色があるかも。"
+            "value": "今日はいつもと違う空の色かも。"
           }
         }
       }
@@ -6166,13 +6166,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No rush. The sky is still becoming itself."
+            "value": "No rush. The sky is still changing."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "急がなくていいよ。空はまだ、なりかけの途中。"
+            "value": "急がなくて大丈夫。空はまだ変わっているよ。"
           }
         }
       }
@@ -6198,13 +6198,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Someone in your circle already looked up today."
+            "value": "Someone in your circle has already captured today's sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サークルの誰かは、もう今日の空を見上げたよ。"
+            "value": "サークルの誰かは、もう今日の空を撮ったよ。"
           }
         }
       }
@@ -6214,13 +6214,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A familiar sky is waiting beside yours."
+            "value": "A buddy's sky is waiting for you."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "見慣れた空が、きみの隣で待ってるよ。"
+            "value": "バディの空が届いているよ。"
           }
         }
       }
@@ -6230,13 +6230,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Two mornings just found each other."
+            "value": "You both captured this morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "2つの朝が、いま出会ったね。"
+            "value": "今朝は2人とも撮影できたね。"
           }
         }
       }
@@ -6246,13 +6246,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Every little square remembers a morning."
+            "value": "Each square is one morning you've captured."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ひとつひとつのマスが、朝の記憶。"
+            "value": "ひとつひとつのマスが、撮影した朝の記録だよ。"
           }
         }
       }
@@ -6262,13 +6262,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your grid is quietly filling in."
+            "value": "Your grid is filling up."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "きみのグリッドが、静かに埋まってきてるよ。"
+            "value": "グリッドが少しずつ埋まってきたよ。"
           }
         }
       }
@@ -6278,13 +6278,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Peek at how the year is changing color."
+            "value": "See how your sky colors have changed over the year."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1年がどう色づいてきたか、のぞいてみて。"
+            "value": "1年の空の色の変化を見てみよう。"
           }
         }
       }
@@ -6294,13 +6294,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "That color looks like it earned its morning."
+            "value": "That's a nice color for this morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "その色、今朝にふさわしいね。"
+            "value": "今朝もいい色だね。"
           }
         }
       }
@@ -6310,13 +6310,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "That light has a story in it."
+            "value": "That's some nice morning light."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "その光、なんか物語がありそう。"
+            "value": "いい朝の光だね。"
           }
         }
       }
@@ -6326,13 +6326,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The sky left a good one for you today."
+            "value": "You got a good sky today."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今日の空、いいの残しておいてくれたね。"
+            "value": "今日はいい空が撮れたね。"
           }
         }
       }
@@ -6342,13 +6342,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "One morning kept. That's how a rhythm begins."
+            "value": "That's one morning done. Keep it going."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1回、続いた。リズムはここから始まる。"
+            "value": "まずは1日目。ここから続けていこう。"
           }
         }
       }
@@ -6358,13 +6358,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld mornings in a row. Quietly impressive."
+            "value": "%lld mornings in a row. Nice work."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld日連続。ひそかにすごいよ。"
+            "value": "%lld日連続。いい感じだね。"
           }
         }
       }
@@ -6390,13 +6390,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This morning might brighten someone's day."
+            "value": "Someone might enjoy seeing this morning's sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今朝の空が、誰かの1日を明るくするかも。"
+            "value": "今朝の空、誰かに見せてもいいかも。"
           }
         }
       }
@@ -6406,13 +6406,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A sky like that is worth passing along."
+            "value": "This sky might be worth sharing."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "こんな空は、誰かに見せたくなる。"
+            "value": "この空、シェアしてみてもいいかも。"
           }
         }
       }
@@ -6486,13 +6486,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your sky is still waiting"
+            "value": "You haven't captured today's sky yet"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "まだ空が待ってるよ"
+            "value": "今日の空はまだ撮ってないよ"
           }
         }
       }
@@ -6534,13 +6534,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — there's room for real life."
+            "value": "%@ — you can always adjust this later."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@。無理しなくて大丈夫。"
+            "value": "%@。あとからいつでも変更できるよ。"
           }
         }
       }
@@ -6550,13 +6550,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "There's room for real life."
+            "value": "You can always adjust this later."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "無理しなくて大丈夫。"
+            "value": "あとからいつでも変更できるよ。"
           }
         }
       }
@@ -6566,13 +6566,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — a good place to begin."
+            "value": "%@ — that's a good place to start."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@。いいスタートだね。"
+            "value": "%@。まずはそこから始めよう。"
           }
         }
       }
@@ -6582,13 +6582,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Let's make this morning yours."
+            "value": "Choose what you want from your mornings."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今朝を、きみだけのものにしよう。"
+            "value": "朝をどう過ごしたいか選んでね。"
           }
         }
       }
@@ -6598,13 +6598,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Together is optional. Your sky is yours."
+            "value": "Adding buddies is optional. You can use Sky Grid on your own."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一緒にやるかは自由。空はきみのもの。"
+            "value": "バディの追加は任意だよ。1人でもSky Gridを使えるよ。"
           }
         }
       }
@@ -6630,13 +6630,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ works. I'll follow your pace."
+            "value": "%@ works. You can go at your own pace."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@でいこう。きみのペースに合わせるよ。"
+            "value": "%@でいこう。自分のペースで続けられるよ。"
           }
         }
       }
@@ -6646,13 +6646,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A pace that feels like you."
+            "value": "Choose a pace that works for you."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "きみらしいペースで。"
+            "value": "自分に合ったペースを選んでね。"
           }
         }
       }
@@ -6678,13 +6678,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — your sky stays yours."
+            "value": "%@ — you control who sees your sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@。空はきみのものだよ。"
+            "value": "%@。空を誰に見せるかは自分で決められるよ。"
           }
         }
       }
@@ -6694,13 +6694,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your sky. Your circle."
+            "value": "Choose who can see your skies."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "きみの空。きみのサークル。"
+            "value": "空を誰に見せるか選んでね。"
           }
         }
       }
@@ -6710,13 +6710,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ — you stay in control."
+            "value": "%@ — you can change this anytime."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@。きみが決められるよ。"
+            "value": "%@。あとからいつでも変更できるよ。"
           }
         }
       }
@@ -6726,13 +6726,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You choose the nudge."
+            "value": "Choose how you want to be reminded."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "きっかけは、きみが選んでね。"
+            "value": "リマインド方法を選んでね。"
           }
         }
       }
@@ -6742,13 +6742,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A time to look up."
+            "value": "Choose a time for your morning reminder."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空を見上げる時間を決めよう。"
+            "value": "朝のリマインド時間を決めよう。"
           }
         }
       }
@@ -6758,13 +6758,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "One sky is a beginning."
+            "value": "Start with your first sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空1枚が、はじまり。"
+            "value": "まずは最初の空を撮ろう。"
           }
         }
       }
@@ -6774,13 +6774,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A small daily mark, with room to miss one."
+            "value": "Capture most mornings, with no pressure if you miss one."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "毎日小さな記録を。たまに休んでも大丈夫。"
+            "value": "できる日は朝に撮影しよう。たまに休んでも大丈夫。"
           }
         }
       }
@@ -6806,13 +6806,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A consistent start to the days that need it."
+            "value": "Keep a consistent routine on weekdays."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "必要な日には、いつも同じスタートを。"
+            "value": "平日は決まったリズムで続けよう。"
           }
         }
       }
@@ -6838,13 +6838,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A record that grows at its own pace."
+            "value": "Capture whenever it fits your schedule."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "自分のペースで育っていく記録。"
+            "value": "自分の予定に合うときに撮影しよう。"
           }
         }
       }
@@ -6870,13 +6870,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "One quiet moment under the open sky."
+            "value": "Spend a little more time outside each morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空の下で過ごす、静かなひととき。"
+            "value": "朝に少し外へ出るきっかけにしよう。"
           }
         }
       }
@@ -6902,13 +6902,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A year that gradually becomes visible."
+            "value": "Keep a visual record of the year."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "少しずつ、見えてくる1年。"
+            "value": "1年の変化を写真で記録しよう。"
           }
         }
       }
@@ -6934,13 +6934,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A small reason to get up at the same time."
+            "value": "Use a small daily habit to help keep a regular wake time."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "同じ時間に起きる、ちょっとした理由。"
+            "value": "毎日の小さな習慣で、起きる時間を整えよう。"
           }
         }
       }
@@ -6966,13 +6966,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Room for the mornings that change."
+            "value": "Adjust when your mornings change."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "変わっていく朝にも余白を。"
+            "value": "予定に合わせて柔軟に続けられるよ。"
           }
         }
       }
@@ -6988,7 +6988,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "フレキシブル"
+            "value": "柔軟に"
           }
         }
       }
@@ -6998,13 +6998,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A reminder, never a reprimand."
+            "value": "Get reminders without pressure."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "リマインドはするけど、責めたりしないよ。"
+            "value": "無理なく続けられるようにリマインドするよ。"
           }
         }
       }
@@ -7030,13 +7030,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A clear time to begin the day."
+            "value": "Start each day at a set time."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1日をはじめる、はっきりした時間を。"
+            "value": "毎日決まった時間にはじめよう。"
           }
         }
       }
@@ -7078,13 +7078,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep weekends open and weekdays intentional."
+            "value": "Focus on weekdays and keep weekends flexible."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "週末は自由に、平日は意識的に。"
+            "value": "平日を中心に続けて、週末は自由に。"
           }
         }
       }
@@ -7094,13 +7094,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Return whenever the sky gives you a minute."
+            "value": "Come back whenever you have time."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空が時間をくれたときに、また戻っておいで。"
+            "value": "時間があるときに続けよう。"
           }
         }
       }
@@ -7110,13 +7110,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "One small reason to step outside at %@."
+            "value": "Step outside at %@ each morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@に、外へ出るちょっとした理由を。"
+            "value": "毎朝%@に外へ出てみよう。"
           }
         }
       }
@@ -7126,13 +7126,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A year of skies begins at %@."
+            "value": "Start your year of sky photos at %@."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@から、1年分の空がはじまる。"
+            "value": "%@から1年分の空の記録を始めよう。"
           }
         }
       }
@@ -7142,13 +7142,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A quieter way to keep %@."
+            "value": "Build a steady routine around %@."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@を、静かに続けていく方法。"
+            "value": "%@を目安に、朝のリズムを整えよう。"
           }
         }
       }
@@ -7158,13 +7158,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep it light. A missed morning is simply an empty square."
+            "value": "Keep it flexible. Missing a morning is okay."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "軽い気持ちで。休んだ朝は、ただの空白のマスだよ。"
+            "value": "無理なく続けよう。撮れない朝があっても大丈夫。"
           }
         }
       }
@@ -7190,13 +7190,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Let the time you choose lead to one simple first action."
+            "value": "Use your chosen time as a cue to take your morning photo."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "決めた時間が、シンプルな最初の一歩につながるよ。"
+            "value": "決めた時間になったら、朝の写真を撮ろう。"
           }
         }
       }
@@ -7238,13 +7238,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add a buddy only when the ritual already feels like yours."
+            "value": "Add a buddy when you're ready to share."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この習慣が自分のものだと感じられたら、バディを追加しよう。"
+            "value": "共有したくなったら、バディを追加しよう。"
           }
         }
       }
@@ -7254,13 +7254,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the changing light beyond the last 30 days."
+            "value": "Keep more than the latest 30 days of sky photos."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "直近30日を超えて、移りゆく光を残しておこう。"
+            "value": "直近30日より前の空の写真も残せるよ。"
           }
         }
       }
@@ -7270,13 +7270,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Let every morning stay in the same long-view grid."
+            "value": "Keep all your morning photos in one long-term archive."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべての朝を、ひとつの長い記録に残しておこう。"
+            "value": "朝の写真を長期でまとめて残せるよ。"
           }
         }
       }
@@ -7286,13 +7286,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the whole record as your rhythm takes shape."
+            "value": "Keep your full morning record as your routine grows."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "リズムができていく様子を、記録にまるごと残しておこう。"
+            "value": "朝の習慣を続けながら、記録をすべて残せるよ。"
           }
         }
       }
@@ -7334,13 +7334,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your sky stays your own by default."
+            "value": "Your sky is private by default."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空は、はじめは自分だけのもの。"
+            "value": "空は最初から非公開だよ。"
           }
         }
       }
@@ -7366,13 +7366,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Buddies are optional, and reciprocal."
+            "value": "Adding buddies is optional, and sharing works both ways."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "バディは任意、そしてお互い様。"
+            "value": "バディの追加は任意で、お互いに空を共有できるよ。"
           }
         }
       }
@@ -7430,13 +7430,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make the ritual\nyour own."
+            "value": "Choose the pace\nthat works for you."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この習慣を\n自分らしく。"
+            "value": "自分に合った\nペースを選ぼう。"
           }
         }
       }
@@ -7462,13 +7462,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep it private,\nor make room to share."
+            "value": "Keep it private,\nor share with a buddy."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "非公開のままにするか、\n共有できるようにするか。"
+            "value": "非公開にするか、\nバディと共有するか選ぼう。"
           }
         }
       }
@@ -7494,13 +7494,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "What should\nbring you back?"
+            "value": "How would you like\nto be reminded?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "何があれば、\nまた戻ってきたくなる？"
+            "value": "どんな方法で\n知らせてほしい？"
           }
         }
       }
@@ -7526,13 +7526,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A quiet nudge at the time I choose."
+            "value": "A regular reminder at the time I choose."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "決めた時間に、そっと知らせてくれる。"
+            "value": "決めた時間に通知で知らせてくれる。"
           }
         }
       }
@@ -7590,13 +7590,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A dedicated start to the morning."
+            "value": "An alarm to start your morning."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "朝のための、専用のスタート。"
+            "value": "朝を始める時間にアラームで知らせてくれる。"
           }
         }
       }
@@ -7830,13 +7830,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Return to every sky beyond the Free 30-day view, whenever you need a little outside."
+            "value": "Access all your sky photos beyond the Free 30-day view."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "無料プランの直近30日を超えて、外の空気が恋しくなったらいつでも空に戻れるよ。"
+            "value": "無料プランの直近30日より前の空の写真も見られるよ。"
           }
         }
       }
@@ -7846,13 +7846,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the changing light"
+            "value": "Keep more sky photos"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "移りゆく光を残そう"
+            "value": "もっと空の写真を残そう"
           }
         }
       }
@@ -7862,13 +7862,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open every sky beyond the Free 30-day view as the year changes colour."
+            "value": "Access all your sky photos beyond the Free 30-day view throughout the year."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "無料プランの直近30日を超えて、1年の移り変わりを空で見られるよ。"
+            "value": "無料プランの直近30日より前の写真も含めて、1年分の空を見られるよ。"
           }
         }
       }
@@ -7878,13 +7878,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the whole season"
+            "value": "Keep the full year"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "季節をまるごと残そう"
+            "value": "1年分の記録を残そう"
           }
         }
       }
@@ -7894,13 +7894,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep every morning beyond the Free 30-day view in one continuous record."
+            "value": "Keep all your morning photos beyond the Free 30-day view in one archive."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "無料プランの直近30日を超えて、すべての朝をひとつの記録に残そう。"
+            "value": "無料プランの直近30日より前の朝の写真も、まとめて残せるよ。"
           }
         }
       }
@@ -7910,13 +7910,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "See your rhythm take shape"
+            "value": "Keep your full routine"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "積み重なるリズムを見よう"
+            "value": "朝の記録をすべて残そう"
           }
         }
       }
@@ -7926,13 +7926,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep every morning in one continuous Sky Grid."
+            "value": "Keep all your morning photos in one Sky Grid."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべての朝をひとつのSky Gridに残そう。"
+            "value": "朝の写真をすべてひとつのSky Gridに残そう。"
           }
         }
       }
@@ -7942,13 +7942,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your first sky together is revealed. Keep the ritual going."
+            "value": "You've revealed your first skies together. Keep going with Pro."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "はじめての空が、2人の間で解禁されたよ。この習慣を続けよう。"
+            "value": "はじめてお互いの空を見られたね。Proでもっと続けよう。"
           }
         }
       }
@@ -7958,13 +7958,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Choose the plan that keeps your mornings in view."
+            "value": "Choose the plan that fits how long you want to keep your photos."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "毎朝を残しておけるプランを選ぼう。"
+            "value": "写真をどれくらい残したいかに合わせてプランを選ぼう。"
           }
         }
       }
@@ -7974,13 +7974,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld mornings in. Keep the whole sky record."
+            "value": "%lld mornings recorded. Keep your full archive."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld日分の記録。空の記録をまるごと残そう。"
+            "value": "%lld日分記録したよ。すべての記録を残そう。"
           }
         }
       }
@@ -7990,13 +7990,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the long view of your mornings."
+            "value": "Keep more of your morning photo history."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "朝の記録を、長く残しておこう。"
+            "value": "朝の写真をもっと長く残そう。"
           }
         }
       }
@@ -8006,13 +8006,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld mornings, just for you. Keep your whole sky record."
+            "value": "%lld mornings recorded. Keep your full archive."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld日分の記録、きみだけのために。空の記録をまるごと残そう。"
+            "value": "%lld日分記録したよ。すべての記録を残そう。"
           }
         }
       }
@@ -8022,13 +8022,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the mornings you return to in one complete record."
+            "value": "Keep all the mornings you capture in one archive."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "戻ってくる朝を、まるごと記録に残そう。"
+            "value": "撮影した朝をすべてひとつのアーカイブに残そう。"
           }
         }
       }
@@ -8038,13 +8038,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep the weekday rhythm you build in one continuous record."
+            "value": "Keep all your weekday morning photos in one archive."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "平日のリズムを、ひとつの記録にまとめて残そう。"
+            "value": "平日の朝の写真をすべてひとつのアーカイブに残そう。"
           }
         }
       }
@@ -8054,13 +8054,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep every sky you make time for, even when the weeks change."
+            "value": "Keep every sky you capture, even across different weeks."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "週が変わっても、時間を見つけて撮った空をすべて残そう。"
+            "value": "週が変わっても、撮った空をすべて残そう。"
           }
         }
       }
@@ -8182,13 +8182,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A month takes shape"
+            "value": "Your first month"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1か月分ができてくる"
+            "value": "最初の1か月"
           }
         }
       }
@@ -8198,13 +8198,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Your year becomes a landscape"
+            "value": "Your full year"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1年が、ひとつの景色になる"
+            "value": "1年分の記録"
           }
         }
       }
@@ -8582,13 +8582,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set the wake flow that brings you to the sky."
+            "value": "Set your morning alarm and wake-up flow."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空にたどり着くまでの目覚めの流れを設定しよう。"
+            "value": "朝のアラームと起床後の流れを設定します。"
           }
         }
       }
@@ -8710,13 +8710,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Celebrate saved skies and important moments."
+            "value": "Play sounds for saved photos and other key moments."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "空の保存や大切な瞬間を、音で盛り上げよう。"
+            "value": "写真の保存などのタイミングで効果音を鳴らします。"
           }
         }
       }
@@ -8774,13 +8774,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keep more than your latest 30 days."
+            "value": "Keep more than the latest 30 days of photos."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "直近30日を超えて残しておこう。"
+            "value": "直近30日より前の写真も残せます。"
           }
         }
       }
@@ -9270,13 +9270,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Six quick questions, then we'll shape your morning. Ready?"
+            "value": "Six quick questions, then we'll set up your morning. Ready?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "6つだけ質問するね。それから朝を一緒に作ろう。いい？"
+            "value": "6つだけ質問するね。そのあと朝の設定をしよう。いい？"
           }
         }
       }
@@ -9286,13 +9286,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A little late for introductions, but I'm Moku! Take one sky photo. Watch your year take shape."
+            "value": "A little late for introductions, but I'm Moku! Take one sky photo and start building your year."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "自己紹介が遅れたけど、Mokuっていうんだ！空を1枚撮って、1年の形を作っていこう。"
+            "value": "自己紹介が遅れたけど、Mokuっていうんだ！空を1枚撮って、1年分の記録を始めよう。"
           }
         }
       }
@@ -9318,13 +9318,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "your skies unlock each other"
+            "value": "you can see each other's skies"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "お互いの空が解禁される"
+            "value": "お互いの空を見られる"
           }
         }
       }
@@ -9455,6 +9455,310 @@
             "value": "7日間投稿したよ。確認してシェアしよう"
           }
         }
+      }
+    },
+    "earlyAdopter.reveal.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're one of our first 100."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先着100人に入りました。"
+          }
+        }
+      }
+    },
+    "earlyAdopter.reveal.subtitle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "60 days of Pro, on us."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proを60日間プレゼント。"
+          }
+        }
+      }
+    },
+    "earlyAdopter.reveal.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thanks for being here early."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "早くから使ってくれてありがとう。"
+          }
+        }
+      }
+    },
+    "earlyAdopter.reveal.dismiss": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "了解"
+          }
+        }
+      }
+    },
+    "paywall.secondChance.status.checking.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Checking your App Store offer…" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "App Storeのオファーを確認中…" } }
+      }
+    },
+    "paywall.features.month.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Browse a month at a time" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "月ごとに振り返る" } }
+      }
+    },
+    "paywall.features.month.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "See the photos behind every season, not a colour substitute." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "色だけの記録ではなく、季節ごとの写真を見られるよ。" } }
+      }
+    },
+    "paywall.features.circle.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Grow an unlimited Circle" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "サークルを無制限に" } }
+      }
+    },
+    "paywall.features.circle.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Keep as many buddies as you like instead of Free's 5." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "無料版の5人制限を超えて、好きなだけバディを追加できるよ。" } }
+      }
+    },
+    "paywall.features.together.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Put two skies side by side" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "2つの空を並べる" } }
+      }
+    },
+    "paywall.features.together.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Open and share a together card after you and a buddy both capture." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "自分とバディが撮影したら、トゥギャザーカードを開いてシェアできるよ。" } }
+      }
+    },
+    "paywall.features.weekly.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Relive every complete week" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "1週間を振り返る" } }
+      }
+    },
+    "paywall.features.weekly.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Turn seven mornings into a weekly recap you can share." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "7日分の朝を、シェアできるウィークリーリキャップにまとめよう。" } }
+      }
+    },
+    "paywall.features.yearShare.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "A full-year share card" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "1年分のシェアカード" } }
+      }
+    },
+    "paywall.features.yearShare.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Export the complete color record when there is a year to share." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "1年分たまったら、空の色の記録をまとめて書き出せるよ。" } }
+      }
+    },
+    "paywall.features.freeDescription": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Free includes daily capture, the recent archive, and a 5-person Circle. Pro opens the full archive, month view, an unlimited Circle, together cards, and weekly recaps." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "無料版には毎日の撮影、直近のアーカイブ、5人までのサークルが含まれるよ。Proでは全アーカイブ、月表示、無制限のサークル、トゥギャザーカード、ウィークリーリキャップが解禁されるよ。" } }
+      }
+    },
+    "paywall.secondChance.status.checking.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "We’re verifying the real price and whether Apple can apply it to this account." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "実際の料金と、このアカウントに適用できるかをAppleで確認しています。" } }
+      }
+    },
+    "paywall.secondChance.status.offline.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "You appear to be offline." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "オフラインのようです。" } }
+      }
+    },
+    "paywall.secondChance.status.offline.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "We couldn’t verify the offer with the App Store. Check your connection and try again." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "App Storeでオファーを確認できませんでした。通信を確認して、もう一度お試しください。" } }
+      }
+    },
+    "paywall.secondChance.renewalNotice": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Your subscription renews monthly at the regular price shown above unless cancelled. Cancel anytime in your App Store subscriptions." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "サブスクリプションは、解約しない限り上記の通常料金で毎月更新されます。解約はApp Storeのサブスクリプション設定からいつでも行えます。" } }
+      }
+    },
+    "today.walkthrough.morning.eyebrow": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "YOUR MORNING" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "あなたの朝" } }
+      }
+    },
+    "today.walkthrough.morning.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Start with today's sky" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "今日の空から始めよう" } }
+      }
+    },
+    "today.walkthrough.morning.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The large card behind this guide is your daily post. Capture once each morning to continue your personal streak." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "このガイドの後ろにある大きなカードが、毎日の投稿だよ。毎朝1枚撮って、自分のストリークを続けよう。" } }
+      }
+    },
+    "today.walkthrough.buddy.eyebrow": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "BUDDY SKIES" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "バディの空" } }
+      }
+    },
+    "today.walkthrough.buddy.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Your skies unlock each other" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "お互いの空が見られるよ" } }
+      }
+    },
+    "today.walkthrough.buddy.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Scroll to Buddy Skies. After both people post, tap a large buddy card to open the full-screen feed for free." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "バディの空までスクロールしよう。2人とも投稿したら、大きなバディカードをタップすると無料で全画面表示できるよ。" } }
+      }
+    },
+    "today.walkthrough.mosaic.eyebrow": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "YOUR MOSAIC" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "あなたのモザイク" } }
+      }
+    },
+    "today.walkthrough.mosaic.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Every morning becomes a tile" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "毎朝が1枚のタイルになるよ" } }
+      }
+    },
+    "today.walkthrough.mosaic.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Open Your Mosaic to revisit the year. This Week shows your recent rhythm and unlocks the image recap." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "あなたのモザイクを開いて1年を振り返ろう。今週の記録では最近のリズムを見たり、画像リキャップを解禁したりできるよ。" } }
+      }
+    },
+    "today.walkthrough.moku.eyebrow": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "MOKU" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "MOKU" } }
+      }
+    },
+    "today.walkthrough.moku.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Moku stays with the message" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "Mokuがメッセージと一緒に動くよ" } }
+      }
+    },
+    "today.walkthrough.moku.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "The character and speech bubble now move as one. Tap Moku for a small response; Reduce Motion is always respected." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "キャラクターと吹き出しが一緒に動くようになったよ。Mokuをタップすると反応するよ。視差効果を減らす設定にも対応しています。" } }
+      }
+    },
+    "today.walkthrough.start": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Start exploring" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "見てみる" } }
+      }
+    },
+    "Next": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Next" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "次へ" } }
+      }
+    },
+    "Terms of Use": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Terms of Use" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "利用規約" } }
+      }
+    },
+    "Privacy Policy": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Privacy Policy" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "プライバシーポリシー" } }
+      }
+    },
+    "buddy.feed.close": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Close buddy skies" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "バディの空を閉じる" } }
+      }
+    },
+    "buddy.feed.empty.title": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No revealed skies yet" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "まだ解禁された空はありません" } }
+      }
+    },
+    "buddy.feed.empty.detail": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "When both of you capture the morning, the sky will appear here." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "2人とも朝の空を撮影すると、ここに表示されるよ。" } }
+      }
+    },
+    "buddy.feed.compare": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Compare our skies" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "空を比べる" } }
+      }
+    },
+    "buddy.feed.comparePro": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Compare · Pro" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "比較する · Pro" } }
+      }
+    },
+    "buddy.feed.compare.accessibility": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Compare skies" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "空を比べる" } }
+      }
+    },
+    "buddy.feed.comparePro.accessibility": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Compare skies — Pro" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "空を比べる — Pro" } }
+      }
+    },
+    "buddy.feed.scrollHint": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Scroll to see everyone's morning sky" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "スクロールしてみんなの朝の空を見る" } }
       }
     },
     "·": {
