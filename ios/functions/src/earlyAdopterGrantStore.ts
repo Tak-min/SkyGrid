@@ -17,7 +17,12 @@ const GRANT_DURATION_MS = GRANT_DURATION_DAYS * 24 * 60 * 60 * 1000;
  * which refuses to run non-dry-run with an empty list without an explicit override, since
  * an empty denylist risks granting to the developer's own test accounts.
  */
-export const QA_DENYLIST: string[] = [];
+export const QA_DENYLIST: string[] = [
+  // Owner's own real-device test account (uid captured from the physical
+  // device console at launch time, 2026-09-17). Prevents the owner's own
+  // testing from consuming one of the 100 real early-adopter slots.
+  "9sMUrQuY8fbANparjixyy2qPVv02",
+];
 
 export type ClaimResult = "claimed" | "resume" | "already" | "paused" | "exhausted";
 export type GrantSource = "live" | "batch";
