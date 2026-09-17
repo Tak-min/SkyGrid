@@ -116,7 +116,7 @@ struct MorningAlarmSettingsView: View {
         }
         .background(MokuColor.nightStage.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        .navigationTitle("Morning Alarms")
+        .navigationTitle(L10n.string("alarm.title"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.refresh() }
         .onChange(of: scenePhase) { _, phase in
@@ -142,7 +142,7 @@ struct MorningAlarmSettingsView: View {
                 .font(.system(size: 42, weight: .black, design: .rounded))
                 .foregroundStyle(SGT.ink)
                 .contentTransition(.numericText())
-            Text("Use a different rhythm for weekdays, weekends, or any morning that needs its own start.")
+            Text(L10n.string("alarm.header.description"))
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
         }
@@ -165,7 +165,7 @@ struct MorningAlarmSettingsView: View {
     private var scheduleList: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
             HStack {
-                Text("YOUR SCHEDULE")
+                Text(L10n.string("alarm.schedule.title"))
                     .font(SGFont.caption(11))
                     .tracking(1.3)
                     .foregroundStyle(SGT.ink3)

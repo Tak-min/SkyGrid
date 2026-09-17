@@ -39,7 +39,7 @@ struct SettingsView: View {
                     } else {
                         Button { showPaywall = true } label: {
                             settingRow(
-                                L10n.string("Unlock the full archive"),
+                                L10n.string("settings.row.unlockArchive.title"),
                                 symbol: "square.grid.3x3",
                                 detail: L10n.string("settings.row.unlockArchive.detail"),
                                 emphasized: true
@@ -52,7 +52,7 @@ struct SettingsView: View {
                         // path just as short as it was on the single-screen paywall.
                         Button { Task { await restore() } } label: {
                             settingRow(
-                                L10n.string("Restore purchases"),
+                                L10n.string("settings.row.restore.title"),
                                 symbol: "arrow.clockwise",
                                 detail: isRestoring ? L10n.string("settings.row.restore.checking") : L10n.string("settings.row.restore.detail"),
                                 accessory: isRestoring ? .progress : .none
@@ -111,7 +111,7 @@ struct SettingsView: View {
                     NavigationLink {
                         CommunitySafetyView(uid: uid, friendRepository: friendRepository, userRepository: userRepository)
                     } label: {
-                        settingRow(L10n.string("Community & Safety"), symbol: "hand.raised", detail: L10n.string("settings.row.communitySafety.detail"))
+                        settingRow(L10n.string("settings.row.communitySafety.title"), symbol: "hand.raised", detail: L10n.string("settings.row.communitySafety.detail"))
                     }
                 }
 
@@ -135,7 +135,7 @@ struct SettingsView: View {
                             onDeleted: onAccountDeleted
                         )
                     } label: {
-                        settingRow(L10n.string("Delete account"), symbol: "trash", detail: L10n.string("settings.row.deleteAccount.detail"))
+                        settingRow(L10n.string("settings.row.deleteAccount.title"), symbol: "trash", detail: L10n.string("settings.row.deleteAccount.detail"))
                             .foregroundStyle(.red)
                     }
                 }
@@ -145,7 +145,7 @@ struct SettingsView: View {
         }
         .background(MokuColor.nightStage.ignoresSafeArea())
         .preferredColorScheme(.dark)
-        .navigationTitle("Settings")
+        .navigationTitle(L10n.string("settings.title"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPaywall) {
             PaywallView(
@@ -154,15 +154,15 @@ struct SettingsView: View {
                 onEntitlementGranted: { await entitlements.refresh() }
             )
         }
-        .alert("Could not restore purchases", isPresented: $restoreError) {
-            Button("Close", role: .cancel) {}
+        .alert(L10n.string("settings.alert.restore.title"), isPresented: $restoreError) {
+            Button(L10n.string("common.close"), role: .cancel) {}
         } message: {
-            Text("Please try again in a moment.")
+            Text(L10n.string("common.pleaseTryAgainInAMoment"))
         }
-        .alert("Could not connect Apple", isPresented: appleLinkAlert) {
-            Button("Close", role: .cancel) { appleLinkError = nil }
+        .alert(L10n.string("settings.alert.appleLink.title"), isPresented: appleLinkAlert) {
+            Button(L10n.string("common.close"), role: .cancel) { appleLinkError = nil }
         } message: {
-            Text(appleLinkError ?? L10n.string("fallback.pleaseTryAgainInAMoment"))
+            Text(appleLinkError ?? L10n.string("common.pleaseTryAgainInAMoment"))
         }
     }
 
@@ -213,7 +213,7 @@ struct SettingsView: View {
         do {
             let linkedUID = try await FirebaseAuthSession.linkCurrentAnonymousUserWithApple()
             guard linkedUID == uid else {
-                appleLinkError = "Your account could not be connected safely. Your photos were not changed."
+                appleLinkError = L10n.string("settings.appleLink.mismatchError")
                 return
             }
             await entitlements.refresh()
@@ -221,28 +221,28 @@ struct SettingsView: View {
             guard error != .cancelled else { return }
             appleLinkError = error.localizedDescription
         } catch {
-            appleLinkError = "We couldn't finish connecting Apple. Please try again."
+            appleLinkError = L10n.string("settings.appleLink.failureError")
         }
     }
 
     private var settingsHeader: some View {
         VStack(alignment: .leading, spacing: SGSpacing.sm) {
-            Text("YOUR RITUAL")
+            Text(L10n.string("settings.header.title"))
                 .font(SGFont.caption(11))
                 .tracking(1.4)
                 .foregroundStyle(SGT.ink3)
             if dynamicTypeSize.isAccessibilitySize {
-                Text("Manage your alarm, archive, privacy, and account.")
+                Text(L10n.string("settings.header.subtitleAccessible"))
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
             } else {
                 HStack(alignment: .top, spacing: SGSpacing.md) {
-                    Text("Your morning,\nyour controls.")
+                    Text(L10n.string("settings.header.title2"))
                         .font(.system(size: 32, weight: .black, design: .rounded))
                     MokuScreenMark(state: .settled, side: 64)
                 }
                     .foregroundStyle(SGT.ink)
-                Text("Alarm, archive, privacy, and support stay within reach.")
+                Text(L10n.string("settings.header.subtitle"))
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
             }
@@ -381,8 +381,8 @@ private struct CommunitySafetyView: View {
     var body: some View {
         List {
             Section {
-                Text("You can flag a post you are concerned about from each buddy's safety menu.")
-                Text("Blocking hides your connection and each other's posts.")
+                Text(L10n.string("communitySafety.info.flagging"))
+                Text(L10n.string("communitySafety.info.blocking"))
             }
             .listRowBackground(SGT.fill)
 
@@ -392,13 +392,13 @@ private struct CommunitySafetyView: View {
             if blockedState == .unavailable {
                 Section {
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                        Text("We couldn't refresh your blocked list.")
+                        Text(L10n.string("communitySafety.blocked.refreshError"))
                             .font(SGFont.body(16))
                             .foregroundStyle(SGT.ink)
                         Text(blocked.isEmpty ? L10n.string("settings.blocked.noChangeNotice") : L10n.string("settings.blocked.showingLastConfirmed"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(SGT.ink2)
-                        Button("Check again") {
+                        Button(L10n.string("common.checkAgain")) {
                             blockedState = .checking
                             observationID = UUID()
                         }
@@ -415,7 +415,7 @@ private struct CommunitySafetyView: View {
                 Section {
                     HStack(spacing: SGSpacing.sm) {
                         ProgressView()
-                        Text("Checking blocked buddies…")
+                        Text(L10n.string("communitySafety.blocked.checking"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(SGT.ink2)
                     }
@@ -423,15 +423,15 @@ private struct CommunitySafetyView: View {
                 .listRowBackground(SGT.fill)
                 .listRowSeparator(.hidden)
             } else if blockedState == .available, blocked.isEmpty {
-                Section("BLOCKED") {
-                    Text("No blocked buddies")
+                Section(L10n.string("communitySafety.blocked.sectionTitle")) {
+                    Text(L10n.string("communitySafety.blocked.empty"))
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink3)
                 }
                 .listRowBackground(SGT.fill)
                 .listRowSeparator(.hidden)
             } else if !blocked.isEmpty {
-                Section("BLOCKED") {
+                Section(L10n.string("communitySafety.blocked.sectionTitle")) {
                     ForEach(blocked, id: \.pairId) { friendship in
                         if let otherUid = friendship.otherMember(than: uid) {
                             BlockedBuddyRow(
@@ -448,7 +448,7 @@ private struct CommunitySafetyView: View {
         }
         .scrollContentBackground(.hidden)
         .background(SGT.background)
-        .navigationTitle("Community & Safety")
+        .navigationTitle(L10n.string("settings.row.communitySafety.title"))
         .task(id: observationID) {
             for await observation in friendRepository.observeBlockedFriendships(uid: uid) {
                 guard case .value(let friendships) = observation else {
@@ -459,10 +459,10 @@ private struct CommunitySafetyView: View {
                 blocked = friendships
             }
         }
-        .alert("Could not unblock", isPresented: $unblockError) {
-            Button("Close", role: .cancel) {}
+        .alert(L10n.string("communitySafety.alert.unblockError.title"), isPresented: $unblockError) {
+            Button(L10n.string("common.close"), role: .cancel) {}
         } message: {
-            Text("Please try again in a moment.")
+            Text(L10n.string("common.pleaseTryAgainInAMoment"))
         }
     }
 
@@ -487,7 +487,7 @@ private struct BlockedBuddyRow: View {
             Text(displayName ?? L10n.string("fallback.buddyName"))
                 .foregroundStyle(SGT.ink)
             Spacer()
-            Button("Unblock") { Task { await onUnblock() } }
+            Button(L10n.string("communitySafety.blocked.unblockButton")) { Task { await onUnblock() } }
         }
         .task {
             for await observation in userRepository.observeProfile(uid: uid) {
@@ -512,11 +512,11 @@ private struct AccountDeletionView: View {
     var body: some View {
         ZStack {
             VStack(alignment: .leading, spacing: 24) {
-                Text("Deleting your account removes your photos, Sky Grid, and buddy connections. Active App Store subscriptions continue until you cancel them in Apple subscription settings.")
+                Text(L10n.string("accountDeletion.description"))
                     .font(SGFont.body())
                     .foregroundStyle(SGT.ink)
 
-                Button("Delete account", role: .destructive) {
+                Button(L10n.string("accountDeletion.deleteButton"), role: .destructive) {
                     showingConfirmation = true
                 }
                 .font(SGFont.body())
@@ -534,10 +534,10 @@ private struct AccountDeletionView: View {
                 VStack(spacing: SGSpacing.md) {
                     ProgressView()
                         .controlSize(.large)
-                    Text("Deleting your account…")
+                    Text(L10n.string("accountDeletion.progress.title"))
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink)
-                    Text("Your photos and connections are being removed securely.")
+                    Text(L10n.string("accountDeletion.progress.description"))
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink2)
                         .multilineTextAlignment(.center)
@@ -546,13 +546,13 @@ private struct AccountDeletionView: View {
                 .frame(maxWidth: 300)
                 .background(SGT.background, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Deleting your account")
+                .accessibilityLabel(L10n.string("accountDeletion.progress.title"))
             }
         }
-        .navigationTitle("Delete account")
+        .navigationTitle(L10n.string("accountDeletion.navigationTitle"))
         .interactiveDismissDisabled(isDeleting)
-        .alert("Delete your account?", isPresented: $showingConfirmation) {
-            Button("Delete", role: .destructive) {
+        .alert(L10n.string("accountDeletion.alert.confirmation.title"), isPresented: $showingConfirmation) {
+            Button(L10n.string("accountDeletion.alert.confirmation.delete"), role: .destructive) {
                 isDeleting = true
                 Task {
                     do {
@@ -564,14 +564,14 @@ private struct AccountDeletionView: View {
                     }
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("This cannot be undone.")
+            Text(L10n.string("accountDeletion.alert.confirmation.message"))
         }
-        .alert("Could not delete account", isPresented: $deletionError) {
-            Button("Close", role: .cancel) {}
+        .alert(L10n.string("accountDeletion.alert.failure.title"), isPresented: $deletionError) {
+            Button(L10n.string("common.close"), role: .cancel) {}
         } message: {
-            Text("Please try again in a moment.")
+            Text(L10n.string("common.pleaseTryAgainInAMoment"))
         }
     }
 }

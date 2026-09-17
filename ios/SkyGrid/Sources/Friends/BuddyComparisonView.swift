@@ -26,20 +26,20 @@ struct BuddyComparisonView: View {
                 .frame(maxHeight: 470)
 
                 VStack(spacing: 4) {
-                    Text("Same morning, two skies")
+                    Text(L10n.string("buddy.comparison.title"))
                         .font(SGFont.title(24))
                         .foregroundStyle(MokuColor.cloud)
-                    Text("Both captured · both revealed")
+                    Text(L10n.string("buddy.comparison.subtitle"))
                         .font(SGFont.caption(13))
                         .foregroundStyle(MokuColor.cloud.opacity(0.65))
                 }
 
                 Button(action: prepareShareImage) {
-                    Label("Share together", systemImage: "square.and.arrow.up")
+                    Label(L10n.string("buddy.comparison.shareButton"), systemImage: "square.and.arrow.up")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SkyPrimaryButtonStyle())
-                .accessibilityHint("Opens the share sheet with both revealed skies")
+                .accessibilityHint(L10n.string("buddy.comparison.shareHint"))
             }
             .padding(SGSpacing.lg)
         }
@@ -52,7 +52,7 @@ struct BuddyComparisonView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text("TOGETHER")
+                Text(L10n.string("buddy.comparison.headerTitle"))
                     .font(SGFont.caption(11))
                     .tracking(1.8)
                     .foregroundStyle(MokuColor.cloud.opacity(0.58))
@@ -68,7 +68,7 @@ struct BuddyComparisonView: View {
                     .frame(width: 44, height: 44)
                     .background(MokuColor.cloud.opacity(0.14), in: Circle())
             }
-            .accessibilityLabel("Close")
+            .accessibilityLabel(L10n.string("common.close"))
         }
     }
 

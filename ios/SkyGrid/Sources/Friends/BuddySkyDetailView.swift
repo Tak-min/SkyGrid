@@ -57,7 +57,7 @@ struct BuddySkyDetailView: View {
                 .onTapGesture(count: 2) { toggleZoom() }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(String(format: L10n.string("buddy.skyThisMorningAccessibility"), displayName))
-                .accessibilityHint("Double tap to zoom")
+                .accessibilityHint(L10n.string("buddySkyDetail.doubleTapToZoom"))
         } else {
             RoundedRectangle(cornerRadius: 32, style: .continuous)
                 .fill(SGT.ghostFaint)
@@ -68,10 +68,10 @@ struct BuddySkyDetailView: View {
                             // A missing sky stays visibly missing. Never stand in
                             // a colour swatch and let it read as their morning.
                             Image(systemName: "icloud.slash")
-                            Text("This sky could not be loaded")
+                            Text(L10n.string("buddySkyDetail.loadingFailed"))
                         } else {
                             ProgressView()
-                            Text("Loading their sky")
+                            Text(L10n.string("buddySkyDetail.loading"))
                         }
                     }
                     .font(SGFont.caption(13))
@@ -107,7 +107,7 @@ struct BuddySkyDetailView: View {
                         .frame(width: 44, height: 44)
                         .background(MokuColor.cloud.opacity(0.14), in: Circle())
                 }
-                .accessibilityLabel("Close")
+                .accessibilityLabel(L10n.string("common.close"))
             }
             Spacer()
         }

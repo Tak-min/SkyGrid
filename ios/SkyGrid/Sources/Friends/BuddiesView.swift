@@ -66,7 +66,7 @@ struct BuddiesView: View {
                 if viewModel.friendshipState == .checking, viewModel.accepted.isEmpty {
                     HStack(spacing: SGSpacing.sm) {
                         ProgressView()
-                        Text("Checking your circle…")
+                        Text(L10n.string("buddies.checking"))
                             .foregroundStyle(SGT.ink2)
                     }
                     .listRowBackground(SGT.fill)
@@ -105,7 +105,7 @@ struct BuddiesView: View {
                     Button {
                         showInviteCodeRecovery = true
                     } label: {
-                        Label("Enter a buddy's invite code", systemImage: "number.square")
+                        Label(L10n.string("buddies.enterInviteCode"), systemImage: "number.square")
                             .font(SGFont.body(15))
                             .foregroundStyle(SGT.ink)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -141,7 +141,7 @@ struct BuddiesView: View {
                         // it one gesture away without making Block/Report the thing a
                         // tap on the row would ever lead to.
                         .swipeActions(edge: .trailing) {
-                            Button("Block or report", systemImage: "hand.raised") {
+                            Button(L10n.string("buddies.blockOrReport"), systemImage: "hand.raised") {
                                 safetyRoute = BuddySafetyRoute(subjectUid: otherUid)
                             }
                             .tint(SGT.ink3)
@@ -152,20 +152,20 @@ struct BuddiesView: View {
                 }
             } header: {
                 if !viewModel.accepted.isEmpty {
-                    Text("YOUR CIRCLE")
+                    Text(L10n.string("buddies.yourCircle"))
                 }
             }
 
             if viewModel.friendshipState == .unavailable {
                 Section {
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                        Text("We couldn't refresh your buddies.")
+                        Text(L10n.string("buddies.refreshError"))
                             .font(SGFont.body(16))
                             .foregroundStyle(SGT.ink)
                         Text(viewModel.friendships.isEmpty ? L10n.string("buddy.list.unchangedNotice") : L10n.string("buddy.list.showingLastConfirmed"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(SGT.ink2)
-                        Button("Check again", action: viewModel.retryFriendships)
+                        Button(L10n.string("common.checkAgain"), action: viewModel.retryFriendships)
                             .font(SGFont.body(15))
                             .foregroundStyle(SGT.ink)
                             .frame(minHeight: 44)
@@ -178,13 +178,13 @@ struct BuddiesView: View {
             if viewModel.profileState == .unavailable {
                 Section {
                     VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                        Text("We couldn't load your invite settings.")
+                        Text(L10n.string("buddies.inviteSettingsError"))
                             .font(SGFont.body(16))
                             .foregroundStyle(SGT.ink)
-                        Text("Your handle hasn't been changed. Check your connection and try again.")
+                        Text(L10n.string("buddies.inviteSettingsErrorDetail"))
                             .font(SGFont.caption(13))
                             .foregroundStyle(SGT.ink2)
-                        Button("Check invite settings again", action: viewModel.retryProfile)
+                        Button(L10n.string("buddies.checkInviteSettingsAgain"), action: viewModel.retryProfile)
                             .font(SGFont.body(15))
                             .foregroundStyle(SGT.ink)
                             .frame(minHeight: 44)
@@ -195,7 +195,7 @@ struct BuddiesView: View {
             }
 
             if viewModel.hasHandle == true, !viewModel.pendingIncoming.isEmpty {
-                Section("INCOMING REQUESTS") {
+                Section(L10n.string("buddies.incomingRequests")) {
                     FriendRequestsView(viewModel: viewModel)
                         // FriendRequestsView already draws its own `.quietCard()`
                         // rows; without clearing the List's own row chrome here,
@@ -208,7 +208,7 @@ struct BuddiesView: View {
             }
 
             if viewModel.hasHandle == true, !viewModel.pendingOutgoing.isEmpty {
-                Section("SENT REQUESTS") {
+                Section(L10n.string("buddies.sentRequests")) {
                     ForEach(viewModel.pendingOutgoing, id: \.pairId) { friendship in
                         HStack(spacing: SGSpacing.sm) {
                             Image(systemName: "paperplane.fill")
@@ -217,7 +217,7 @@ struct BuddiesView: View {
                                 Text(friendship.recipientHandle.map { "@" + $0.value } ?? L10n.string("friends.pendingInvitationFallback"))
                                     .font(SGFont.body(15))
                                     .foregroundStyle(SGT.ink)
-                                Text("Waiting for them to accept")
+                                Text(L10n.string("buddies.waiting"))
                                     .font(SGFont.caption(12))
                                     .foregroundStyle(SGT.ink3)
                             }
@@ -231,7 +231,7 @@ struct BuddiesView: View {
 
             if viewModel.hasHandle == true {
                 Section {
-                    DisclosureGroup("Know their exact handle?", isExpanded: handleRequestExpansion) {
+                    DisclosureGroup(L10n.string("buddies.knowHandle"), isExpanded: handleRequestExpansion) {
                         AddBuddyView(viewModel: viewModel)
                             .padding(.top, SGSpacing.sm)
                     }
@@ -265,7 +265,7 @@ struct BuddiesView: View {
                 .listSectionSpacing(.custom(SGSpacing.xl))
                 .playfulEntrance()
                 .safeAreaInset(edge: .bottom) { Color.clear.frame(height: SGSpacing.xl) }
-                .navigationTitle("Buddies")
+                .navigationTitle(L10n.string("buddies.title"))
                 // This view is one tab inside the root NavigationStack. An inline title
                 // avoids List reserving a large-title gap when tab selection changes.
                 .navigationBarTitleDisplayMode(.inline)
@@ -333,21 +333,21 @@ private struct BuddyRitualCard: View {
 
     var body: some View {
         VStack(alignment: isCollapsed ? .leading : .center, spacing: SGSpacing.sm) {
-            Label("MORNING TOGETHER", systemImage: "person.2.fill")
+            Label(L10n.string("buddies.morningTogether"), systemImage: "person.2.fill")
                 .font(SGFont.caption(11))
                 .tracking(1.2)
                 .foregroundStyle(SGT.ink3)
             if isCollapsed {
-                Text("Your skies stay sealed until you've each captured this morning.")
+                Text(L10n.string("buddies.morningTogether.collapsedDescription"))
                     .font(SGFont.caption(13))
                     .foregroundStyle(SGT.ink2)
             } else {
-                Text("Skies revealed together.")
+                Text(L10n.string("buddies.morningTogether.skiesRevealed"))
                     .font(SGFont.title(27))
                     .foregroundStyle(SGT.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.center)
-                Text("Invite people you trust. Each sky stays private until you've each captured that morning.")
+                Text(L10n.string("buddies.morningTogether.description"))
                     .font(SGFont.body(14))
                     .foregroundStyle(SGT.ink2)
                     .multilineTextAlignment(.center)
@@ -640,11 +640,11 @@ private struct BuddyRelationshipView: View {
                     Button {
                         showingSky = true
                     } label: {
-                        Label("View their sky", systemImage: "arrow.up.left.and.arrow.down.right")
+                        Label(L10n.string("buddy.viewTheirSky"), systemImage: "arrow.up.left.and.arrow.down.right")
                             .font(SGFont.body(16))
                             .frame(minHeight: 44)
                     }
-                    .accessibilityHint("Opens their photo. Double tap or pinch the photo to zoom.")
+                    .accessibilityHint(L10n.string("buddy.photoZoomHint"))
                 }
             }
             .listRowBackground(SGT.fill)
@@ -657,7 +657,7 @@ private struct BuddyRelationshipView: View {
                    today: today,
                    buddyName: profile?.displayName ?? "your buddy"
                ) {
-                Section("TOGETHER") {
+                Section(L10n.string("buddy.together")) {
                     Text(streak.text)
                         .font(SGFont.numeric(18, weight: .medium))
                         .foregroundStyle(SGT.ink)
@@ -676,16 +676,16 @@ private struct BuddyRelationshipView: View {
                         contentSafetyRepository: contentSafetyRepository
                     )
                 } label: {
-                    Label("Safety and reporting", systemImage: "hand.raised")
+                    Label(L10n.string("buddy.safety"), systemImage: "hand.raised")
                 }
 
                 Button(role: .destructive) {
                     showRemoveConfirmation = true
                 } label: {
                     if isRemoving {
-                        HStack { ProgressView(); Text("Removing…") }
+                        HStack { ProgressView(); Text(L10n.string("buddy.removing")) }
                     } else {
-                        Label("Remove from your circle", systemImage: "person.badge.minus")
+                        Label(L10n.string("buddy.removeFromCircle"), systemImage: "person.badge.minus")
                     }
                 }
                 .disabled(isRemoving)
@@ -705,7 +705,7 @@ private struct BuddyRelationshipView: View {
         }
         .scrollContentBackground(.hidden)
         .background(SGT.background)
-        .navigationTitle("Buddy")
+        .navigationTitle(L10n.string("buddy.title"))
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $showingSky) {
             if case .posted(let post) = revealState {
@@ -717,11 +717,11 @@ private struct BuddyRelationshipView: View {
                 )
             }
         }
-        .alert("Remove this buddy?", isPresented: $showRemoveConfirmation) {
-            Button("Remove", role: .destructive) { removeRelationship() }
-            Button("Keep", role: .cancel) {}
+        .alert(L10n.string("buddy.alert.removeTitle"), isPresented: $showRemoveConfirmation) {
+            Button(L10n.string("buddy.alert.remove"), role: .destructive) { removeRelationship() }
+            Button(L10n.string("buddy.alert.keep"), role: .cancel) {}
         } message: {
-            Text("You will no longer reveal each other's skies. You can reconnect later with a new request.")
+            Text(L10n.string("buddy.alert.removeMessage"))
         }
         .task {
             for await observation in userRepository.observeProfile(uid: subjectUid) {
@@ -809,7 +809,7 @@ struct BuddySafetyView: View {
                 Button(role: .destructive) {
                     showBlockConfirmation = true
                 } label: {
-                    Label("Block", systemImage: "hand.raised")
+                    Label(L10n.string("buddy.safety.block"), systemImage: "hand.raised")
                 }
             }
 
@@ -817,30 +817,30 @@ struct BuddySafetyView: View {
                 Button {
                     Task { await submitConcern() }
                 } label: {
-                    Label("A post I’m concerned about", systemImage: "exclamationmark.bubble")
+                    Label(L10n.string("buddy.safety.postConcern"), systemImage: "exclamationmark.bubble")
                 }
             } footer: {
-                Text("We will review it and act when needed.")
+                Text(L10n.string("buddy.safety.reviewNotice"))
             }
         }
-        .navigationTitle("Safety")
-        .alert("Block this buddy?", isPresented: $showBlockConfirmation) {
-            Button("Block", role: .destructive) {
+        .navigationTitle(L10n.string("buddy.safety.title"))
+        .alert(L10n.string("buddy.safety.alert.blockTitle"), isPresented: $showBlockConfirmation) {
+            Button(L10n.string("buddy.safety.alert.block"), role: .destructive) {
                 Task {
                     try? await friendRepository.block(ownerUid: ownerUid, blockedUid: subjectUid)
                     dismiss()
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("You will no longer see each other's posts or connection.")
+            Text(L10n.string("buddy.safety.alert.blockMessage"))
         }
         .alert(item: $reportState) { state in
             switch state {
             case .sent:
-                Alert(title: Text("Received"), message: Text("We will review it."), dismissButton: .default(Text("Close")))
+                Alert(title: Text(L10n.string("buddy.safety.alert.reportReceived")), message: Text(L10n.string("buddy.safety.alert.reportWillReview")), dismissButton: .default(Text(L10n.string("common.close"))))
             case .failed:
-                Alert(title: Text("Could not send"), message: Text("Please try again in a moment."), dismissButton: .default(Text("Close")))
+                Alert(title: Text(L10n.string("buddy.safety.alert.reportFailed")), message: Text(L10n.string("common.pleaseTryAgainInAMoment")), dismissButton: .default(Text(L10n.string("common.close"))))
             }
         }
     }

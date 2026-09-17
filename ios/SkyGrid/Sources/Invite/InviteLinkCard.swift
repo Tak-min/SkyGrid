@@ -28,7 +28,7 @@ struct InviteLinkCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SGSpacing.md) {
-            Text("INVITE A BUDDY")
+            Text(L10n.string("invite.header"))
                 .font(SGFont.caption(11))
                 .tracking(1.2)
                 .foregroundStyle(SGT.accentSecondary)
@@ -37,7 +37,7 @@ struct InviteLinkCard: View {
             case .loading:
                 HStack(spacing: SGSpacing.sm) {
                     ProgressView()
-                    Text("Preparing your invite link…")
+                    Text(L10n.string("invite.preparing"))
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink2)
                 }
@@ -45,10 +45,10 @@ struct InviteLinkCard: View {
                 readyContent(link: link)
             case .revoked:
                 VStack(alignment: .leading, spacing: SGSpacing.xs) {
-                    Text("This link no longer works.")
+                    Text(L10n.string("invite.linkRevoked"))
                         .font(SGFont.body(15))
                         .foregroundStyle(SGT.ink)
-                    Button("Get a new link") { Task { await viewModel.load() } }
+                    Button(L10n.string("invite.getNewLink")) { Task { await viewModel.load() } }
                         .font(SGFont.body(15))
                         .foregroundStyle(SGT.accent)
                         .frame(minHeight: 44)
@@ -58,7 +58,7 @@ struct InviteLinkCard: View {
                     Text(message)
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink2)
-                    Button("Try again") { Task { await viewModel.load() } }
+                    Button(L10n.string("invite.tryAgain")) { Task { await viewModel.load() } }
                         .font(SGFont.body(15))
                         .foregroundStyle(SGT.accent)
                         .frame(minHeight: 44)
@@ -72,18 +72,18 @@ struct InviteLinkCard: View {
                 .strokeBorder(SGT.rule, lineWidth: 1)
         }
         .task { await viewModel.load() }
-        .alert("Stop sharing this link?", isPresented: $showRevokeConfirmation) {
-            Button("Stop sharing", role: .destructive) { Task { await viewModel.revoke() } }
-            Button("Cancel", role: .cancel) {}
+        .alert(L10n.string("invite.alert.revokeTitle"), isPresented: $showRevokeConfirmation) {
+            Button(L10n.string("invite.alert.stopSharing"), role: .destructive) { Task { await viewModel.revoke() } }
+            Button(L10n.string("common.cancel"), role: .cancel) {}
         } message: {
-            Text("Anyone who already has this code will no longer be able to use it.")
+            Text(L10n.string("invite.alert.revokeMessage"))
         }
     }
 
     @ViewBuilder
     private func readyContent(link: InviteLink) -> some View {
         VStack(alignment: .leading, spacing: SGSpacing.sm) {
-            Text("Group code")
+            Text(L10n.string("invite.groupCode"))
                 .font(SGFont.caption(11))
                 .tracking(1.0)
                 .foregroundStyle(SGT.ink2)
@@ -120,7 +120,7 @@ struct InviteLinkCard: View {
         ShareLink(item: shareText(for: link)) {
             HStack(spacing: SGSpacing.sm) {
                 Image(systemName: "square.and.arrow.up")
-                Text("Share link")
+                Text(L10n.string("invite.shareLink"))
             }
             .font(SGFont.body(15))
             .frame(maxWidth: .infinity)
@@ -134,7 +134,7 @@ struct InviteLinkCard: View {
             InviteAnalytics.record(.linkShared, placement: placement)
         })
 
-        Button("Stop sharing this link", role: .destructive) {
+        Button(L10n.string("invite.stopSharing"), role: .destructive) {
             showRevokeConfirmation = true
         }
         .font(SGFont.caption(13))
@@ -167,16 +167,16 @@ struct InviteCodeRecoveryView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: SGSpacing.lg) {
-                    Label("JOIN WITH A CODE", systemImage: "person.2.fill")
+                    Label(L10n.string("invite.code.header"), systemImage: "person.2.fill")
                         .font(SGFont.caption(11))
                         .tracking(1.3)
                         .foregroundStyle(SGT.ink3)
 
-                    Text("Paste your buddy's invite code")
+                    Text(L10n.string("invite.code.title"))
                         .font(SGFont.title(30))
                         .foregroundStyle(SGT.ink)
 
-                    Text("If a link from Instagram or LINE did not open Sky Grid, enter the readable code from the message instead.")
+                    Text(L10n.string("invite.code.description"))
                         .font(SGFont.body(15))
                         .foregroundStyle(SGT.ink2)
 
@@ -204,12 +204,12 @@ struct InviteCodeRecoveryView: View {
                     Button {
                         pasteFromClipboard()
                     } label: {
-                        Label("Paste from clipboard", systemImage: "doc.on.clipboard")
+                        Label(L10n.string("invite.code.paste"), systemImage: "doc.on.clipboard")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(SkySecondaryButtonStyle())
 
-                    Button("Check invite code", action: continueWithCode)
+                    Button(L10n.string("invite.code.check"), action: continueWithCode)
                         .frame(maxWidth: .infinity)
                         .buttonStyle(SkyPrimaryButtonStyle())
                         .disabled(codeText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -218,11 +218,11 @@ struct InviteCodeRecoveryView: View {
                 .padding(SGSpacing.xl)
             }
             .background(SGT.background)
-            .navigationTitle("Invite code")
+            .navigationTitle(L10n.string("invite.code.navigationTitle"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
+                    Button(L10n.string("common.close")) { dismiss() }
                 }
             }
         }
@@ -242,7 +242,7 @@ struct InviteCodeRecoveryView: View {
 
     private func pasteFromClipboard() {
         guard let pasted = UIPasteboard.general.string, !pasted.isEmpty else {
-            errorMessage = "There is no invite code in the clipboard."
+            errorMessage = L10n.string("invite.code.noPastedCode")
             return
         }
         codeText = pasted
@@ -252,7 +252,7 @@ struct InviteCodeRecoveryView: View {
     private func continueWithCode() {
         let trimmed = codeText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let code = InviteLinkParser.code(fromSharedText: trimmed) else {
-            errorMessage = "Enter the 10-character code from the invite message."
+            errorMessage = L10n.string("invite.code.invalidCode")
             return
         }
         errorMessage = nil
