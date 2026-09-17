@@ -194,7 +194,11 @@ test("a stale device token is deleted after a not-registered response, a healthy
   assert.deepEqual(devices.docs.map((doc) => doc.id).sort(), ["live-token"]);
 });
 
-test("a transient send failure does not delete the device token", async () => {
+test("a transient send failure does not delete the device token, and rethrows for retry", async () => {
+  // Transient FCM failures must release the send lease and rethrow, so the bounded
+  // trigger/scheduler retry path (not this call) is what eventually delivers or
+  // gives up — see the notification-lease hardening commit. A caller that awaits
+  // this without expecting a rejection is testing behavior this store no longer has.
   await reset();
   await makeUser("poster");
   await makeUser("buddy");
@@ -202,7 +206,10 @@ test("a transient send failure does not delete the device token", async () => {
   await makeFriendship("buddy_poster", { members: ["buddy", "poster"], requestedBy: "poster" });
   const messaging = fakeMessaging(() => ({ success: false, error: { code: "messaging/internal-error" } }));
 
-  await notifyBuddiesOfPost(db, messaging, { posterUid: "poster", localDate: "2026-01-01", nowMs: NOW });
+  await assert.rejects(
+    () => notifyBuddiesOfPost(db, messaging, { posterUid: "poster", localDate: "2026-01-01", nowMs: NOW }),
+    /retryable send failure/,
+  );
 
   const devices = await db.collection("users").doc("buddy").collection("devices").get();
   assert.deepEqual(devices.docs.map((doc) => doc.id), ["token-1"]);

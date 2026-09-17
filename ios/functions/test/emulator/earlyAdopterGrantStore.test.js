@@ -81,11 +81,25 @@ test("a configured limit above the hard 100 cap fails closed", async () => {
   assert.equal(await grant("uid-1"), undefined);
 });
 
-test("claiming an already-claimed uid returns 'already' and does not move the counter", async () => {
+test("re-claiming a still-pending uid resumes instead of re-reserving a slot", async () => {
+  // A previous invocation may have reserved the slot and then lost its process
+  // before completing the RevenueCat grant. Re-running must resume, not double-claim.
   await reset();
   await seedCounter({ claimedCount: 5, limit: 100 });
   await claimEarlyAdopterSlot(db, "uid-1", { source: "live" });
   assert.equal((await counter()).claimedCount, 6);
+
+  const second = await claimEarlyAdopterSlot(db, "uid-1", { source: "live" });
+  assert.equal(second, "resume");
+  assert.equal((await counter()).claimedCount, 6);
+});
+
+test("claiming an already-finalized uid returns 'already' and does not move the counter", async () => {
+  await reset();
+  await seedCounter({ claimedCount: 5, limit: 100 });
+  await claimEarlyAdopterSlot(db, "uid-1", { source: "live" });
+  assert.equal((await counter()).claimedCount, 6);
+  await db.collection("earlyAdopterGrants").doc("uid-1").update({ status: "granted" });
 
   const second = await claimEarlyAdopterSlot(db, "uid-1", { source: "live" });
   assert.equal(second, "already");
@@ -99,6 +113,19 @@ test("claiming at quota returns 'exhausted' without creating a grant doc", async
   const result = await claimEarlyAdopterSlot(db, "uid-1", { source: "live" });
   assert.equal(result, "exhausted");
   assert.equal(await grant("uid-1"), undefined);
+  assert.equal((await counter()).claimedCount, 100);
+  // phase is only flipped to "closed" as a side effect of the specific claim that
+  // crosses the limit (see the next test) — a counter pre-seeded already at/above
+  // the limit is exhausted by the count comparison alone and never touches phase.
+  assert.equal((await counter()).phase, "live");
+});
+
+test("the claim that crosses the limit flips phase to 'closed' in the same transaction", async () => {
+  await reset();
+  await seedCounter({ claimedCount: 99, limit: 100 });
+
+  const result = await claimEarlyAdopterSlot(db, "uid-1", { source: "live" });
+  assert.equal(result, "claimed");
   assert.equal((await counter()).claimedCount, 100);
   assert.equal((await counter()).phase, "closed");
 });
