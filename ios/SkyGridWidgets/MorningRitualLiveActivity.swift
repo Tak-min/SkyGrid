@@ -18,16 +18,17 @@ struct MorningRitualLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label("Sky Grid", systemImage: "sun.horizon.fill")
+                    Label(localized("widget.skyGrid", state: context.state), systemImage: "sun.horizon.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Self.sunrise)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 1) {
-                        Text("UNTIL")
+                        Text(localized("widget.until", state: context.state))
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(.secondary)
                         Text(captureDeadline(for: context.state), style: .time)
+                            .environment(\.locale, locale(for: context.state))
                             .font(.caption.weight(.semibold))
                             .monospacedDigit()
                     }
@@ -38,7 +39,7 @@ struct MorningRitualLiveActivity: Widget {
                             .font(.callout.weight(.medium))
                             .lineLimit(1)
                         Spacer(minLength: 8)
-                        Label("Open camera", systemImage: "camera.fill")
+                        Label(localized("widget.openCamera", state: context.state), systemImage: "camera.fill")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Self.sunrise)
                     }
@@ -46,16 +47,16 @@ struct MorningRitualLiveActivity: Widget {
             } compactLeading: {
                 Image(systemName: "sun.horizon.fill")
                     .foregroundStyle(Self.sunrise)
-                    .accessibilityLabel("Sky Grid morning")
+                    .accessibilityLabel(localized("widget.skyGridMorning", state: context.state))
             } compactTrailing: {
-                Text("Capture")
+                Text(localized("widget.capture", state: context.state))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(Self.sunrise)
-                    .accessibilityLabel("Open camera")
+                    .accessibilityLabel(localized("widget.openCamera", state: context.state))
             } minimal: {
                 Image(systemName: "camera.fill")
                     .foregroundStyle(Self.sunrise)
-                    .accessibilityLabel("Open Sky Grid camera")
+                    .accessibilityLabel(localized("widget.openSkyGridCamera", state: context.state))
             }
             .keylineTint(Self.sunrise)
             .widgetURL(Self.captureURL)
@@ -69,7 +70,7 @@ struct MorningRitualLiveActivity: Widget {
     private func lockScreen(state: MorningRitualAttributes.ContentState) -> some View {
         HStack(alignment: .center, spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Today's sky")
+                Text(localized("widget.todaysSky", state: state))
                     .font(.system(.title3, design: .serif, weight: .medium))
                 Text(actionText(for: state))
                     .font(.caption)
@@ -77,17 +78,24 @@ struct MorningRitualLiveActivity: Widget {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text("AVAILABLE UNTIL")
+                Text(localized("widget.availableUntil", state: state))
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Text(captureDeadline(for: state), style: .time)
+                    .environment(\.locale, locale(for: state))
                     .font(.system(.body, design: .rounded, weight: .semibold))
                     .monospacedDigit()
             }
         }
         .padding()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(statusText(for: state)). Open the Sky Grid camera. Available until \(captureDeadline(for: state).formatted(date: .omitted, time: .shortened)).")
+        .accessibilityLabel(String(
+            format: localized("widget.lockScreenAccessibility", state: state),
+            statusText(for: state),
+            captureDeadline(for: state).formatted(
+                .dateTime.hour().minute().locale(locale(for: state))
+            )
+        ))
     }
 
     private func captureDeadline(for state: MorningRitualAttributes.ContentState) -> Date {
@@ -96,9 +104,9 @@ struct MorningRitualLiveActivity: Widget {
 
     private func actionText(for state: MorningRitualAttributes.ContentState) -> String {
         switch state.status {
-        case .awaitingCapture: "Tap to open the camera"
-        case .captured: "Today's sky is safe"
-        case .ended: "The morning window has closed"
+        case .awaitingCapture: localized("widget.action.openCamera", state: state)
+        case .captured: localized("widget.action.skySafe", state: state)
+        case .ended: localized("widget.action.windowClosed", state: state)
         }
     }
 
@@ -106,9 +114,23 @@ struct MorningRitualLiveActivity: Widget {
     /// (VISION.md §6: "儀式的・寡黙・非評価的。褒めない、煽らない").
     private func statusText(for state: MorningRitualAttributes.ContentState) -> String {
         switch state.status {
-        case .awaitingCapture: "Ready for today's sky"
-        case .captured: "Captured"
-        case .ended: "Morning ritual ended"
+        case .awaitingCapture: localized("widget.status.ready", state: state)
+        case .captured: localized("widget.status.captured", state: state)
+        case .ended: localized("widget.status.ended", state: state)
         }
+    }
+
+    private func locale(for state: MorningRitualAttributes.ContentState) -> Locale {
+        Locale(identifier: state.languageCode ?? Locale.preferredLanguages.first ?? "en")
+    }
+
+    /// A widget runs in another process, so the app's Bundle override cannot
+    /// reach it. The activity state carries the selected app language instead.
+    private func localized(_ key: String, state: MorningRitualAttributes.ContentState) -> String {
+        guard let code = state.languageCode,
+              let path = Bundle.main.path(forResource: code, ofType: "lproj"),
+              let bundle = Bundle(path: path)
+        else { return NSLocalizedString(key, bundle: .main, value: key, comment: "") }
+        return NSLocalizedString(key, bundle: bundle, value: key, comment: "")
     }
 }

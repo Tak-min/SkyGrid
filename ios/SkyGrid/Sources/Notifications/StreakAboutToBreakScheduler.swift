@@ -58,6 +58,23 @@ enum StreakAboutToBreakScheduler {
         try? await center.add(request)
     }
 
+    /// Pending notification content is snapshotted when scheduled. Keep its
+    /// original fire time when the person changes the in-app language.
+    static func resyncLocalizedContent() async {
+        let center = UNUserNotificationCenter.current()
+        for request in await center.pendingNotificationRequests()
+            where request.identifier.hasPrefix(identifierPrefix) {
+            guard let content = request.content.mutableCopy() as? UNMutableNotificationContent else { continue }
+            content.title = L10n.string("notification.streakAboutToBreak.title")
+            content.body = L10n.string("notification.streakAboutToBreak.body")
+            try? await center.add(UNNotificationRequest(
+                identifier: request.identifier,
+                content: content,
+                trigger: request.trigger
+            ))
+        }
+    }
+
     /// Cancels exactly one day's reminder — pending and delivered.
     static func cancel(for localDate: LocalDate) {
         let center = UNUserNotificationCenter.current()

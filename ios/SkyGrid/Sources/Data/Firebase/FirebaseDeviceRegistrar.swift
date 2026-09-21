@@ -14,6 +14,7 @@ final class FirebaseDeviceRegistrar {
     private var lastToken: String?
     private var tokenObserver: NSObjectProtocol?
     private var languageObserver: NSObjectProtocol?
+    private var pendingWrite: Task<Void, Never>?
 
     init(firestore: Firestore = Firestore.firestore()) {
         self.firestore = firestore
@@ -60,19 +61,7 @@ final class FirebaseDeviceRegistrar {
     private func persist(token: String) async {
         guard let uid, !token.isEmpty else { return }
         lastToken = token
-        let tokenID = deviceTokenID(for: token)
-        do {
-            try await firestore.collection("users").document(uid).collection("devices").document(tokenID)
-                .setDataAsync([
-                    "fcmToken": token,
-                    "updatedAt": FieldValue.serverTimestamp(),
-                    "platform": "ios",
-                    "language": currentLanguageCode(),
-                ], merge: true)
-        } catch {
-            // Registration is retried on the next FCM token refresh or launch; it
-            // must never block camera capture or account startup.
-        }
+        await enqueueWrite(uid: uid, token: token, includeToken: true)
     }
 
     /// Re-persists only the language field for the already-registered token, so a
@@ -80,17 +69,33 @@ final class FirebaseDeviceRegistrar {
     /// waiting for the next token refresh.
     private func persistCurrentLanguage() async {
         guard let uid, let lastToken, !lastToken.isEmpty else { return }
-        let tokenID = deviceTokenID(for: lastToken)
-        do {
-            try await firestore.collection("users").document(uid).collection("devices").document(tokenID)
-                .setDataAsync([
-                    "updatedAt": FieldValue.serverTimestamp(),
-                    "language": currentLanguageCode(),
-                ], merge: true)
-        } catch {
-            // Same non-blocking discipline as `persist(token:)`: retried on the next
-            // token refresh or launch if this write fails.
+        await enqueueWrite(uid: uid, token: lastToken, includeToken: false)
+    }
+
+    private func enqueueWrite(uid: String, token: String, includeToken: Bool) async {
+        // A slower old-language write must never finish after a newer selection
+        // and put server notifications back into the device's previous language.
+        let previous = pendingWrite
+        let task = Task {
+            await previous?.value
+            var fields: [String: Any] = [
+                "updatedAt": FieldValue.serverTimestamp(),
+                "language": currentLanguageCode(),
+            ]
+            if includeToken {
+                fields["fcmToken"] = token
+                fields["platform"] = "ios"
+            }
+            do {
+                try await firestore.collection("users").document(uid).collection("devices")
+                    .document(deviceTokenID(for: token)).setDataAsync(fields, merge: true)
+            } catch {
+                // A failed write is retried on the next token refresh or launch.
+                // Notification setup must not block the daily capture flow.
+            }
         }
+        pendingWrite = task
+        await task.value
     }
 
     private func deviceTokenID(for token: String) -> String {

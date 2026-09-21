@@ -4,6 +4,22 @@ import Testing
 
 @Suite("MorningRitualPolicy")
 struct MorningRitualPolicyTests {
+    @Test("Live Activity language survives encoding and older state still decodes")
+    func contentStateLanguageCompatibility() throws {
+        let state = MorningRitualAttributes.ContentState(
+            status: .awaitingCapture,
+            wokeAt: Date(timeIntervalSince1970: 1_700_000_000),
+            captureBy: Date(timeIntervalSince1970: 1_700_014_400),
+            languageCode: "en"
+        )
+        let encoded = try JSONEncoder().encode(state)
+        #expect(try JSONDecoder().decode(MorningRitualAttributes.ContentState.self, from: encoded).languageCode == "en")
+        var legacy = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        legacy.removeValue(forKey: "languageCode")
+        let legacyData = try JSONSerialization.data(withJSONObject: legacy)
+        #expect(try JSONDecoder().decode(MorningRitualAttributes.ContentState.self, from: legacyData).languageCode == nil)
+    }
+
     private let timeZone = TimeZone(identifier: "UTC")!
     private let wakeGoalMinutes = 360 // 6:00
     private let today = LocalDate(year: 2026, month: 8, day: 2)

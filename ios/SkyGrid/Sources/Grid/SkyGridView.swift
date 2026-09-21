@@ -3,6 +3,7 @@ import SwiftUI
 /// The year is a physical-looking field of days, not a progress chart. Every empty
 /// cell stays visible so the color record can be read alongside the ordinary gaps.
 struct SkyGridView: View {
+    @Environment(\.locale) private var locale
     let year: Int
     let posts: [LocalDate: SkyPost]
     let thumbnails: [LocalDate: UIImage]
@@ -148,8 +149,8 @@ struct SkyGridView: View {
                 .skyAnimation(SGMotion.exchange, value: postedCount)
                 .accessibilityLabel(
                     isArchiveUnavailable && posts.isEmpty
-                        ? "Archive not checked"
-                        : "\(postedCount) morning skies photographed this year"
+                        ? L10n.string("grid.archiveNotCheckedAccessibility")
+                        : String(format: L10n.string("grid.yearCaptureCountAccessibility"), postedCount)
                 )
             if canShare, let onShare {
                 Button(action: onShare) {
@@ -309,10 +310,10 @@ struct SkyGridView: View {
 
     private func monthFormatter(format: String, month: Int) -> String {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "en_US_POSIX")
+        calendar.locale = locale
         guard let date = calendar.date(from: DateComponents(year: year, month: month, day: 1)) else { return String(month) }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = locale
         formatter.calendar = calendar
         formatter.dateFormat = format
         return formatter.string(from: date)

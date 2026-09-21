@@ -8081,6 +8081,38 @@
         }
       }
     },
+    "paywall.error.accessUnconfirmed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your purchase completed, but we could not confirm access. Try restoring purchases."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購入は完了しましたが、Proの利用権を確認できませんでした。購入を復元してください。"
+          }
+        }
+      }
+    },
+    "paywall.error.alreadyActive": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Pro access is already active."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proはすでに利用できます。"
+          }
+        }
+      }
+    },
     "paywall.error.configurationMissing": {
       "localizations": {
         "en": {
@@ -8141,6 +8173,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "プランを読み込めませんでした。少ししてから、もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "paywall.error.noPurchasesToRestore": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No purchases were found to restore."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "復元できる購入が見つかりませんでした。"
           }
         }
       }
@@ -8911,6 +8959,30 @@
             "value": "Apple へのサインインを完了できませんでした。もう一度お試しください。"
           }
         }
+      }
+    },
+    "startup.failure.configurationTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Sky Grid isn't configured." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "Sky Gridの設定が完了していません。" } }
+      }
+    },
+    "startup.failure.configurationRecovery": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This build is missing its Firebase configuration file." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "このビルドにはFirebaseの設定ファイルがありません。" } }
+      }
+    },
+    "startup.failure.connectionTitle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Sky Grid couldn't connect." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "Sky Gridに接続できませんでした。" } }
+      }
+    },
+    "startup.failure.connectionRecovery": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Check your connection and try again. Your archive hasn't changed." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "接続を確認して、もう一度お試しください。アーカイブの内容は変わっていません。" } }
       }
     },
     "startup.newAccount.error": {
@@ -11966,6 +12038,404 @@
           "stringUnit": {
             "state": "translated",
             "value": "1年分の空の写真をすべて見る"
+          }
+        }
+      }
+    },
+    "alarm.repeat.everyDay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every day"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日"
+          }
+        }
+      }
+    },
+    "alarm.repeat.weekdays": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekdays"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平日"
+          }
+        }
+      }
+    },
+    "alarm.repeat.weekends": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekends"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "週末"
+          }
+        }
+      }
+    },
+    "alarm.enableAccessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@のアラームを有効にする"
+          }
+        }
+      }
+    },
+    "alarm.permission.systemDenied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Sky Grid alarms in Settings, or use a regular reminder."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定でSky Gridのアラームを許可するか、通常のリマインダーを使ってね。"
+          }
+        }
+      }
+    },
+    "alarm.permission.reminderDenied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow notifications in Settings to receive morning reminders."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝のリマインダーを受け取るには、設定で通知を許可してね。"
+          }
+        }
+      }
+    },
+    "alarm.state.addFirst": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add your first alarm when you're ready."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備ができたら、最初のアラームを追加してね。"
+          }
+        }
+      }
+    },
+    "alarm.state.unscheduled": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These times are saved but aren't scheduled on this device. Edit one or toggle it off and on to try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時刻は保存されているけど、この端末ではアラームが設定されていないよ。編集するか、オフにしてから再びオンにしてみてね。"
+          }
+        }
+      }
+    },
+    "alarm.state.enableOne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on at least one alarm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アラームを1件以上オンにしてね。"
+          }
+        }
+      }
+    },
+    "grid.archiveNotCheckedAccessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archive not checked"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アーカイブは未確認"
+          }
+        }
+      }
+    },
+    "grid.yearCaptureCountAccessibility": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld morning skies photographed this year"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今年撮影した朝の空は%lld枚"
+          }
+        }
+      }
+    },
+    "today.weeklyRecap.open": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open weekly recap"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィークリーリキャップを開く"
+          }
+        }
+      }
+    },
+    "today.weeklyRecap.pro": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly recap · Pro"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィークリーリキャップ · Pro"
+          }
+        }
+      }
+    },
+    "today.weeklyRecap.openHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens a shareable recap of your last seven mornings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "過去7日間の朝をまとめた共有できるリキャップを開く"
+          }
+        }
+      }
+    },
+    "today.weeklyRecap.proHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens Sky Grid Pro upgrade"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky Grid Proのアップグレードを開く"
+          }
+        }
+      }
+    },
+    "plan.free": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無料"
+          }
+        }
+      }
+    },
+    "plan.monthly": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monthly"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月額"
+          }
+        }
+      }
+    },
+    "plan.annual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annual"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "年額"
+          }
+        }
+      }
+    },
+    "plan.lifetime": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lifetime"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "買い切り"
+          }
+        }
+      }
+    },
+    "paywall.continueWithPlan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue with %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@で続ける"
+          }
+        }
+      }
+    },
+    "Open Sky Grid": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Sky Grid"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Sky Grid"
+          }
+        }
+      }
+    },
+    "Sky Grid morning alarm stopped": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky Grid morning alarm stopped"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky Grid morning alarm stopped"
+          }
+        }
+      }
+    },
+    "Welcome!": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Welcome!" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ようこそ！" } }
+      }
+    },
+    "Join": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Join" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "参加する" } }
+      }
+    },
+    "Weekly recap ready": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Weekly recap ready" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "週間まとめができました" } }
+      }
+    },
+    "Seven mornings captured": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Seven mornings captured" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "7日分の朝を記録しました" } }
+      }
+    },
+    "SAVED": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "SAVED" } },
+        "ja": { "stringUnit": { "state": "translated", "value": "保存完了" } }
+      }
+    },
+    "Alarm ID": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alarm ID"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アラームID"
           }
         }
       }

@@ -56,19 +56,50 @@ final class LocalizationController {
         LocalDefaults.selectedLanguageCode = language.rawValue
         NotificationCenter.default.post(name: .skyGridLanguageDidChange, object: nil)
         guard resyncNotifications else { return }
-        Task { await MorningAlarmScheduler.resyncLocalizedContent() }
+        Task {
+            await MorningAlarmScheduler.resyncLocalizedContent()
+            await MorningRitualActivity.resyncLocalizedContent()
+            await StreakAboutToBreakScheduler.resyncLocalizedContent()
+        }
     }
 }
 
 enum L10n {
+    static var language: AppLanguage {
+        LocalDefaults.selectedLanguageCode.flatMap(AppLanguage.init(rawValue:))
+            ?? AppLanguage.inferred()
+    }
+
     static func resource(_ key: String, language: AppLanguage? = nil) -> LocalizedStringResource {
-        LocalizedStringResource(stringLiteral: string(key, language: language))
+        let selected = language ?? self.language
+        let resourceKey: StaticString
+        switch (key, selected) {
+        case ("notification.captureSky", .english): resourceKey = "skygrid.alarm.captureSky.en.v1"
+        case ("notification.captureSky", .japanese): resourceKey = "skygrid.alarm.captureSky.ja.v1"
+        case ("notification.skyStillWaiting", .english): resourceKey = "skygrid.alarm.skyStillWaiting.en.v1"
+        case ("notification.skyStillWaiting", .japanese): resourceKey = "skygrid.alarm.skyStillWaiting.ja.v1"
+        case ("notification.openCamera", .english): resourceKey = "skygrid.alarm.openCamera.en.v1"
+        case ("notification.openCamera", .japanese): resourceKey = "skygrid.alarm.openCamera.ja.v1"
+        default:
+            assertionFailure("Unexpected AlarmKit localization key: \(key)")
+            resourceKey = "skygrid.alarm.unknown.v1"
+        }
+        // AlarmKit resolves resources in a different process, where the system
+        // may replace `locale` with the device language. Use a key absent from
+        // the catalog and the app-selected text as its fallback. Distinct keys
+        // prevent the system from reusing a value from another field or
+        // language. The fallback survives a later lookup using ja.
+        return LocalizedStringResource(
+            resourceKey,
+            defaultValue: String.LocalizationValue(stringLiteral: string(key, language: selected)),
+            table: "AlarmPrelocalizedCopy",
+            locale: selected.locale,
+            bundle: .main
+        )
     }
 
     static func string(_ key: String, language: AppLanguage? = nil) -> String {
-        let resolved = language
-            ?? LocalDefaults.selectedLanguageCode.flatMap(AppLanguage.init(rawValue:))
-            ?? AppLanguage.inferred()
+        let resolved = language ?? self.language
         guard let path = Bundle.main.path(forResource: resolved.rawValue, ofType: "lproj"),
               let bundle = Bundle(path: path)
         else {

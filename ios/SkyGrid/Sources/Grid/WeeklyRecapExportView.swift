@@ -140,24 +140,29 @@ struct WeeklyRecapExportView: View {
 
     private var dateRange: String {
         guard let first = orderedPosts.first?.localDate, let last = orderedPosts.last?.localDate else { return "" }
-        if first.year == last.year, first.month == last.month {
-            return "\(month(first.month)) \(first.day)—\(last.day), \(last.year)"
-        }
-        return "\(month(first.month)) \(first.day)—\(month(last.month)) \(last.day)"
+        return "\(formattedDate(first))—\(formattedDate(last))"
     }
 
-    private func month(_ value: Int) -> String {
-        let months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-        guard months.indices.contains(value - 1) else { return "" }
-        return months[value - 1]
+    private func formattedDate(_ date: LocalDate) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        guard let value = calendar.date(from: DateComponents(year: date.year, month: date.month, day: date.day)) else {
+            return date.docID
+        }
+        let formatter = DateFormatter()
+        formatter.locale = L10n.language.locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .medium
+        return formatter.string(from: value)
     }
 
     private func weekday(_ date: LocalDate) -> String {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "en_US_POSIX")
+        calendar.locale = L10n.language.locale
         guard let value = calendar.date(from: DateComponents(year: date.year, month: date.month, day: date.day)) else { return "" }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = L10n.language.locale
         formatter.calendar = calendar
         formatter.dateFormat = "EEE"
         return formatter.string(from: value).uppercased()

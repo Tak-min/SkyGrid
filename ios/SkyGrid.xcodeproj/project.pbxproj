@@ -88,6 +88,7 @@
 		485B087FE37BF025B2547524 /* InviteLinkCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE316403FC0C5F12B7048A3 /* InviteLinkCard.swift */; };
 		48C0F6F1523810869AF829F8 /* FriendRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F57291326970B094543254 /* FriendRequestsView.swift */; };
 		4BA845FD309C5FDC34D7CD44 /* AppStartupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C066803C0C09197672F84395 /* AppStartupController.swift */; };
+		4C03F5B60A083AD93ADF8699 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = C76CECADF3B3DACAE073FC67 /* Localizable.xcstrings */; };
 		4CC2E2E8F54842CB054CBF98 /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F8226F41E37D81F38B2EA3D /* QRCodeGenerator.swift */; };
 		4D0178A5D5C0B27708C30C4D /* FirebaseContentSafetyRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D37F265D873D99179818E9 /* FirebaseContentSafetyRepository.swift */; };
 		4D18633E8DC5D3E5398355E7 /* InviteLinkParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E04A3EBA32F5CB4180A33A /* InviteLinkParserTests.swift */; };
@@ -574,6 +575,7 @@
 		C3F960A6C26CEE3DD63F79F1 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		C40E82FC02E08596714BA7FB /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		C6A3B5CC0ADD2C9D6F8F4CDF /* FriendsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendsViewModel.swift; sourceTree = "<group>"; };
+		C76CECADF3B3DACAE073FC67 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		C7FBEED81343B4AE56B8423B /* StreakAboutToBreakSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreakAboutToBreakSchedulerTests.swift; sourceTree = "<group>"; };
 		C856196405B33988CBE21663 /* FirebasePostRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebasePostRepository.swift; sourceTree = "<group>"; };
 		C9EEFAB924CC4A1311B4EBBE /* BuddyAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuddyAnalytics.swift; sourceTree = "<group>"; };
@@ -769,6 +771,7 @@
 		2F2DB77184A5C071AA1F8A63 /* SkyGridWidgets */ = {
 			isa = PBXGroup;
 			children = (
+				C76CECADF3B3DACAE073FC67 /* Localizable.xcstrings */,
 				81D5E4D6A1F3A08B61CCED03 /* MorningRitualLiveActivity.swift */,
 				66BB3A44CB5F9D749092A935 /* SkyGridWidgetsBundle.swift */,
 			);
@@ -1268,6 +1271,7 @@
 			buildConfigurationList = A5A74DA4C4EDB18397BF1EDE /* Build configuration list for PBXNativeTarget "SkyGridWidgets" */;
 			buildPhases = (
 				90EBB9C0242F1933A60B70DD /* Sources */,
+				A367B0D35B6FF5282A42B055 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -1380,6 +1384,14 @@
 				7B1C8A0D8D637108DBEB34A6 /* purchase_confirmed.caf in Resources */,
 				63ED7FF5537EED9A6B3C2C79 /* recoverable_error.caf in Resources */,
 				C2488137112CC5FCCD36D8E3 /* streak_milestone.caf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A367B0D35B6FF5282A42B055 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C03F5B60A083AD93ADF8699 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1900,7 +1912,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1911,7 +1923,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.9;
+				MARKETING_VERSION = 1.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridWidgets;
 				PRODUCT_MODULE_NAME = SkyGridWidgets;
 				SDKROOT = iphoneos;
@@ -1930,7 +1942,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -1943,7 +1955,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.9;
+				MARKETING_VERSION = 1.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
 				PRODUCT_MODULE_NAME = SkyGrid;
 				SDKROOT = iphoneos;
@@ -1957,7 +1969,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SkyGrid/Config/SkyGridWidgets-Info.plist";
@@ -1968,7 +1980,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.9;
+				MARKETING_VERSION = 1.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid.SkyGridWidgets;
 				PRODUCT_MODULE_NAME = SkyGridWidgets;
 				SDKROOT = iphoneos;
@@ -1987,7 +1999,7 @@
 				CODE_SIGN_ENTITLEMENTS = SkyGrid/Config/SkyGrid.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEVELOPMENT_TEAM = NVZB82UK53;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SkyGrid/Config/Info.plist;
@@ -2001,7 +2013,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.9;
+				MARKETING_VERSION = 1.0.10;
 				PRODUCT_BUNDLE_IDENTIFIER = com.takmin.skygrid;
 				PRODUCT_MODULE_NAME = SkyGrid;
 				SDKROOT = iphoneos;

@@ -175,11 +175,18 @@ struct MorningCardExportView: View {
     /// under — rather than re-deriving a day from `capturedAt`, which would disagree
     /// with the grid for anyone who has travelled.
     private var captureDate: String {
-        let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         let date = post.localDate
-        guard (1...12).contains(date.month) else { return date.docID }
-        return "\(months[date.month - 1]) \(date.day), \(date.year)"
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        guard let value = calendar.date(from: DateComponents(year: date.year, month: date.month, day: date.day)) else {
+            return date.docID
+        }
+        let formatter = DateFormatter()
+        formatter.locale = L10n.language.locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .medium
+        return formatter.string(from: value)
     }
 
     /// `minutesFromGoal` is stored on the post and is independent of any time zone,

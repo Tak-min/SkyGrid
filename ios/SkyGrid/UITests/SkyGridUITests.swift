@@ -4,6 +4,107 @@ import XCTest
 /// fabricated local users, photos, or purchases. End-to-end camera and backend
 /// coverage belongs to a Firebase Emulator / physical-device test plan.
 final class SkyGridUITests: XCTestCase {
+    func testClosingFirstPaywallUsesSelectedLanguageOnSecondChance() {
+        for (language, headline, close, renewal, action) in [
+            ("en", "Wait—want to try your first month?", "Close", "Then each month", "Try the first month for $0.99"),
+            ("ja", "ちょっと待って！\n最初の1か月を\n試してみない？", "閉じる", "その後は毎月", "$0.99で最初の1か月を試す"),
+        ] {
+            let app = XCUIApplication()
+            app.launchArguments = [
+                "-SkyGridUIAudit", "-SkyGridUIAuditScenario", "paywall-second-chance-flow",
+                "-selectedLanguageCode", language,
+            ]
+            app.launch()
+            XCTAssertTrue(app.buttons[close].waitForExistence(timeout: 8), language)
+            app.buttons[close].tap()
+            XCTAssertTrue(app.staticTexts[headline].waitForExistence(timeout: 8), language)
+            XCTAssertTrue(app.staticTexts[renewal].exists, language)
+            XCTAssertTrue(app.buttons[action].exists, language)
+            let attachment = XCTAttachment(screenshot: app.screenshot())
+            attachment.name = "second-chance-\(language)"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+            app.terminate()
+        }
+    }
+
+    func testEnglishChosenInSettingsPersistsToSecondChanceOnJapaneseDevice() {
+        let settings = XCUIApplication()
+        settings.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "settings"]
+        settings.launch()
+        let languageMenu = settings.buttons["Language"].exists ? settings.buttons["Language"] : settings.buttons["言語"]
+        XCTAssertTrue(languageMenu.waitForExistence(timeout: 8))
+        languageMenu.tap()
+        settings.buttons["日本語"].tap()
+        XCTAssertTrue(settings.buttons["言語"].waitForExistence(timeout: 5))
+        settings.buttons["言語"].tap()
+        settings.buttons["English"].tap()
+        XCTAssertTrue(settings.buttons["Language"].waitForExistence(timeout: 5))
+        settings.terminate()
+
+        let paywall = XCUIApplication()
+        paywall.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "paywall-second-chance-flow"]
+        paywall.launch()
+        XCTAssertTrue(paywall.buttons["Close"].waitForExistence(timeout: 8))
+        paywall.buttons["Close"].tap()
+        XCTAssertTrue(paywall.staticTexts["Wait—want to try your first month?"].waitForExistence(timeout: 8))
+        XCTAssertTrue(paywall.buttons["Try the first month for $0.99"].exists)
+    }
+
+    func testAlarmSettingsUseEnglishSelectionOnJapaneseDevice() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-SkyGridUIAudit", "-SkyGridUIAuditScenario", "alarm",
+            "-selectedLanguageCode", "en",
+        ]
+        app.launch()
+        XCTAssertTrue(app.navigationBars["Morning Alarms"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["2 alarms"].exists)
+        XCTAssertTrue(app.buttons["Add another alarm"].exists)
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = "alarm-settings-en-on-ja-device"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
+    func testRunningLiveActivitySwitchesFromJapaneseToEnglish() {
+        let settings = XCUIApplication()
+        settings.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "settings"]
+        settings.launch()
+        let startingMenu = settings.buttons["Language"].exists ? settings.buttons["Language"] : settings.buttons["言語"]
+        XCTAssertTrue(startingMenu.waitForExistence(timeout: 8))
+        startingMenu.tap()
+        settings.buttons["日本語"].tap()
+        settings.terminate()
+
+        let activityHost = XCUIApplication()
+        activityHost.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "live-activity"]
+        activityHost.launch()
+        XCTAssertTrue(activityHost.staticTexts["Started — leave the app to inspect the Island."].waitForExistence(timeout: 8))
+        activityHost.terminate()
+
+        let englishSettings = XCUIApplication()
+        englishSettings.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "settings"]
+        englishSettings.launch()
+        englishSettings.buttons["言語"].tap()
+        englishSettings.buttons["English"].tap()
+        XCTAssertTrue(englishSettings.buttons["Language"].waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        XCTAssertTrue(springboard.otherElements["Sky Grid morning, Open camera"].waitForExistence(timeout: 8))
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = "live-activity-en-after-language-switch"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+
+        let cleanup = XCUIApplication()
+        cleanup.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "live-activity"]
+        cleanup.launch()
+        XCTAssertTrue(cleanup.buttons["End Live Activity"].waitForExistence(timeout: 8))
+        cleanup.buttons["End Live Activity"].tap()
+    }
+
     func testRewardDismissalSerializesInviteAndDayOnePresentation() {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "presentation-flow"]

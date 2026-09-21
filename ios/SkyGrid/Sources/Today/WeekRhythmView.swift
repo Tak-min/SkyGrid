@@ -12,6 +12,7 @@ import UIKit
 /// `BuddyTile` there is no mutual-reveal gate to respect — a posted day's photo is
 /// simply fetched and shown.
 struct WeekRhythmView: View {
+    @Environment(\.locale) private var locale
     let rhythm: WeekRhythm
     let imageFetching: any ImageFetching
     var accent: SkyColor = SkyColor(uncheckedHex: "#9DB7C5")
@@ -79,10 +80,10 @@ struct WeekRhythmView: View {
 
     private func weekdayLabel(for day: LocalDate) -> String {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.locale = Locale(identifier: "en_US_POSIX")
+        calendar.locale = locale
         guard let date = calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day)) else { return "" }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.locale = locale
         formatter.calendar = calendar
         formatter.dateFormat = "EEEEE"
         return formatter.string(from: date)

@@ -23,6 +23,8 @@ struct MorningRitualAttributes: ActivityAttributes {
         var wokeAt: Date
         /// Optional for decoding activities started by an older app build.
         var captureBy: Date? = nil
+        /// Optional so an activity started by an older build still decodes.
+        var languageCode: String? = nil
     }
 
     /// The `LocalDate.docID` ("YYYY-MM-DD") this activity belongs to. Immutable:

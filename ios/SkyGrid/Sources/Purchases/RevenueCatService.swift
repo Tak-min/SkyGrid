@@ -40,7 +40,7 @@ struct RevenueCatService: PurchasesServicing {
             // storefront cannot be reached. RevenueCat/StoreKit remain the
             // price authority.
             Self.logger.error("RevenueCat offerings request failed")
-            throw PurchaseError.underlying("Plans could not be reached. Check your connection and try again.")
+            throw PurchaseError.noOfferingAvailable
         }
         guard let offering = offerings.current else {
             Self.logger.error("RevenueCat returned no current offering")

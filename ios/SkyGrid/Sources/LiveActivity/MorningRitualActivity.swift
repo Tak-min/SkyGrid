@@ -38,7 +38,8 @@ enum MorningRitualActivity {
         let state = MorningRitualAttributes.ContentState(
             status: .awaitingCapture,
             wokeAt: wokeAt,
-            captureBy: captureBy
+            captureBy: captureBy,
+            languageCode: L10n.language.rawValue
         )
         let content = ActivityContent(state: state, staleDate: captureBy, relevanceScore: 100)
         // A denied/unsupported Live Activity is not a failure of the morning
@@ -57,9 +58,22 @@ enum MorningRitualActivity {
             let finalState = MorningRitualAttributes.ContentState(
                 status: status,
                 wokeAt: activity.content.state.wokeAt,
-                captureBy: activity.content.state.captureBy
+                captureBy: activity.content.state.captureBy,
+                languageCode: activity.content.state.languageCode
             )
             await activity.end(ActivityContent(state: finalState, staleDate: nil), dismissalPolicy: .immediate)
+        }
+    }
+
+    static func resyncLocalizedContent() async {
+        for activity in Activity<MorningRitualAttributes>.activities {
+            var state = activity.content.state
+            state.languageCode = L10n.language.rawValue
+            await activity.update(ActivityContent(
+                state: state,
+                staleDate: state.captureBy,
+                relevanceScore: 100
+            ))
         }
     }
 }

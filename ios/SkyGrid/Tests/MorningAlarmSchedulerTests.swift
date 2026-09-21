@@ -4,6 +4,47 @@ import Testing
 
 @Suite("Morning reminder reconcile plan")
 struct MorningAlarmSchedulerTests {
+    @Test("alarm text stays in the selected app language after system locale override")
+    func alarmPresentationResourceUsesChosenLanguage() {
+        for language in AppLanguage.allCases {
+            var resource = L10n.resource("notification.captureSky", language: language)
+            #expect(resource.key == "skygrid.alarm.captureSky.\(language.rawValue).v1")
+            #expect(resource.locale.language.languageCode?.identifier == language.rawValue)
+            let expected = language == .english ? "Capture the sky" : "空を撮ろう"
+            #expect(String(localized: resource) == expected)
+            // AlarmKit serializes the resource before its UI resolves it.
+            let encoded = try! JSONEncoder().encode(resource)
+            resource = try! JSONDecoder().decode(LocalizedStringResource.self, from: encoded)
+            resource.locale = (language == .english ? AppLanguage.japanese : .english).locale
+            #expect(String(localized: resource) == expected)
+            #expect(L10n.string("notification.captureSky", language: language) == (language == .english ? "Capture the sky" : "空を撮ろう"))
+        }
+        for key in ["notification.skyStillWaiting", "notification.openCamera"] {
+            var resource = L10n.resource(key, language: .english)
+            resource.locale = AppLanguage.japanese.locale
+            #expect(String(localized: resource) == L10n.string(key, language: .english))
+        }
+    }
+
+    @Test("matching fallback reminders still replace snapshotted text")
+    func unchangedReminderRefreshesLocalizedContent() {
+        let alarm = schedule()
+        let current = alarm.weekdays.map { weekday in
+            MorningReminderPendingOccurrence(
+                identifier: MorningAlarmScheduler.reminderIdentifier(scheduleID: alarm.id, weekday: weekday),
+                hour: alarm.minutesAfterMidnight / 60,
+                minute: alarm.minutesAfterMidnight % 60
+            )
+        }
+        let plan = morningReminderReconcilePlan(
+            schedules: [alarm],
+            currentPendingOccurrences: current,
+            refreshLocalizedContent: true
+        )
+        #expect(plan.additions.count == 7)
+        #expect(plan.cancellations.isEmpty)
+    }
+
     @Test("five all-week alarms leave notification budget headroom")
     func maximumScheduleCountFitsNotificationBudget() {
         let repeatingRequests = MorningAlarmScheduler.maximumScheduleCount * 7

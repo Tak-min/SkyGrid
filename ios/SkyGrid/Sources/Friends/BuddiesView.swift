@@ -608,7 +608,7 @@ private struct BuddyRelationshipView: View {
                     Text(profile?.handle.map { "@" + $0.value } ?? "@…")
                         .font(SGFont.body(15))
                         .foregroundStyle(SGT.ink2)
-                    Text(String(format: L10n.string("buddy.connectedOn"), friendship.createdAt.formatted(date: .abbreviated, time: .omitted)))
+                    Text(String(format: L10n.string("buddy.connectedOn"), friendship.createdAt.formatted(.dateTime.day().month(.abbreviated).year().locale(L10n.language.locale))))
                         .font(SGFont.caption(13))
                         .foregroundStyle(SGT.ink3)
                 }
@@ -710,7 +710,7 @@ private struct BuddyRelationshipView: View {
             if case .posted(let post) = revealState {
                 BuddySkyDetailView(
                     post: post,
-                    displayName: profile?.displayName ?? "Buddy",
+                    displayName: profile?.displayName ?? L10n.string("Buddy"),
                     handle: profile?.handle?.value,
                     imageFetching: imageFetching
                 )

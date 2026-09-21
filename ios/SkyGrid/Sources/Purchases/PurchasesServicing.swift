@@ -21,10 +21,10 @@ enum SubscriptionPlan: String, CaseIterable, Equatable, Sendable {
 
     var homeLabel: String {
         switch self {
-        case .free: return "Free"
-        case .monthly: return "Monthly"
-        case .annual: return "Annual"
-        case .lifetime: return "Lifetime"
+        case .free: return L10n.string("plan.free")
+        case .monthly: return L10n.string("plan.monthly")
+        case .annual: return L10n.string("plan.annual")
+        case .lifetime: return L10n.string("plan.lifetime")
         }
     }
 

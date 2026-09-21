@@ -100,8 +100,18 @@ struct TogetherCardExportView: View {
     }
 
     private var dateLabel: String {
-        let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        return "\(months[ownPost.localDate.month - 1]) \(ownPost.localDate.day), \(ownPost.localDate.year)"
+        let date = ownPost.localDate
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        guard let value = calendar.date(from: DateComponents(year: date.year, month: date.month, day: date.day)) else {
+            return date.docID
+        }
+        let formatter = DateFormatter()
+        formatter.locale = L10n.language.locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.dateStyle = .medium
+        return formatter.string(from: value)
     }
 
     private func timeLabel(_ date: Date) -> String {

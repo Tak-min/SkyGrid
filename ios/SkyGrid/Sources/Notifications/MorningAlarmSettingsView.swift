@@ -102,6 +102,7 @@ final class MorningAlarmSettingsViewModel {
 struct MorningAlarmSettingsView: View {
     @State private var viewModel = MorningAlarmSettingsViewModel()
     @State private var editedSchedule: MorningAlarmSchedule?
+    @Environment(\.locale) private var locale
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -217,7 +218,7 @@ struct MorningAlarmSettingsView: View {
             .buttonStyle(.plain)
 
             Toggle(
-                "Enable \(timeString(schedule.minutesAfterMidnight))",
+                String(format: L10n.string("alarm.enableAccessibility"), timeString(schedule.minutesAfterMidnight)),
                 isOn: Binding(
                     get: { schedule.isEnabled },
                     set: { value in Task { await viewModel.setEnabled(value, for: schedule) } }
@@ -276,9 +277,9 @@ struct MorningAlarmSettingsView: View {
                 Label("Permission is not allowed", systemImage: "exclamationmark.circle")
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
-                Text(kind == .systemAlarm
-                     ? "Allow Sky Grid alarms in Settings, or use a regular reminder."
-                     : "Allow notifications in Settings to receive morning reminders.")
+                Text(L10n.string(kind == .systemAlarm
+                     ? "alarm.permission.systemDenied"
+                     : "alarm.permission.reminderDenied"))
                     .font(SGFont.caption())
                     .foregroundStyle(SGT.ink3)
                 Button("Open Settings", action: openSystemSettings)
@@ -291,11 +292,11 @@ struct MorningAlarmSettingsView: View {
                     .disabled(viewModel.isWorking)
                 }
             case .off:
-                Text(viewModel.schedules.isEmpty
-                     ? "Add your first alarm when you're ready."
+                Text(L10n.string(viewModel.schedules.isEmpty
+                     ? "alarm.state.addFirst"
                      : viewModel.schedules.contains(where: \.isEnabled)
-                        ? "These times are saved but aren't scheduled on this device. Edit one or toggle it off and on to try again."
-                        : "Turn on at least one alarm.")
+                        ? "alarm.state.unscheduled"
+                        : "alarm.state.enableOne"))
                     .font(SGFont.body(15))
                     .foregroundStyle(SGT.ink2)
             case .failed:
@@ -307,10 +308,12 @@ struct MorningAlarmSettingsView: View {
     }
 
     private func weekdaySummary(_ weekdays: Set<Int>) -> String {
-        if weekdays == Set(1...7) { return "Every day" }
-        if weekdays == Set(2...6) { return "Weekdays" }
-        if weekdays == Set([1, 7]) { return "Weekends" }
-        let symbols = Calendar.current.veryShortWeekdaySymbols
+        if weekdays == Set(1...7) { return L10n.string("alarm.repeat.everyDay") }
+        if weekdays == Set(2...6) { return L10n.string("alarm.repeat.weekdays") }
+        if weekdays == Set([1, 7]) { return L10n.string("alarm.repeat.weekends") }
+        var calendar = Calendar.current
+        calendar.locale = locale
+        let symbols = calendar.veryShortWeekdaySymbols
         return weekdays.sorted().compactMap { day in
             guard symbols.indices.contains(day - 1) else { return nil }
             return symbols[day - 1]
@@ -329,6 +332,7 @@ struct MorningAlarmSettingsView: View {
 
 private struct MorningAlarmEditor: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @State private var draft: MorningAlarmSchedule
     let onSave: (MorningAlarmSchedule) -> Void
 
@@ -384,7 +388,9 @@ private struct MorningAlarmEditor: View {
 
     private func weekdayButton(_ weekday: Int) -> some View {
         let selected = draft.weekdays.contains(weekday)
-        let symbol = Calendar.current.veryShortWeekdaySymbols[weekday - 1]
+        var calendar = Calendar.current
+        calendar.locale = locale
+        let symbol = calendar.veryShortWeekdaySymbols[weekday - 1]
         return Button {
             if selected { draft.weekdays.remove(weekday) } else { draft.weekdays.insert(weekday) }
         } label: {
@@ -395,7 +401,7 @@ private struct MorningAlarmEditor: View {
                 .background(selected ? SGT.ink : SGT.fill, in: Circle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Calendar.current.weekdaySymbols[weekday - 1])
+        .accessibilityLabel(calendar.weekdaySymbols[weekday - 1])
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 

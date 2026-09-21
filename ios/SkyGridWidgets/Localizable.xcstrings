@@ -1,0 +1,21 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "widget.action.openCamera": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Tap to open the camera"}}, "ja": {"stringUnit": {"state": "translated", "value": "タップしてカメラを開く"}}}},
+    "widget.action.skySafe": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Today's sky is safe"}}, "ja": {"stringUnit": {"state": "translated", "value": "今日の空は保存済み"}}}},
+    "widget.action.windowClosed": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "The morning window has closed"}}, "ja": {"stringUnit": {"state": "translated", "value": "朝の撮影時間は終了"}}}},
+    "widget.availableUntil": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "AVAILABLE UNTIL"}}, "ja": {"stringUnit": {"state": "translated", "value": "撮影できる期限"}}}},
+    "widget.capture": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Capture"}}, "ja": {"stringUnit": {"state": "translated", "value": "撮影"}}}},
+    "widget.lockScreenAccessibility": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "%1$@. Open the Sky Grid camera. Available until %2$@."}}, "ja": {"stringUnit": {"state": "translated", "value": "%1$@。Sky Gridのカメラを開く。撮影期限は%2$@。"}}}},
+    "widget.openCamera": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open camera"}}, "ja": {"stringUnit": {"state": "translated", "value": "カメラを開く"}}}},
+    "widget.openSkyGridCamera": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Open Sky Grid camera"}}, "ja": {"stringUnit": {"state": "translated", "value": "Sky Gridのカメラを開く"}}}},
+    "widget.skyGrid": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sky Grid"}}, "ja": {"stringUnit": {"state": "translated", "value": "Sky Grid"}}}},
+    "widget.skyGridMorning": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Sky Grid morning"}}, "ja": {"stringUnit": {"state": "translated", "value": "Sky Gridの朝"}}}},
+    "widget.status.captured": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Captured"}}, "ja": {"stringUnit": {"state": "translated", "value": "撮影済み"}}}},
+    "widget.status.ended": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Morning ritual ended"}}, "ja": {"stringUnit": {"state": "translated", "value": "朝の撮影は終了"}}}},
+    "widget.status.ready": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Ready for today's sky"}}, "ja": {"stringUnit": {"state": "translated", "value": "今日の空を撮ろう"}}}},
+    "widget.todaysSky": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "Today's sky"}}, "ja": {"stringUnit": {"state": "translated", "value": "今日の空"}}}},
+    "widget.until": {"localizations": {"en": {"stringUnit": {"state": "translated", "value": "UNTIL"}}, "ja": {"stringUnit": {"state": "translated", "value": "期限"}}}}
+  },
+  "version": "1.0"
+}

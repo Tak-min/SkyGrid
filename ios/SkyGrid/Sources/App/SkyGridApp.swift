@@ -27,6 +27,7 @@ struct SkyGridApp: App {
             .environment(appDelegate.appRouter)
             .environment(localization)
             .environment(\.locale, localization.language.locale)
+            .task { await MorningRitualActivity.resyncLocalizedContent() }
             // The app is dark-only by design (a light-mode pass shipped in ebf7bfc
             // read as a broken color-inverted dark mode on-device and was pulled).
             // This single root-level modifier is the only place color scheme is
@@ -66,6 +67,7 @@ private enum UIAuditScenario: String {
     case paywall
     case paywallPlan = "paywall-plan"
     case paywallSecondChance = "paywall-second-chance"
+    case paywallSecondChanceFlow = "paywall-second-chance-flow"
     case alarm
     case settings
     case settingsBlockedUnavailable = "settings-blocked-unavailable"
@@ -187,6 +189,15 @@ private struct UIAuditRoot: View {
                 purchases: UIAuditPurchases(),
                 entryPoint: .onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: 360),
                 initialStep: .secondChance,
+                allowsSecondChance: true,
+                onEntitlementGranted: {},
+                onDismissed: { _ in }
+            )
+        } else if scenario == .paywallSecondChanceFlow {
+            PaywallView(
+                purchases: UIAuditPurchases(),
+                entryPoint: .onboarding(profile: PersonalizationProfile(), wakeGoalMinutes: 360),
+                initialStep: .plan,
                 allowsSecondChance: true,
                 onEntitlementGranted: {},
                 onDismissed: { _ in }
@@ -926,7 +937,7 @@ private struct UIAuditPurchases: PurchasesServicing {
                     pricePerMonth: 1.67,
                     pricePerMonthLabel: "$1.67",
                     price: 19.99,
-                    billingDescription: "$19.99 per year. Auto-renews unless cancelled."
+                    billingDescription: String(format: L10n.string("paywall.billing.thenPerYear"), "$19.99")
                 ),
                 PurchaseProduct(
                     id: "monthly",
@@ -936,7 +947,7 @@ private struct UIAuditPurchases: PurchasesServicing {
                     offeringID: "ui-audit",
                     period: .monthly,
                     price: 3.99,
-                    billingDescription: "$3.99 per month. Auto-renews unless cancelled."
+                    billingDescription: String(format: L10n.string("paywall.billing.perMonth"), "$3.99")
                 ),
                 PurchaseProduct(
                     id: "lifetime",
@@ -946,7 +957,7 @@ private struct UIAuditPurchases: PurchasesServicing {
                     offeringID: "ui-audit",
                     period: .lifetime,
                     price: 59.99,
-                    billingDescription: "One payment. No renewal."
+                    billingDescription: L10n.string("paywall.billing.onePaymentNoRenewal")
                 )
             ]
         )
@@ -962,7 +973,7 @@ private struct UIAuditPurchases: PurchasesServicing {
             storeProductID: RevenueCatConfig.secondChanceProductID,
             period: .monthly,
             price: 3.99,
-            billingDescription: "$3.99 per month. Auto-renews unless cancelled."
+            billingDescription: String(format: L10n.string("paywall.billing.perMonth"), "$3.99")
         )
         return SecondChanceOffer(
             product: product,

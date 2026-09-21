@@ -583,16 +583,14 @@ struct TodayView: View {
             if WeeklyRecapPolicy.isReady(viewModel.weekRhythm) {
                 Button(action: openWeeklyRecap) {
                     Label(
-                        isPro ? "Open weekly recap" : "Weekly recap · Pro",
+                        L10n.string(isPro ? "today.weeklyRecap.open" : "today.weeklyRecap.pro"),
                         systemImage: isPro ? "rectangle.stack.fill" : "lock.fill"
                     )
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SkySecondaryButtonStyle())
                 .accessibilityHint(
-                    isPro
-                        ? "Opens a shareable recap of your last seven mornings"
-                        : "Opens Sky Grid Pro upgrade"
+                    L10n.string(isPro ? "today.weeklyRecap.openHint" : "today.weeklyRecap.proHint")
                 )
             }
 

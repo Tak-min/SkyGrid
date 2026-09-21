@@ -42,7 +42,7 @@ final class PaywallViewModel {
         if verifyEntitlement {
             let status = await purchases.entitlementStatus()
             guard status == .notSubscribed else {
-                state = status == .unknown ? .entitlementUnavailable : .failed("Your Pro access is already active.")
+                state = status == .unknown ? .entitlementUnavailable : .failed(L10n.string("paywall.error.alreadyActive"))
                 return status
             }
         }
@@ -68,12 +68,12 @@ final class PaywallViewModel {
             if status == .subscribed {
                 return true
             }
-            errorMessage = "Your purchase completed, but we could not confirm access. Try restoring purchases."
+            errorMessage = L10n.string("paywall.error.accessUnconfirmed")
             return false
         } catch PurchaseError.userCancelled {
             return false
         } catch PurchaseError.paymentPending {
-            errorMessage = "Your purchase is waiting for approval. Pro will unlock after Apple confirms it."
+            errorMessage = L10n.string("paywall.error.paymentPending")
             return false
         } catch {
             errorMessage = Self.message(for: error)
@@ -89,7 +89,7 @@ final class PaywallViewModel {
             if try await purchases.restorePurchases() == .subscribed {
                 return true
             }
-            errorMessage = "No purchases were found to restore."
+            errorMessage = L10n.string("paywall.error.noPurchasesToRestore")
             return false
         } catch {
             errorMessage = Self.message(for: error)
@@ -148,8 +148,10 @@ final class PaywallViewModel {
             return L10n.string("paywall.error.eligibilityUnavailable")
         case PurchaseError.paymentPending:
             return L10n.string("paywall.error.paymentPending")
-        case PurchaseError.underlying(let message):
-            return message
+        case PurchaseError.underlying:
+            // SDK and OS descriptions use the device language and can expose
+            // implementation details. Keep those in logs, not the paywall UI.
+            return L10n.string("paywall.error.default")
         default:
             return L10n.string("paywall.error.default")
         }

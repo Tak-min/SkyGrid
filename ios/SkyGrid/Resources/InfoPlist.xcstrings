@@ -13,7 +13,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sky Gridは、指定した時刻にアラームを鳴らし、朝の空の撮影をサポートします。"
+            "value" : "Sky Grid uses alarms at the time you choose to help you capture your morning sky."
           }
         }
       }

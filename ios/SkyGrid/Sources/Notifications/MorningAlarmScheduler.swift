@@ -200,7 +200,8 @@ func morningAlarmKitReconcilePlan(
 /// is intentionally restricted by the caller to the legacy/multi-schedule namespace.
 func morningReminderReconcilePlan(
     schedules: [MorningAlarmSchedule],
-    currentPendingOccurrences: [MorningReminderPendingOccurrence]
+    currentPendingOccurrences: [MorningReminderPendingOccurrence],
+    refreshLocalizedContent: Bool = false
 ) -> MorningReminderReconcilePlan {
     let desired = schedules
         .filter(\.isEnabled)
@@ -219,7 +220,7 @@ func morningReminderReconcilePlan(
     return MorningReminderReconcilePlan(
         additions: desired.filter { occurrence in
             guard let pendingOccurrence = pendingByIdentifier[occurrence.identifier] else { return true }
-            return !pendingOccurrence.matches(occurrence)
+            return refreshLocalizedContent || !pendingOccurrence.matches(occurrence)
         },
         cancellations: Set(pending.compactMap { pendingOccurrence in
             guard let desiredOccurrence = desired.first(where: { $0.identifier == pendingOccurrence.identifier }) else {
@@ -661,15 +662,32 @@ enum MorningAlarmScheduler {
                 }
                 await refreshMorningRitualFollowUps(minutes: minutes, schedules: schedules)
             }
+            // Retry alarms already queued for this morning also contain a
+            // presentation snapshot. Preserve their IDs and fire dates.
+            if let session = LocalDefaults.morningWakeSession {
+                let now = Date()
+                let today = LocalDate(date: now, timeZone: .current)
+                if session.isActive(today: today, now: now),
+                   LocalDefaults.lastCapturedLocalDateID != today.docID {
+                    for retry in session.pendingRetries where retry.fireDate > now {
+                        _ = try? await AlarmManager.shared.schedule(
+                            id: retry.id,
+                            configuration: captureRetryConfiguration(
+                                alarmID: retry.id,
+                                fireDate: retry.fireDate
+                            )
+                        )
+                    }
+                }
+            }
             return
         }
 
-        await cancelAllReminderSchedules()
         if schedules.isEmpty {
             _ = await scheduleReminder(minutes: normalizeWakeGoalMinutes(minutes))
             await refreshMorningRitualFollowUps(minutes: minutes)
         } else {
-            _ = await scheduleReminders(schedules: schedules)
+            _ = await scheduleReminders(schedules: schedules, refreshLocalizedContent: true)
             await refreshMorningRitualFollowUps(minutes: minutes, schedules: schedules)
         }
     }
@@ -679,10 +697,16 @@ enum MorningAlarmScheduler {
         guard LocalDefaults.morningAlarmEnabled else { return }
         let schedules = LocalDefaults.morningAlarmSchedules
         if !schedules.isEmpty {
-            _ = await apply(
+            let state = await apply(
                 schedules: schedules,
                 useReminderFallback: LocalDefaults.morningAlarmBackend == "reminder"
             )
+            // Both AlarmKit and reminder reconciliation compare times and
+            // weekdays, not snapshotted text. Refresh existing content even
+            // when the schedule itself is unchanged.
+            if state.isScheduled {
+                await resyncLocalizedContent()
+            }
             return
         }
         let minutes = LocalDefaults.wakeGoalMinutes
@@ -714,7 +738,10 @@ enum MorningAlarmScheduler {
     /// Reconciles the pre-AlarmKit fallback as one weekly local notification per
     /// enabled schedule weekday. This is deliberately additive beside the legacy
     /// single-value entry points until their callers migrate to schedule sets.
-    static func scheduleReminders(schedules: [MorningAlarmSchedule]) async -> MorningAlarmState {
+    static func scheduleReminders(
+        schedules: [MorningAlarmSchedule],
+        refreshLocalizedContent: Bool = false
+    ) async -> MorningAlarmState {
         let center = UNUserNotificationCenter.current()
         let requests = await center.pendingNotificationRequests()
         let pendingOccurrences: [MorningReminderPendingOccurrence] = requests.compactMap { request -> MorningReminderPendingOccurrence? in
@@ -730,7 +757,8 @@ enum MorningAlarmScheduler {
         }
         let plan = morningReminderReconcilePlan(
             schedules: schedules,
-            currentPendingOccurrences: pendingOccurrences
+            currentPendingOccurrences: pendingOccurrences,
+            refreshLocalizedContent: refreshLocalizedContent
         )
 
         guard schedules.contains(where: \.isEnabled) else {
@@ -836,7 +864,6 @@ enum MorningAlarmScheduler {
             return .failed(.reminder)
         }
 
-        center.removePendingNotificationRequests(withIdentifiers: [notificationIdentifier])
         let content = reminderContent()
 
         var components = DateComponents()
@@ -1265,6 +1292,9 @@ struct SkyGridAlarmMetadata: AlarmMetadata {}
 /// variable in how AlarmKit resolves this type across app rebuilds.
 @available(iOS 26.0, *)
 struct OpenMorningCameraIntent: LiveActivityIntent {
+    // App Intent metadata is resolved by iOS using its own language. Keep this
+    // alarm action name English in both catalog locales until App Intents can
+    // receive the in-app language without breaking metadata extraction.
     static var title: LocalizedStringResource = "Open Sky Grid"
     // `openAppWhenRun` was deprecated in iOS 26.0 in favor of `supportedModes`;
     // `.foreground(.immediate)` is Apple's documented replacement for "always
@@ -1312,6 +1342,7 @@ struct OpenMorningCameraIntent: LiveActivityIntent {
 /// modifier changes that name across rebuilds.
 @available(iOS 26.0, *)
 struct MorningAlarmStoppedIntent: LiveActivityIntent {
+    // Same system-owned metadata rule as OpenMorningCameraIntent.title.
     static var title: LocalizedStringResource = "Sky Grid morning alarm stopped"
     static var isDiscoverable: Bool { false }
     static var supportedModes: IntentModes = .foreground(.immediate)

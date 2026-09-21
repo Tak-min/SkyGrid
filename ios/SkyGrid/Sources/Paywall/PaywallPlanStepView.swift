@@ -176,7 +176,18 @@ struct PaywallPlanStepView: View {
     }
 
     private func primaryActionTitle(for product: PurchaseProduct) -> String {
-        "Continue with \(product.periodLabel ?? "Pro")"
+        String(format: L10n.string("paywall.continueWithPlan"), product.localizedPeriodLabel)
+    }
+}
+
+private extension PurchaseProduct {
+    var localizedPeriodLabel: String {
+        switch period {
+        case .annual: L10n.string("plan.annual")
+        case .monthly: L10n.string("plan.monthly")
+        case .lifetime: L10n.string("plan.lifetime")
+        case .unknown: periodLabel ?? title
+        }
     }
 }
 
@@ -266,7 +277,7 @@ private struct PlanOptionRow: View {
     }
 
     private var planPeriod: some View {
-        Text(product.periodLabel ?? product.title)
+        Text(product.localizedPeriodLabel)
             .font(SGFont.body(16))
             .foregroundStyle(SGT.ink)
     }

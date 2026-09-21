@@ -26,13 +26,13 @@ struct StartupFailureMessage: Equatable {
             // Only reachable in a misconfigured development build — a shipped app
             // always bundles its plist — so this one may name the real cause.
             Self(
-                title: "Sky Grid isn't configured.",
-                recovery: "This build is missing its Firebase configuration file."
+                title: L10n.string("startup.failure.configurationTitle"),
+                recovery: L10n.string("startup.failure.configurationRecovery")
             )
         case .backendUnavailable:
             Self(
-                title: "Sky Grid couldn't connect.",
-                recovery: "Check your connection and try again. Your archive hasn't changed."
+                title: L10n.string("startup.failure.connectionTitle"),
+                recovery: L10n.string("startup.failure.connectionRecovery")
             )
         }
     }
