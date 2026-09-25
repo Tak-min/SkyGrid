@@ -386,8 +386,8 @@ ALL of these are true:
   re-run for record-keeping: Gate 1 still fails — DoD's 8-ticket/3-screen bar is very close (T0,
   1a, 1b, 2(partial), 3, 4, 5, 6 = 6 fully-implemented tickets across Today/Invite/AppStartup/
   Paywall/Notifications, 5 distinct screens) but not yet at 8, Ticket 2's remaining-19-site audit
-  write-up is still outstanding, and Ticket 7/8/9 are unstarted. Committed as follows (staged
-  explicit paths only, no `git add -A`): [commit sha to be filled after commit]. Next iteration:
+  write-up is still outstanding, and Ticket 7/8/9 are unstarted. Committed as `969e85c` (staged
+  explicit paths only, no `git add -A`). Next iteration:
   finish Ticket 2's 19-site audit write-up (cheapest path to the 8-ticket bar, likely already
   correct usage per iteration 4's spot-check — needs the full per-site accounting the DoD
   requires), or pick up Ticket 7 (ink3/fill contrast — systemic token change, higher risk, budget a
