@@ -266,8 +266,7 @@ struct MorningAlarmSettingsView: View {
                         .font(SGFont.body(14))
                         .foregroundStyle(SGT.ink2)
                     Button("Open Settings", action: openSystemSettings)
-                        .font(SGFont.body(14))
-                        .frame(minHeight: 44)
+                        .buttonStyle(SkySecondaryButtonStyle())
                 }
             case .needsAuthorization:
                 Text("Add or enable an alarm to request permission at the moment it is needed.")

@@ -39,7 +39,7 @@ struct PaywallSecondChanceStepView: View {
             EmptyView()
         case .ready(let offer):
             VStack(alignment: .leading, spacing: SGSpacing.lg) {
-                MokuView(state: .pleading, side: 156)
+                MokuView(state: .bracing, side: 156)
                     .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
 

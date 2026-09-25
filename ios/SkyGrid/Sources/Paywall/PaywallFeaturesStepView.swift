@@ -12,15 +12,20 @@ struct PaywallFeaturesStepView: View {
     let showsHeadline: Bool
     let onAdvance: () -> Void
     let onContinueWithFree: () -> Void
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var didRecordPreview = false
 
     var body: some View {
-        PaywallStepScaffold(flow: flow, step: .features) {
+        PaywallStepScaffold(flow: flow, step: .features, showsScreenMark: !showsHeadline) {
             if showsHeadline {
-                Text(entryPoint.headline)
-                    .font(.system(size: 30, weight: .black, design: .rounded))
-                    .foregroundStyle(SGT.ink)
-                    .fixedSize(horizontal: false, vertical: true)
+                if dynamicTypeSize.isAccessibilitySize {
+                    headline
+                } else {
+                    HStack(alignment: .top, spacing: SGSpacing.md) {
+                        headline
+                        MokuScreenMark(state: .ready, side: 50)
+                    }
+                }
             }
             ArchiveGrowthPreview {
                 guard !didRecordPreview else { return }
@@ -40,6 +45,13 @@ struct PaywallFeaturesStepView: View {
                 .font(SGFont.body(15))
                 .foregroundStyle(SGT.ink2)
         }
+    }
+
+    private var headline: some View {
+        Text(entryPoint.headline)
+            .font(.system(size: 30, weight: .black, design: .rounded))
+            .foregroundStyle(SGT.ink)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var benefits: some View {

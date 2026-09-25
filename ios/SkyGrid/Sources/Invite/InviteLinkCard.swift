@@ -112,8 +112,9 @@ struct InviteLinkCard: View {
                     Image(systemName: showCopiedConfirmation ? "checkmark" : "doc.on.doc")
                         .font(.system(size: 16, weight: .semibold))
                 }
+                .accessibilityLabel(showCopiedConfirmation ? L10n.string("invite.codeCopied") : L10n.string("invite.copyCode"))
                 .foregroundStyle(SGT.accentSecondary)
-                .frame(minHeight: 44)
+                .frame(minWidth: 44, minHeight: 44)
                 .animation(.default, value: showCopiedConfirmation)
                 .task(id: showCopiedConfirmation) {
                     guard showCopiedConfirmation else { return }

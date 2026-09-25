@@ -7,6 +7,11 @@ import SwiftUI
 struct PaywallStepScaffold<Content: View, CTA: View>: View {
     let flow: PaywallFlow
     let step: PaywallStep
+    /// Lets a step suppress this scaffold's own screen-level Moku mark when that
+    /// step already renders an equivalent mark inline (e.g. `PaywallFeaturesStepView`
+    /// draws it next to its headline to avoid the two colliding). Defaults to `true`
+    /// so every other step keeps the scaffold-drawn mark unchanged.
+    var showsScreenMark: Bool = true
     @ViewBuilder var content: () -> Content
     @ViewBuilder var cta: () -> CTA
 
@@ -31,7 +36,7 @@ struct PaywallStepScaffold<Content: View, CTA: View>: View {
         }
         .background(PaywallStepScaffold.background.ignoresSafeArea())
         .overlay(alignment: .topTrailing) {
-            if step != .secondChance {
+            if step != .secondChance && showsScreenMark {
                 MokuScreenMark(state: .ready, side: 50)
                     .padding(.top, 54)
                     .padding(.trailing, SGSpacing.xl)

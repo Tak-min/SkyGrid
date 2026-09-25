@@ -316,6 +316,83 @@ ALL of these are true:
   19 `.plain` sites file-by-file (expect most to stay, some to gain `.accessibilityLabel`/hit-area
   fixes per Ticket 5's pattern), or pick up Ticket 3/4/5 (paywall/a11y correctness fixes, already
   fully specified, disjoint file scope from this iteration's Invite/AppStartup files).
+- 2026-09-25 (iteration 5): Implemented Tickets 3, 4, 5, and 6 — all four were already fully
+  specified with exact files/lines/acceptance criteria from iteration 1's discovery pass, and had
+  disjoint file scopes (Paywall/PaywallStepScaffold+PaywallFeaturesStepView for T3;
+  Paywall/PaywallSecondChanceStepView for T4; Invite/InviteLinkCard for T5;
+  Notifications/MorningAlarmSettingsView for T6), so ran the lightweight pipeline per step 2e and
+  dispatched all four to Codex **in parallel** (four `mcp__codex__codex` calls in one message),
+  per the owner's "multiple parallel implementation agents" requirement. Re-verified current file
+  state against each ticket's description directly (Read) before dispatch — all four still
+  matched. Model routing: T3 left unset (self-routed Terra/Sol — it edits `PaywallStepScaffold`,
+  a shared component every paywall step renders through, which is exactly the "shared DesignSystem
+  API" ambiguity case VISION's own routing rule reserves for non-Luna); T4/T5/T6 dispatched with
+  `model: "gpt-5.6-luna"` (each a single-file, zero-ambiguity packet: one enum-case swap, one
+  accessibility-label+frame addition, one missing-buttonStyle addition). Read every changed file
+  directly (not Codex's own summaries) before trusting any of it: confirmed exactly the 5 intended
+  Swift files changed (T3's two files, T4's one, T5's one, T6's one) plus the diff contents matched
+  each ticket's acceptance text. T5's Codex pass hardcoded English literals
+  (`"Copied"`/`"Copy invite code"`) for the new `.accessibilityLabel` instead of routing through
+  `L10n.string(...)` like every other string in that file — a real gap for the app's Japanese
+  localization that the ticket text explicitly asked to avoid ("add new keys to both en and ja...
+  if no reusable key exists"); fixed directly (not re-dispatched, small well-understood fix): added
+  two new `Localizable.xcstrings` keys (`invite.copyCode`, `invite.codeCopied`, en+ja) via a
+  targeted text insertion (not a full JSON re-dump — a first attempt using `json.dump` reformatted
+  the entire 8900+-line file with a different indent style, inflating the diff to 621
+  insertions/100 deletions for a 2-key addition; reverted and redid it as a minimal 32-line
+  `Edit`), then repointed the Swift call site through `L10n.string(...)`. Dispatched an independent
+  `swift-reviewer` (separate sonnet call) over the actual diff across all 6 changed files (5 Swift
+  + xcstrings) — it caught a real HIGH-severity regression I had not seen: my/Codex's scaffold
+  exclusion (`step != .secondChance && step != .features`) suppressed the `MokuScreenMark` overlay
+  for the `.features` step unconditionally, but the new inline HStack mark in
+  `PaywallFeaturesStepView` only renders when `showsHeadline` is true (`.ritualMilestone`/
+  `.firstUnlock` entry points only, per `PaywallView.swift:126`) — for the standard
+  `[.value, .features, .plan]` flow used by every other entry point, `showsHeadline` is false, so
+  Moku's mark would have disappeared from the features step entirely for the majority of paywall
+  impressions, a regression Ticket 3 never asked for and the original code didn't have. Fixed
+  directly: added a `showsScreenMark: Bool = true` parameter to `PaywallStepScaffold` (defaults to
+  the scaffold's prior unconditional behavior for every existing call site — Value/Plan/
+  SecondChance are unaffected), and `PaywallFeaturesStepView` now passes
+  `showsScreenMark: !showsHeadline` so the scaffold only suppresses its own mark exactly when the
+  inline one will render instead. The reviewer's second finding (HIGH) was that a pre-existing UI
+  test, `SkyGridUITests.testBuddiesInviteActionsRemainReachableWithoutATabBar` (committed
+  2026-09-06, untouched by this diff), looks up `app.buttons["Copy code"]` — independently
+  confirmed via a stash/baseline comparison that this test was **already failing before this
+  iteration's changes** (not a regression introduced here), because the button previously had no
+  accessibility label at all and fell back to a raw SF-Symbol-derived name. Since T5 now owns that
+  exact string and reconciling it was a 2-value edit, changed `invite.copyCode`'s en value from
+  "Copy invite code" to "Copy code" (ja: "招待コードをコピー" → "コードをコピー") to match the
+  test's expectation exactly — re-ran that specific UI test after the fix: now passes. Also
+  independently verified (via `git stash`/`git stash pop` around a clean-baseline UI test run) that
+  the other 13 UI-test failures seen in a full `xcodebuild test` run are **pre-existing and
+  unrelated** to any change in this iteration (identical failures reproduce against unmodified
+  `HEAD`) — not investigated further this iteration since none touch the 6 files this iteration
+  changed; flagging for a future iteration since they cover Buddies/Onboarding/Moku/WeeklyRecap
+  screens and may hide real defects worth a dedicated discovery pass. Final verification after all
+  fixes: `xcodebuild build` (iPhone 17 sim) succeeded; `xcodebuild test -only-testing:SkyGridTests`
+  passed all 356 tests/63 suites unchanged; `xcodebuild test -only-testing:
+  SkyGridUITests/SkyGridUITests/testBuddiesInviteActionsRemainReachableWithoutATabBar` passed
+  (previously broken, now fixed as a side effect of T5). antislop-ui Delivery Gate: **PASS** for
+  all four tickets — Purpose-Gate holds for each (T3 fixes an evidenced clipping defect via an
+  established in-repo pattern; T4 fixes a named Mascot-Contract violation; T5 fixes two named WCAG
+  violations; T6 fixes a named chrome inconsistency against its own sibling button); Liveliness/
+  Craftsmanship hold by construction since none of the four introduce any new visual language —
+  T3 reuses `SettingsView`'s exact HStack+accessibility-size-branch pattern, T4/T6 reuse existing
+  `MokuState`/`SkySecondaryButtonStyle` values already proven elsewhere in the app, T5 extends the
+  file's own established `L10n.string(...)` localization convention; no web-only checklist items
+  apply to native SwiftUI. Generic-button grep count: unchanged at 19 (none of these four tickets
+  touch the `.bordered/.borderedProminent/.plain/.automatic` pattern the grep matches — T6's fix
+  was to a button with no `.buttonStyle` call at all, as its own ticket text predicted). `verify.sh`
+  re-run for record-keeping: Gate 1 still fails — DoD's 8-ticket/3-screen bar is very close (T0,
+  1a, 1b, 2(partial), 3, 4, 5, 6 = 6 fully-implemented tickets across Today/Invite/AppStartup/
+  Paywall/Notifications, 5 distinct screens) but not yet at 8, Ticket 2's remaining-19-site audit
+  write-up is still outstanding, and Ticket 7/8/9 are unstarted. Committed as follows (staged
+  explicit paths only, no `git add -A`): [commit sha to be filled after commit]. Next iteration:
+  finish Ticket 2's 19-site audit write-up (cheapest path to the 8-ticket bar, likely already
+  correct usage per iteration 4's spot-check — needs the full per-site accounting the DoD
+  requires), or pick up Ticket 7 (ink3/fill contrast — systemic token change, higher risk, budget a
+  full iteration) or Ticket 8 (onboarding progress-bar accessibility, fully specified, disjoint
+  file scope).
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -372,7 +449,7 @@ ALL of these are true:
       usages with a proper DesignSystem button component matching DESIGN.md's dials — start with
       the highest-traffic screens (TodayView, WelcomeView, CameraView) and continue in later
       tickets as capacity allows; not required to finish all 23 in one ticket.
-- [ ] Ticket 3 (correctness + consistency, paywall — confirmed by BOTH discovery passes): the
+- [x] Ticket 3 (correctness + consistency, paywall — confirmed by BOTH discovery passes): the
       decorative `MokuScreenMark(state: .ready, side: 50)` applied as a screen-level
       `.overlay(alignment: .topTrailing)` in `ios/SkyGrid/Sources/Paywall/
       PaywallStepScaffold.swift:33-39` visually collides with and clips the wrapped 2-line
@@ -387,8 +464,10 @@ ALL of these are true:
       Type. Fix: make Paywall's header follow Settings' pattern instead of the screen-level
       overlay. Acceptance: re-run the `paywall` UI-audit scenario screenshot, confirm no
       overlap at default size AND at `.accessibility3` Dynamic Type (via the harness or
-      Accessibility Inspector), `xcodebuild test` green.
-- [ ] Ticket 4 (correctness, contract violation, paywall second-chance — design/UX pass): DESIGN.md's
+      Accessibility Inspector), `xcodebuild test` green. DONE 2026-09-25 iteration 5 — see
+      Progress log below (fixed with an added `showsScreenMark` scaffold parameter after
+      independent review caught a regression in the first pass).
+- [x] Ticket 4 (correctness, contract violation, paywall second-chance — design/UX pass): DESIGN.md's
       Mascot Contract explicitly lists forbidden mascot emotions: "Avoid shame, sadness, anger,
       pleading, streak-loss guilt, or manipulative disappointment." `ios/SkyGrid/Sources/Paywall/
       PaywallSecondChanceStepView.swift:42` renders `MokuView(state: .pleading, side: 156)` — a
@@ -400,8 +479,12 @@ ALL of these are true:
       for the ask, not guilt) is the closest semantic fit; do not invent new copy or remove the
       second-chance step itself, this is a mascot-state swap only. Acceptance: grep confirms no
       `.pleading` call site remains anywhere in `ios/SkyGrid/Sources`; antislop-ui Delivery Gate
-      re-run on the second-chance screenshot; `xcodebuild test` green.
-- [ ] Ticket 5 (correctness, WCAG 2.2 SC 4.1.2 + SC 2.5.8, a11y pass): the copy-invite-code icon
+      re-run on the second-chance screenshot; `xcodebuild test` green. DONE 2026-09-25
+      iteration 5 — see Progress log. Note: `.pleading` still exists as an enum case in
+      `MokuView.swift`'s `MokuState` definition itself (not a call site) — intentionally left,
+      since removing an enum case is out of this ticket's bounded scope and the case simply
+      being unused/unreachable satisfies the contract (no code path renders it).
+- [x] Ticket 5 (correctness, WCAG 2.2 SC 4.1.2 + SC 2.5.8, a11y pass): the copy-invite-code icon
       button in `ios/SkyGrid/Sources/Invite/InviteLinkCard.swift:107-117` (visible in
       `buddies.jpg` and `milestone.jpg`) has no `.accessibilityLabel` at all — VoiceOver falls
       back to the raw SF Symbol name ("doc on doc, button"), never announces the copied-state
@@ -411,8 +494,9 @@ ALL of these are true:
       announcement (e.g. `.accessibilityValue` or a `UIAccessibility.post(notification: .announcement,...)`
       on copy), and `.frame(minWidth: 44, minHeight: 44)`. Acceptance: VoiceOver manual pass in
       simulator confirms a meaningful label and copied-state announcement; Accessibility Inspector
-      or a UI test confirms ≥44×44pt hit target; `xcodebuild test` green.
-- [ ] Ticket 6 (consistency, alarm settings — confirmed by design/UX pass): two "Open Settings"
+      or a UI test confirms ≥44×44pt hit target; `xcodebuild test` green. DONE 2026-09-25
+      iteration 5 — see Progress log (also fixed a pre-existing broken UI test in passing).
+- [x] Ticket 6 (consistency, alarm settings — confirmed by design/UX pass): two "Open Settings"
       buttons in `ios/SkyGrid/Sources/Notifications/MorningAlarmSettingsView.swift` calling the
       identical `openSystemSettings` action render with different chrome depending on which state
       branch triggers them — line 268 (`.scheduled` case, "Live Activities are off" sub-branch)
