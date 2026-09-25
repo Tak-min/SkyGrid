@@ -148,10 +148,11 @@ later 2026-08-08 session (streak+reveal wiring, QR/App-Store-URL on the share ca
   cancellable `.task(id:)` keyed to the post identity, shows the server-verified `skyColor` as
   fallback while the real photo streams in via `ThumbnailLoader`. This is not a gap — preserve
   this behavior exactly when the buddy model becomes N-way; do not re-architect it.
-- **Alarm system supports exactly one wake time.** `MorningAlarmScheduler` has a single
-  `alarmIdentifier` / `hasMorningAlarm` check — no array of alarms, no per-alarm state.
-- **No Erly-style motion-gated dismissal exists.** Current AlarmKit integration is a standard
-  stop button; nothing requires a specific physical action to silence it.
+- **Alarm system supports ~~exactly one wake time~~ — corrected 2026-09-24: multiple alarms
+  are implemented; see `MorningAlarmScheduler.swift:1038` (`scheduleAlarmKit(schedules:)`).**
+- **No Erly-style motion-gated dismissal exists.** Current AlarmKit integration has a ~~standard
+  stop button~~ — corrected 2026-09-24: on iOS 26.1+ AlarmKit fully system-controls the stop
+  control and no longer accepts a `stopButton` parameter; nothing requires a specific physical action to silence it.
 - **Mutual-reveal privacy gate is real and correctly enforced server-side**
   (`firestore.rules` `hasPostedFor(localDate)` + the post `get`/`list` rule), not just a client
   blur — any redesign must preserve this invariant per-person in the N-way model.

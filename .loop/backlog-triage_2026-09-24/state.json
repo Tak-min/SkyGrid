@@ -1,0 +1,9 @@
+{
+  "iteration": 2,
+  "status": "in_progress",
+  "base_commit": "84f0d8e433e89994d76d3683eaa239a94a1bf85a",
+  "last_verify_exit": null,
+  "t1_status": "done_verified",
+  "stuck_counter": 0,
+  "iteration_cap": 8
+}

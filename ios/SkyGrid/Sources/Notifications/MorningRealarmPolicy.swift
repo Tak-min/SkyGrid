@@ -1,8 +1,8 @@
 import Foundation
 
-/// Decides whether a stopped morning alarm earns one more bounded, one-shot
-/// re-alarm. Scheduling and cancellation deliberately live elsewhere: this
-/// policy only protects the three-attempt and local-date boundaries.
+/// Decides whether a stopped morning alarm re-arms roughly every five minutes,
+/// up to three attempts or until the four-hour capture window ends, whichever comes first.
+/// Scheduling and cancellation deliberately live elsewhere.
 enum MorningRealarmPolicy {
     static let interval: TimeInterval = 5 * 60
     static let maximumAttempts = 3

@@ -1014,6 +1014,9 @@ private extension MorningAlarmScheduler {
                 secondaryButtonBehavior: .custom
             )
         } else {
+            // On iOS 26.0, AlarmKit's initializer requires `stopButton` (per AlarmKit.swiftinterface).
+            // It cannot be removed without breaking the build; on iOS 26.1+, the SDK no longer
+            // accepts it because the system fully owns the stop control.
             alert = AlarmPresentation.Alert(
                 title: L10n.resource("notification.skyStillWaiting"),
                 stopButton: AlarmButton(text: L10n.resource("notification.openCamera"), textColor: .white, systemImageName: "camera"),
@@ -1271,6 +1274,9 @@ private extension MorningAlarmScheduler {
                 secondaryButtonBehavior: .custom
             )
         }
+        // On iOS 26.0, AlarmKit's initializer requires `stopButton` (per AlarmKit.swiftinterface).
+        // It cannot be removed without breaking the build; on iOS 26.1+, the SDK no longer
+        // accepts it because the system fully owns the stop control.
         return AlarmPresentation.Alert(
             title: L10n.resource("notification.captureSky"),
             stopButton: AlarmButton(text: L10n.resource("notification.openCamera"), textColor: .white, systemImageName: "camera"),
