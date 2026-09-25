@@ -7,7 +7,12 @@ iteration left off.
 
 1. Pick the next ticket from VISION.md's TODO in order (Ticket 0 first if unchecked). If a
    ticket is `blocked_on_asset` (see step 3f), skip it and pick the next one instead — do not
-   wait for it.
+   wait for it. **Round 2 (owner instruction 2026-09-26):** the Definition of Done now has a
+   Round 2 block requiring at least 2 of the next 8 tickets to come from a FRESH discovery pass
+   (new screenshots/code reading of screens not yet audited — Settings, Camera, Buddies,
+   Milestone, Grid/Mosaic, WeeklyRecap are untouched so far), not just draining the existing
+   TODO backlog. Every ~3-4 tickets drained from the backlog, spend one iteration running a new
+   Ticket-0-style discovery pass instead of implementing, and append what it finds.
 
 2. **Run the role pipeline for that one ticket** (owner-mandated separation — do not collapse
    these into one pass):

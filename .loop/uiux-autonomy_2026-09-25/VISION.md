@@ -149,6 +149,32 @@ ALL of these are true:
       CRITICAL/HIGH finding raised along the way (e.g. iteration 5's `showsScreenMark` regression,
       the pre-existing broken UI test) was fixed in the same iteration it was found, not deferred.
 
+**[ROUND 2, owner instruction 2026-09-26]:** Round 1's 8-ticket bar was a deliberately small
+first checkpoint, not "UI/UX is now done" — the owner correctly pointed out 6 iterations is not
+enough given how much was originally asked (moku sync + buttons were only the two NAMED
+symptoms; the owner expects continuous, autonomous discovery to keep surfacing more). All Round 1
+items above stay checked (still true) as historical record — do not uncheck them. The loop
+resumes against this NEW, larger bar, which supersedes "done" until ALL of these are also true:
+
+- [ ] Tickets 7 (`ink3`/`fill` contrast, systemic token — recompute the actual ratio, don't guess)
+      and 9 (milestone hero-card `ScrollView`) are implemented, reviewed, and committed. Both were
+      already fully specified by Round 1's discovery pass — see the TODO entries below.
+- [ ] At least 8 MORE concrete tickets (i.e. 16+ cumulative since this loop started) have gone
+      through the full role pipeline and are committed, covering at least 5 DISTINCT screens/flows
+      beyond the 6 Round 1 already touched (Today, Invite, AppStartup, Paywall, Notifications,
+      Onboarding) — e.g. Settings, Camera, Buddies, Milestone, Grid/Mosaic, WeeklyRecap. At least
+      2 of the 8 new tickets must come from a FRESH discovery pass (new screenshots/code reading),
+      not just draining tickets already sitting in the TODO list, per the owner's "keep finding
+      more problems autonomously" instruction.
+- [ ] The 13 pre-existing UI-test failures flagged in iteration 5's Progress log (Buddies/
+      Onboarding/Moku/WeeklyRecap screens, confirmed pre-existing via a clean-`HEAD` stash
+      comparison, not caused by this loop) have each been triaged: either root-caused and fixed,
+      or logged in this file with a concrete reason they're out of this loop's scope (e.g.
+      environment-only failure, intentionally deferred product decision) — "not investigated" is
+      no longer an acceptable end state for them.
+- [ ] `bash .loop/uiux-autonomy_2026-09-25/verify.sh` exits 0 against this Round 2 bar.
+- [ ] No CRITICAL/HIGH reviewer findings remain unaddressed on any Round 2 ticket either.
+
 ## Constraints / guardrails (do not weaken — inherited from this repo's established convention)
 
 - Never `git add -A` — stage explicit paths only, every commit.
