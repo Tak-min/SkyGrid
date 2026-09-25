@@ -174,6 +174,53 @@ ALL of these are true:
   still 23 (unchanged this iteration, no button-style tickets implemented yet — Ticket 2 and the
   new Ticket 6 below target specific instances next). `verify.sh` run for record-keeping only
   (Gate 1 fails as expected — Definition of Done not remotely met yet, 0 tickets implemented).
+- 2026-09-25 (iteration 2): Implemented Ticket 1a. Already fully specified in VISION, so ran the
+  role pipeline in lightweight form per step 2e (no separate discovery/metric/eval dispatches —
+  went straight to implementation). Dispatched to Codex (`mcp__codex__codex`, model left unset per
+  the moku-sync-adjacent judgment-call guidance) for the 3-file change: `Anchor` gained a `String`
+  raw value, `MokuAmbientMessagePolicy.forcedSelection(anchor:messageIndex:context:today:)` added
+  (DEBUG-gated), `TodayView` gained a `debugForcedAmbientMessage` param consumed at the top of
+  `presentAmbientMessageIfEligible()`, and `SkyGridApp.swift`'s `UIAuditRoot` wires the two new
+  launch args (`-SkyGridUIAuditMokuTopic`, `-SkyGridUIAuditMokuMessageIndex`) for the `today` case.
+  **Codex's own build/test claim did not hold up under independent verification** (real
+  `xcodebuild build` failed): it had wrapped the new init parameter in `#if DEBUG ... #endif`
+  *inside the parameter list*, which Swift's grammar does not support (confirmed by the compiler:
+  "expected parameter name followed by ':'"). Fixed directly in this session (not re-dispatched —
+  a small, well-understood syntax repair): made the `debugForcedAmbientMessage` property/param
+  unconditional (safe, since the only non-`nil` call site, `UIAuditRoot`, is itself inside the
+  file's outer `#if DEBUG`), keeping only the *usage* in `presentAmbientMessageIfEligible()`
+  gated by `#if DEBUG` (statement-level `#if` is fine; parameter-list `#if` is not). Also caught
+  and fixed a second Codex defect: the injected `UIAuditData.todayMokuContext` had
+  `hasBuddyPostToday: false`, which would have silently routed the `buddySection` topic to the
+  generic `ambientMessages` pool instead of the "circle" copy (`buddyActivityMessages`) the
+  ticket's acceptance criterion specifically requires verifying — flipped to `true`. Independently
+  re-verified after both fixes: `xcodebuild build` (iPhone 17 sim) succeeded, `xcodebuild test
+  -only-testing:SkyGridTests/MokuAmbientMessagePolicyTests` passed all 9 existing tests unchanged,
+  and `swift-reviewer` (separate sonnet dispatch) reviewed the actual diff and approved with zero
+  CRITICAL/HIGH findings, confirming no Release-reachable call site can set the forced-message
+  path non-nil (grepped every `TodayView(` construction site: only `RootView.swift`, real
+  production, and `UIAuditRoot`, DEBUG-only). Captured both required acceptance screenshots by
+  actually running the harness (XcodeBuildMCP build_run_sim on iPhone 17 sim, not guessed):
+  `.loop/uiux-autonomy_2026-09-25/screenshots/today-forced-mosaicEntry-1.jpg` (forced
+  `mosaicEntry`/index 1 → "Each square is one morning you've captured.") and
+  `today-forced-buddySection-0.jpg` (forced `buddySection`/index 0 → "Someone in your circle has
+  already captured today's sky."). **Visual evidence for Ticket 1b**: in BOTH screenshots the
+  speech bubble renders in the exact same fixed position on the morning-record card next to Moku,
+  regardless of which topic/anchor was forced — directly confirms the root-cause finding (the
+  `Anchor` concept has zero effect on render position; only the message text changes) and
+  contradicts the location-referencing copy ("square", "circle") which points at UI elements
+  nowhere near where the bubble actually appears. On the architect's flagged secondary hypothesis
+  (bubble reading as visually disconnected from Moku for lack of a speech-bubble tail): the
+  captured screenshots show the bubble adjacent to and slightly overlapping Moku's icon, not
+  severely disconnected — per the architect's own instruction to fix this only if evidence shows
+  it, this iteration does NOT add a tail; Ticket 1b should proceed with the copy-rewrite fix only.
+  This ticket touches no shipped UI/copy (DEBUG-only scaffolding, confirmed unreachable from
+  Release), so the antislop-ui Delivery Gate was not run — noting the reasoning here rather than
+  skipping silently, per the iteration's own instruction. Generic-button grep count unchanged
+  (still 23 — this ticket didn't touch button styling). Committed as
+  `<pending — see git log after this entry>`. Next iteration should run Ticket 1b using this
+  evidence, or continue in parallel with Ticket 3/4 (paywall correctness fixes, also
+  fully-specified and disjoint in file scope from Ticket 1b).
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -181,7 +228,7 @@ ALL of these are true:
       first discovery pass. DONE 2026-09-25 iteration 1 — see Progress log and Tickets 1, 3-9
       below for the resulting findings (9 concrete, file-referenced defects across 6 screens:
       today/moku, paywall (×2), alarm, buddies/milestone, onboarding, settings-token-level).
-- [ ] Ticket 1a: add a DEBUG-only way to force a specific `MokuAmbientMessage` topic + message
+- [x] Ticket 1a: add a DEBUG-only way to force a specific `MokuAmbientMessage` topic + message
       index under the `-SkyGridUIAudit -SkyGridUIAuditScenario today` harness (e.g.
       `-SkyGridUIAuditMokuTopic mosaicEntry -SkyGridUIAuditMokuMessageIndex 0`, wired into
       `UIAuditRoot`'s `today` case in `ios/SkyGrid/Sources/App/SkyGridApp.swift` and consumed by
@@ -192,7 +239,7 @@ ALL of these are true:
       references a specific UI element (`mosaicEntry`'s "every square remembers" text,
       `buddySection`'s "circle" text) both pre- and post-capture state, committed as evidence in
       the next iteration's Progress log entry, not shipped as a user-facing flag (DEBUG-gated,
-      excluded from Release builds).
+      excluded from Release builds). DONE 2026-09-25 iteration 2 — see Progress log below.
 - [ ] Ticket 1b: fix the moku dialogue/position desync root cause — confirmed by two independent
       discovery passes AND one Opus architect consult (2026-09-25): `MokuAmbientMessage.Anchor`
       (`ios/SkyGrid/Sources/Today/MokuAmbientMessage.swift:4-13`, 8 cases) and the

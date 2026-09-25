@@ -1,7 +1,7 @@
 import Foundation
 
 struct MokuAmbientMessage: Equatable {
-    enum Anchor: CaseIterable, Equatable {
+    enum Anchor: String, CaseIterable, Equatable {
         case morningRecord
         case buddySection
         case mosaicEntry
@@ -111,6 +111,26 @@ enum MokuAmbientMessagePolicy {
             messageIndex: Int.random(in: 0..<Int.max)
         )
     }
+
+#if DEBUG
+    static func forcedSelection(
+        anchor: MokuAmbientMessage.Anchor,
+        messageIndex: Int,
+        context: MokuAmbientMessage.Context,
+        today: LocalDate
+    ) -> MokuAmbientMessage? {
+        let anchors = eligibleAnchors(for: context)
+        guard let anchorIndex = anchors.firstIndex(of: anchor) else { return nil }
+        return selectionForVisit(
+            context: context,
+            today: today,
+            lastPresentedLocalDateID: nil,
+            randomUnit: 0,
+            anchorIndex: anchorIndex,
+            messageIndex: messageIndex
+        )
+    }
+#endif
 
     static func allPossibleMessages(streak: Int = 3) -> [String] {
         let contexts = [

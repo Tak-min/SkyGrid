@@ -35,6 +35,11 @@ struct TodayView: View {
     /// or merely delivered while foregrounded) — see `RootView.buddyRefreshToken`.
     /// Not read directly by `body`; only its `.onChange` transition matters.
     let buddyRefreshToken: Int
+    /// Only ever non-nil when constructed by the DEBUG-only `-SkyGridUIAudit` harness
+    /// (`UIAuditRoot` in `SkyGridApp.swift`, itself compiled out of Release entirely);
+    /// no shipping call site sets this. Kept as an unconditional stored property/param
+    /// because Swift does not support `#if` inside a parameter list.
+    let debugForcedAmbientMessage: MokuAmbientMessage?
     init(
         viewModel: TodayViewModel,
         imageFetching: any ImageFetching,
@@ -48,6 +53,7 @@ struct TodayView: View {
         onUpgrade: @escaping () -> Void,
         buddyRefreshToken: Int = 0,
         onSharePresentationChanged: @escaping (Bool) -> Void = { _ in },
+        debugForcedAmbientMessage: MokuAmbientMessage? = nil,
         onShareDismissed: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: viewModel)
@@ -62,6 +68,7 @@ struct TodayView: View {
         self.onUpgrade = onUpgrade
         self.buddyRefreshToken = buddyRefreshToken
         self.onSharePresentationChanged = onSharePresentationChanged
+        self.debugForcedAmbientMessage = debugForcedAmbientMessage
         self.onShareDismissed = onShareDismissed
     }
 
@@ -699,6 +706,17 @@ struct TodayView: View {
     }
 
     private func presentAmbientMessageIfEligible() {
+#if DEBUG
+        if let debugForcedAmbientMessage {
+            let animation: Animation? = MokuAmbientMessagePolicy.shouldAnimate(reduceMotion: reduceMotion)
+                ? .spring(response: 0.42, dampingFraction: 0.78)
+                : nil
+            withAnimation(animation) {
+                ambientMessage = debugForcedAmbientMessage
+            }
+            return
+        }
+#endif
         // The daily slot is reserved only after the primary post status is known.
         // On a cold launch `.onAppear` often wins the race with the Firestore
         // listener; consuming the slot there made Moku silently disappear for the

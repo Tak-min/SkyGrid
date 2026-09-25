@@ -99,6 +99,22 @@ private enum UIAuditScenario: String {
         else { return nil }
         return Self(rawValue: arguments[index + 1])
     }
+
+    static var mokuTopic: MokuAmbientMessage.Anchor? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-SkyGridUIAuditMokuTopic"),
+              arguments.indices.contains(index + 1)
+        else { return nil }
+        return MokuAmbientMessage.Anchor(rawValue: arguments[index + 1])
+    }
+
+    static var mokuMessageIndex: Int? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-SkyGridUIAuditMokuMessageIndex"),
+              arguments.indices.contains(index + 1)
+        else { return nil }
+        return Int(arguments[index + 1])
+    }
 }
 
 @MainActor
@@ -108,6 +124,19 @@ private struct UIAuditRoot: View {
     private let auditPostRepository: UIAuditPostRepository
     private let auditFriendRepository: UIAuditFriendRepository
     private let auditUserRepository: UIAuditUserRepository
+
+    private var debugForcedAmbientMessage: MokuAmbientMessage? {
+        guard scenario == .today,
+              let anchor = UIAuditScenario.mokuTopic,
+              let messageIndex = UIAuditScenario.mokuMessageIndex
+        else { return nil }
+        return MokuAmbientMessagePolicy.forcedSelection(
+            anchor: anchor,
+            messageIndex: messageIndex,
+            context: UIAuditData.todayMokuContext,
+            today: UIAuditData.today
+        )
+    }
 
     init(scenario: UIAuditScenario) {
         self.scenario = scenario
@@ -332,7 +361,8 @@ private struct UIAuditRoot: View {
                         isPro: true,
                         onOpenGrid: {},
                         onOpenBuddies: {},
-                        onUpgrade: {}
+                        onUpgrade: {},
+                        debugForcedAmbientMessage: debugForcedAmbientMessage
                     )
                 }
             }
@@ -540,6 +570,16 @@ private enum UIAuditData {
         timeZone: TimeZone(identifier: "UTC")!
     )
     static let today = fixedClock.today()
+    // hasBuddyPostToday: true so `-SkyGridUIAuditMokuTopic buddySection` reaches
+    // `buddyActivityMessages` (the "circle" copy Ticket 1a needs to verify) instead
+    // of silently falling through to the generic `ambientMessages` pool.
+    static let todayMokuContext = MokuAmbientMessage.Context(
+        isPostStatusKnown: true,
+        hasPostedToday: false,
+        hasBuddies: true,
+        hasBuddyPostToday: true,
+        streak: 2
+    )
 
     static let posts: [SkyPost] = (Array(1...18) + [28, 29]).map { day in
         SkyPost(
