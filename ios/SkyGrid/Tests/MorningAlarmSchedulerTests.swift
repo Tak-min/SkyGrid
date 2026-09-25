@@ -126,22 +126,27 @@ struct MorningAlarmSchedulerTests {
         ) == "com.takmin.skygrid.morning-realarm.2026-09-05.2")
     }
 
-    @Test("one stop plans all three re-alarms at five-minute intervals")
-    func realarmOccurrencesPlanThreeAttemptsUpFront() {
+    @Test("one stop plans all twelve re-alarms at five-minute intervals")
+    func realarmOccurrencesPlanTwelveAttemptsUpFront() {
         let timeZone = TimeZone(identifier: "Asia/Tokyo")!
         let wakeDay = LocalDate(year: 2026, month: 9, day: 5)
         let stopTime = instant(hour: 6, minute: 0, on: wakeDay, timeZone: timeZone)
+
+        // MorningRealarmPolicy.maximumAttempts == 12, interval == 5 minutes: attempts land
+        // every 5 minutes from 6:05 through 7:00 (12 occurrences).
+        let expected = (1...MorningRealarmPolicy.maximumAttempts).map { attempt in
+            MorningRealarmOccurrence(
+                attempt: attempt,
+                fireDate: instant(hour: 6, minute: 5 * attempt, on: wakeDay, timeZone: timeZone)
+            )
+        }
 
         #expect(morningRealarmOccurrences(
             attemptCount: 0,
             originalWakeDay: wakeDay,
             now: stopTime,
             timeZone: timeZone
-        ) == [
-            MorningRealarmOccurrence(attempt: 1, fireDate: instant(hour: 6, minute: 5, on: wakeDay, timeZone: timeZone)),
-            MorningRealarmOccurrence(attempt: 2, fireDate: instant(hour: 6, minute: 10, on: wakeDay, timeZone: timeZone)),
-            MorningRealarmOccurrence(attempt: 3, fireDate: instant(hour: 6, minute: 15, on: wakeDay, timeZone: timeZone))
-        ])
+        ) == expected)
     }
 
     @Test("a midnight boundary truncates the up-front re-alarm plan")

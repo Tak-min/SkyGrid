@@ -82,11 +82,26 @@ struct MorningWakeSessionTests {
             pending: [consumed, second, third],
             consumedAlarmID: consumed.id,
             now: instant(hour: 6, minute: 5),
-            deadline: instant(hour: 10, minute: 0)
+            deadline: instant(hour: 10, minute: 0),
+            desiredPendingCount: 3
         )
 
         #expect(plan.retained == [second, third])
         #expect(plan.additions == [instant(hour: 6, minute: 20)])
+    }
+
+    @Test("production default front-loads twelve reservations within a four-hour window")
+    func productionDefaultFrontLoadsTwelveReservations() {
+        let plan = morningWakeRetryDates(
+            pending: [],
+            consumedAlarmID: nil,
+            now: instant(hour: 6, minute: 0),
+            deadline: instant(hour: 10, minute: 0)
+        )
+        #expect(plan.retained.isEmpty)
+        #expect(plan.additions.count == 12)
+        #expect(plan.additions.first == instant(hour: 6, minute: 5))
+        #expect(plan.additions.last == instant(hour: 7, minute: 0))
     }
 
     @Test("rolling horizon stops adding at its deadline")

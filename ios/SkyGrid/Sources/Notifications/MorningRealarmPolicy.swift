@@ -1,11 +1,11 @@
 import Foundation
 
 /// Decides whether a stopped morning alarm re-arms roughly every five minutes,
-/// up to three attempts or until the four-hour capture window ends, whichever comes first.
+/// up to twelve attempts (~1 hour) or until the four-hour capture window ends, whichever comes first.
 /// Scheduling and cancellation deliberately live elsewhere.
 enum MorningRealarmPolicy {
     static let interval: TimeInterval = 5 * 60
-    static let maximumAttempts = 3
+    static let maximumAttempts = 12
 
     enum StopReason: Equatable, Sendable {
         case maximumAttemptsReached

@@ -20,35 +20,23 @@ struct MorningRealarmPolicyTests {
         ))!
     }
 
-    @Test("schedules exactly three re-alarms five minutes apart")
-    func schedulesThreeAttemptsAndNeverAFourth() {
-        let firstStop = instant(hour: 6, minute: 0)
-        let firstFire = instant(hour: 6, minute: 5)
-        let secondFire = instant(hour: 6, minute: 10)
-        let thirdFire = instant(hour: 6, minute: 15)
-
+    @Test("schedules exactly maximumAttempts re-alarms five minutes apart, then stops")
+    func schedulesMaximumAttemptsAndNeverOneMore() {
+        var decisionTime = instant(hour: 6, minute: 0)
+        for attempt in 1...MorningRealarmPolicy.maximumAttempts {
+            let expectedFire = instant(hour: 6, minute: 5 * attempt)
+            #expect(MorningRealarmPolicy.decide(
+                attemptCount: attempt - 1,
+                originalWakeDay: wakeDay,
+                now: decisionTime,
+                timeZone: timeZone
+            ) == .schedule(attempt: attempt, fireDate: expectedFire))
+            decisionTime = expectedFire
+        }
         #expect(MorningRealarmPolicy.decide(
-            attemptCount: 0,
+            attemptCount: MorningRealarmPolicy.maximumAttempts,
             originalWakeDay: wakeDay,
-            now: firstStop,
-            timeZone: timeZone
-        ) == .schedule(attempt: 1, fireDate: firstFire))
-        #expect(MorningRealarmPolicy.decide(
-            attemptCount: 1,
-            originalWakeDay: wakeDay,
-            now: firstFire,
-            timeZone: timeZone
-        ) == .schedule(attempt: 2, fireDate: secondFire))
-        #expect(MorningRealarmPolicy.decide(
-            attemptCount: 2,
-            originalWakeDay: wakeDay,
-            now: secondFire,
-            timeZone: timeZone
-        ) == .schedule(attempt: 3, fireDate: thirdFire))
-        #expect(MorningRealarmPolicy.decide(
-            attemptCount: 3,
-            originalWakeDay: wakeDay,
-            now: thirdFire,
+            now: decisionTime,
             timeZone: timeZone
         ) == .stop(.maximumAttemptsReached))
     }
