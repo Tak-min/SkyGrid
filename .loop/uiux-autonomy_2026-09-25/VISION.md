@@ -267,7 +267,55 @@ ALL of these are true:
   button grep count unchanged (23 — untouched by this ticket). `verify.sh` re-run for record-
   keeping: Gate 1 fails as expected (5 DoD items still unchecked at run time, now 4 after this
   entry updates the moku-sync item above) — full xcodebuild gates not reached since Gate 1 exits
-  first by design. Committed as `<pending — see git log after this entry>`.
+  first by design. Committed as `18128ce`.
+- 2026-09-25 (iteration 4): Implemented a scoped slice of Ticket 2 (generic button-style
+  replacement). Correction to Ticket 2's own text: it named TodayView/WelcomeView/CameraView as
+  the starting screens, but re-investigating those files directly (grep + read) found their 23-
+  count contributions are all `.buttonStyle(.plain)` wrapping custom `MokuView`/card content to
+  strip default chrome — that's *correct* usage (verified: `TodayView.swift:315`,
+  `WelcomeView.swift:82` both wrap tappable mascot art with `.contentShape(Rectangle())`), not the
+  "generic control" defect the owner named. Re-scoped by grepping which of the 23 are the raw
+  `.borderedProminent` sub-case (system capsule chrome manually re-tinted with `.tint(SGT.accent)`
+  + `.foregroundStyle(SGT.accentInk)` as a workaround) vs. the 19 legitimate `.plain` sites: found
+  exactly 4 `.borderedProminent` call sites, all genuinely off-the-shelf. Ticket was fully
+  specified after this investigation (exact files/lines/change), so ran the lightweight pipeline
+  per step 2e. Dispatched one bounded Codex task with `model: "gpt-5.6-luna"` (owner's explicit
+  routing rule for a fully-specified, zero-ambiguity packet) covering all 4 sites:
+  `Invite/InviteLinkCard.swift:136` (ShareLink), `Invite/InviteClaimView.swift:108` ("Join") and
+  `:248` (`primaryTitle` button), `App/AppStartupView.swift:57` ("Try again") — replaced
+  `.buttonStyle(.borderedProminent)` (+ the redundant `.tint`/`.foregroundStyle` pair at 3 of the
+  4 sites) with `.buttonStyle(SkyPrimaryButtonStyle())`, the app's own existing capsule/56pt
+  primary style already used correctly at 20+ other call sites (e.g. `TodayView.swift:432`,
+  `InviteLinkCard.swift:221-223` two lines below the touched ShareLink). Codex's own build attempt
+  failed in its sandbox (exit 74, `/tmp`/CoreSimulatorService I/O restriction, not a code error) —
+  did not trust that as a signal either way; read the actual diff directly (exactly the 4 intended
+  swaps, zero scope creep) and independently ran the real gates myself: `xcodebuild build`
+  (iPhone 17 sim — 17 Pro is not provisioned on this machine, matching AGENTS.md's simulator
+  note) succeeded, and `xcodebuild test -only-testing:SkyGridTests` passed all 356 tests/63
+  suites unchanged. Dispatched an independent `swift-reviewer` over the actual diff: PASS, zero
+  CRITICAL/HIGH — confirmed no disabled-state behavior lost (none of the 4 sites use `.disabled()`
+  and `SkyPrimaryButtonStyle` reproduces the dimming internally, already proven at the untouched
+  `InviteLinkCard.swift:219-222` sibling site), no layout clipping risk from the style's 340pt
+  cap/56pt min height in any of the 4 containers, and flagged one correctly-expected outcome (not
+  a defect): `AppStartupView`'s "Try again" button had no explicit tint before and no ambient
+  `.tint` reaches it in production, so it visibly changes from system-default blue to the brand
+  accent color — this *is* the fix's entire point (a generic system-blue button becoming a
+  designed one), not a regression. antislop-ui Delivery Gate: PASS — Purpose-Gate holds (fixes the
+  owner-named generic-control symptom directly, with the manual re-tint workaround as concrete
+  before-evidence), Liveliness/Craftsmanship hold by construction since this reuses the app's own
+  already-proven `SkyPrimaryButtonStyle` pattern rather than introducing any new visual language;
+  no web-only checklist items apply. Generic-button grep count: **23 → 19** (all 4
+  `.borderedProminent` instances eliminated repo-wide; remaining 19 are `.buttonStyle(.plain)`
+  sites, spot-checked as legitimate custom-chrome-stripping usage, not yet individually audited
+  one-by-one — a future iteration should still re-grep each remaining site before declaring Ticket
+  2 fully done, per the DoD's requirement to state *why* any remaining generic usage is
+  intentional). `verify.sh` re-run for record-keeping: Gate 1 still fails (DoD has one item left
+  unchecked: Ticket 2's remaining-count-with-reasons write-up needs the full 19-site audit, plus
+  the 8-ticket/3-screen coverage bar isn't met yet). Committed as `db1cb9b` (code diff only,
+  explicit paths). Next iteration: audit the remaining
+  19 `.plain` sites file-by-file (expect most to stay, some to gain `.accessibilityLabel`/hit-area
+  fixes per Ticket 5's pattern), or pick up Ticket 3/4/5 (paywall/a11y correctness fixes, already
+  fully specified, disjoint file scope from this iteration's Invite/AppStartup files).
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
