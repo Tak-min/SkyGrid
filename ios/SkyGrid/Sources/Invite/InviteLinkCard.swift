@@ -133,9 +133,7 @@ struct InviteLinkCard: View {
             .font(SGFont.body(15))
             .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(SGT.accent)
-        .foregroundStyle(SGT.accentInk)
+        .buttonStyle(SkyPrimaryButtonStyle())
         .simultaneousGesture(TapGesture().onEnded {
             // ShareLink has no completion callback, only this tap — recorded on
             // the intent to share, not confirmed delivery.

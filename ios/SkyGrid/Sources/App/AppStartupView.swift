@@ -54,7 +54,7 @@ struct AppStartupView: View {
                     Button("Try again") {
                         Task { await startup.startNewAnonymousSession() }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(SkyPrimaryButtonStyle())
                 }
                 .padding(24)
                 .background(SGT.background)

@@ -105,9 +105,7 @@ struct InviteClaimView: View {
                 Text("Join")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(SGT.accent)
-            .foregroundStyle(SGT.accentInk)
+            .buttonStyle(SkyPrimaryButtonStyle())
             .frame(minHeight: 44)
 
             Button("Not now") { onFinished() }
@@ -245,9 +243,7 @@ struct InviteClaimView: View {
                 .foregroundStyle(SGT.ink2)
                 .multilineTextAlignment(.center)
             Button(primaryTitle, action: primaryAction)
-                .buttonStyle(.borderedProminent)
-                .tint(SGT.accent)
-                .foregroundStyle(SGT.accentInk)
+                .buttonStyle(SkyPrimaryButtonStyle())
                 .frame(minHeight: 44)
                 .padding(.top, SGSpacing.xs)
         }
