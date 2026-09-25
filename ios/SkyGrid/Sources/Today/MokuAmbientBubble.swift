@@ -22,32 +22,3 @@ struct MokuAmbientBubble: View {
             .allowsHitTesting(false)
     }
 }
-
-private struct MokuAmbientBubbleModifier: ViewModifier {
-    let message: MokuAmbientMessage?
-    let anchor: MokuAmbientMessage.Anchor
-    let alignment: Alignment
-    let offset: CGSize
-
-    func body(content: Content) -> some View {
-        content.overlay(alignment: alignment) {
-            if let message, message.anchor == anchor {
-                MokuAmbientBubble(text: message.text)
-                    .offset(offset)
-                    .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .center)))
-                    .zIndex(2)
-            }
-        }
-    }
-}
-
-extension View {
-    func mokuAmbientBubble(
-        _ message: MokuAmbientMessage?,
-        at anchor: MokuAmbientMessage.Anchor,
-        alignment: Alignment,
-        offset: CGSize = .zero
-    ) -> some View {
-        modifier(MokuAmbientBubbleModifier(message: message, anchor: anchor, alignment: alignment, offset: offset))
-    }
-}

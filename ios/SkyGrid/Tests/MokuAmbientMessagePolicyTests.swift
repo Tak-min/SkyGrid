@@ -5,36 +5,36 @@ import Testing
 struct MokuAmbientMessagePolicyTests {
     private let today = LocalDate(year: 2026, month: 9, day: 9)
 
-    @Test("all eight anchors become eligible across the reachable contexts that admit them")
-    func allAnchorsCanBecomeEligible() {
+    @Test("all eight topics become eligible across the reachable contexts that admit them")
+    func allTopicsCanBecomeEligible() {
         // `.emptyMorningRecord` / `.captureButton` require "not posted yet" and
         // `.shareButton` requires "posted" — mutually exclusive states, so no
         // single context can ever surface all eight at once. The real claim is
-        // that every anchor is reachable by *some* real context.
-        let postedAnchors = MokuAmbientMessagePolicy.eligibleAnchors(
+        // that every topic is reachable by *some* real context.
+        let postedTopics = MokuAmbientMessagePolicy.eligibleTopics(
             for: context(posted: true, buddies: true, buddyPosted: true, streak: 4)
         )
-        let notPostedAnchors = MokuAmbientMessagePolicy.eligibleAnchors(
+        let notPostedTopics = MokuAmbientMessagePolicy.eligibleTopics(
             for: context(posted: false, buddies: false, buddyPosted: false, streak: 0)
         )
 
-        let reachable = Set(postedAnchors).union(notPostedAnchors)
-        #expect(reachable == Set(MokuAmbientMessage.Anchor.allCases))
+        let reachable = Set(postedTopics).union(notPostedTopics)
+        #expect(reachable == Set(MokuAmbientMessage.Topic.allCases))
     }
 
-    @Test("only currently valid anchors participate before capture")
-    func preCaptureAnchors() {
-        let anchors = MokuAmbientMessagePolicy.eligibleAnchors(
+    @Test("only currently valid topics participate before capture")
+    func preCaptureTopics() {
+        let topics = MokuAmbientMessagePolicy.eligibleTopics(
             for: context(posted: false, buddies: false, buddyPosted: false, streak: 0)
         )
 
-        #expect(anchors == [.morningRecord, .mosaicEntry, .heading, .emptyMorningRecord, .captureButton])
-        #expect(!anchors.contains(.buddySection))
-        #expect(!anchors.contains(.rhythmSection))
-        #expect(!anchors.contains(.shareButton))
+        #expect(topics == [.morningRecord, .mosaicEntry, .heading, .emptyMorningRecord, .captureButton])
+        #expect(!topics.contains(.buddySection))
+        #expect(!topics.contains(.rhythmSection))
+        #expect(!topics.contains(.shareButton))
     }
 
-    @Test("unknown post state still has always-valid anchors")
+    @Test("unknown post state still has always-valid topics")
     func unknownPostState() {
         let context = MokuAmbientMessage.Context(
             isPostStatusKnown: false,
@@ -44,7 +44,7 @@ struct MokuAmbientMessagePolicyTests {
             streak: 0
         )
 
-        #expect(MokuAmbientMessagePolicy.eligibleAnchors(for: context) == [.mosaicEntry, .heading])
+        #expect(MokuAmbientMessagePolicy.eligibleTopics(for: context) == [.mosaicEntry, .heading])
         #expect(!MokuAmbientMessagePolicy.canConsumeDailySlot(for: context))
     }
 
@@ -71,7 +71,7 @@ struct MokuAmbientMessagePolicyTests {
             today: today,
             lastPresentedLocalDateID: today.docID,
             randomUnit: 0,
-            anchorIndex: 0,
+            topicIndex: 0,
             messageIndex: 0
         )
 
@@ -86,11 +86,11 @@ struct MokuAmbientMessagePolicyTests {
     func buddyActivityIsTruthful() {
         let withoutPost = selection(
             context: context(posted: true, buddies: true, buddyPosted: false, streak: 0),
-            anchor: .buddySection
+            topic: .buddySection
         )
         let withPost = selection(
             context: context(posted: true, buddies: true, buddyPosted: true, streak: 0),
-            anchor: .buddySection
+            topic: .buddySection
         )
 
         #expect(withoutPost?.category == .ambient)
@@ -109,6 +109,26 @@ struct MokuAmbientMessagePolicyTests {
         }
     }
 
+    @Test("message pool contains no location-referencing language, in English or Japanese")
+    func noLocationReferencingLanguage() {
+        let forbiddenEnglish = ["square", "circle"]
+        let forbiddenJapanese = ["マス", "サークル", "下の"]
+
+        let englishMessages = MokuAmbientMessagePolicy.allPossibleMessages(language: .english)
+        let japaneseMessages = MokuAmbientMessagePolicy.allPossibleMessages(language: .japanese)
+
+        #expect(!englishMessages.isEmpty)
+        #expect(!japaneseMessages.isEmpty)
+
+        for message in englishMessages {
+            let normalized = message.lowercased()
+            #expect(forbiddenEnglish.allSatisfy { !normalized.contains($0) }, "Location-referencing copy in: \(message)")
+        }
+        for message in japaneseMessages {
+            #expect(forbiddenJapanese.allSatisfy { !message.contains($0) }, "Location-referencing copy in: \(message)")
+        }
+    }
+
     @Test("Reduce Motion always disables the bubble animation")
     func reduceMotionIsStatic() {
         #expect(!MokuAmbientMessagePolicy.shouldAnimate(reduceMotion: true))
@@ -118,16 +138,16 @@ struct MokuAmbientMessagePolicyTests {
         context: MokuAmbientMessage.Context,
         lastPresentedLocalDateID: String? = nil,
         randomUnit: Double = 0,
-        anchor: MokuAmbientMessage.Anchor? = nil
+        topic: MokuAmbientMessage.Topic? = nil
     ) -> MokuAmbientMessage? {
-        let eligible = MokuAmbientMessagePolicy.eligibleAnchors(for: context)
-        let anchorIndex = anchor.flatMap(eligible.firstIndex) ?? 0
+        let eligible = MokuAmbientMessagePolicy.eligibleTopics(for: context)
+        let topicIndex = topic.flatMap(eligible.firstIndex) ?? 0
         return MokuAmbientMessagePolicy.selectionForVisit(
             context: context,
             today: today,
             lastPresentedLocalDateID: lastPresentedLocalDateID,
             randomUnit: randomUnit,
-            anchorIndex: anchorIndex,
+            topicIndex: topicIndex,
             messageIndex: 0
         )
     }

@@ -1,7 +1,7 @@
 import Foundation
 
 struct MokuAmbientMessage: Equatable {
-    enum Anchor: String, CaseIterable, Equatable {
+    enum Topic: String, CaseIterable, Equatable {
         case morningRecord
         case buddySection
         case mosaicEntry
@@ -29,7 +29,7 @@ struct MokuAmbientMessage: Equatable {
         let streak: Int
     }
 
-    let anchor: Anchor
+    let topic: Topic
     let category: Category
     let text: String
     let mokuState: MokuState
@@ -50,26 +50,26 @@ enum MokuAmbientMessagePolicy {
         context.isPostStatusKnown
     }
 
-    static func eligibleAnchors(for context: MokuAmbientMessage.Context) -> [MokuAmbientMessage.Anchor] {
-        var anchors: [MokuAmbientMessage.Anchor] = [.mosaicEntry, .heading]
+    static func eligibleTopics(for context: MokuAmbientMessage.Context) -> [MokuAmbientMessage.Topic] {
+        var topics: [MokuAmbientMessage.Topic] = [.mosaicEntry, .heading]
 
         if context.hasPostedToday || (context.isPostStatusKnown && !context.hasPostedToday) {
-            anchors.append(.morningRecord)
+            topics.append(.morningRecord)
         }
         if context.hasBuddies {
-            anchors.append(.buddySection)
+            topics.append(.buddySection)
         }
         if context.streak >= 1 {
-            anchors.append(.rhythmSection)
+            topics.append(.rhythmSection)
         }
         if context.isPostStatusKnown && !context.hasPostedToday {
-            anchors.append(contentsOf: [.emptyMorningRecord, .captureButton])
+            topics.append(contentsOf: [.emptyMorningRecord, .captureButton])
         }
         if context.hasPostedToday {
-            anchors.append(.shareButton)
+            topics.append(.shareButton)
         }
 
-        return MokuAmbientMessage.Anchor.allCases.filter(anchors.contains)
+        return MokuAmbientMessage.Topic.allCases.filter(topics.contains)
     }
 
     static func selectionForVisit(
@@ -77,20 +77,20 @@ enum MokuAmbientMessagePolicy {
         today: LocalDate,
         lastPresentedLocalDateID: String?,
         randomUnit: Double,
-        anchorIndex: Int,
+        topicIndex: Int,
         messageIndex: Int
     ) -> MokuAmbientMessage? {
         guard lastPresentedLocalDateID != today.docID else { return nil }
         guard randomUnit >= 0, randomUnit < appearanceProbability else { return nil }
 
-        let anchors = eligibleAnchors(for: context)
-        guard !anchors.isEmpty else { return nil }
-        let anchor = anchors[wrapped: anchorIndex]
-        let messages = messagePool(for: anchor, context: context)
+        let topics = eligibleTopics(for: context)
+        guard !topics.isEmpty else { return nil }
+        let topic = topics[wrapped: topicIndex]
+        let messages = messagePool(for: topic, context: context)
         guard !messages.isEmpty else { return nil }
         let message = messages[wrapped: messageIndex]
         return MokuAmbientMessage(
-            anchor: anchor,
+            topic: topic,
             category: message.category,
             text: message.text,
             mokuState: message.state
@@ -107,32 +107,32 @@ enum MokuAmbientMessagePolicy {
             today: today,
             lastPresentedLocalDateID: lastPresentedLocalDateID,
             randomUnit: Double.random(in: 0..<1),
-            anchorIndex: Int.random(in: 0..<Int.max),
+            topicIndex: Int.random(in: 0..<Int.max),
             messageIndex: Int.random(in: 0..<Int.max)
         )
     }
 
 #if DEBUG
     static func forcedSelection(
-        anchor: MokuAmbientMessage.Anchor,
+        topic: MokuAmbientMessage.Topic,
         messageIndex: Int,
         context: MokuAmbientMessage.Context,
         today: LocalDate
     ) -> MokuAmbientMessage? {
-        let anchors = eligibleAnchors(for: context)
-        guard let anchorIndex = anchors.firstIndex(of: anchor) else { return nil }
+        let topics = eligibleTopics(for: context)
+        guard let topicIndex = topics.firstIndex(of: topic) else { return nil }
         return selectionForVisit(
             context: context,
             today: today,
             lastPresentedLocalDateID: nil,
             randomUnit: 0,
-            anchorIndex: anchorIndex,
+            topicIndex: topicIndex,
             messageIndex: messageIndex
         )
     }
 #endif
 
-    static func allPossibleMessages(streak: Int = 3) -> [String] {
+    static func allPossibleMessages(streak: Int = 3, language: AppLanguage? = nil) -> [String] {
         let contexts = [
             MokuAmbientMessage.Context(
                 isPostStatusKnown: true,
@@ -158,8 +158,8 @@ enum MokuAmbientMessagePolicy {
         ]
 
         return contexts.flatMap { context in
-            MokuAmbientMessage.Anchor.allCases.flatMap { anchor in
-                messagePool(for: anchor, context: context).map(\.text)
+            MokuAmbientMessage.Topic.allCases.flatMap { topic in
+                messagePool(for: topic, context: context, language: language).map(\.text)
             }
         }
     }
@@ -171,37 +171,38 @@ enum MokuAmbientMessagePolicy {
     }
 
     private static func messagePool(
-        for anchor: MokuAmbientMessage.Anchor,
-        context: MokuAmbientMessage.Context
+        for topic: MokuAmbientMessage.Topic,
+        context: MokuAmbientMessage.Context,
+        language: AppLanguage? = nil
     ) -> [MessageTemplate] {
-        switch anchor {
+        switch topic {
         case .morningRecord where context.hasPostedToday:
-            return photoMessages
+            return photoMessages(language: language)
         case .morningRecord, .emptyMorningRecord, .captureButton:
-            return beforeCaptureMessages
+            return beforeCaptureMessages(language: language)
         case .buddySection where context.hasBuddyPostToday:
-            return buddyActivityMessages
+            return buddyActivityMessages(language: language)
         case .buddySection:
-            return ambientMessages
+            return ambientMessages(language: language)
         case .mosaicEntry:
-            return mosaicMessages
+            return mosaicMessages(language: language)
         case .rhythmSection:
             let text = context.streak == 1
-                ? L10n.string("moku.rhythm.oneMorningKept")
-                : String(format: L10n.string("moku.rhythm.streakCount"), context.streak)
+                ? L10n.string("moku.rhythm.oneMorningKept", language: language)
+                : String(format: L10n.string("moku.rhythm.streakCount", language: language), context.streak)
             return [MessageTemplate(category: .streak, text: text, state: .delight)]
         case .heading:
-            return ambientMessages
+            return ambientMessages(language: language)
         case .shareButton:
             return [
                 MessageTemplate(
                     category: .photo,
-                    text: L10n.string("moku.share.mightBrightenDay"),
+                    text: L10n.string("moku.share.mightBrightenDay", language: language),
                     state: .delight
                 ),
                 MessageTemplate(
                     category: .photo,
-                    text: L10n.string("moku.share.worthPassingAlong"),
+                    text: L10n.string("moku.share.worthPassingAlong", language: language),
                     state: .settled
                 ),
             ]
@@ -214,50 +215,50 @@ enum MokuAmbientMessagePolicy {
     // consumer, not a `Text("literal")` call site — so SwiftUI's automatic String
     // Catalog key matching never applies (see `dev-notes/localization-en-ja-stage2_*.md`).
     //
-    // These are computed `static var`, not `static let`: a `let` would resolve
+    // These are computed `static func`, not `static let`: a `let` would resolve
     // `L10n.string(...)` exactly once (Swift lazily initializes a `static let` on
     // first access and caches it for the process lifetime), freezing every message
     // in whichever language was active the first time it was read — silently
     // breaking immediate in-app language switching for any category already seen
-    // before a language change. Recomputing on every access keeps them live.
+    // before a language change. Recomputing on every call keeps them live.
 
-    private static var photoMessages: [MessageTemplate] {
+    private static func photoMessages(language: AppLanguage?) -> [MessageTemplate] {
         [
-            MessageTemplate(category: .photo, text: L10n.string("moku.photo.coloredEarnedMorning"), state: .delight),
-            MessageTemplate(category: .photo, text: L10n.string("moku.photo.skyLeftGoodOne"), state: .settled),
-            MessageTemplate(category: .photo, text: L10n.string("moku.photo.lightHasStory"), state: .delight),
+            MessageTemplate(category: .photo, text: L10n.string("moku.photo.coloredEarnedMorning", language: language), state: .delight),
+            MessageTemplate(category: .photo, text: L10n.string("moku.photo.skyLeftGoodOne", language: language), state: .settled),
+            MessageTemplate(category: .photo, text: L10n.string("moku.photo.lightHasStory", language: language), state: .delight),
         ]
     }
 
-    private static var buddyActivityMessages: [MessageTemplate] {
+    private static func buddyActivityMessages(language: AppLanguage?) -> [MessageTemplate] {
         [
-            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.circleAlreadyLookedUp"), state: .delight),
-            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.twoMorningsFoundEachOther"), state: .delight),
-            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.familiarSkyWaiting"), state: .settled),
+            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.circleAlreadyLookedUp", language: language), state: .delight),
+            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.twoMorningsFoundEachOther", language: language), state: .delight),
+            MessageTemplate(category: .buddyActivity, text: L10n.string("moku.buddy.familiarSkyWaiting", language: language), state: .settled),
         ]
     }
 
-    private static var ambientMessages: [MessageTemplate] {
+    private static func ambientMessages(language: AppLanguage?) -> [MessageTemplate] {
         [
-            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.skiesChangeMind"), state: .ready),
-            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.morningLightNeverRepeats"), state: .ready),
-            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.dayLooksDifferent"), state: .settled),
+            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.skiesChangeMind", language: language), state: .ready),
+            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.morningLightNeverRepeats", language: language), state: .ready),
+            MessageTemplate(category: .ambient, text: L10n.string("moku.ambient.dayLooksDifferent", language: language), state: .settled),
         ]
     }
 
-    private static var beforeCaptureMessages: [MessageTemplate] {
+    private static func beforeCaptureMessages(language: AppLanguage?) -> [MessageTemplate] {
         [
-            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.wonderWhatsUpThere"), state: .ready),
-            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.noRushStillBecoming"), state: .settled),
-            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.maybeNewColor"), state: .ready),
+            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.wonderWhatsUpThere", language: language), state: .ready),
+            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.noRushStillBecoming", language: language), state: .settled),
+            MessageTemplate(category: .beforeCapture, text: L10n.string("moku.beforeCapture.maybeNewColor", language: language), state: .ready),
         ]
     }
 
-    private static var mosaicMessages: [MessageTemplate] {
+    private static func mosaicMessages(language: AppLanguage?) -> [MessageTemplate] {
         [
-            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.gridQuietlyFilling"), state: .ready),
-            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.everySquareRemembers"), state: .settled),
-            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.peekYearChangingColor"), state: .ready),
+            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.gridQuietlyFilling", language: language), state: .ready),
+            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.everySquareRemembers", language: language), state: .settled),
+            MessageTemplate(category: .mosaic, text: L10n.string("moku.mosaic.peekYearChangingColor", language: language), state: .ready),
         ]
     }
 }

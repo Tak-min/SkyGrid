@@ -123,9 +123,10 @@ ALL of these are true:
 - [ ] At least 8 concrete tickets have gone through the full role pipeline (discovery → metric →
       evaluation → instruction → implementation → verify → commit), covering at least 3 distinct
       screens/flows, and at least one ticket is NOT one of the two owner-named symptoms.
-- [ ] The moku dialogue/position sync symptom has a filed root-cause finding AND either a fix is
+- [x] The moku dialogue/position sync symptom has a filed root-cause finding AND either a fix is
       committed or a documented reason it's already correct (owner's perception vs. an actual
-      code defect — state which, with evidence).
+      code defect — state which, with evidence). DONE 2026-09-25 iteration 3 — real code defect
+      (mismatched copy vs. actual fixed render location), fixed via Ticket 1b, see Progress log.
 - [ ] The generic-button grep count (see Recon above) has measurably dropped from 23, with the
       remaining count and *why* each remaining one is intentionally left generic (if any) stated
       in this file's Progress log.
@@ -217,10 +218,56 @@ ALL of these are true:
   This ticket touches no shipped UI/copy (DEBUG-only scaffolding, confirmed unreachable from
   Release), so the antislop-ui Delivery Gate was not run — noting the reasoning here rather than
   skipping silently, per the iteration's own instruction. Generic-button grep count unchanged
-  (still 23 — this ticket didn't touch button styling). Committed as
-  `<pending — see git log after this entry>`. Next iteration should run Ticket 1b using this
-  evidence, or continue in parallel with Ticket 3/4 (paywall correctness fixes, also
-  fully-specified and disjoint in file scope from Ticket 1b).
+  (still 23 — this ticket didn't touch button styling). Committed as `16630a2`. Next iteration
+  should run Ticket 1b using this evidence, or continue in parallel with Ticket 3/4 (paywall
+  correctness fixes, also fully-specified and disjoint in file scope from Ticket 1b).
+- 2026-09-25 (iteration 3): Implemented Ticket 1b (the moku dialogue/position root-cause fix).
+  Already fully specified with acceptance criteria from iteration 1's architect consult, so ran
+  the role pipeline in the same lightweight form as step 2e (no separate discovery/metric/eval
+  dispatches — went straight to implementation, consistent with how Ticket 1a was handled).
+  Dispatched one bounded task to Codex (`mcp__codex__codex`, model left unset — self-routed
+  Terra/Sol per VISION's own guidance that this ticket needs judgment, not Luna) covering all
+  five required changes: (1) renamed `MokuAmbientMessage.Anchor` → `.Topic` and
+  `eligibleAnchors`/`anchorIndex`/the `anchor` stored property throughout
+  `MokuAmbientMessage.swift`, `SkyGridApp.swift`, and `MokuAmbientMessagePolicyTests.swift` (pure
+  rename, zero behavior change — the type never represented a real screen position); (2) deleted
+  the dead `MokuAmbientBubbleModifier`/`mokuAmbientBubble(_:at:alignment:offset:)` extension in
+  `MokuAmbientBubble.swift` (zero call sites, confirmed by grep before and after); (3) added an
+  additive `language: AppLanguage?` parameter to `messagePool`/`allPossibleMessages` so tests can
+  assert on both languages without touching the app's live locale (no production call sites use
+  `allPossibleMessages`, so this cannot change shipped behavior); (4) rewrote the two
+  location-referencing strings in both `en`/`ja` in `Localizable.xcstrings` —
+  `moku.mosaic.everySquareRemembers` ("Each square is one morning you've captured." → "Every
+  morning you capture becomes part of your mosaic.") and `moku.buddy.circleAlreadyLookedUp`
+  ("Someone in your circle has already captured today's sky." → "A buddy has already captured
+  today's sky.", matching the existing `moku.buddy.familiarSkyWaiting` voice); (5) added
+  `noLocationReferencingLanguage` test asserting no message in either language contains
+  "square"/"circle" (en) or "マス"/"サークル"/"下の" (ja), mirroring the existing
+  `noMonetizationLanguage` test pattern. **Codex's own build/test claim was independently
+  re-verified, not trusted as-is**: re-ran `xcodebuild test -only-testing:
+  SkyGridTests/MokuAmbientMessagePolicyTests` myself (10/10 passed, including the new test) and
+  the full `SkyGridTests` suite (356 tests, 63 suites, all passed — zero regressions from the
+  rename touching shared test helpers). Read every changed file directly (not Codex's summary):
+  confirmed the diff touched exactly the 5 intended files, the rename is complete with zero
+  leftover `Anchor`/`eligibleAnchors`/`anchorIndex` references, the dead-code deletion left the
+  live `MokuAmbientBubble` View struct untouched, and the `Localizable.xcstrings` edit only
+  changed the two intended keys' `value` fields (JSON structure and `state` fields intact).
+  Dispatched an independent `swift-reviewer` (separate sonnet call) over the real diff — approved
+  with zero CRITICAL/HIGH findings, explicitly confirmed the `language` parameter is
+  behavior-preserving (no production call sites), the DEBUG boundary around `UIAuditRoot` is
+  unchanged (still unreachable from Release), and the new copy matches DESIGN.md's Moku voice
+  contract (optional, sparse, one short sentence, concrete/morning-specific, no monetization
+  language). **antislop-ui Delivery Gate**: PASS — this ticket only edits two short existing
+  copy strings in an already-established render location (no new component, layout, color, or
+  visual element introduced), so Purpose-Gate (fixes a real, evidenced defect: copy referencing a
+  screen position the bubble never actually occupies), Liveliness (matches the existing
+  Moku-voice message pool's tone and length, mirrors `familiarSkyWaiting`'s phrasing), and
+  Craftsmanship (concrete, morning-specific, one sentence, both languages hand-checked for
+  natural phrasing) all hold; no web-only checklist items apply to native SwiftUI copy. Generic-
+  button grep count unchanged (23 — untouched by this ticket). `verify.sh` re-run for record-
+  keeping: Gate 1 fails as expected (5 DoD items still unchecked at run time, now 4 after this
+  entry updates the moku-sync item above) — full xcodebuild gates not reached since Gate 1 exits
+  first by design. Committed as `<pending — see git log after this entry>`.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -240,7 +287,7 @@ ALL of these are true:
       `buddySection`'s "circle" text) both pre- and post-capture state, committed as evidence in
       the next iteration's Progress log entry, not shipped as a user-facing flag (DEBUG-gated,
       excluded from Release builds). DONE 2026-09-25 iteration 2 — see Progress log below.
-- [ ] Ticket 1b: fix the moku dialogue/position desync root cause — confirmed by two independent
+- [x] Ticket 1b: fix the moku dialogue/position desync root cause — confirmed by two independent
       discovery passes AND one Opus architect consult (2026-09-25): `MokuAmbientMessage.Anchor`
       (`ios/SkyGrid/Sources/Today/MokuAmbientMessage.swift:4-13`, 8 cases) and the
       `mokuAmbientBubble(_:at:alignment:offset:)` modifier built to place a bubble at each anchor
@@ -272,6 +319,7 @@ ALL of these are true:
       mirroring the existing `noMonetizationLanguage`-style test pattern; (c) `grep -rn
       "mokuAmbientBubble("` returns zero matches outside intentional new call sites (or zero
       matches at all, if the modifier is fully removed); (d) full `xcodebuild test` suite green.
+      DONE 2026-09-25 iteration 3 — see Progress log below for full detail.
 - [ ] Ticket 2: replace generic `.buttonStyle(.bordered/.borderedProminent/.plain/.automatic)`
       usages with a proper DesignSystem button component matching DESIGN.md's dials — start with
       the highest-traffic screens (TodayView, WelcomeView, CameraView) and continue in later

@@ -100,12 +100,12 @@ private enum UIAuditScenario: String {
         return Self(rawValue: arguments[index + 1])
     }
 
-    static var mokuTopic: MokuAmbientMessage.Anchor? {
+    static var mokuTopic: MokuAmbientMessage.Topic? {
         let arguments = ProcessInfo.processInfo.arguments
         guard let index = arguments.firstIndex(of: "-SkyGridUIAuditMokuTopic"),
               arguments.indices.contains(index + 1)
         else { return nil }
-        return MokuAmbientMessage.Anchor(rawValue: arguments[index + 1])
+        return MokuAmbientMessage.Topic(rawValue: arguments[index + 1])
     }
 
     static var mokuMessageIndex: Int? {
@@ -131,7 +131,7 @@ private struct UIAuditRoot: View {
               let messageIndex = UIAuditScenario.mokuMessageIndex
         else { return nil }
         return MokuAmbientMessagePolicy.forcedSelection(
-            anchor: anchor,
+            topic: anchor,
             messageIndex: messageIndex,
             context: UIAuditData.todayMokuContext,
             today: UIAuditData.today

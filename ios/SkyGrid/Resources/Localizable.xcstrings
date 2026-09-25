@@ -6198,13 +6198,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Someone in your circle has already captured today's sky."
+            "value": "A buddy has already captured today's sky."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サークルの誰かは、もう今日の空を撮ったよ。"
+            "value": "バディの誰かが、もう今日の空を撮ったよ。"
           }
         }
       }
@@ -6246,13 +6246,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Each square is one morning you've captured."
+            "value": "Every morning you capture becomes part of your mosaic."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ひとつひとつのマスが、撮影した朝の記録だよ。"
+            "value": "撮影した朝は、ひとつずつモザイクに残っていくよ。"
           }
         }
       }
