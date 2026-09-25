@@ -65,7 +65,7 @@ ffmpeg -i <source>.ogg -map_metadata -1 -ac 1 -ar 44100 -c:a pcm_s16le <destinat
 |---|---|
 | `capture_saved.caf` | `3e43c216c9e7695caa67423a5ea5ba8f7452c6082227d2c07bc231395864410e` |
 | `mutual_reveal.caf` | `122612d7e9f9bb0599bb86331fe9c18e74203e4eac1913e9f2231096c944001d` |
-| `streak_milestone.caf` | `0860705b7ff8fcf63a60011f56760876cdc2b34020bdb538476c092cec5fdbfe` |
+| `streak_milestone.caf` | `0860705b7ff8fcf63a60011f56760876cdc2b34020bdb538476c092cec5fdbfe` → **`04c3c793d59870f46649cda43f8dd8787c7045888f9fb692caff512d04ee9e05`** (2026-09-25: `volume=-2.3dB` applied — see `.loop/backlog-triage_2026-09-24/VISION.md` T2a-T2d; original true peak measured at +0.79 dBTP, i.e. already over 0 dBTP / clipping risk, corrected to -1.51 dBTP) |
 | `recoverable_error.caf` | `47d64b606f4f490e780c94f79543f4aaf7866bc2f8d95377ecc788f636365f44` |
 
 ## 4. 効果判定

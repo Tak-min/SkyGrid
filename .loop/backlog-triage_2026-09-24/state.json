@@ -1,9 +1,10 @@
 {
-  "iteration": 2,
-  "status": "in_progress",
+  "iteration": 3,
+  "status": "closed_done",
   "base_commit": "84f0d8e433e89994d76d3683eaa239a94a1bf85a",
-  "last_verify_exit": null,
+  "last_verify_exit": 0,
   "t1_status": "done_verified",
+  "t2_status": "done_verified_rescoped",
   "stuck_counter": 0,
   "iteration_cap": 8
 }
