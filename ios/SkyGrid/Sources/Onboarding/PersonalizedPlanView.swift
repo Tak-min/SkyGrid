@@ -75,26 +75,31 @@ struct OnboardingProgress: View {
     let total: Int
 
     var body: some View {
-        HStack {
-            Text("SKY GRID")
-                .font(SGFont.caption(12))
-                .tracking(2)
-                .foregroundStyle(SGT.ink3)
-            Spacer()
-            Text(String(format: "%02d / %02d", step, total))
-                .font(SGFont.numeric(12))
-                .foregroundStyle(SGT.ink3)
-        }
-        .padding(.top, SGSpacing.lg)
-
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(SGT.rule)
-                Capsule()
-                    .fill(SGT.ink.opacity(0.55))
-                    .frame(width: proxy.size.width * CGFloat(step) / CGFloat(total))
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("SKY GRID")
+                    .font(SGFont.caption(12))
+                    .tracking(2)
+                    .foregroundStyle(SGT.ink3)
+                Spacer()
+                Text(String(format: "%02d / %02d", step, total))
+                    .font(SGFont.numeric(12))
+                    .foregroundStyle(SGT.ink3)
             }
+            .padding(.top, SGSpacing.lg)
+
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(SGT.rule)
+                    Capsule()
+                        .fill(SGT.ink.opacity(0.55))
+                        .frame(width: proxy.size.width * CGFloat(step) / CGFloat(total))
+                }
+            }
+            .frame(height: 2)
         }
-        .frame(height: 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(L10n.string("onboarding.progress.accessibilityLabel"))
+        .accessibilityValue(String(format: L10n.string("onboarding.progress.accessibilityValue"), step, total))
     }
 }

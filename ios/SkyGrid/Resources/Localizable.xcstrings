@@ -11754,6 +11754,38 @@
         }
       }
     },
+    "onboarding.progress.accessibilityLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onboarding progress"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンボーディングの進捗"
+          }
+        }
+      }
+    },
+    "onboarding.progress.accessibilityValue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Step %lld of %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld ステップ"
+          }
+        }
+      }
+    },
     "onboarding.welcome.mokuCaption": {
       "localizations": {
         "en": {
