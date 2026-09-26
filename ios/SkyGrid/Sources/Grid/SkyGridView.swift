@@ -209,6 +209,7 @@ struct SkyGridView: View {
                 .aspectRatio(1, contentMode: .fit)
             }
         }
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(L10n.string("A calendar grid of your sky photos"))
     }
 
