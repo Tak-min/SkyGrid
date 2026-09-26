@@ -156,10 +156,10 @@ symptoms; the owner expects continuous, autonomous discovery to keep surfacing m
 items above stay checked (still true) as historical record — do not uncheck them. The loop
 resumes against this NEW, larger bar, which supersedes "done" until ALL of these are also true:
 
-- [ ] Tickets 7 (`ink3`/`fill` contrast, systemic token — recompute the actual ratio, don't guess)
+- [x] Tickets 7 (`ink3`/`fill` contrast, systemic token — recompute the actual ratio, don't guess)
       and 9 (milestone hero-card `ScrollView`) are implemented, reviewed, and committed. Both were
       already fully specified by Round 1's discovery pass — see the TODO entries below. Ticket 7
-      DONE 2026-09-26 (Round 2 iteration 7); Ticket 9 still open.
+      DONE 2026-09-26 (Round 2 iteration 7); Ticket 9 DONE 2026-09-26 (Round 2 iteration 8).
 - [ ] At least 8 MORE concrete tickets (i.e. 16+ cumulative since this loop started) have gone
       through the full role pipeline and are committed, covering at least 5 DISTINCT screens/flows
       beyond the 6 Round 1 already touched (Today, Invite, AppStartup, Paywall, Notifications,
@@ -531,6 +531,74 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
   discovery pass on an untouched screen (Grid/Mosaic, Camera, or WeeklyRecap) — Round 2's DoD
   requires at least 2 of the next 8 tickets to come from new discovery, not just TODO-draining,
   and none of the 3 discovery-required screens have been audited yet.
+- 2026-09-26 (Round 2, iteration 8): Implemented Ticket 9 (milestone hero-card `ScrollView`),
+  Round 2's other named priority ticket. Already fully specified in TODO, so ran the lightweight
+  pipeline per step 2e — re-verified `MilestoneView.swift` still matched the ticket's description
+  (non-scrolling `VStack`, `cardPreview` squeezed by a `GeometryReader`-filled-remaining-space
+  technique, `actions` embedding the full `InviteLinkCard`) before dispatching. Dispatched to
+  Codex (`mcp__codex__codex`/`codex-reply`, `model: "gpt-5.6-luna"` — a single-file layout change
+  I'd already fully specified in code) for the ticket's own suggested approach: wrap the content
+  in a `ScrollView`, size the hero card from an outer `GeometryReader`, pin the CTAs via
+  `.safeAreaInset(edge: .bottom)` matching `PaywallStepScaffold`'s established pattern. **Did not
+  trust Codex's build claim as sufficient evidence for a visual layout ticket** — independently
+  rebuilt, ran the full `SkyGridTests` suite (356/356 passed throughout), and critically, captured
+  real screenshots via XcodeBuildMCP (`build_run_sim` + `screenshot`) for every attempt rather than
+  judging by code review alone. This caught THREE real, screenshot-confirmed defects the
+  `.safeAreaInset` approach produced, each fixed and re-verified before moving to the next: (1) a
+  naive "62% of screen height" card-sizing heuristic overflowed into the pinned action bar's
+  region, visibly clipping the card and showing the "Share this morning" button overlapping the
+  `InviteLinkCard`; (2) replacing that with an exact `PreferenceKey`-based remaining-space
+  measurement (headline + pinned-bar heights measured at runtime, not guessed) produced the
+  *identical* visual overlap — proving the overflow wasn't a measurement-precision problem; (3) an
+  intermediate fix attempt that changed `.scaleEffect(anchor: .top)` (reasoning about the anchor
+  incorrectly) made the hero card render **completely invisible** — root-caused to `scaleEffect`'s
+  anchor needing to match the subsequent `.frame()`'s default `.center` alignment, or the
+  visually-scaled content ends up positioned outside the new frame's clipped bounds entirely.
+  Root-caused finding (3)'s fix (`anchor: .center`) restored visibility, but re-testing then
+  revealed the *actual* root cause behind (1) and (2): `.safeAreaInset` does not clip a
+  `ScrollView`'s own viewport — a pinned overlay simply floats at a fixed screen position while
+  scrollable content beneath it continues rendering on its natural flow, so any scrollable content
+  (the card's own `AppStoreIdentity` footer, or `InviteLinkCard`) whose natural position coincides
+  with the pinned bar's Y-band shows through underneath it, confirmed by trying the inset on the
+  `ScrollView` directly instead of a parent `ZStack` (no change) and by measuring the overlap
+  region in a cropped/zoomed screenshot. **Changed strategy** (per this harness's 3-repair-attempt
+  guardrail) rather than continuing to tune the pin: abandoned `.safeAreaInset` pinning entirely —
+  every element (headline, hero card, Share button, `InviteLinkCard`, Done button) now lives in
+  the `ScrollView`'s plain natural flow with nothing pinned, and the hero card sizes to fill the
+  available width (aspect-ratio-preserving, matching DESIGN.md's dominant-hero intent) rather than
+  being height-constrained against a pinned bar that no longer exists. This deviates from the
+  ticket's own suggested implementation detail (`.safeAreaInset` "per the same pattern... used in
+  `PaywallStepScaffold.swift`") but fully satisfies its actual acceptance criterion — a judgment
+  call within this iteration's authority since the suggested detail turned out to have a real
+  failure mode this specific screen's variable-height secondary content (InviteLinkCard) triggers,
+  which `PaywallStepScaffold`'s own always-short CTA area never hits. Verified via real
+  screenshots for BOTH the `milestone` (streak 30, `moment.handle` present → `InviteLinkCard`
+  shown) and `milestone-day-one` (streak 1, no handle) scenarios: hero card renders fully, large,
+  and dominant with zero clipping or overlap in either case. Dispatched an independent
+  `swift-reviewer` over the final diff: **Approve, zero CRITICAL/HIGH** — confirmed no dead code
+  survived the four rewrite attempts (no orphaned `actions` property, no leftover `PreferenceKey`
+  structs, no unused parameters), confirmed `moment.handle == nil` is still handled correctly by
+  reading the code (not just the screenshot), confirmed the app's portrait-only/iPhone-only
+  deployment target (`project.yml`) rules out landscape/iPad edge cases, and confirmed VoiceOver
+  focus order now matches visual/scroll order (an improvement over the old fixed-height layout).
+  Applied the reviewer's one actionable MEDIUM finding (documenting the portrait-only assumption
+  `outerProxy.size` relies on, so a future orientation/multitasking change doesn't silently
+  reintroduce this ticket's bug) directly as a comment; left the other MEDIUM (a redundant
+  `.frame(maxWidth: .infinity)`) and three LOW notes as-is per the reviewer's own "not wrong, just
+  minor" framing. Final independent re-verification after the comment addition: `xcodebuild build`
+  and `xcodebuild test -only-testing:SkyGridTests` (356/356) both green. antislop-ui Delivery Gate:
+  **PASS** — this ticket is pure layout restructuring (ScrollView wrapping + sizing) reusing
+  existing components (`MorningCardExportView`, `SkyPrimaryButtonStyle`, `InviteLinkCard`,
+  `SkySecondaryButtonStyle`) with zero new colors, gradients, glass, radii, or decorative elements,
+  so Purpose-Gate holds (fixes the named squeezed-hero defect with real before/after screenshot
+  evidence) and Liveliness/Craftsmanship hold by construction (no new visual language introduced);
+  no web-only checklist items apply. Generic-button grep count: unchanged (this ticket didn't
+  touch `.buttonStyle` call sites, only their container layout). Committed as a separate commit
+  (see git log). This closes BOTH of Round 2's named priority tickets (7 and 9) — the next
+  iteration should pivot to a fresh discovery pass (Grid/Mosaic, Camera, Buddies, Settings, or
+  WeeklyRecap — none audited yet) per Round 2's DoD requirement that at least 2 of the next 8
+  tickets come from new discovery rather than TODO-draining, since 2 tickets (7, 9) have now been
+  drained from the existing backlog without one.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -682,7 +750,7 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       2026-09-25 iteration 6 — see Progress log below (combined-element fix, independently
       verified build succeeded; full `xcodebuild test` run deferred to this iteration's closeout
       note since it duplicates the build already confirmed green).
-- [ ] Ticket 9 (polish/hierarchy, milestone — design/UX pass, LOWER priority than 3-8): the
+- [x] Ticket 9 (polish/hierarchy, milestone — design/UX pass, LOWER priority than 3-8): the
       milestone screen's own header comment (`ios/SkyGrid/Sources/Milestone/MilestoneView.swift:
       4-11`) states it's deliberately "the loud half" matching DESIGN.md's ENERGY 4/5 dial, with
       the live-scaled share-card preview (`cardPreview`, :70-88) as the hero. But the screen is
@@ -695,4 +763,9 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       used in `PaywallStepScaffold.swift`) so the hero card can render at its intended size while
       the invite widget remains present but doesn't compress it. Acceptance: re-screenshot
       `milestone` scenario, confirm the hero card visually reads as dominant per DESIGN.md's
-      ENERGY 4/5 dial; `xcodebuild test` green.
+      ENERGY 4/5 dial; `xcodebuild test` green. DONE 2026-09-26 (Round 2, iteration 8) — see
+      Progress log below. Note: the ticket's own suggested `.safeAreaInset`-pinned-CTA approach
+      was tried and abandoned after 3 screenshot-verified failures (`.safeAreaInset` does not clip
+      a `ScrollView`'s natural-flow content, so scrollable content underneath a pinned overlay
+      shows through it); the shipped fix puts every element in the ScrollView's plain flow with
+      nothing pinned, which fully satisfies the acceptance criterion without that failure mode.

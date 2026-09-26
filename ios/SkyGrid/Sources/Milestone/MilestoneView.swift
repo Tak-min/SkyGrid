@@ -19,16 +19,55 @@ struct MilestoneView: View {
     @State private var shareImage: ShareableCard?
 
     var body: some View {
-        ZStack {
-            PlayfulStageBackdrop(accent: moment.post.skyColor.color)
+        GeometryReader { outerProxy in
+            // Everything — headline, hero card, and both CTAs — lives in one
+            // ScrollView's natural flow, nothing pinned via `.safeAreaInset`.
+            // Three earlier attempts (see VISION.md Ticket 9 progress notes,
+            // each verified with a real Simulator screenshot) tried pinning the
+            // Share button at the bottom while the card/`InviteLinkCard` stayed
+            // scrollable: every attempt let scrollable content render underneath
+            // the pinned overlay at scroll position 0, because `.safeAreaInset`
+            // does not clip the ScrollView's own viewport — it only lets the
+            // user scroll past the pinned bar, it does not prevent content
+            // earlier in the flow from occupying the same on-screen band as a
+            // fixed-position overlay. A fully scrollable, unpinned layout has no
+            // such fixed-position band to collide with.
+            //
+            // `outerProxy.size` is captured once and reused for `cardPreview`'s
+            // width; that's only safe because this app is iPhone-only and
+            // portrait-only (`TARGETED_DEVICE_FAMILY: "1"`, `UISupportedInterface
+            // Orientations: Portrait` in `project.yml`). If landscape, iPad, or a
+            // resizable/multitasking window ever gets added, this needs to react
+            // to `outerProxy.size` changing after first layout, not just reading
+            // it once.
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: SGSpacing.xl) {
+                    headline
+                    cardPreview(availableWidth: outerProxy.size.width - SGSpacing.xl * 2)
 
-            VStack(spacing: SGSpacing.xl) {
-                headline
-                cardPreview
-                actions
+                    Button("Share this morning") { prepareShareImage() }
+                        .buttonStyle(SkyPrimaryButtonStyle())
+                        .accessibilityHint("Opens the share sheet with this card as an image")
+
+                    // Bet 3 (dev-note §7 P0): a person already excited enough to be
+                    // looking at a milestone is the cheapest place to test whether
+                    // invite *placement*, not desire, was the binding constraint —
+                    // see the Buddies-tab-only version of this same card. Only shown
+                    // once a handle exists, matching the gate `InviteLinkCard`'s own
+                    // doc comment describes; `moment.handle` is already resolved by
+                    // the presenter, so no extra fetch is needed here.
+                    if moment.handle != nil {
+                        InviteLinkCard(inviteRepository: inviteRepository, placement: .milestone)
+                    }
+
+                    Button("Done", action: onDone)
+                        .buttonStyle(SkySecondaryButtonStyle())
+                }
+                .padding(.horizontal, SGSpacing.xl)
+                .padding(.vertical, SGSpacing.xxl)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, SGSpacing.xl)
-            .padding(.vertical, SGSpacing.xxl)
+            .background(PlayfulStageBackdrop(accent: moment.post.skyColor.color).ignoresSafeArea())
         }
         .opacity(hasAppeared ? 1 : 0)
         .scaleEffect(hasAppeared ? 1 : 0.94)
@@ -67,45 +106,28 @@ struct MilestoneView: View {
         .accessibilityLabel("\(moment.milestone.title). \(moment.milestone.headline)")
     }
 
-    private var cardPreview: some View {
-        GeometryReader { proxy in
-            let scale = min(proxy.size.width / 1080, proxy.size.height / 1920)
-            MorningCardExportView(
-                post: moment.post,
-                photo: moment.photo,
-                streak: moment.milestone.streak,
-                handle: moment.handle
-            )
-            .frame(width: 1080, height: 1920)
-            .scaleEffect(scale, anchor: .center)
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .shadow(color: .black.opacity(0.18), radius: 24, y: 12)
-        }
+    private func cardPreview(availableWidth: CGFloat) -> some View {
+        // Fill the available width so the hero card reads as dominant per
+        // DESIGN.md's ENERGY 4/5 dial; height follows the card's fixed 1080:1920
+        // aspect ratio. The whole screen is one ScrollView with nothing pinned
+        // (see `body`), so a card taller than one device's screen is fine — the
+        // user scrolls, same as reaching the "Invite a buddy" card and Done
+        // button beneath it.
+        let scale = availableWidth / 1080
+        return MorningCardExportView(
+            post: moment.post,
+            photo: moment.photo,
+            streak: moment.milestone.streak,
+            handle: moment.handle
+        )
+        .frame(width: 1080, height: 1920)
+        .scaleEffect(scale, anchor: .center)
+        .frame(width: availableWidth, height: 1920 * scale)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 24, y: 12)
         // The card restates the headline and the streak, so exposing its internals
         // would make VoiceOver read the same milestone three times.
         .accessibilityHidden(true)
-    }
-
-    private var actions: some View {
-        VStack(spacing: SGSpacing.md) {
-            Button("Share this morning") { prepareShareImage() }
-                .buttonStyle(SkyPrimaryButtonStyle())
-                .accessibilityHint("Opens the share sheet with this card as an image")
-
-            // Bet 3 (dev-note §7 P0): a person already excited enough to be looking at
-            // a milestone is the cheapest place to test whether invite *placement*,
-            // not desire, was the binding constraint — see the Buddies-tab-only
-            // version of this same card. Only shown once a handle exists, matching
-            // the gate `InviteLinkCard`'s own doc comment describes; `moment.handle`
-            // is already resolved by the presenter, so no extra fetch is needed here.
-            if moment.handle != nil {
-                InviteLinkCard(inviteRepository: inviteRepository, placement: .milestone)
-            }
-
-            Button("Done", action: onDone)
-                .buttonStyle(SkySecondaryButtonStyle())
-        }
     }
 
     /// Rendering is synchronous and happens on demand rather than on appear, so the
