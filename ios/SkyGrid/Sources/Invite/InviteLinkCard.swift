@@ -147,6 +147,7 @@ struct InviteLinkCard: View {
         }
         .font(SGFont.caption(13))
         .foregroundStyle(.red)
+        .frame(minHeight: 44)
         .disabled(viewModel.isRevoking)
     }
 

@@ -42,6 +42,7 @@ struct SettingsView: View {
                                 L10n.string("settings.row.unlockArchive.title"),
                                 symbol: "square.grid.3x3",
                                 detail: L10n.string("settings.row.unlockArchive.detail"),
+                                accessory: .none,
                                 emphasized: true
                             )
                         }
@@ -319,6 +320,7 @@ struct SettingsView: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(SGT.ink3)
+                    .accessibilityHidden(true)
             case .external:
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 12, weight: .semibold))

@@ -4577,6 +4577,86 @@
         }
       }
     },
+    "camera.review.capturedLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CAPTURED"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撮影しました"
+          }
+        }
+      }
+    },
+    "camera.review.keepThisSky": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "KEEP THIS SKY"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この空を残す"
+          }
+        }
+      }
+    },
+    "camera.review.retake": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retake"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撮り直す"
+          }
+        }
+      }
+    },
+    "camera.review.skyGridLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SKY GRID"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スカイグリッド"
+          }
+        }
+      }
+    },
+    "camera.review.useThisOne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use this one"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これを使う"
+          }
+        }
+      }
+    },
     "camera.failure.backToCamera.action": {
       "localizations": {
         "en": {

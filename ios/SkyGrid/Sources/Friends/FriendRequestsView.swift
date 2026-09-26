@@ -33,6 +33,8 @@ struct FriendRequestsView: View {
                                     .frame(minHeight: 44)
                             }
                         }
+                        .buttonStyle(SkySecondaryButtonStyle())
+                        .frame(width: 92)
                         .disabled(viewModel.acceptingPairIDs.contains(friendship.pairId))
                     }
                     .padding(12)

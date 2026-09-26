@@ -1,5 +1,6 @@
 import AVFoundation
 import SwiftUI
+import UIKit
 
 /// Inset live viewfinder, one shutter button, and — after capture — exactly
 /// two choices ("retake" / "use this"). No gallery picker, no filters, nothing else.
@@ -125,10 +126,10 @@ struct CameraView: View {
         CameraStage {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("SKY GRID")
+                    Text(L10n.string("camera.review.skyGridLabel"))
                         .font(SGFont.caption(12))
                         .tracking(1.8)
-                    Text("CAPTURED")
+                    Text(L10n.string("camera.review.capturedLabel"))
                         .font(SGFont.caption(11))
                         .foregroundStyle(.white.opacity(0.62))
                 }
@@ -142,7 +143,7 @@ struct CameraView: View {
                 .aspectRatio(contentMode: .fill)
         } controls: {
             VStack(spacing: SGSpacing.md) {
-                Text("KEEP THIS SKY")
+                Text(L10n.string("camera.review.keepThisSky"))
                     .font(SGFont.caption(12))
                     .tracking(1.4)
                     .foregroundStyle(.white.opacity(0.72))
@@ -160,6 +161,10 @@ struct CameraView: View {
                         .multilineTextAlignment(.center)
                 }
             }
+        }
+        .onChange(of: confirmationError) { _, error in
+            guard let error else { return }
+            UIAccessibility.post(notification: .announcement, argument: error)
         }
     }
 
@@ -380,7 +385,7 @@ struct CameraReviewActions: View {
     }
 
     private var retakeButton: some View {
-        Button("Retake", action: onRetake)
+        Button(L10n.string("camera.review.retake"), action: onRetake)
             .buttonStyle(CameraChoiceButtonStyle(emphasized: false))
             .disabled(isConfirming)
     }
@@ -390,7 +395,7 @@ struct CameraReviewActions: View {
             if isConfirming {
                 ProgressView().tint(.black)
             } else {
-                Text("Use this one")
+                Text(L10n.string("camera.review.useThisOne"))
             }
         }
         .buttonStyle(CameraChoiceButtonStyle(emphasized: true))
