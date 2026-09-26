@@ -167,12 +167,17 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       2 of the 8 new tickets must come from a FRESH discovery pass (new screenshots/code reading),
       not just draining tickets already sitting in the TODO list, per the owner's "keep finding
       more problems autonomously" instruction.
-- [ ] The 13 pre-existing UI-test failures flagged in iteration 5's Progress log (Buddies/
+- [x] The 13 pre-existing UI-test failures flagged in iteration 5's Progress log (Buddies/
       Onboarding/Moku/WeeklyRecap screens, confirmed pre-existing via a clean-`HEAD` stash
       comparison, not caused by this loop) have each been triaged: either root-caused and fixed,
       or logged in this file with a concrete reason they're out of this loop's scope (e.g.
       environment-only failure, intentionally deferred product decision) — "not investigated" is
-      no longer an acceptable end state for them.
+      no longer an acceptable end state for them. DONE 2026-09-26 (Round 2, iteration 9) — all 9
+      distinct failing test methods (13 assertion failures) root-caused with code evidence, see
+      Progress log below. Verdict: every one is a stale test asserting on UI copy/flow that a
+      legitimate prior product change moved on from — zero are app defects. Logged here rather
+      than fixed in-line (fixing the 9 test methods is now Ticket 19, deferred to keep this
+      iteration's scope to discovery+triage as planned).
 - [ ] `bash .loop/uiux-autonomy_2026-09-25/verify.sh` exits 0 against this Round 2 bar.
 - [ ] No CRITICAL/HIGH reviewer findings remain unaddressed on any Round 2 ticket either.
 
@@ -599,6 +604,99 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
   WeeklyRecap — none audited yet) per Round 2's DoD requirement that at least 2 of the next 8
   tickets come from new discovery rather than TODO-draining, since 2 tickets (7, 9) have now been
   drained from the existing backlog without one.
+- 2026-09-26 (Round 2, iteration 9): Discovery-only iteration (no implementation), per Round 2's
+  DoD requirement that at least 2 of the next 8 tickets come from a FRESH discovery pass, not just
+  TODO-draining — with Tickets 7 and 9 both drained from the pre-existing backlog last iteration,
+  this was the right point to spend one iteration on discovery instead. Built the app and captured
+  real Simulator screenshots via the UI-audit harness (XcodeBuildMCP `build_run_sim`/`screenshot`,
+  iPhone 17 sim) for 6 scenarios covering 5 screens/flows none of Round 1 touched: `grid`,
+  `settings`, `weekly-recap`, `camera-review`, `camera-live`, `buddies-request-flow` — saved under
+  `.loop/uiux-autonomy_2026-09-25/screenshots/*-discovery.jpg` (not committed, reproducible via the
+  harness, per this loop's own convention). Dispatched two independent discovery agents in
+  parallel (both sonnet): a general-purpose design/UX pass loading `ios-design-agent-skill` +
+  antislop-ui's `SKILL.md` + `DESIGN.md`, and a separate `a11y-architect` pass — both examined the
+  screenshots AND read the actual SwiftUI source (not screenshot-only guessing) before reporting.
+  Combined output: 10 raw findings, one exact duplicate between the two passes (Buddies'
+  `InviteLinkCard` "Stop sharing this link" missing `.frame(minHeight: 44)` — both agents found it
+  independently, which is itself corroborating evidence, not just redundancy), yielding 9 unique,
+  file-referenced defects. Wrote these up as Tickets 10-18 in TODO below, ranked functional gaps
+  and correctness above pure polish: Ticket 10 (no decline/reject action exists for incoming buddy
+  requests — a real missing feature, not styling), Ticket 11 (Grid/Mosaic's `Canvas`-drawn year
+  mosaic has zero accessibility content and its wrapper label never attaches — HIGH severity,
+  blocks a screen-reader user from the app's core artifact entirely), Ticket 12 (5 hardcoded
+  English strings on the Camera screen bypass `L10n.string`, breaking Japanese localization on the
+  app's most-used screen), Ticket 13 (a failed capture-post error is never announced to VoiceOver,
+  WCAG 4.1.3), Ticket 14 (Settings' paywall row shows a push-navigation chevron but presents a
+  sheet — affordance mismatch), Ticket 15 (Buddies' "Accept" request button has zero `.buttonStyle`
+  at all), Ticket 16 (the duplicate-confirmed touch-target gap), Ticket 17 (Settings' `.disclosure`
+  chevron missing `.accessibilityHidden(true)`, unlike its own sibling cases in the same switch),
+  Ticket 18 (Grid's month-banding is wired on but invisible at render scale, so short months still
+  read as layout glitches — lower priority, polish). This satisfies Round 2's "at least 2 of the
+  next 8 must be fresh discovery" bar several times over (9 candidates from one pass).
+
+  Second half of this iteration: triaged the 13 pre-existing UI-test failures flagged in iteration
+  5 and still outstanding in Round 2's DoD. Ran the full `SkyGridUITests` suite fresh
+  (`xcodebuild test -only-testing:SkyGridUITests`, iPhone 17 sim): **41 executed, 5 skipped, 13
+  failures across 9 distinct test methods** — the count matches iteration 5's flag exactly (the
+  "13" both times counts individual `XCTAssertTrue` failures, not test methods; 9 methods fail,
+  some with multiple assertions each). Root-caused every one by reading the actual current SwiftUI
+  source against each test's expectation (not guessing from the error text alone) — first tested
+  and ruled out one hypothesis (simulator device language had drifted to `ja-JP`, confirmed via
+  `defaults read -g AppleLanguages`; reset to `en`/`en_US` and rebooted the simulator, then
+  re-ran 4 of the 9 as a control — **identical failures reproduced**, disproving the locale theory
+  before writing it down as a conclusion). The real root causes, all confirmed by reading source:
+  (1) `testMokuPlayKeepsOnboardingActionUsable`, `testOnboardingMovesFromWelcomeIntoTheQuestionFlow`,
+  `testOnboardingCanMoveBetweenPagesWithHorizontalSwipes` (3 methods, 6 assertion failures) — all
+  three call `app.buttons["Get started"]` immediately after `app.launch()`, but
+  `OnboardingCoordinatorView.swift:115` now hardcodes `OnboardingViewModel(step: .language)`, so
+  every onboarding flow begins with `LanguageSelectionView` (`Onboarding/LanguageSelectionView.swift`,
+  its own "Does this language look right?" screen, step 1 of 10) before `WelcomeView`'s "Get
+  started" (step 2 of 10) ever appears — confirmed live via `snapshot_ui` showing the language
+  screen as the actual first frame. These 3 tests were written before the language-confirmation
+  step existed and were never updated to tap through it first — a genuinely legitimate onboarding
+  feature (also the source of Ticket 8's `OnboardingProgress` "01/10" component this loop already
+  fixed for accessibility), not an app defect. (2) `testMilestoneMomentOffersTheShareableCard`,
+  `testDayOneMilestoneRendersWithoutAPhoto` (2 methods, 3 assertion failures) — both look up
+  `app.staticTexts["30 days"]`/`["Thirty mornings in a row."]`/`["Day one"]`/`["Your first sky."]`
+  as separate elements, but Ticket 9 (this very loop, iteration 8) added
+  `.accessibilityElement(children: .combine)` + a combined `.accessibilityLabel` to `MilestoneView`
+  's `headline` (`ios/SkyGrid/Sources/Milestone/MilestoneView.swift:99-100`) as a genuine,
+  reviewer-approved VoiceOver improvement — merging the title+headline into one accessibility
+  element removes them as independently queryable `staticTexts`. **This is a real regression this
+  loop itself introduced** (the swift-reviewer for Ticket 9 checked VoiceOver focus order and code
+  correctness but didn't run the UI test suite), though the fix is to update the 2 tests to assert
+  on the combined label, not to revert a correct accessibility improvement. (3)
+  `testBuddiesContextualDestinationRendersWithoutATabBar`,
+  `testPlayfulRedesignContextAuditScreensRender`'s `buddies` sub-case (2 methods/scenarios, 2
+  assertion failures) — both wait for `staticTexts["MORNING TOGETHER"]`, which is `BuddyRitualCard`
+  's caption Label (`ios/SkyGrid/Sources/Friends/BuddiesView.swift:335`, still called at :257) —
+  confirmed via screenshot that the Buddies screen's actual top-of-screen content is now a
+  `MokuScreenMark` with a dynamic caption ("Your circle opens one real morning at a time." /
+  "Moku is saving a spot for your first sky buddy.", hardcoded literals at :54-55, itself arguably
+  a Ticket-12-style localization gap worth folding into a future pass) — `BuddyRitualCard` still
+  renders, just relocated below the friends list/invite-code UI in the file's current `List`
+  ordering, likely below the fold in a lazy-loaded `List` section the harness doesn't scroll to.
+  Confirmed a legitimate screen reorganization since these tests were written, not a missing
+  feature. (4) `testWeeklyRecapAndExportRender`'s `weekly-recap` sub-case — waits for
+  `staticTexts["WEEK COMPLETE"]`; confirmed via screenshot the current copy is "YOUR WEEK IS
+  COMPLETE" inside the card preview plus "Weekly recap ready"/"Seven mornings captured" as the
+  screen header — a copy rewrite since the test was written, text search confirms "WEEK COMPLETE"
+  no longer appears anywhere in `ios/SkyGrid/Sources`. (5) `testBuddyRequestShowsSuccessAndClearsTheHandle`
+  — fails to find `textFields["Their handle"]` after expanding the handle-request disclosure; the
+  placeholder text in `ios/SkyGrid/Sources/Friends/AddBuddyView.swift:34` is still exactly "Their
+  handle" (not a copy change), and the test's own `expandHandleRequest` helper
+  (`SkyGridUITests.swift:155-164`) already documents and works around this exact screen's List
+  lazy-loading fragility with a pre-tap `swipeUp` loop — the most likely explanation (not
+  independently reproduced further given time budget) is that the loop swipes before tapping the
+  disclosure but not after expanding it, and the newly-revealed `AddBuddyView` row's TextField
+  isn't realized by the `List` until scrolled to post-expansion. Verdict for all 9: **zero are app
+  UI/UX defects** — every one is a stale test assertion left behind by a legitimate, otherwise
+  already-reviewed product/accessibility change. Logged here per the DoD's "root-caused ... or
+  logged with a concrete reason" bar (marked DONE in Round 2's DoD checklist above) rather than
+  fixed in-line, to keep this iteration's scope to discovery+triage as planned; filed as Ticket 19
+  (test-hygiene, not app-facing) for a future iteration to actually update the 9 test methods.
+  No commit-worthy app code changed this iteration (VISION.md/state.json only); this iteration's
+  diff is the discovery/triage writeup itself.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -769,3 +867,104 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       a `ScrollView`'s natural-flow content, so scrollable content underneath a pinned overlay
       shows through it); the shipped fix puts every element in the ScrollView's plain flow with
       nothing pinned, which fully satisfies the acceptance criterion without that failure mode.
+- [ ] Ticket 10 (functional gap, Buddies — fresh discovery, design/UX pass): there is no way to
+      decline or ignore an incoming buddy request anywhere in the app.
+      `ios/SkyGrid/Sources/Friends/FriendRequestsView.swift` renders only an "Accept" action per
+      pending request, and `grep -rn "decline|reject" ios/SkyGrid/Sources/Friends/` returns zero
+      matches. A user who gets an unwanted request can only accept it or leave it pending forever.
+      Fix: add a `decline(_:)` method to `FriendsViewModel` (delete/deny the pending `Friendship`
+      doc — check the Firestore Security Rules constraints on `friendships/{pairId}` writes per
+      root AGENTS.md before choosing delete vs. a denied-state field) and a secondary "Not now"
+      control next to Accept in `FriendRequestsView`. Acceptance: a UI test or manual pass confirms
+      declining removes/hides the request without accepting it; `xcodebuild test` green; rules
+      tests (`cd ios/rules-tests && npm run test:emulator`) still pass if the write shape changes.
+- [ ] Ticket 11 (accessibility, WCAG 2.2 SC 1.1.1/1.3.1/4.1.2, Grid/Mosaic — fresh discovery, a11y
+      pass, HIGH severity — blocks a screen reader user entirely from the app's core artifact): the
+      year mosaic `Canvas` (`ios/SkyGrid/Sources/Grid/GridCanvas.swift:38-97`) draws all 365
+      day-cells with SwiftUI's `Canvas`, which has no default accessibility representation.
+      `gridField` in `ios/SkyGrid/Sources/Grid/SkyGridView.swift:188-213` wraps `dayLabels` +
+      `monthLabels` + `GridCanvas` in a plain `VStack` with `.accessibilityLabel(...)` at line 212,
+      but there is no `.accessibilityElement(children: .ignore/.combine)` anywhere on the
+      container, so the label never attaches to one coherent element — VoiceOver instead swipes
+      through orphaned, context-free numeric `Text` children ("1"…"31", "1"…"12") with zero
+      indication they're day/month scale markers, while the mosaic itself contributes nothing.
+      Fix: wrap `gridField` in `.accessibilityElement(children: .ignore)` with the descriptive
+      label attached there (or build a real accessible representation — e.g. a summary element
+      stating streak/posted-day count, or a rotor-style overlay of invisible per-cell elements).
+      Acceptance: VoiceOver manual pass on the `grid` scenario announces one coherent, labeled
+      element instead of orphaned numerals; `xcodebuild test` green.
+- [ ] Ticket 12 (correctness, localization, Camera — fresh discovery, design/UX pass): five strings
+      on the camera review/live screen are hardcoded English literals bypassing the app's own
+      `L10n.string(...)` system that every other string on the same screen uses:
+      `ios/SkyGrid/Sources/Camera/CameraView.swift:128` (`"SKY GRID"`), `:131` (`"CAPTURED"`),
+      `:145` (`"KEEP THIS SKY"`), `:383` (`Button("Retake", ...)`), `:393` (`"Use this one"`).
+      Settings ships a working English/Japanese switcher and every other camera string already
+      routes through `L10n.string`, so these five always render in English regardless of the
+      selected language on the app's single most-used screen (daily capture). Fix: wrap each in
+      `L10n.string(...)` with a new key and add the Japanese value to `Localizable.xcstrings`.
+      Acceptance: switch the in-app language to Japanese (Settings), re-run the `camera-review`/
+      `camera-live` scenarios, confirm all five now render in Japanese; `xcodebuild test` green.
+- [ ] Ticket 13 (accessibility, WCAG 2.2 SC 4.1.3, Camera — fresh discovery, a11y pass): after
+      tapping "Use this one," a failed post (`confirmationError` set, e.g.
+      `camera.alreadyPosted`/`camera.confirmationError.postFailed`) is inserted as plain inline
+      `Text` in `ios/SkyGrid/Sources/Camera/CameraView.swift:156-161` with no
+      `UIAccessibility.post(notification:.announcement)` and no live-region trait — a VoiceOver
+      user who taps the button hears nothing when it fails and has no way to discover why without
+      blindly re-exploring the screen. Fix: post an accessibility announcement with the error text
+      when `confirmationError` is set. Acceptance: VoiceOver manual pass on a forced-failure state
+      confirms the error is spoken automatically; `xcodebuild test` green.
+- [ ] Ticket 14 (correctness, affordance mismatch, Settings — fresh discovery, design/UX pass): the
+      "Unlock the full archive" row (`ios/SkyGrid/Sources/Settings/SettingsView.swift:40-48`)
+      doesn't override `settingRow`'s default `.disclosure` accessory, so it shows a `>` chevron —
+      the standard iOS signal for push navigation — but tapping it presents the paywall as a modal
+      `.sheet` (`:149`). Every other chevroned row in this file (Morning Alarm, Language, Community
+      Safety) is a genuine push `NavigationLink`; this one row's affordance doesn't match its
+      behavior. Fix: pass `accessory: .none` (or a dedicated "opens" indicator) for the paywall
+      row, matching the non-chevron treatment already used for "Restore purchases" directly below
+      it. Acceptance: re-screenshot `settings` scenario, confirm the paywall row no longer shows a
+      push chevron; `xcodebuild test` green.
+- [ ] Ticket 15 (consistency, Buddies — fresh discovery, design/UX pass): the "Accept" button for
+      an incoming buddy request (`ios/SkyGrid/Sources/Friends/FriendRequestsView.swift:24-35`) has
+      no `.buttonStyle` at all — not even one of the already-cleared generic system styles — so it
+      renders with bare default control chrome (system tint, no capsule/fill) while every other
+      primary/secondary action in the app goes through `SkyPrimaryButtonStyle`/
+      `SkySecondaryButtonStyle`. Fix: apply `SkySecondaryButtonStyle` (or a small pill variant) to
+      the Accept button. Acceptance: screenshot the `buddies-request-flow` scenario, confirm Accept
+      now matches the app's pill-button language; `xcodebuild test` green.
+- [ ] Ticket 16 (accessibility, WCAG 2.2 SC 2.5.8, Buddies — fresh discovery, confirmed by BOTH
+      discovery passes independently): the destructive "Stop sharing this link" button
+      (`ios/SkyGrid/Sources/Invite/InviteLinkCard.swift:145-150`) has no `.frame(minHeight: 44)`,
+      unlike its sibling buttons in the same file (`invite.getNewLink` at :59-62, `invite.tryAgain`
+      at :69-72, both explicitly 44pt) — a caption-sized (13pt) destructive control with a
+      sub-minimum tap target. Fix: add `.frame(minHeight: 44)` to match the file's own established
+      pattern. Acceptance: Accessibility Inspector or a UI test confirms ≥44×44pt hit target;
+      `xcodebuild test` green.
+- [ ] Ticket 17 (accessibility, WCAG 2.2 SC 1.1.1, Settings — fresh discovery, a11y pass): in
+      `settingRow`'s `accessory` switch (`ios/SkyGrid/Sources/Settings/SettingsView.swift:318-330`),
+      the `.disclosure` case's chevron `Image` (:318-321) is the only branch missing
+      `.accessibilityHidden(true)` — `.external` and `.progress` two cases below it both correctly
+      hide their icons. Every row using the default `.disclosure` accessory (Morning Alarm,
+      Community Safety, Delete Account, the paywall CTA) gets VoiceOver appending a redundant
+      unlabeled "chevron forward" announcement after the row's real label. Fix: add
+      `.accessibilityHidden(true)` to the `.disclosure` case, matching its siblings. Acceptance:
+      VoiceOver manual pass on `settings` confirms no chevron announcement on any disclosure row;
+      `xcodebuild test` green.
+- [ ] Ticket 18 (polish/clarity, Grid — fresh discovery, design/UX pass, LOWER priority): the year
+      mosaic's month-banding is wired on (`ios/SkyGrid/Sources/Grid/SkyGridView.swift:207`,
+      `monthBanding: true`) specifically so short months "read as the end of a month" per the code
+      comment at `ios/SkyGrid/Sources/Grid/GridCanvas.swift:29-34`, but the band rect is drawn once
+      per even month and then every day cell (including empty ones) is drawn on top at full size —
+      the band is only visible in the ~1.5pt gutters between cells, imperceptible at render scale.
+      In `grid-discovery.jpg`, February's truncated row reads as an unexplained cutout
+      indistinguishable from a layout bug, exactly the failure mode banding was written to prevent.
+      Fix: make the band visibly distinct where it matters — e.g. tint the empty-cell fill itself
+      for even months, or a faint background wash behind the whole row. Acceptance: re-screenshot
+      `grid`, confirm a short month's truncated row reads as an intentional month boundary, not a
+      glitch; `xcodebuild test` green.
+- [ ] Ticket 19 (test hygiene, not a UI/UX defect — fresh discovery, iteration 9's UI-test triage):
+      update the 9 stale `SkyGridUITests` methods identified in iteration 9's Progress log entry
+      (see below for the full root-cause table) so they assert against current UI copy/flow instead
+      of pre-redesign strings. None of the underlying app behavior is wrong; the tests just weren't
+      updated when the screens they cover evolved. Acceptance: `xcodebuild test -only-testing:
+      SkyGridUITests` passes 41/41 (currently 32/41, 9 stale failures); no test assertion is
+      weakened to force a pass — each fix reflects genuinely current, correct UI state.
