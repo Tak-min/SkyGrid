@@ -137,6 +137,7 @@ final class SkyGridUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditLiveMotion", "-SkyGridUIAuditScenario", "onboarding"]
         app.launch()
+        passLanguageConfirmation(in: app)
         XCTAssertTrue(app.buttons["Get started"].waitForExistence(timeout: 8))
         let moku = app.buttons["Say hello to Moku"]
         XCTAssertTrue(moku.exists)
@@ -161,6 +162,26 @@ final class SkyGridUITests: XCTestCase {
         }
         XCTAssertTrue(disclosure.waitForExistence(timeout: 8))
         disclosure.tap()
+
+        // Expanding reveals `AddBuddyView`'s "Their handle" field below the
+        // disclosure row, but a List does not realise that newly-revealed content
+        // until it is scrolled into view either — the same lazy-loading fragility
+        // this helper already works around for the disclosure row itself.
+        let handleField = app.textFields["Their handle"]
+        for _ in 0..<4 where !handleField.exists {
+            app.swipeUp()
+        }
+    }
+
+    /// Onboarding now opens on `LanguageSelectionView` (step 1 of 10, added after
+    /// several of these tests were first written) before `WelcomeView`'s "Get
+    /// started" ever appears — every onboarding-scenario test must tap through the
+    /// language confirmation first. The initial selection defaults to the device's
+    /// own language, so the button is enabled immediately with no picker tap needed.
+    private func passLanguageConfirmation(in app: XCUIApplication) {
+        let confirm = app.buttons["This works"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 8))
+        confirm.tap()
     }
 
     private func requirePhysicalDevice(allowLiveBackendSimulator: Bool = false) throws {
@@ -228,11 +249,22 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "milestone"]
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["30 days"].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["Thirty mornings in a row."].exists)
+        // `MilestoneView.headline` combines the title + subtitle into one
+        // `.accessibilityElement(children: .combine)` element (a deliberate,
+        // reviewer-approved VoiceOver improvement), so they are no longer two
+        // independently queryable `staticTexts` — assert on the combined label.
+        XCTAssertTrue(app.staticTexts["30 days. Thirty mornings in a row."].waitForExistence(timeout: 8))
 
+        // The whole screen is one unpinned ScrollView (Ticket 9's fix so the hero
+        // card renders dominant): the full 1080:1920 card sits between the headline
+        // and this button, so "Share this morning" exists immediately but is below
+        // the fold until scrolled — same reasoning as the Buddies swipe helpers
+        // elsewhere in this file.
         let share = app.buttons["Share this morning"]
         XCTAssertTrue(share.exists)
+        for _ in 0..<6 where !share.isHittable {
+            app.swipeUp()
+        }
         XCTAssertTrue(share.isHittable)
         XCTAssertTrue(app.buttons["Done"].exists)
 
@@ -250,9 +282,16 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "milestone-day-one"]
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["Day one"].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["Your first sky."].exists)
-        XCTAssertTrue(app.buttons["Share this morning"].isHittable)
+        // Same combined-accessibility-element reasoning as
+        // `testMilestoneMomentOffersTheShareableCard` above.
+        XCTAssertTrue(app.staticTexts["Day one. Your first sky."].waitForExistence(timeout: 8))
+
+        // Same unpinned-ScrollView reasoning as `testMilestoneMomentOffersTheShareableCard`.
+        let share = app.buttons["Share this morning"]
+        for _ in 0..<6 where !share.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(share.isHittable)
     }
 
     /// The live reward finishes in 1.6 seconds, so its causal states need fixed
@@ -290,7 +329,11 @@ final class SkyGridUITests: XCTestCase {
             ("camera-live", "THIS MORNING"),
             ("camera-review", "KEEP THIS SKY"),
             ("grid", "2026"),
-            ("buddies", "MORNING TOGETHER"),
+            // "MORNING TOGETHER" (`BuddyRitualCard`) now renders as the List's last
+            // section, below the friends list/invite card/requests, so it is not
+            // visible without scrolling; "INVITE A BUDDY" (`InviteLinkCard`'s header)
+            // renders near the top instead and still confirms this screen loaded.
+            ("buddies", "INVITE A BUDDY"),
         ]
 
         for (scenario, expectedText) in scenarios {
@@ -309,7 +352,10 @@ final class SkyGridUITests: XCTestCase {
 
     func testWeeklyRecapAndExportRender() {
         let scenarios = [
-            ("weekly-recap", "WEEK COMPLETE"),
+            // Copy rewrite since this test was written: "WEEK COMPLETE" no longer
+            // appears anywhere in the app; the header now reads "Weekly recap ready"
+            // (`WeeklyRecapView.swift`).
+            ("weekly-recap", "Weekly recap ready"),
             ("share-weekly", "SKY GRID · WEEKLY"),
         ]
 
@@ -363,9 +409,18 @@ final class SkyGridUITests: XCTestCase {
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "buddies"]
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["MORNING TOGETHER"].waitForExistence(timeout: 8))
         XCTAssertTrue(app.staticTexts["INVITE A BUDDY"].waitForExistence(timeout: 8))
         XCTAssertFalse(app.tabBars.firstMatch.exists)
+
+        // "MORNING TOGETHER" (`BuddyRitualCard`) is a legitimate screen
+        // reorganization since this test was written — it still renders, just
+        // relocated to the List's last section, below the friends list, invite
+        // card, and requests, so it needs scrolling into view.
+        let morningTogether = app.staticTexts["MORNING TOGETHER"]
+        for _ in 0..<6 where !morningTogether.exists {
+            app.swipeUp()
+        }
+        XCTAssertTrue(morningTogether.waitForExistence(timeout: 5))
     }
 
     /// `BuddyRitualCard` expands into its centred explainer only for an empty
@@ -537,6 +592,7 @@ final class SkyGridUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "onboarding"]
         app.launch()
+        passLanguageConfirmation(in: app)
 
         XCTAssertTrue(app.buttons["Get started"].waitForExistence(timeout: 8))
         app.buttons["Get started"].tap()
@@ -557,29 +613,62 @@ final class SkyGridUITests: XCTestCase {
         app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 2 OF 6 · How should it feel? You can change this later."].waitForExistence(timeout: 5))
 
-        app.buttons["Skip setup"].tap()
+        // `PersonalizationQuestionsView`'s "Skip setup" shortcut no longer exists —
+        // the redesign split what used to be a multi-question carousel into one
+        // single-question page per step (`PaceQuestionView` through
+        // `WakeGoalPickerView` in `PersonalizationQuestionsView.swift`), each reached
+        // only via its own "Continue" button. Walk through the remaining 4 steps
+        // for real instead of skipping past them.
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.staticTexts["QUESTION 3 OF 6 · You can change this later."].waitForExistence(timeout: 5))
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.staticTexts["QUESTION 4 OF 6 · Who is this for? Nothing is sent from this answer."].waitForExistence(timeout: 5))
+        app.buttons["Continue"].tap()
+        XCTAssertTrue(app.staticTexts["QUESTION 5 OF 6 · Nothing is sent from this answer."].waitForExistence(timeout: 5))
+        app.buttons["Continue"].tap()
+        // `WakeGoalPickerView` (step 6/the wake-time picker) has its own CTA label,
+        // not the shared "Continue" button.
+        XCTAssertTrue(app.buttons["Save time and continue"].waitForExistence(timeout: 5))
+        app.buttons["Save time and continue"].tap()
+
         XCTAssertTrue(app.staticTexts["YOUR MORNING PLAN"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Start my first sky"].exists)
-        XCTAssertTrue(app.staticTexts["Take one real photo first. Your archive options come after your first sky lands in the grid."].exists)
+        // `PersonalizedPlanView`'s CTA reads "Continue to invite a buddy"
+        // (`onboarding.plan.continueButton`), not "Start my first sky" — that
+        // string doesn't exist anywhere in the app. Its recommendation text is
+        // also built dynamically from the profile's pace/frequency answers
+        // (`PersonalizedMorningPlanBuilder.make`); since this test never taps a
+        // `ChoiceRow`, every question falls back to its documented default
+        // (`.gentle`/`.mostMornings`), producing this exact concatenated string.
+        XCTAssertTrue(app.buttons["Continue to invite a buddy"].exists)
+        XCTAssertTrue(app.staticTexts["Keep it gentle: one photo is enough. Most mornings are plenty."].exists)
         XCTAssertTrue(app.buttons["Edit answers"].exists)
     }
 
-    func testOnboardingCanMoveBetweenPagesWithHorizontalSwipes() {
+    /// Renamed from `testOnboardingCanMoveBetweenPagesWithHorizontalSwipes`: the
+    /// `companionRail` this test used to drive with `swipeLeft`/`swipeRight` never
+    /// had a page-drag gesture attached even before the redesign investigated here
+    /// — `OnboardingCoordinatorView.swift`'s `companionRail` is a static Moku status
+    /// row, and forward/back navigation has only ever been the explicit
+    /// "Continue"/"Back" buttons each question page renders. Testing the actual
+    /// navigation affordance instead of a gesture the app never wired up.
+    func testOnboardingCanMoveBetweenPagesWithContinueAndBack() {
         let app = XCUIApplication()
         app.launchArguments = ["-SkyGridUIAudit", "-SkyGridUIAuditScenario", "onboarding"]
         app.launch()
+        passLanguageConfirmation(in: app)
 
+        XCTAssertTrue(app.buttons["Get started"].waitForExistence(timeout: 8))
         app.buttons["Get started"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 1 OF 6 · Choose a direction. This stays on your device."].waitForExistence(timeout: 5))
-        app.otherElements["onboarding.companionRail"].swipeLeft()
+        app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 2 OF 6 · How should it feel? You can change this later."].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Back"].exists)
         app.buttons["Back"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 1 OF 6 · Choose a direction. This stays on your device."].waitForExistence(timeout: 5))
 
-        app.otherElements["onboarding.companionRail"].swipeLeft()
+        app.buttons["Continue"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 2 OF 6 · How should it feel? You can change this later."].waitForExistence(timeout: 5))
-        app.otherElements["onboarding.companionRail"].swipeRight()
+        app.buttons["Back"].tap()
         XCTAssertTrue(app.staticTexts["QUESTION 1 OF 6 · Choose a direction. This stays on your device."].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Back"].exists)
     }

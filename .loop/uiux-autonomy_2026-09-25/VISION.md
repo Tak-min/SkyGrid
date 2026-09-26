@@ -222,10 +222,10 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       rules change was needed (existing `allow delete` already covers pending docs), so the
       emulator rules-tests re-run was judged unnecessary and not run — reasoning logged below.
       to the normal xcodebuild gates before considering this ticket done.
-- [ ] Tickets 18 (grid month-banding legibility) and 19 (9 stale pre-existing UI-test methods,
+- [x] Tickets 18 (grid month-banding legibility) and 19 (9 stale pre-existing UI-test methods,
       confirmed test-side not app-side in Round 2) are implemented/fixed and committed. Ticket 18
       DONE 2026-09-26 (Round 3, iteration 2) — see Progress log and TODO entry below. Ticket 19
-      still outstanding — this bullet stays open until 19 is also committed.
+      DONE 2026-09-26 (Round 3, iteration 3) — see Progress log and TODO entry below.
 - [ ] A full fresh discovery pass covers `WeeklyRecapView` (only partially audited so far) plus a
       SECOND, deeper pass over at least 2 already-audited screens (Today, Paywall, Milestone,
       Onboarding, Invite, Notifications, Camera, Buddies, Settings, Grid — pick whichever got the
@@ -869,6 +869,74 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   to the Round 3 fresh-discovery pass since only Tickets 10/18 have been drained from the backlog
   so far this round (below the "every 3-4 drained" discovery cadence, but WeeklyRecapView remains
   entirely unaudited and is an explicit Round 3 DoD requirement either way).
+- 2026-09-26 (Round 3, iteration 3): Implemented Ticket 19 (the 9 stale `SkyGridUITests` methods).
+  Found on resuming that a prior interactive session had already started this exact ticket and hit
+  its own usage limit mid-work, leaving an uncommitted diff to `SkyGridUITests.swift` (visible in
+  `git status`, not yet in any commit) — reconciled state by reading that diff directly rather than
+  assuming the driver's `state.json` (`iteration: 3, status: "working"`) meant nothing had happened.
+  The uncommitted partial pass had already correctly fixed 5 of the 9: added a
+  `passLanguageConfirmation` helper (taps `"This works"`, the real `language.continue` L10n value)
+  for the 3 onboarding-launch tests, updated the 2 milestone tests' text assertions for
+  `MilestoneView.headline`'s combined-accessibility-element label, fixed the Buddies/weekly-recap/
+  buddy-request-handle tests' stale copy and scroll-reachability assumptions. Did not trust this as
+  finished — ran the real `xcodebuild test -only-testing:SkyGridUITests` (XcodeBuildMCP, iPhone 17
+  sim) myself first: 32→36 passed, but 4 methods still failed, meaning iteration 9's original
+  9-method root-cause table (written before this partial pass existed) was itself incomplete for 2
+  of them. Root-caused each remaining failure by reading actual current source, not guessing from
+  error text: (1) `testMilestoneMomentOffersTheShareableCard`/`testDayOneMilestoneRendersWithoutAPhoto`
+  now failed on `share.isHittable`, not the text assertion the partial pass had already fixed —
+  `MilestoneView.swift`'s own doc comment (its Ticket-9 ScrollView rewrite) confirms the full
+  1080×1920 hero card sits between the headline and the Share button in one unpinned ScrollView, so
+  the button `.exists` immediately but isn't on-screen until scrolled; fixed by adding the same
+  `swipeUp`-until-hittable loop already used for the Buddies tests elsewhere in this file. (2)
+  `testOnboardingCanMoveBetweenPagesWithHorizontalSwipes` failed because `OnboardingCoordinatorView
+  .swift`'s `companionRail` (confirmed by reading the whole file) has never had a swipe/drag gesture
+  attached — it's a static Moku status row: real forward/back navigation is only ever each
+  question page's own "Continue"/"Back" buttons. The test's own `swipeLeft` no-ops, so the
+  subsequent assertions failed, then its `Back` tap (still logically on the first question) fired
+  `goBackOneStep()` which for `.intention` goes to `.welcome`, so the following `companionRail`
+  lookup legitimately found nothing (the rail is hidden on `.welcome`/`.language` by the `if
+  viewModel.step != .language && viewModel.step != .welcome` guard) — root-caused, not guessed, by
+  reading `goBackOneStep()`'s full switch. Renamed to
+  `testOnboardingCanMoveBetweenPagesWithContinueAndBack` (documented the rename reason inline) and
+  rewrote it to drive the buttons that actually exist. (3) Independently re-verified
+  `testOnboardingMovesFromWelcomeIntoTheQuestionFlow`'s "Skip setup" tap was itself dead — grepped
+  `ios/SkyGrid/Sources` for the literal, zero hits — `PersonalizationQuestionsView.swift`'s own
+  doc comment confirms the old multi-question carousel was split into one page per question
+  (`PaceQuestionView` through `WakeGoalPickerView`, `L10n` keys read directly for the exact
+  "QUESTION N OF 6 · ..." subheadings), each gated behind its own "Continue" (or, for the wake-time
+  page, "Save time and continue") button — rewrote the test to walk all 6 question pages for real.
+  Its final assertions (previously "Start my first sky" + a "Take one real photo first..." string,
+  neither of which exists anywhere in `Sources`, confirmed by grep) were also stale:
+  `PersonalizedPlanView.swift`'s actual CTA is `L10n.string("onboarding.plan.continueButton")` =>
+  "Continue to invite a buddy", and its recommendation text is built dynamically by
+  `PersonalizedMorningPlanBuilder.make` from the profile's pace/frequency answers — since this test
+  never taps a `ChoiceRow`, every question falls back to its documented default (confirmed by
+  reading the builder's `?? .gentle`/`?? .mostMornings` fallbacks), producing the exact string
+  "Keep it gentle: one photo is enough. Most mornings are plenty." (read both L10n values directly
+  rather than guessing the concatenation). Re-ran the full `SkyGridUITests` suite after all fixes:
+  **36 passed, 0 failed, 5 skipped** (the 5 skips are the pre-existing, correctly-`XCTSkip`-gated
+  `requirePhysicalDevice()` tests, unrelated to this ticket and unchanged) — meets the acceptance
+  bar (every executable method green, no assertion weakened: each fix traces to source actually
+  read, several with exact string/behavior confirmation, not approximation). Did not touch two
+  further "Skip setup" references found by the same grep, in
+  `testRealSandboxPurchaseReachesStoreKitConfirmationSheet` and one physical-device-gated sibling
+  (both `requirePhysicalDevice()`-only, hence not among the 41 counted here and un-runnable in this
+  headless sim-only session) — logged rather than blind-edited, since fixing them would mean
+  guessing at a live-backend flow this session cannot execute or verify; flagged as a follow-up
+  ticket below rather than silently left broken. This ticket is test-only (`ios/SkyGrid/UITests/`),
+  touches no shipped UI/copy/behavior, so the antislop-ui Delivery Gate does not apply — noting that
+  reasoning explicitly per this loop's own convention (same treatment as Ticket 1a). No
+  `swift-reviewer` dispatch either, for the same reason (test-only, no production logic changed);
+  self-reviewed the diff directly instead — confirmed no assertion was loosened to force a pass,
+  every changed line traces to a specific source read cited above. Generic-button grep count:
+  unchanged (test-only ticket). `verify.sh` re-run for record-keeping: Gate 1 still fails — Round
+  3's remaining unchecked items are the fresh-discovery pass (WeeklyRecapView + a second deeper
+  pass on 2 already-audited screens, ≥5 new tickets filed/≥3 implemented/committed) and the two
+  closing gates. Committed as a separate commit (see git log). Next iteration should run the Round
+  3 fresh-discovery pass (0 of 3 Round-3 tickets so far came from fresh discovery — Tickets 10/18/19
+  were all backlog-drained from iteration 9 — this is now the highest-priority remaining Round 3
+  item) rather than draining more backlog.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -1186,10 +1254,32 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       `grid`, confirm a short month's truncated row reads as an intentional month boundary, not a
       glitch; `xcodebuild test` green. DONE 2026-09-26 (Round 3, iteration 2) — see Progress log
       below.
-- [ ] Ticket 19 (test hygiene, not a UI/UX defect — fresh discovery, iteration 9's UI-test triage):
+- [x] Ticket 19 (test hygiene, not a UI/UX defect — fresh discovery, iteration 9's UI-test triage):
       update the 9 stale `SkyGridUITests` methods identified in iteration 9's Progress log entry
       (see below for the full root-cause table) so they assert against current UI copy/flow instead
       of pre-redesign strings. None of the underlying app behavior is wrong; the tests just weren't
       updated when the screens they cover evolved. Acceptance: `xcodebuild test -only-testing:
       SkyGridUITests` passes 41/41 (currently 32/41, 9 stale failures); no test assertion is
       weakened to force a pass — each fix reflects genuinely current, correct UI state.
+      DONE 2026-09-26 (Round 3, iteration 3) — see Progress log below. All 36 executable methods
+      pass (5 remain `XCTSkip`-gated to a physical device, unchanged from before). A prior,
+      uncommitted partial pass (from a session that hit its usage limit) already fixed 5 of the 9;
+      this iteration root-caused and fixed the remaining regressions the partial pass had missed
+      or introduced, and found the partial pass's own root-cause table was itself incomplete for
+      2 of the 9 methods (see Progress log for the two additional real root causes discovered).
+- [ ] Ticket 20 (test hygiene, LOWER priority, not runnable/verifiable in this headless session —
+      discovered while fixing Ticket 19): `testRealSandboxPurchaseReachesStoreKitConfirmationSheet`
+      and one physical-device-gated sibling test in `SkyGridUITests.swift` still tap
+      `app.buttons["Skip setup"]`, a button confirmed dead by grep (zero hits anywhere under
+      `ios/SkyGrid/Sources`) — same stale-onboarding-flow root cause as Ticket 19, just in the two
+      `requirePhysicalDevice()`-gated tests Ticket 19 intentionally left alone (can't execute or
+      verify a live-backend physical-device flow from a headless sim-only session). Fix needs: (a)
+      a `passLanguageConfirmation`-equivalent step before the existing `"Get started"` check (these
+      tests use `launchLiveBackend`, not `-SkyGridUIAudit`, so confirm the language screen still
+      appears there first), (b) replacing the "Skip setup" tap with a walk through the same 6
+      question pages (or confirm whether skipping to the plan screen is even still reachable in the
+      live-backend flow — don't assume Ticket 19's simulator-only findings transfer unmodified).
+      Acceptance: a session with real-device access runs
+      `-only-testing:SkyGridUITests/testRealSandboxPurchaseReachesStoreKitConfirmationSheet` (and
+      the sibling) on a physical device and confirms the updated flow actually reaches the StoreKit
+      sheet; do not mark this done from a simulator-only run since these are gated `XCTSkip` there.
