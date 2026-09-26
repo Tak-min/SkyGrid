@@ -83,7 +83,8 @@ struct GridCanvas: View {
                         context.draw(symbol, in: rect.insetBy(dx: symbolInset, dy: symbolInset))
                     }
                 } else {
-                    context.fill(path, with: .color(emptyFill))
+                    let isBandedMonth = monthBanding && date.month.isMultiple(of: 2)
+                    context.fill(path, with: .color(isBandedMonth ? bandFill : emptyFill))
                 }
             }
         } symbols: {

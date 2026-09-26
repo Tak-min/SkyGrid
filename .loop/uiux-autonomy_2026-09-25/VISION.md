@@ -223,7 +223,9 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       emulator rules-tests re-run was judged unnecessary and not run — reasoning logged below.
       to the normal xcodebuild gates before considering this ticket done.
 - [ ] Tickets 18 (grid month-banding legibility) and 19 (9 stale pre-existing UI-test methods,
-      confirmed test-side not app-side in Round 2) are implemented/fixed and committed.
+      confirmed test-side not app-side in Round 2) are implemented/fixed and committed. Ticket 18
+      DONE 2026-09-26 (Round 3, iteration 2) — see Progress log and TODO entry below. Ticket 19
+      still outstanding — this bullet stays open until 19 is also committed.
 - [ ] A full fresh discovery pass covers `WeeklyRecapView` (only partially audited so far) plus a
       SECOND, deeper pass over at least 2 already-audited screens (Today, Paywall, Milestone,
       Onboarding, Invite, Notifications, Camera, Buddies, Settings, Grid — pick whichever got the
@@ -815,6 +817,58 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   entry) with full reasoning. Not done this iteration, deferred to a future iteration per the
   "one ticket through the full pipeline" per-iteration scope: Tickets 18/19 and the Round 3
   fresh-discovery pass (WeeklyRecapView + a second deeper pass over 2 already-audited screens).
+- 2026-09-26 (Round 3, iteration 2): Implemented Ticket 18 (Grid month-banding legibility),
+  already fully specified from iteration 9's discovery pass, so ran the lightweight pipeline per
+  step 2e. Re-read `GridCanvas.swift` first to confirm the exact mechanism: a pre-pass loop draws
+  a `bandFill` (`SGT.ghostFaint`) rectangle behind each even month's row, but the per-day loop then
+  draws every day cell — including empty/uncaptured ones — fully opaque in `emptyFill`
+  (`SGT.ghost`) on top, so the band was covered everywhere except the ~1.5pt inter-cell gutters.
+  Dispatched one bounded task to Codex (`mcp__codex__codex`) for the minimal fix: the day loop's
+  final `else` branch (a day with no thumbnail, not posted, no pending state) now computes
+  `isBandedMonth = monthBanding && date.month.isMultiple(of: 2)` and fills with `bandFill` instead
+  of `emptyFill` when true — exactly the ticket's first suggested option ("tint the empty-cell fill
+  itself for even months"), reusing the two tokens already declared in the file rather than
+  inventing a new color. Read the actual diff myself (not Codex's summary): confirmed it is a
+  single 2-line hunk touching only that one `else` branch — the pre-pass band rectangle, the
+  thumbnail/posted/pending branches, and the `symbols:` closure are all untouched, and no other
+  file changed. Codex's own sandboxed `xcodebuild` attempt failed on a CoreSimulatorService
+  workspace-state lock I/O error (environment sandbox limitation, not a code defect, same class of
+  failure noted in prior iterations); independently ran the real build myself outside that sandbox
+  (`xcodebuild build`, iPhone 17 sim) — succeeded — and the full `xcodebuild test
+  -only-testing:SkyGridTests` suite (356/356 passed, zero regressions). Dispatched an independent
+  `swift-reviewer` over the actual diff: **Approve, zero CRITICAL/HIGH** — confirmed the
+  `isBandedMonth` condition is textually identical to the pre-pass loop's own per-month predicate
+  (no off-by-one risk given `GridLayoutMath`'s 1-indexed month model), confirmed via repo-wide grep
+  that `SkyGridView.swift:201` is the only `GridCanvas(` call site (the share-card export path
+  bypasses this view entirely per its own doc comment, so no second consumer could regress), and
+  found no snapshot/golden-image test pinning the old always-`emptyFill` behavior. Captured a real
+  screenshot via XcodeBuildMCP (`build_run_sim` + `screenshot`, `grid` UI-audit scenario, not
+  guessed) — `.loop/uiux-autonomy_2026-09-25/screenshots/grid-ticket18-after.jpg` — and visually
+  compared it side-by-side against the pre-existing `grid-discovery.jpg` baseline: before, every
+  row (odd and even month) rendered in the identical uniform `emptyFill` gray, and February's
+  early cutoff showed only as a thin, easy-to-miss dark notch at the row's far right edge (the
+  "unexplained glitch" the ticket named); after, every even-numbered month's row (Feb/Apr/Jun/
+  Aug/Oct/Dec) now renders as a visibly distinct, uniformly darker charcoal block from day 1
+  through its actual last day, then stops cleanly — the short month now reads as a deliberately
+  bounded calendar region, not a rendering error, while odd months keep the original lighter gray.
+  The tonal difference is intentionally subtle (matching the file's own doc comment calling this a
+  "faint... wash" and `bandFill`'s literal `ghostFaint` name) rather than a bold stripe — a design
+  choice already established by the token's existing name/intent, not something this ticket
+  introduced. antislop-ui Delivery Gate: **PASS** — Purpose-Gate holds (fixes the named,
+  screenshot-evidenced defect: the band feature existed in code but was 100% covered, and the
+  fix restores its documented purpose); Liveliness/Craftsmanship hold by construction (reuses the
+  two existing `SGT` tokens already declared as this file's own `emptyFill`/`bandFill` properties,
+  zero new colors or visual language, preserves cell rounding/spacing/texture for every cell); no
+  web-only checklist items apply to native Canvas drawing. Generic-button grep count: unchanged
+  (this ticket touches Canvas fill colors, not button styles). `verify.sh` re-run for
+  record-keeping: Gate 1 still fails as expected — Round 3's remaining unchecked items are Ticket
+  19, the fresh-discovery pass (WeeklyRecapView + a second deeper pass on 2 already-audited
+  screens, ≥5 new tickets filed/≥3 implemented), and the two closing gates. Committed as a separate
+  commit (see git log). Next iteration: Ticket 19 (9 stale UI-test methods — mechanical,
+  well-specified from iteration 9's root-cause table) is the cheapest remaining TODO item, or pivot
+  to the Round 3 fresh-discovery pass since only Tickets 10/18 have been drained from the backlog
+  so far this round (below the "every 3-4 drained" discovery cadence, but WeeklyRecapView remains
+  entirely unaudited and is an explicit Round 3 DoD requirement either way).
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -1119,7 +1173,7 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       VoiceOver manual pass on `settings` confirms no chevron announcement on any disclosure row;
       `xcodebuild test` green. DONE 2026-09-26 (Round 2, iteration 10 — committed as `2688ed7`;
       independently re-reviewed this iteration, see Progress log).
-- [ ] Ticket 18 (polish/clarity, Grid — fresh discovery, design/UX pass, LOWER priority): the year
+- [x] Ticket 18 (polish/clarity, Grid — fresh discovery, design/UX pass, LOWER priority): the year
       mosaic's month-banding is wired on (`ios/SkyGrid/Sources/Grid/SkyGridView.swift:207`,
       `monthBanding: true`) specifically so short months "read as the end of a month" per the code
       comment at `ios/SkyGrid/Sources/Grid/GridCanvas.swift:29-34`, but the band rect is drawn once
@@ -1130,7 +1184,8 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       Fix: make the band visibly distinct where it matters — e.g. tint the empty-cell fill itself
       for even months, or a faint background wash behind the whole row. Acceptance: re-screenshot
       `grid`, confirm a short month's truncated row reads as an intentional month boundary, not a
-      glitch; `xcodebuild test` green.
+      glitch; `xcodebuild test` green. DONE 2026-09-26 (Round 3, iteration 2) — see Progress log
+      below.
 - [ ] Ticket 19 (test hygiene, not a UI/UX defect — fresh discovery, iteration 9's UI-test triage):
       update the 9 stale `SkyGridUITests` methods identified in iteration 9's Progress log entry
       (see below for the full root-cause table) so they assert against current UI copy/flow instead
