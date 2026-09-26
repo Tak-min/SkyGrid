@@ -233,6 +233,19 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       should look for subtler issues (motion/timing mismatches, Dynamic Type at accessibility
       sizes, RTL/long-string localization overflow, dark-mode-only edge cases) not just static
       layout. At least 5 new tickets filed, at least 3 implemented/reviewed/committed this round.
+      Discovery half DONE 2026-09-26 (Round 3, iteration 4): `WeeklyRecapView` fully audited (fresh
+      screenshot + full source read of `WeeklyRecapView.swift`/`WeeklyRecapExportView.swift`) and a
+      deeper pass run on Today and Paywall (the 2 screens with only ever one narrow prior ticket
+      each — moku sync, generic-button fix) at accessibility-XXXL Dynamic Type, forced dark
+      appearance, and attempted Japanese locale (blocked — see Progress log). 5 new tickets filed
+      (21-25) covering 3 distinct areas: a real functional double-fire bug (21), 2 screenshot-
+      confirmed visual defects (22, 23), and 2 accessibility gaps (24, 25) — all independently
+      spot-verified against the actual source by this session before filing, not taken on the
+      discovery agent's word alone. Still open: implementing/reviewing/committing at least 3 of
+      21-25 — deferred to the next iteration(s) per this loop's one-ticket-per-iteration role
+      pipeline (this iteration's budget went to discovery + verification, matching the driver's
+      own "spend one iteration on discovery instead of implementing" guidance after 3 backlog
+      tickets — 10, 18, 19 — were drained in the prior 3 iterations).
 - [ ] `bash .loop/uiux-autonomy_2026-09-25/verify.sh` exits 0 against this Round 3 bar.
 - [ ] No CRITICAL/HIGH reviewer findings remain unaddressed on any Round 3 ticket.
 
@@ -1283,3 +1296,91 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       `-only-testing:SkyGridUITests/testRealSandboxPurchaseReachesStoreKitConfirmationSheet` (and
       the sibling) on a physical device and confirms the updated flow actually reaches the StoreKit
       sheet; do not mark this done from a simulator-only run since these are gated `XCTSkip` there.
+- [ ] Ticket 21 (correctness, functional — WeeklyRecapView, Round 3 fresh discovery on
+      `WeeklyRecapView`, HIGHEST priority of this batch — real double-fire bug, not styling): the
+      "View weekly recap" button's busy state and double-tap guard are both wired to the WRONG
+      flag. `ios/SkyGrid/Sources/Today/WeeklyRecapView.swift`'s `@State private var isLoading`
+      (:14) is only ever set inside `loadPhotos()` (:115-117, the initial photo fetch on appear);
+      `prepareShareImage()` (:127-141) — the function the button (:40-54) actually calls — never
+      touches `isLoading` at all, it only guards on it at :128 (`guard !isLoading else { return
+      }`). By the time a user can tap the button, `isLoading` is already `false` and stays `false`
+      throughout `prepareShareImage()`'s real async work (an `inviteRepository.createInvite`
+      network call plus `ShareCardRenderer.renderWeekly`). Confirmed by direct code read: (a) the
+      button shows no busy indicator and stays enabled during a real, possibly multi-second
+      operation; (b) a double-tap bypasses the guard entirely (it's checking a flag that's already
+      false) and fires two concurrent `Task`s, each independently creating an invite and rendering
+      a share card. Fix: add `@State private var isPreparingShare = false` and set it `true` at
+      the top of `prepareShareImage()`'s `Task`, `false` when it completes (success or early
+      `return`), then gate both the button's spinner branch (:41) and `.disabled(...)` (:53) on
+      the new flag instead of `isLoading`. Acceptance: manual double-tap test on the `weekly-recap`
+      scenario confirms only one share sheet/invite-creation fires and a spinner shows throughout;
+      `xcodebuild test` green.
+- [ ] Ticket 22 (correctness, visual bug, screenshot-confirmed — WeeklyRecapView, Round 3 fresh
+      discovery on `WeeklyRecapView`): the live in-app weekly-recap preview clips its own content.
+      `cardPreview` (`ios/SkyGrid/Sources/Today/WeeklyRecapView.swift:100-113`) computes `scale =
+      min(proxy.size.width / 1080, proxy.size.height / 1920)`, applies `.scaleEffect(scale,
+      anchor: .center)` to `WeeklyRecapExportView`, then wraps the result in `.frame(width:
+      proxy.size.width, height: proxy.size.height)` with no `.clipped()` anywhere in the chain.
+      Confirmed in `.loop/uiux-autonomy_2026-09-25/screenshots/weekly-recap-discovery-fresh.jpg`
+      (captured this iteration): the leftmost day-tile in the mosaic is visibly cut off at the
+      screen's left edge (only a sliver of color, no weekday/time label visible, unlike every
+      other tile), and the rightmost tile sits flush against the right edge — the exact screen a
+      user sees before deciding whether to share is clipping its own content. Fix: replace the
+      manual `GeometryReader`/`scaleEffect`/`frame` composition with
+      `WeeklyRecapExportView(...).aspectRatio(1080.0/1920.0, contentMode: .fit)`, or at minimum add
+      a defensive `.clipped()` after the `.frame(...)` call and re-verify no tile/label is cut off.
+      Acceptance: re-screenshot `weekly-recap`, confirm all 7 day labels are fully visible with no
+      edge clipping; `xcodebuild test` green.
+- [ ] Ticket 23 (correctness/consistency, screenshot-confirmed — WeeklyRecapExportView, Round 3
+      fresh discovery on `WeeklyRecapView`): the shared "mosaic" artifact isn't actually a uniform
+      grid. `skyMosaic` (`ios/SkyGrid/Sources/Grid/WeeklyRecapExportView.swift:62-75`) lays the 7
+      day-tiles into two separate `HStack`s spanning the identical `Self.contentWidth` (920pt) —
+      the first `ForEach(orderedPosts.prefix(4))` (4 tiles), the second
+      `ForEach(orderedPosts.dropFirst(4))` (3 tiles). Each `skyTile` uses `.frame(maxWidth:
+      .infinity, maxHeight: .infinity)` (:92, :111), so row 1's tiles compute to `(920 - 3×22)/4 =
+      213.5pt` wide while row 2's tiles compute to `(920 - 2×22)/3 = 292pt` wide — roughly 37%
+      wider, confirmed by the frame math and visible in `weekly-recap-discovery-fresh.jpg` (the
+      bottom row reads noticeably fatter than the top row). Nothing else in the app does this —
+      `WeekRhythmView`'s own 7-day strip keeps every tile the same size. A "mosaic" with
+      inconsistently sized cells reads as a layout bug, not a design choice. Fix: give both rows
+      the same per-tile width (e.g. a shared `tileWidth = (contentWidth - 3×spacing)/4` applied via
+      explicit `.frame(width:)` on every tile, letting row 2 leave a trailing gap instead of
+      stretching), or lay out all 7 tiles in one `LazyVGrid`/fixed-column grid instead of two
+      independently-stretched `HStack`s. Acceptance: re-screenshot `weekly-recap`, confirm all 7
+      tiles render at the same size; `xcodebuild test` green.
+- [ ] Ticket 24 (accessibility, WCAG 2.2 SC 1.4.4 Resize Text, screenshot-confirmed — Today, Round
+      3 deeper pass on an already-audited screen): at accessibility Dynamic Type sizes, Moku's
+      ambient message overlaps and obscures the card content beneath it. The overlay `HStack`
+      (`ios/SkyGrid/Sources/Today/TodayView.swift:296-322`) is fixed at `.frame(width:
+      ambientMessage == nil ? 142 : 350, height: 156, ...)` with no `.clipped()`, and the message
+      text itself (`ios/SkyGrid/Sources/Today/MokuAmbientBubble.swift:6-12`, `Text(text)
+      .font(SGFont.body(14))`) has no `maximumScale` cap — unlike `SGFont.title`/`.bigTime`/
+      `.display` in `Typography.swift`, which do cap. Confirmed via
+      `.loop/uiux-autonomy_2026-09-25/screenshots/today-discovery-axxxl-mosaic-msg.jpg` (captured
+      this iteration with `-SkyGridUIAuditMokuTopic mosaicEntry -SkyGridUIAuditMokuMessageIndex 0`
+      at the accessibility-XXXL content size): the ambient message text grows well past the fixed
+      156pt-tall box and renders on top of the card's own "THIS MORNING" label and streak number,
+      making both unreadable for a user relying on large text. Fix: add a `maximumScale` cap to
+      the font used in `MokuAmbientBubble` (matching the existing pattern for `title`/`display`/
+      `bigTime`), and/or replace the fixed-height overlay with a layout that lets the bubble push
+      sibling content aside at accessibility sizes instead of drawing over it. Acceptance:
+      re-capture the same forced-message scenario at accessibility-XXXL, confirm no overlap with
+      the streak/status text; `xcodebuild test` green.
+- [ ] Ticket 25 (accessibility, localization gap — Today (Buddy strip), Round 3 deeper pass on an
+      already-audited screen): three VoiceOver-only announcements and one accessibility hint on
+      the buddy strip bypass the app's own localization system while every visible string around
+      them uses it correctly. `ios/SkyGrid/Sources/Today/BuddyTile.swift`'s `accessibilityLabel`
+      computed property (:236-246) builds raw English string interpolation — `"\(displayName), sky
+      revealed"`, `"\(displayName), sealed until you capture this morning"`, `"\(displayName),
+      hasn't captured yet"` — while the same file's visible `caption` (:227-234) correctly routes
+      through `L10n.string("buddy.tile.notYetSuffix")`. `ios/SkyGrid/Sources/Today/BuddyRow.swift:
+      24`'s `.accessibilityHint("Opens the buddy sky feed")` is the same kind of raw literal.
+      Confirmed via direct inspection of `Resources/Localizable.xcstrings`: none of these four
+      strings have a catalog entry (unlike `BuddyTile`'s visible caption, which does), so a
+      VoiceOver user running the app in Japanese hears these specific announcements in English
+      while every visible label around them is Japanese. Fix: wrap each in `L10n.string(...)` with
+      new keys (interpolating `displayName` via `String(format:)` for the three label variants),
+      add `ja` values to `Localizable.xcstrings`, and add the missing hint key with `en`+`ja`
+      values. Acceptance: with the in-app language set to Japanese (Settings), a VoiceOver pass
+      over the buddy strip announces Japanese text for all three reveal states and the hint;
+      `xcodebuild test` green.
