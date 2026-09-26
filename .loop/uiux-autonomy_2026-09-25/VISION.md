@@ -158,7 +158,8 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
 
 - [ ] Tickets 7 (`ink3`/`fill` contrast, systemic token — recompute the actual ratio, don't guess)
       and 9 (milestone hero-card `ScrollView`) are implemented, reviewed, and committed. Both were
-      already fully specified by Round 1's discovery pass — see the TODO entries below.
+      already fully specified by Round 1's discovery pass — see the TODO entries below. Ticket 7
+      DONE 2026-09-26 (Round 2 iteration 7); Ticket 9 still open.
 - [ ] At least 8 MORE concrete tickets (i.e. 16+ cumulative since this loop started) have gone
       through the full role pipeline and are committed, covering at least 5 DISTINCT screens/flows
       beyond the 6 Round 1 already touched (Today, Invite, AppStartup, Paywall, Notifications,
@@ -482,6 +483,54 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
   (milestone ScrollView polish) is needed to fully close every DoD checkbox, since the button-grep
   DoD line and the "no CRITICAL/HIGH unaddressed" line still need a final explicit statement even
   though no findings are currently outstanding.
+- 2026-09-26 (Round 2, iteration 7): Implemented Ticket 7 (`ink3`/`fill` contrast, systemic
+  token), the first of Round 2's two named priority tickets. Already fully specified in TODO, so
+  ran the lightweight pipeline per step 2e — but recomputed the actual math myself first rather
+  than trusting the ticket's own numbers at face value, since it's flagged as a systemic,
+  higher-risk change. Recomputed relative-luminance contrast via the real WCAG formula (not
+  eyeballed): `SGT.ink3`/`SGT.fill` was **4.13:1 in dark mode** (matching the ticket's claim) but
+  **3.57:1 in light mode** — worse than dark and not mentioned in the ticket text, a genuine
+  finding beyond what was already specified. Also checked `SGT.ink3`/`SGT.surface` (the token's
+  other common background pairing): 4.76:1 dark / 3.88:1 light — light mode fails there too.
+  Computed the minimal lightness-only adjustment (same hue/saturation, binary-searched in HSL
+  space) that clears 4.5:1 against both `fill` and `surface` in both appearances: dark `#7D8490`
+  → `#848B96` (ink3-on-fill 4.13→4.53, ink3-on-surface 4.76→5.22), light `#737B87` → `#646A75`
+  (ink3-on-fill 3.57→4.54, ink3-on-surface 3.88→4.94). Verified the change is monotonically safe
+  across every other neutral token in `Theme.swift` before dispatching: `background`, `ghost`,
+  and `ghostFaint` are all darker than ink3 in dark mode and lighter than ink3 in light mode, same
+  polarity as `fill`/`surface`, so a single lightness nudge cannot regress any of those pairings
+  either — this is why the fix is a genuine single-token systemic correction, not a per-screen
+  judgment call. Dispatched one bounded Codex task with `model: "gpt-5.6-luna"` (fully-specified,
+  zero-ambiguity: one literal hex-pair swap in one file, with the exact target values already
+  computed and verified by me, matching the Luna-tier bar) to edit
+  `ios/SkyGrid/Sources/DesignSystem/Theme.swift`. Read the actual diff myself (not Codex's
+  summary): exactly the one intended line changed, nothing else. Independently re-ran the gates
+  myself rather than trusting Codex's own build claim: `xcodebuild build` (iPhone 17 sim)
+  succeeded, `xcodebuild test -only-testing:SkyGridTests` passed all 356 tests/63 suites
+  unchanged. Captured real screenshots via XcodeBuildMCP (`build_run_sim` + `screenshot`, not
+  guessed) for 3 affected screens as the ticket's acceptance criterion requires —
+  `buddies-ticket7-after.jpg`, `settings-ticket7-after.jpg`, `alarm-ticket7-after.jpg` under
+  `.loop/uiux-autonomy_2026-09-25/screenshots/` — and visually confirmed no cascade breakage
+  (handles/status text/labels all still legible, slightly lighter gray, no layout shift).
+  Dispatched an independent `swift-reviewer` over the actual diff given the token's ~20-file/
+  69-call-site reach: PASS, zero CRITICAL/HIGH findings — confirmed every non-`Theme.swift`
+  `ink3` usage is foreground (`.foregroundStyle`, `.tint` on controls) rather than a background
+  fill, with one benign exception noted (`BuddyTile.swift:147`, `SGT.ink3.opacity(0.35)` as a
+  decorative lock-icon blur over a photo thumbnail, not a contrast-critical layer, unaffected by
+  the lightness-only nudge's visual role), and confirmed zero API/behavior surface change (same
+  property name/type, same call sites). antislop-ui Delivery Gate: this ticket only changes two
+  hex literals in an existing token (no new component, layout, or visual element), so
+  Purpose-Gate holds (fixes a real, measured WCAG 1.4.3 failure in both appearances, not a guess),
+  Liveliness/Craftsmanship hold by construction (reuses the existing token architecture,
+  lightness-only shift preserves the palette's hue identity per `DESIGN.md`'s instruction not to
+  touch the palette itself) — no web-only items apply. `verify.sh` re-run for record-keeping:
+  Gate 1 still fails as expected (Round 2's 5-item DoD block has 4 items left: the 8-more-tickets
+  bar, the 13 UI-test-failure triage, Ticket 9, and verify.sh itself — Ticket 7's own line is now
+  the only one of the original 5 checked). Committed as a separate commit (see git log). Next
+  iteration: either Ticket 9 (milestone `ScrollView`, Round 2's other named priority) or a fresh
+  discovery pass on an untouched screen (Grid/Mosaic, Camera, or WeeklyRecap) — Round 2's DoD
+  requires at least 2 of the next 8 tickets to come from new discovery, not just TODO-draining,
+  and none of the 3 discovery-required screens have been audited yet.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -604,7 +653,7 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       `.buttonStyle` call at all — the 23-count baseline undercounts this class of gap. Acceptance:
       screenshot the `alarm` scenario in the "Live Activities off" sub-state, confirm visual match
       with the `.denied`-case button; `xcodebuild test` green.
-- [ ] Ticket 7 (correctness, WCAG 2.2 SC 1.4.3, a11y pass — systemic token issue): `SGT.ink3`
+- [x] Ticket 7 (correctness, WCAG 2.2 SC 1.4.3, a11y pass — systemic token issue): `SGT.ink3`
       (`#7D8490`) rendered on `SGT.fill` (`#20242C`) backgrounds computes to ~4.13:1 contrast,
       below the 4.5:1 AA minimum for normal-size text — visible in `buddies.jpg` as the dim
       `@handle` text under buddy names (`ios/SkyGrid/Sources/Friends/BuddiesView.swift:463-465`
@@ -617,7 +666,7 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       regressions since this is a shared token, not a single-file fix. Acceptance: recomputed
       contrast ratio ≥4.5:1 stated in the commit/PR note with the actual hex values and math;
       screenshot diff of at least 3 affected screens shows no unintended token cascade breakage;
-      `xcodebuild test` green.
+      `xcodebuild test` green. DONE 2026-09-26 (Round 2, iteration 7) — see Progress log below.
 - [x] Ticket 8 (correctness, WCAG 2.2 SC 1.3.1, a11y pass — onboarding): the onboarding
       step-progress bar (`OnboardingProgress` in `ios/SkyGrid/Sources/Onboarding/
       PersonalizedPlanView.swift:73-100`, reused across all 10 onboarding steps e.g. from

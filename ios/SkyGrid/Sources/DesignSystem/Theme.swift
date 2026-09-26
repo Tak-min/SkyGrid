@@ -16,7 +16,7 @@ enum SGT {
     static let surface = Color.adaptive(light: "#F2F4F7", dark: "#14171F")
     static let ink = Color.adaptive(light: "#15171C", dark: "#F5F6F8")
     static let ink2 = Color.adaptive(light: "#4D5561", dark: "#B5BAC4")
-    static let ink3 = Color.adaptive(light: "#737B87", dark: "#7D8490")
+    static let ink3 = Color.adaptive(light: "#646A75", dark: "#848B96")
     static let rule = Color.adaptive(light: "#D8DDE4", dark: "#303640")
     static let fill = Color.adaptive(light: "#E7EBF0", dark: "#20242C")
 
