@@ -12,6 +12,7 @@ struct WeeklyRecapView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var photos: [LocalDate: UIImage]
     @State private var isLoading = false
+    @State private var isPreparingShare = false
     @State private var shareImage: WeeklyRecapShareableCard?
     @State private var didRecordOpen = false
 
@@ -38,7 +39,7 @@ struct WeeklyRecapView: View {
                 header
                 cardPreview
                 Button(action: prepareShareImage) {
-                    if isLoading {
+                    if isPreparingShare {
                         HStack(spacing: SGSpacing.sm) {
                             ProgressView().controlSize(.small)
                             Text(L10n.string("Preparing…"))
@@ -50,7 +51,7 @@ struct WeeklyRecapView: View {
                     }
                 }
                 .buttonStyle(SkyPrimaryButtonStyle())
-                .disabled(isLoading)
+                .disabled(isPreparingShare)
                 .accessibilityHint(L10n.string("Opens the share sheet with your seven-morning recap as an image"))
             }
             .padding(SGSpacing.lg)
@@ -125,8 +126,10 @@ struct WeeklyRecapView: View {
     }
 
     private func prepareShareImage() {
-        guard !isLoading else { return }
+        guard !isPreparingShare else { return }
+        isPreparingShare = true
         Task {
+            defer { isPreparingShare = false }
             let inviteLink = try? await inviteRepository.createInvite(fresh: false)
             let image = ShareCardRenderer.renderWeekly(
                 posts: posts,
