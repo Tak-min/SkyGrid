@@ -970,6 +970,20 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   Ticket 21 remains unchecked/unimplemented; next iteration (after the rate limit clears, no
   earlier than 2026-09-27 10:17 JST/local per the error) should retry the same Codex dispatch for
   Ticket 21 before moving to Tickets 22-25.
+- 2026-09-26 (Round 3, iteration 6, 19:37 JST): Retried Ticket 21 exactly as planned. Re-confirmed
+  the bug still exists by direct source read of `WeeklyRecapView.swift` (lines 14, 40-53, 127-141
+  unchanged from iteration 5's citation), then dispatched the same bounded 5-step fix to Codex via
+  `mcp__codex__codex` with `model: "gpt-5.6-luna"` (single-file, zero-ambiguity packet, matching the
+  driver's own routing rule), stating working directory, exact steps, and "touch only this file /
+  do not commit." The call returned the identical rate-limit error as iteration 5: "You've hit your
+  usage limit... try again at Sep 27th, 2026 10:17 AM" — confirms this is a fixed-window quota, not
+  a transient blip (still ~15 hours from the stated reset at the time of this retry). Verified no
+  file was modified (`git status --short` on the target file returned empty) before stopping. Per
+  this loop's explicit rate-limit handling, did not implement the fix directly in this thread —
+  same precedent as iteration 5. Set `state.json` to `blocked_rate_limit` and stopped immediately.
+  Ticket 21 remains unimplemented. Next iteration: do not retry before 2026-09-27 10:17 JST/local;
+  if still blocked past that time, that's a signal the quota window is longer than stated and a
+  human may want to check Codex account status directly rather than the loop retrying indefinitely.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
