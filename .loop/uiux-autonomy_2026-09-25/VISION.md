@@ -950,6 +950,26 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   3 fresh-discovery pass (0 of 3 Round-3 tickets so far came from fresh discovery — Tickets 10/18/19
   were all backlog-drained from iteration 9 — this is now the highest-priority remaining Round 3
   item) rather than draining more backlog.
+- 2026-09-26 (Round 3, iteration 5): Picked Ticket 21 (WeeklyRecapView double-fire bug, the
+  highest-priority item from iteration 4's fresh discovery — already fully specified: exact file,
+  exact flag rename, exact acceptance check). Re-confirmed the bug still exists by direct source
+  read of `ios/SkyGrid/Sources/Today/WeeklyRecapView.swift` before dispatching (lines 14, 37-49,
+  114-140 match the ticket's description exactly: `isLoading` is set only in `loadPhotos()`,
+  `prepareShareImage()`'s `Task` never touches it, and the button's spinner/`.disabled` both read
+  `isLoading`). Per the driver's model-routing rule (fully-specified, single-file, no
+  architectural ambiguity), dispatched to Codex via `mcp__codex__codex` with `model:
+  "gpt-5.6-luna"`, stating the working directory, the exact 5-step fix (new `isPreparingShare`
+  flag, set true/false around the `Task`'s async work via `defer`, retarget the guard and the two
+  UI reads), and explicit "do not touch other files / do not commit" constraints. The call
+  returned an error: "You've hit your usage limit... try again at Sep 27th, 2026 10:17 AM" — a
+  Codex-side rate limit, not a task failure. Verified no file was modified
+  (`git status --short ios/SkyGrid/Sources/Today/WeeklyRecapView.swift` empty) before stopping.
+  Per this loop's explicit "Stuck/rate-limit handling" instruction, did not fall back to
+  implementing the fix directly in this thread — set `state.json` status to `blocked_rate_limit`
+  and stopped the iteration immediately rather than rerouting around the documented handling.
+  Ticket 21 remains unchecked/unimplemented; next iteration (after the rate limit clears, no
+  earlier than 2026-09-27 10:17 JST/local per the error) should retry the same Codex dispatch for
+  Ticket 21 before moving to Tickets 22-25.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
