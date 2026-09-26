@@ -208,6 +208,29 @@ resumes against this NEW, larger bar, which supersedes "done" until ALL of these
       was not run for it — noting that reasoning rather than skipping silently, consistent with how
       Ticket 1a's DEBUG-only scaffolding was handled in iteration 2.
 
+**[ROUND 3, owner instruction 2026-09-26: "round3に関してもいいよそのまま進めてくれ" — proceed]:**
+Round 2 closed (verify.sh exited 0, see `.loop/uiux-autonomy_2026-09-25/report.md`'s Round 2
+section). All Round 1/2 items above stay checked as historical record. This is a continuing,
+open-ended improvement loop per the owner's original request — Round 3 supersedes "done" until:
+
+- [ ] Ticket 10 (friend-request decline — functional gap) is implemented, reviewed, and
+      committed. **Extra caution required**: this touches `friendships/{pairId}`, a protected
+      contract per root `AGENTS.md` — read `ios/firestore.rules`'s actual constraints before
+      picking delete-vs-denied-state, and run `cd ios/rules-tests && npm run test:emulator`
+      (needs `export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"` first per AGENTS.md) in addition
+      to the normal xcodebuild gates before considering this ticket done.
+- [ ] Tickets 18 (grid month-banding legibility) and 19 (9 stale pre-existing UI-test methods,
+      confirmed test-side not app-side in Round 2) are implemented/fixed and committed.
+- [ ] A full fresh discovery pass covers `WeeklyRecapView` (only partially audited so far) plus a
+      SECOND, deeper pass over at least 2 already-audited screens (Today, Paywall, Milestone,
+      Onboarding, Invite, Notifications, Camera, Buddies, Settings, Grid — pick whichever got the
+      least scrutiny so far) — two rounds of low-hanging fruit are likely picked clean; this pass
+      should look for subtler issues (motion/timing mismatches, Dynamic Type at accessibility
+      sizes, RTL/long-string localization overflow, dark-mode-only edge cases) not just static
+      layout. At least 5 new tickets filed, at least 3 implemented/reviewed/committed this round.
+- [ ] `bash .loop/uiux-autonomy_2026-09-25/verify.sh` exits 0 against this Round 3 bar.
+- [ ] No CRITICAL/HIGH reviewer findings remain unaddressed on any Round 3 ticket.
+
 ## Constraints / guardrails (do not weaken — inherited from this repo's established convention)
 
 - Never `git add -A` — stage explicit paths only, every commit.
