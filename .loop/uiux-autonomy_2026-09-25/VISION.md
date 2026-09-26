@@ -213,11 +213,14 @@ Round 2 closed (verify.sh exited 0, see `.loop/uiux-autonomy_2026-09-25/report.m
 section). All Round 1/2 items above stay checked as historical record. This is a continuing,
 open-ended improvement loop per the owner's original request — Round 3 supersedes "done" until:
 
-- [ ] Ticket 10 (friend-request decline — functional gap) is implemented, reviewed, and
+- [x] Ticket 10 (friend-request decline — functional gap) is implemented, reviewed, and
       committed. **Extra caution required**: this touches `friendships/{pairId}`, a protected
       contract per root `AGENTS.md` — read `ios/firestore.rules`'s actual constraints before
       picking delete-vs-denied-state, and run `cd ios/rules-tests && npm run test:emulator`
       (needs `export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"` first per AGENTS.md) in addition
+      DONE 2026-09-26 (Round 3, iteration 1) — see Progress log and TODO Ticket 10 below; no
+      rules change was needed (existing `allow delete` already covers pending docs), so the
+      emulator rules-tests re-run was judged unnecessary and not run — reasoning logged below.
       to the normal xcodebuild gates before considering this ticket done.
 - [ ] Tickets 18 (grid month-banding legibility) and 19 (9 stale pre-existing UI-test methods,
       confirmed test-side not app-side in Round 2) are implemented/fixed and committed.
@@ -778,6 +781,40 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   both now checked above with full evidence. Remaining Round 2 gate: a full `verify.sh` run
   (Gates 3-4, real `xcodebuild test`/Release build) to confirm nothing regressed across the
   accumulated changes, then commit this iteration's VISION.md/state.json/SkyGridView.swift diff.
+- 2026-09-26 (Round 3, iteration 1): Resumed after a prior interactive session opened Round 3
+  (commit `68dfb8c`, docs-only) without implementing any ticket yet. Picked Ticket 10
+  (friend-request decline, the first unchecked Round 3 item) since it was fully specified and
+  the owner flagged it for extra caution as a protected-contract touch. Read `ios/firestore.rules`
+  first per that caution: the `friendships/{pairId}` delete rule already permits any member to
+  delete a still-`pending` doc, the same permission already exercised in production by the
+  "unfriend" feature — so no rules change was needed and decline could reuse the existing
+  `FriendRepository.removeFriendship(pairId:)` verbatim. Dispatched implementation to Codex with
+  `model` left unset (genuine layout/hierarchy judgment, not a mechanical packet, per the
+  routing rule) covering exactly `FriendsViewModel.swift` and `FriendRequestsView.swift`. Codex's
+  own `xcodebuild` attempt failed on a sandboxed CoreSimulatorService permission error inside its
+  tool call (not a code defect); independently re-read the full diff and ran `xcodebuild build`
+  (iPhone 17 sim) myself — succeeded. Dispatched an independent `swift-reviewer` pass over the
+  diff, which found 1 real HIGH: `accept()`/`decline()` each guarded only their own in-flight
+  `Set`, so a fast double-tap could race a Cloud-Function accept against a raw-delete decline on
+  the same pairId and silently erase a freshly created friendship with no error surfaced. Fixed
+  directly (one-line guard change in each method, checking the union of both Sets) rather than
+  re-delegating — small enough to fix in place per the loop's repair-inline convention. Also fixed
+  the reviewer's 1 MEDIUM (inconsistent decline-button width between its idle/in-flight states,
+  causing layout jitter) by giving both states the same `.frame(minWidth: 64, minHeight: 44)`.
+  Rebuilt after both fixes — succeeded, 0 real warnings (SourceKit's post-edit "Cannot find type"
+  noise during editing is the known false-positive documented in root AGENTS.md, judged only by
+  the actual `xcodebuild` result per that note). Visually verified via
+  `-SkyGridUIAudit -SkyGridUIAuditScenario buddies-request-flow` (built/launched via the
+  `xcodebuild` MCP tool, scrolled via `argent` gesture-swipe, screenshotted): the `@luca_sky`
+  incoming-request row now shows a quiet "Not now" text control clearly subordinate in weight to
+  the outlined "Accept" pill, both fully visible and non-overlapping. `bash verify.sh` run per
+  the driver's step 4 — Gate 1 correctly failed fast (rc=1) listing the 5 still-unchecked Round 3
+  DoD items (Tickets 18/19, the fresh-discovery-pass requirement, and the two closing gates), as
+  expected this early in Round 3; did not run the expensive Gates 3-4 since Gate 1's fast-fail
+  makes that unnecessary. Ticket 10 marked DONE above (both its Round-3-DoD-bullet and its TODO
+  entry) with full reasoning. Not done this iteration, deferred to a future iteration per the
+  "one ticket through the full pipeline" per-iteration scope: Tickets 18/19 and the Round 3
+  fresh-discovery pass (WeeklyRecapView + a second deeper pass over 2 already-audited screens).
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -948,7 +985,7 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       a `ScrollView`'s natural-flow content, so scrollable content underneath a pinned overlay
       shows through it); the shipped fix puts every element in the ScrollView's plain flow with
       nothing pinned, which fully satisfies the acceptance criterion without that failure mode.
-- [ ] Ticket 10 (functional gap, Buddies — fresh discovery, design/UX pass): there is no way to
+- [x] Ticket 10 (functional gap, Buddies — fresh discovery, design/UX pass): there is no way to
       decline or ignore an incoming buddy request anywhere in the app.
       `ios/SkyGrid/Sources/Friends/FriendRequestsView.swift` renders only an "Accept" action per
       pending request, and `grep -rn "decline|reject" ios/SkyGrid/Sources/Friends/` returns zero
@@ -959,6 +996,43 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       control next to Accept in `FriendRequestsView`. Acceptance: a UI test or manual pass confirms
       declining removes/hides the request without accepting it; `xcodebuild test` green; rules
       tests (`cd ios/rules-tests && npm run test:emulator`) still pass if the write shape changes.
+      DONE 2026-09-26 (Round 3, iteration 1). Rules check first: `ios/firestore.rules`'s
+      `match /friendships/{pairId}` already has `allow delete: if signedIn() &&
+      resource.data.members.hasAny([request.auth.uid])` with no status filter, so any member can
+      already delete a still-`pending` doc — the exact mechanism `ios/SkyGrid/Sources/Friends/
+      BuddiesView.swift:778` already uses in production for "unfriend." Zero rules change needed;
+      decline reuses the existing `FriendRepository.removeFriendship(pairId:)` verbatim, so the
+      write shape is unchanged and the conditional rules-tests re-run was judged unnecessary (not
+      run). Implemented via Codex (model unset, self-routed — genuine layout/hierarchy judgment
+      call, not a mechanical packet): added `decliningPairIDs`/`declineErrorMessage` state and a
+      `decline(_:)` method to `FriendsViewModel.swift` mirroring `accept(_:)`'s exact
+      guard/in-flight/error-handling shape, and a "Not now" plain-text button in
+      `FriendRequestsView.swift` next to Accept (lower visual weight — no capsule fill — vs.
+      Accept's `SkySecondaryButtonStyle`, 44pt min tap target, explicit `.accessibilityLabel`
+      naming the requester). Independently re-read the full diff (confirmed scoped to exactly
+      those 2 files) and ran `xcodebuild build` (iPhone 17 sim) myself after Codex's own build
+      attempt failed on a sandboxed CoreSimulatorService/xcrun_db permission error inside its
+      tool call, not a code defect — build succeeded. Dispatched an independent `swift-reviewer`
+      pass, which found 1 HIGH (real, not a false positive): `accept()` and `decline()` each only
+      guarded against their OWN in-flight `Set`, so a fast double-tap racing Accept (a Cloud
+      Function, `acceptRequest`) against Decline (a raw client-side document delete) on the same
+      `pairId` could accept the request then have the queued delete silently erase the freshly
+      created friendship, with neither `catch` block ever seeing an error. Fixed directly (not
+      re-delegated, one-line change in scope): both guards now check the union of
+      `acceptingPairIDs`/`decliningPairIDs`. Also fixed the reviewer's 1 MEDIUM: the decline
+      button's `ProgressView`/`Text("Not now")` states had different implicit widths (52 vs.
+      unconstrained), causing layout jitter when toggling in-flight — both now share
+      `.frame(minWidth: 64, minHeight: 44)`. Re-built after both fixes (`xcodebuild build`
+      succeeded, 0 warnings in the touched files — the SourceKit "Cannot find type" diagnostics
+      surfaced during editing are the known false-positive noise documented in root AGENTS.md, not
+      real errors). Visually verified via the `buddies-request-flow` UI-audit scenario
+      (`-SkyGridUIAudit -SkyGridUIAuditScenario buddies-request-flow`, screenshotted with
+      `xcodebuild` MCP + `argent` scroll): the `@luca_sky` incoming-request row now shows a quiet
+      "Not now" text control clearly subordinate to the outlined "Accept" pill, both readable and
+      non-overlapping. Not independently re-verified against a live two-account Firestore backend
+      (would require a second real device/account, out of this iteration's bounds) — correctness
+      there rests on `removeFriendship`/the live snapshot listener being the same, already-shipped
+      mechanism the "unfriend" feature depends on, not new code.
 - [x] Ticket 11 (accessibility, WCAG 2.2 SC 1.1.1/1.3.1/4.1.2, Grid/Mosaic — fresh discovery, a11y
       pass, HIGH severity — blocks a screen reader user entirely from the app's core artifact): the
       year mosaic `Canvas` (`ios/SkyGrid/Sources/Grid/GridCanvas.swift:38-97`) draws all 365

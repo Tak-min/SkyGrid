@@ -33,6 +33,8 @@ final class FriendsViewModel {
     private(set) var isSendingRequest = false
     private(set) var acceptingPairIDs: Set<String> = []
     private(set) var acceptErrorMessage: String?
+    private(set) var decliningPairIDs: Set<String> = []
+    private(set) var declineErrorMessage: String?
 
     let uid: String
     let friendRepository: any FriendRepository
@@ -193,7 +195,13 @@ final class FriendsViewModel {
     }
 
     func accept(_ friendship: Friendship) async {
-        guard !acceptingPairIDs.contains(friendship.pairId) else { return }
+        // Guard against both this method's own re-entry AND a concurrent
+        // decline() on the same pairId — without the union check here, a
+        // fast double-tap (accept then decline before the UI's `disabled`
+        // state catches up) could accept the request via a Cloud Function
+        // and then have the other in-flight task's raw document delete land
+        // right after, silently erasing the freshly-created friendship.
+        guard !acceptingPairIDs.contains(friendship.pairId), !decliningPairIDs.contains(friendship.pairId) else { return }
         acceptingPairIDs.insert(friendship.pairId)
         acceptErrorMessage = nil
         defer { acceptingPairIDs.remove(friendship.pairId) }
@@ -224,6 +232,30 @@ final class FriendsViewModel {
             }
         } catch {
             acceptErrorMessage = "The request could not be accepted. Please try again."
+        }
+    }
+
+    func decline(_ friendship: Friendship) async {
+        // See accept()'s matching comment: guard on the union of both
+        // in-flight sets so a concurrent accept() on the same pairId can't
+        // race with this raw document delete.
+        guard !decliningPairIDs.contains(friendship.pairId), !acceptingPairIDs.contains(friendship.pairId) else { return }
+        decliningPairIDs.insert(friendship.pairId)
+        declineErrorMessage = nil
+        defer { decliningPairIDs.remove(friendship.pairId) }
+        do {
+            try await friendRepository.removeFriendship(pairId: friendship.pairId)
+        } catch let error as RepositoryError {
+            switch error {
+            case .network:
+                declineErrorMessage = "No connection. The request is still waiting; try again."
+            case .permissionDenied:
+                declineErrorMessage = "This request could not be verified. Refresh your buddies and try again."
+            default:
+                declineErrorMessage = error.errorDescription ?? "The request could not be declined."
+            }
+        } catch {
+            declineErrorMessage = "The request could not be declined. Please try again."
         }
     }
 

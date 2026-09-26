@@ -11,6 +11,8 @@ struct FriendRequestsView: View {
         } else {
             VStack(spacing: 12) {
                 ForEach(viewModel.pendingIncoming, id: \.pairId) { friendship in
+                    let isRequestActionInFlight = viewModel.acceptingPairIDs.contains(friendship.pairId)
+                        || viewModel.decliningPairIDs.contains(friendship.pairId)
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(friendship.requestedByHandle.map { "@" + $0.value } ?? L10n.string("friends.buddyRequestFallback"))
@@ -21,6 +23,22 @@ struct FriendRequestsView: View {
                                 .foregroundStyle(SGT.ink3)
                         }
                         Spacer()
+                        Button {
+                            Task { await viewModel.decline(friendship) }
+                        } label: {
+                            if viewModel.decliningPairIDs.contains(friendship.pairId) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .frame(minWidth: 64, minHeight: 44)
+                            } else {
+                                Text("Not now")
+                                    .frame(minWidth: 64, minHeight: 44)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(SGT.ink3)
+                        .accessibilityLabel("Decline request from \(friendship.requestedByHandle.map { "@\($0.value)" } ?? "this buddy")")
+                        .disabled(isRequestActionInFlight)
                         Button {
                             Task { await viewModel.accept(friendship) }
                         } label: {
@@ -35,13 +53,20 @@ struct FriendRequestsView: View {
                         }
                         .buttonStyle(SkySecondaryButtonStyle())
                         .frame(width: 92)
-                        .disabled(viewModel.acceptingPairIDs.contains(friendship.pairId))
+                        .disabled(isRequestActionInFlight)
                     }
                     .padding(12)
                     .quietCard()
                 }
 
                 if let error = viewModel.acceptErrorMessage {
+                    Label(error, systemImage: "exclamationmark.circle")
+                        .font(SGFont.caption())
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if let error = viewModel.declineErrorMessage {
                     Label(error, systemImage: "exclamationmark.circle")
                         .font(SGFont.caption())
                         .foregroundStyle(.red)
