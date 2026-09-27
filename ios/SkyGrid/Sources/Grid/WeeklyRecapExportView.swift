@@ -18,7 +18,19 @@ struct WeeklyRecapExportView: View {
     private static let margin: CGFloat = 80
     private static let contentWidth: CGFloat = 1080 - margin * 2
     private static let tileSpacing: CGFloat = 22
+    private static let mosaicHeight: CGFloat = 844
+    // `skyMosaic` lays out exactly a 4-tile row then a 3-tile row (see `orderedPosts`'s
+    // contract below) and gives every tile this same explicit size; if `orderedPosts` ever
+    // yielded fewer than 4 for the first row, that row would center with symmetric gaps
+    // instead of the left-aligned trailing gap row 2 gets, since only row 2 is explicitly
+    // left-aligned. All real callers (`WeeklyRecapPolicy.isReady`,
+    // `WeeklyRecapReadyScheduler.recapAttachment`) already gate on exactly 7 posts.
+    private static let tileWidth: CGFloat = (contentWidth - 3 * tileSpacing) / 4
+    private static let tileHeight: CGFloat = (mosaicHeight - tileSpacing) / 2
 
+    /// Exactly 7 posts (4 in `skyMosaic`'s first row, 3 in its second) — callers are expected
+    /// to only construct this view once a rolling week is fully posted; see the doc comment
+    /// on `tileWidth` above for why the mosaic's fixed-size tile layout depends on this.
     private var orderedPosts: [SkyPost] {
         Array(posts.sorted { $0.localDate < $1.localDate }.prefix(7))
     }
@@ -29,7 +41,7 @@ struct WeeklyRecapExportView: View {
                 .padding(.bottom, 48)
 
             skyMosaic
-                .frame(width: Self.contentWidth, height: 844)
+                .frame(width: Self.contentWidth, height: Self.mosaicHeight)
 
             Spacer(minLength: 48)
 
@@ -71,6 +83,7 @@ struct WeeklyRecapExportView: View {
                     skyTile(post)
                 }
             }
+            .frame(width: Self.contentWidth, alignment: .leading)
         }
     }
 
@@ -89,7 +102,7 @@ struct WeeklyRecapExportView: View {
                     )
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: Self.tileWidth, height: Self.tileHeight)
             .clipped()
 
             LinearGradient(
@@ -108,7 +121,7 @@ struct WeeklyRecapExportView: View {
             .foregroundStyle(SGExport.ink)
             .padding(24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(width: Self.tileWidth, height: Self.tileHeight)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 30, style: .continuous)
