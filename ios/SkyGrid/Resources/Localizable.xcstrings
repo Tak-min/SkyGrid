@@ -4545,6 +4545,70 @@
         }
       }
     },
+    "buddy.tile.accessibilityLabel.revealed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, sky revealed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@さんの空が公開されました"
+          }
+        }
+      }
+    },
+    "buddy.tile.accessibilityLabel.sealed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, sealed until you capture this morning"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@さんの空は、あなたが今朝の空を撮るまで封印されています"
+          }
+        }
+      }
+    },
+    "buddy.tile.accessibilityLabel.notYet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, hasn't captured yet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@さんはまだ撮影していません"
+          }
+        }
+      }
+    },
+    "buddy.row.accessibilityHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the buddy sky feed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バディの空フィードを開きます"
+          }
+        }
+      }
+    },
     "camera.confirmationError.postFailed": {
       "localizations": {
         "en": {

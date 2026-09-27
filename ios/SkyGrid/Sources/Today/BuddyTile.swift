@@ -236,11 +236,11 @@ struct BuddyTile: View {
     private var accessibilityLabel: String {
         let revealLabel: String = switch revealState {
         case .posted:
-            "\(displayName), sky revealed"
+            String(format: L10n.string("buddy.tile.accessibilityLabel.revealed"), displayName)
         case .sealed:
-            "\(displayName), sealed until you capture this morning"
+            String(format: L10n.string("buddy.tile.accessibilityLabel.sealed"), displayName)
         case .notYet:
-            "\(displayName), hasn't captured yet"
+            String(format: L10n.string("buddy.tile.accessibilityLabel.notYet"), displayName)
         }
         return [revealLabel, streak?.accessibilityLabel].compactMap { $0 }.joined(separator: ". ")
     }

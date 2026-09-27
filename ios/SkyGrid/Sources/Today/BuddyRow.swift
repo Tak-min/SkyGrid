@@ -21,7 +21,7 @@ struct BuddyRow: View {
                     if buddy.post != nil {
                         Button { onSelect(buddy) } label: { tile(for: buddy) }
                             .buttonStyle(.plain)
-                            .accessibilityHint("Opens the buddy sky feed")
+                            .accessibilityHint(L10n.string("buddy.row.accessibilityHint"))
                     } else {
                         tile(for: buddy)
                     }
