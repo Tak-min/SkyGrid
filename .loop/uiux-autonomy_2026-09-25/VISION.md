@@ -1070,6 +1070,68 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   message Dynamic Type overlap) or Ticket 25 (buddy-strip VoiceOver localization gap), or run
   `verify.sh` to check whether Round 3's remaining DoD bullets (the fresh-discovery-pass bullet
   now fully satisfied) let it exit 0.
+- 2026-09-27 (Round 3, iteration 9): Implemented Ticket 24 (Moku ambient-message Dynamic Type
+  overlap), already fully specified with a captured before-screenshot from iteration 8's
+  discovery pass, so ran the lightweight pipeline per step 2e. Dispatched one bounded Codex task
+  (`mcp__codex__codex`, model left unset — this is a shared `Typography.swift` component-API
+  change plus a `TodayView` layout branch, matching VISION's own routing rule for shared
+  DesignSystem API changes) for the additive `maximumScale`/`maximumFontScale` plumbing (added an
+  optional `maximumScale: CGFloat? = nil` parameter to `SGFont.body`, following the exact
+  existing pattern `.title`/`.bigTime`/`.display` already use; default `nil` preserves the other
+  ~104 existing `SGFont.body(...)` call sites byte-for-byte). Read the returned diff directly
+  (not Codex's summary): exactly the 2 intended lines changed in `Typography.swift` and
+  `MokuAmbientBubble.swift`, no scope creep. Independently rebuilt (`xcodebuild build`, iPhone 17
+  sim) and re-screenshotted the `today` scenario forced to `mosaicEntry`/message 0 at
+  `xcrun simctl ui <udid> content_size accessibility-extra-extra-extra-large` — the
+  `maximumFontScale: 1.6` cap alone shrank the bubble from 2-3 wrapped lines to 1 line but did
+  **not** fully clear the overlap (residual touch against "THIS MORNING"'s last letter and the
+  streak "2" digit remained, saved as `today-ticket24-axxxl-fixed.jpg`), disproving that a font
+  cap alone meets the ticket's "confirm no overlap" acceptance bar. Root cause once measured: the
+  overlay HStack is bottom-aligned within a fixed 156pt frame anchored to the card's top-right,
+  so even a compact bubble's fixed anchor point sits too close to "THIS MORNING." Implemented the
+  ticket's other named option directly (not re-delegated — required iterative real-screenshot
+  verification Codex's sandboxed build can't do, same reasoning iteration 8 used for the
+  WeeklyRecap layout bug): added `@Environment(\.dynamicTypeSize)` to `TodayView`, a
+  `showsAmbientBubbleOverlay` flag (`!dynamicTypeSize.isAccessibilitySize`), and a new
+  `ambientMessageAccessibleFlow` computed view inserted into the main `VStack` right after
+  `morningRecord` — at accessibility sizes the overlay bubble is suppressed entirely (only Moku's
+  icon stays in the overlay) and the same message renders in normal document flow instead,
+  pushing `mosaicEntry` and everything below it down rather than drawing over the card.
+  Independently rebuilt and re-screenshotted at accessibility-XXXL again: card content ("THIS
+  MORNING", "2", "day streak · capture to keep it") now fully visible with zero overlap, message
+  visible below the "Capture the sky" button in normal flow (`today-ticket24-axxxl-flowfix.jpg`).
+  Also re-screenshotted the same forced scenario at default/`large` content size to check for
+  regression: pixel-identical to the pre-ticket layout (`today-ticket24-default-regression-check.jpg`),
+  confirming the overlay path is unchanged for the vast majority of users who never reach
+  accessibility sizes. Ran `xcodebuild test -only-testing:SkyGridTests` myself: 361/361 passed, 0
+  regressions. Dispatched an independent `swift-reviewer` over the actual diff (all 3 files): **no
+  CRITICAL/HIGH**. One MEDIUM noted and accepted as non-blocking: if `dynamicTypeSize` changes
+  live while a message is already showing (e.g. via the Text Size Control Center widget, no
+  relaunch needed), the bubble hard-cuts between the overlay and flow positions instead of
+  cross-fading, since the environment change isn't wrapped in `withAnimation` — cosmetic only, no
+  state loss (the view is stateless) and no duplicate accessibility nodes (the two render
+  conditions are exact complements, reviewer confirmed they can never both show or both hide).
+  One LOW noted and accepted: `maximumFontScale: 1.6` is currently a no-op in practice since
+  `UIFontMetrics(.body)`'s largest non-accessibility category (`.xxxLarge`) only scales to ≈1.35×
+  and `showsAmbientBubbleOverlay` already excludes every size where the cap would bind — kept as
+  defensive belt-and-suspenders per the ticket's explicit "and/or" wording (it also protects
+  against a future non-accessibility category growing past 1.6× without anyone revisiting this
+  code), not treated as load-bearing. VoiceOver reading order was reasoned about (position-based
+  sort should read Moku's button then the flowed message, consistent with non-accessibility
+  layout) but not manually swiped through with VoiceOver live — logged as unverified rather than
+  claimed. This ticket touches accessibility layout only (no new color/component/decoration — it
+  relocates and caps growth on the same existing `MokuAmbientBubble`), so per this loop's
+  established convention for correctness/accessibility-only fixes (Tickets 8/11/13/17/18/19/21/22/23)
+  the antislop-ui Delivery Gate was not run — noting that reasoning explicitly rather than
+  skipping silently. Committed as a single commit touching exactly
+  `ios/SkyGrid/Sources/DesignSystem/Typography.swift`, `ios/SkyGrid/Sources/Today/
+  MokuAmbientBubble.swift`, and `ios/SkyGrid/Sources/Today/TodayView.swift` (see git log for SHA).
+  Round 3 status: only Ticket 25 (buddy-strip VoiceOver localization gap) remains open in TODO;
+  the two closing Round 3 gates (`verify.sh` exits 0, no unaddressed CRITICAL/HIGH — both MEDIUM/
+  LOW above are accepted non-blocking, not unaddressed CRITICAL/HIGH) are the only items left.
+  Next iteration should pick Ticket 25 (fully specified, disjoint file scope —
+  `ios/SkyGrid/Sources/Today/BuddyTile.swift` and `BuddyRow.swift`), then run `verify.sh` to check
+  whether Round 3's DoD bullets can now all close.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -1493,7 +1555,7 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       call sites already gate on exactly 7 posts. Pure layout-math fix touching no color/gradient/
       motion — antislop-ui Delivery Gate not run, per this loop's established convention for
       correctness-only fixes (same treatment as Tickets 18/19/21).
-- [ ] Ticket 24 (accessibility, WCAG 2.2 SC 1.4.4 Resize Text, screenshot-confirmed — Today, Round
+- [x] Ticket 24 (accessibility, WCAG 2.2 SC 1.4.4 Resize Text, screenshot-confirmed — Today, Round
       3 deeper pass on an already-audited screen): at accessibility Dynamic Type sizes, Moku's
       ambient message overlaps and obscures the card content beneath it. The overlay `HStack`
       (`ios/SkyGrid/Sources/Today/TodayView.swift:296-322`) is fixed at `.frame(width:
@@ -1510,7 +1572,9 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       `bigTime`), and/or replace the fixed-height overlay with a layout that lets the bubble push
       sibling content aside at accessibility sizes instead of drawing over it. Acceptance:
       re-capture the same forced-message scenario at accessibility-XXXL, confirm no overlap with
-      the streak/status text; `xcodebuild test` green.
+      the streak/status text; `xcodebuild test` green. DONE 2026-09-27 (Round 3, iteration 9) —
+      see Progress log below. Implemented both halves of the "and/or": a `maximumFontScale` cap
+      on the overlay path AND a structural flow fallback at true accessibility sizes.
 - [ ] Ticket 25 (accessibility, localization gap — Today (Buddy strip), Round 3 deeper pass on an
       already-audited screen): three VoiceOver-only announcements and one accessibility hint on
       the buddy strip bypass the app's own localization system while every visible string around

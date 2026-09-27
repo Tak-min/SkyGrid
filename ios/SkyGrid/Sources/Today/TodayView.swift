@@ -16,6 +16,7 @@ struct TodayView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AppRouter.self) private var appRouter
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let imageFetching: any ImageFetching
     let inviteRepository: any InviteRepository
     let observedDate: LocalDate
@@ -81,6 +82,7 @@ struct TodayView: View {
                     heading
                     morningRecord
                         .skyAnimation(SGMotion.settle, value: viewModel.todayPost)
+                    ambientMessageAccessibleFlow
                     mosaicEntry
                     buddySection
                     rhythmSection
@@ -289,13 +291,18 @@ struct TodayView: View {
     }
 
     private var morningRecord: some View {
+        // At accessibility Dynamic Type sizes the overlay bubble below is
+        // suppressed (see `showsAmbientBubbleOverlay`) in favor of
+        // `ambientMessageAccessibleFlow`, which renders the same message in
+        // normal document flow so it can push sibling content aside instead
+        // of growing tall enough to cover it (WCAG 2.2 SC 1.4.4).
         morningRecordContent
             // One stable character lives outside the changing photo/empty state.
             // Incoming and outgoing record content never instantiate another Moku.
             .overlay(alignment: .topTrailing) {
                 HStack(alignment: .bottom, spacing: -18) {
-                    if let ambientMessage {
-                        MokuAmbientBubble(text: ambientMessage.text)
+                    if let ambientMessage, showsAmbientBubbleOverlay {
+                        MokuAmbientBubble(text: ambientMessage.text, maximumFontScale: 1.6)
                             .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .trailing)))
                     }
                     Button {
@@ -317,11 +324,31 @@ struct TodayView: View {
                     .accessibilityHint(L10n.string("Moku says hello back"))
                     .accessibilityIdentifier("moku.play")
                 }
-                .frame(width: ambientMessage == nil ? 142 : 350, height: 156, alignment: .bottomTrailing)
+                .frame(
+                    width: (ambientMessage == nil || !showsAmbientBubbleOverlay) ? 142 : 350,
+                    height: 156,
+                    alignment: .bottomTrailing
+                )
                 .padding(.trailing, 12)
                 .offset(y: -8)
             }
             .padding(.top, 16)
+    }
+
+    /// The fixed-position overlay bubble only has room to avoid the card
+    /// content behind it at standard Dynamic Type sizes. Accessibility sizes
+    /// use `ambientMessageAccessibleFlow` instead.
+    private var showsAmbientBubbleOverlay: Bool {
+        !dynamicTypeSize.isAccessibilitySize
+    }
+
+    @ViewBuilder
+    private var ambientMessageAccessibleFlow: some View {
+        if let ambientMessage, !showsAmbientBubbleOverlay {
+            MokuAmbientBubble(text: ambientMessage.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.opacity)
+        }
     }
 
     @ViewBuilder

@@ -2,10 +2,16 @@ import SwiftUI
 
 struct MokuAmbientBubble: View {
     let text: String
+    /// Caps Dynamic Type growth for callers that overlay this bubble on top of
+    /// other content (the Today card) at a fixed position — an uncapped font
+    /// there grows tall enough to cover the content behind it. Pass `nil` (the
+    /// default) for callers that instead let the bubble flow in normal layout,
+    /// where uncapped growth is safe because it just pushes siblings aside.
+    var maximumFontScale: CGFloat? = nil
 
     var body: some View {
         Text(text)
-            .font(SGFont.body(14))
+            .font(SGFont.body(14, maximumScale: maximumFontScale))
             .foregroundStyle(SGT.ink)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, SGSpacing.md)

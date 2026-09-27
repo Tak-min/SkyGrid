@@ -55,8 +55,8 @@ enum SGFont {
         .system(size: size, weight: weight, design: .default).monospacedDigit()
     }
 
-    static func body(_ size: CGFloat = 17) -> Font {
-        .system(size: scaled(size, relativeTo: .body), weight: .regular, design: .default)
+    static func body(_ size: CGFloat = 17, maximumScale: CGFloat? = nil) -> Font {
+        .system(size: scaled(size, relativeTo: .body, maximumScale: maximumScale), weight: .regular, design: .default)
     }
 
     static func caption(_ size: CGFloat = 13) -> Font {
