@@ -20,6 +20,16 @@ unchecked="${unchecked:-0}"
 if [ "$unchecked" -gt 0 ]; then
   echo "Gate 1 FAILED: Definition of Done in $VISION still has $unchecked unchecked item(s):"
   printf '%s\n' "$dod_block" | grep -n '^- \[ \]'
+  # Fine-grained progress fingerprint: some DoD bullets (e.g. "N new tickets filed, M
+  # implemented") stay textually unchanged across iterations even while real per-ticket
+  # progress happens underneath, which made the driver's identical-output no-progress
+  # detector false-positive on 2026-09-26 (halted mid-Round-3 despite Ticket 21 landing that
+  # same iteration). Print the actual per-ticket checked/unchecked tally so the hash the
+  # driver hashes actually changes when a ticket is implemented, even if no top-level DoD
+  # bullet flips yet.
+  ticket_done="$(grep -cE '^- \[x\] Ticket [0-9]+' "$VISION" || true)"
+  ticket_open="$(grep -cE '^- \[ \] Ticket [0-9]+' "$VISION" || true)"
+  echo "Info: ticket tally — done=${ticket_done:-0} open=${ticket_open:-0} (this line changes whenever a ticket lands, even if the DoD bullet text above doesn't)"
   exit 1
 fi
 echo "Gate 1 PASSED: Definition of Done fully checked in $VISION"
