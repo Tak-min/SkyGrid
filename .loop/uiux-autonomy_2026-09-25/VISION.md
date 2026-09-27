@@ -226,7 +226,7 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       confirmed test-side not app-side in Round 2) are implemented/fixed and committed. Ticket 18
       DONE 2026-09-26 (Round 3, iteration 2) — see Progress log and TODO entry below. Ticket 19
       DONE 2026-09-26 (Round 3, iteration 3) — see Progress log and TODO entry below.
-- [ ] A full fresh discovery pass covers `WeeklyRecapView` (only partially audited so far) plus a
+- [x] A full fresh discovery pass covers `WeeklyRecapView` (only partially audited so far) plus a
       SECOND, deeper pass over at least 2 already-audited screens (Today, Paywall, Milestone,
       Onboarding, Invite, Notifications, Camera, Buddies, Settings, Grid — pick whichever got the
       least scrutiny so far) — two rounds of low-hanging fruit are likely picked clean; this pass
@@ -245,7 +245,10 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       21-25 — deferred to the next iteration(s) per this loop's one-ticket-per-iteration role
       pipeline (this iteration's budget went to discovery + verification, matching the driver's
       own "spend one iteration on discovery instead of implementing" guidance after 3 backlog
-      tickets — 10, 18, 19 — were drained in the prior 3 iterations).
+      tickets — 10, 18, 19 — were drained in the prior 3 iterations). Update 2026-09-27
+      (iteration 8): Tickets 22 and 23 both DONE via one shared-root-cause fix/commit — 21, 22,
+      23 of 21-25 now implemented/committed, meeting this bullet's "at least 3" bar. Tickets
+      24-25 remain open.
 - [ ] `bash .loop/uiux-autonomy_2026-09-25/verify.sh` exits 0 against this Round 3 bar.
 - [ ] No CRITICAL/HIGH reviewer findings remain unaddressed on any Round 3 ticket.
 
@@ -1018,6 +1021,55 @@ open-ended improvement loop per the owner's original request — Round 3 superse
   open in TODO for subsequent iterations, along with the two closing Round 3 gates
   (`verify.sh` exits 0, no unaddressed CRITICAL/HIGH). Next iteration should pick Ticket 22
   (WeeklyRecapView preview clipping, next-highest priority, same file family, also fully specified).
+- 2026-09-27 (Round 3, iteration 8): Picked Ticket 22 (WeeklyRecapView preview clipping) per the
+  prior iteration's own pointer. Dispatched Codex (`gpt-5.6-luna`, fully bounded packet per the
+  ticket's exact prescribed fix) to apply the ticket's suggested `.aspectRatio`/`.clipped()` fix
+  to `WeeklyRecapView.swift`'s `cardPreview`. Codex reported it couldn't use `.aspectRatio` (the
+  export view has an internal fixed `.frame(width:1080,height:1920)` that ignores a proposed
+  aspect-fit size) and instead added a bare `.clipped()`. Per this loop's "Codex's own summary is
+  hearsay until checked" rule, did NOT trust the report — rebuilt via XcodeBuildMCP
+  (`build_run_sim` with `-SkyGridUIAudit -SkyGridUIAuditScenario weekly-recap`) and screenshotted:
+  **the `.clipped()` fix produced a pixel-identical still-broken screenshot** (leftmost tile still
+  cut, "MON" tile now also cut on the right) — proof the ticket's own root-cause diagnosis
+  (blaming `cardPreview`'s GeometryReader/scaleEffect/frame chain) was wrong. Reverted Codex's
+  diff. Implemented my own theoretically-correct fix instead (explicit `1080*scale` frame +
+  `.position()` centering, replacing the ambiguous `.frame(width: proxy.size.width, ...)`) —
+  rebuilt and re-screenshotted: **zero visual change**, definitively disproving that theory too.
+  Decisive test: screenshotted the independent `share-weekly` scenario (`ShareCardAuditView`,
+  which wraps `WeeklyRecapExportView` with a *different* GeometryReader/scaleEffect
+  implementation, full-screen, no VStack siblings) — **identical clipping pattern reproduced**,
+  proving the bug is inside `WeeklyRecapExportView.swift` itself, not either outer scaling
+  wrapper. Added temporary `.border()` debug overlays (yellow on the 1080-canvas, cyan on
+  `skyMosaic`'s declared frame) and screenshotted again: the mosaic's actual rendered tile content
+  visibly bled past its own declared `Self.contentWidth` frame boundary — root cause confirmed as
+  `skyTile`'s `.frame(maxWidth: .infinity, maxHeight: .infinity)` not being correctly bounded by
+  the parent `HStack`'s available width. Removed debug borders and reverted the unnecessary
+  `WeeklyRecapView.swift` edit (kept the diff to only the file that actually needed it, per
+  smallest-coherent-change). Implemented the real fix directly (not re-delegated to Codex, given
+  two prior wrong diagnoses and full context already in hand): explicit precomputed
+  `tileWidth`/`tileHeight` constants replacing the flexible frame on every tile, plus
+  `.frame(width: Self.contentWidth, alignment: .leading)` on row 2's `HStack` so its narrower
+  3-tile row doesn't center-stretch. Rebuilt and screenshotted both `share-weekly` and
+  `weekly-recap` — all 7 tiles now fully visible, uniform size, symmetric margins, saved as
+  `weekly-recap-ticket22-fixed.jpg`/`share-weekly-ticket22-fixed.jpg`. This single fix also
+  resolved Ticket 23 (uneven tile widths) since it was the same root cause. Ran
+  `xcodebuild test -only-testing:SkyGridTests`: 361/361 passed, including the existing
+  "weekly recap renders a story-size image even when photos fall back to sky colors" test
+  (covers the no-photo/gradient branch sharing the same `.frame` call). Dispatched an independent
+  `swift-reviewer` over the diff: no CRITICAL/HIGH; one MEDIUM (fixed-size layout now silently
+  assumes exactly 7 posts, whereas the old flexible frame degraded gracefully) — addressed with a
+  doc comment on `orderedPosts`/`tileWidth` in the same commit, verified all 3 real call sites
+  already gate on exactly 7 posts so this is not a live bug. Rebuilt once more after the
+  comment-only addition to confirm it still compiles. Committed as `26df486`
+  (`ios/SkyGrid/Sources/Grid/WeeklyRecapExportView.swift` only). Pure layout-math correctness fix
+  (no color/gradient/motion touched) — antislop-ui Delivery Gate not run, matching this loop's
+  established convention for correctness-only fixes (Tickets 18/19/21). Round 3 status: 3 of the
+  required ≥3 implemented/committed fresh-discovery tickets (21, 22, 23) now done, meeting that
+  DoD bullet. Tickets 24-25 remain open in TODO; the two closing Round 3 gates (`verify.sh` exits
+  0, no unaddressed CRITICAL/HIGH) remain. Next iteration should pick Ticket 24 (Moku ambient
+  message Dynamic Type overlap) or Ticket 25 (buddy-strip VoiceOver localization gap), or run
+  `verify.sh` to check whether Round 3's remaining DoD bullets (the fresh-discovery-pass bullet
+  now fully satisfied) let it exit 0.
 
 ## TODO (the loop maintains this — check off, and add newly-discovered items in this order)
 
@@ -1383,7 +1435,7 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       the new flag instead of `isLoading`. Acceptance: manual double-tap test on the `weekly-recap`
       scenario confirms only one share sheet/invite-creation fires and a spinner shows throughout;
       `xcodebuild test` green. DONE 2026-09-26 (Round 3, iteration 7) — see Progress log below.
-- [ ] Ticket 22 (correctness, visual bug, screenshot-confirmed — WeeklyRecapView, Round 3 fresh
+- [x] Ticket 22 (correctness, visual bug, screenshot-confirmed — WeeklyRecapView, Round 3 fresh
       discovery on `WeeklyRecapView`): the live in-app weekly-recap preview clips its own content.
       `cardPreview` (`ios/SkyGrid/Sources/Today/WeeklyRecapView.swift:100-113`) computes `scale =
       min(proxy.size.width / 1080, proxy.size.height / 1920)`, applies `.scaleEffect(scale,
@@ -1398,8 +1450,16 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       `WeeklyRecapExportView(...).aspectRatio(1080.0/1920.0, contentMode: .fit)`, or at minimum add
       a defensive `.clipped()` after the `.frame(...)` call and re-verify no tile/label is cut off.
       Acceptance: re-screenshot `weekly-recap`, confirm all 7 day labels are fully visible with no
-      edge clipping; `xcodebuild test` green.
-- [ ] Ticket 23 (correctness/consistency, screenshot-confirmed — WeeklyRecapExportView, Round 3
+      edge clipping; `xcodebuild test` green. DONE 2026-09-27 (Round 3, iteration 8) — **root cause
+      was misdiagnosed in the original ticket**: `cardPreview`'s scale math was not the culprit (a
+      Codex-applied `.clipped()` band-aid there produced an identical-looking still-broken
+      screenshot, and a corrected GeometryReader+`.position()` centering fix also produced zero
+      visual change — both empirically disproved the ticket's own hypothesis). The real overflow
+      was inside `WeeklyRecapExportView.swift`'s own `skyMosaic`/`skyTile` layout, reproduced
+      identically in the independent `share-weekly` (`ShareCardAuditView`) scenario, which rules
+      out both outer scaling wrappers. Fixed alongside Ticket 23 below (same root cause, same
+      commit) — see that entry and the Progress log for the real diagnosis and fix.
+- [x] Ticket 23 (correctness/consistency, screenshot-confirmed — WeeklyRecapExportView, Round 3
       fresh discovery on `WeeklyRecapView`): the shared "mosaic" artifact isn't actually a uniform
       grid. `skyMosaic` (`ios/SkyGrid/Sources/Grid/WeeklyRecapExportView.swift:62-75`) lays the 7
       day-tiles into two separate `HStack`s spanning the identical `Self.contentWidth` (920pt) —
@@ -1415,7 +1475,24 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       explicit `.frame(width:)` on every tile, letting row 2 leave a trailing gap instead of
       stretching), or lay out all 7 tiles in one `LazyVGrid`/fixed-column grid instead of two
       independently-stretched `HStack`s. Acceptance: re-screenshot `weekly-recap`, confirm all 7
-      tiles render at the same size; `xcodebuild test` green.
+      tiles render at the same size; `xcodebuild test` green. DONE 2026-09-27 (Round 3,
+      iteration 8) — committed as `26df486`. Gave every tile an explicit precomputed
+      `tileWidth`/`tileHeight` (replacing `.frame(maxWidth: .infinity, maxHeight: .infinity)`) and
+      left-aligned row 2's `HStack` so its leftover space trails. This single fix resolved BOTH
+      Ticket 22's clipping (the flexible-frame tiles were actually overflowing past
+      `Self.contentWidth`, not merely uneven — confirmed by adding temporary `.border()` debug
+      overlays and screenshotting: the mosaic's own HStack content bled past its declared frame
+      boundary) and Ticket 23's uneven widths, since all 7 tiles now share one size. Verified with
+      fresh screenshots of both `weekly-recap` and `share-weekly` scenarios (saved as
+      `weekly-recap-ticket22-fixed.jpg` / `share-weekly-ticket22-fixed.jpg`): all 7 tiles fully
+      visible, uniform size, symmetric margins, no clipping. `xcodebuild test
+      -only-testing:SkyGridTests`: 361/361 passed. Independent `swift-reviewer` dispatch: no
+      CRITICAL/HIGH findings; one MEDIUM (the fixed-size layout's silent "exactly 7 posts"
+      assumption, previously masked by the old flexible-frame's graceful degradation) addressed
+      with a doc comment in the same commit rather than a runtime precondition, since all 3 real
+      call sites already gate on exactly 7 posts. Pure layout-math fix touching no color/gradient/
+      motion — antislop-ui Delivery Gate not run, per this loop's established convention for
+      correctness-only fixes (same treatment as Tickets 18/19/21).
 - [ ] Ticket 24 (accessibility, WCAG 2.2 SC 1.4.4 Resize Text, screenshot-confirmed — Today, Round
       3 deeper pass on an already-audited screen): at accessibility Dynamic Type sizes, Moku's
       ambient message overlaps and obscures the card content beneath it. The overlay `HStack`
