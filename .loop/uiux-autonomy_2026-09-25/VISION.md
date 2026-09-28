@@ -262,6 +262,32 @@ open-ended improvement loop per the owner's original request — Round 3 superse
       same iteration or explicitly accepted as non-blocking LOW/MEDIUM, never left as an
       unaddressed CRITICAL/HIGH.
 
+**[ROUND 4, owner instruction 2026-09-28: "作業を再開しろループを回せ" — keep going, open-ended]:**
+Round 3 closed. All Round 1-3 items above stay checked as historical record. Every ticket filed
+by Round 1-3's discovery so far is implemented except Ticket 20 (correctly deferred — needs a
+physical device). Note: the buddy-system BeReal-style vertical-feed rework and the onboarding
+redesign the owner raised on 2026-09-27 are explicitly OUT of this loop — those are a separate,
+dedicated design initiative (see the Progress log entry for that date), not a ticket here.
+
+Round 4 targets a gap in Round 1-3's own coverage: the owner's original request named THREE
+dimensions (moku sync, generic buttons, "time-based usability, sound/screen mismatch") and no
+ticket across 25 has touched sound/haptic-visual synchronization at all
+(`ios/SkyGrid/Sources/DesignSystem/SoundEffects.swift` and `Haptics.swift` exist but have never
+been audited by this loop). Round 4 supersedes "done" until:
+
+- [ ] A dedicated discovery pass audits every call site of `SoundEffects`/`Haptics` against the
+      visual/state change it's meant to accompany (capture confirmation, streak milestone, buddy
+      reveal, paywall interactions, alarm dismissal, etc.) — using real device or simulator
+      recordings with frame timestamps, per this loop's existing "developer-side tooling only,
+      no shipped analytics" constraint. At least 4 new tickets filed from this pass specifically
+      (sync delta, missing feedback, or mismatched feedback), at least 3 implemented, reviewed,
+      and committed.
+- [ ] A second fresh discovery pass covers animation/motion timing more broadly (transition
+      durations vs. DESIGN.md's MOTION dial, any animation that doesn't respect Reduce Motion) —
+      at least 3 new tickets filed, at least 2 implemented, reviewed, and committed.
+- [ ] `bash .loop/uiux-autonomy_2026-09-25/verify.sh` exits 0 against this Round 4 bar.
+- [ ] No CRITICAL/HIGH reviewer findings remain unaddressed on any Round 4 ticket.
+
 ## Constraints / guardrails (do not weaken — inherited from this repo's established convention)
 
 - Never `git add -A` — stage explicit paths only, every commit.
