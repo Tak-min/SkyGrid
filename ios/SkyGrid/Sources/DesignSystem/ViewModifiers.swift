@@ -43,6 +43,7 @@ extension View {
 /// also keeps hit areas at or above Apple's 44pt minimum.
 struct SkyPrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -65,12 +66,13 @@ struct SkyPrimaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .offset(y: isEnabled && configuration.isPressed ? 2 : 0)
             .scaleEffect(isEnabled && configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }
 
 struct SkySecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -87,6 +89,6 @@ struct SkySecondaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .offset(y: isEnabled && configuration.isPressed ? 2 : 0)
             .scaleEffect(isEnabled && configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : .spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }

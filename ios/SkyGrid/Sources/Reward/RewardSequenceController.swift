@@ -64,8 +64,16 @@ final class RewardSequenceController {
             }
 
             // Leave the settled mosaic and its VoiceOver result on screen long
-            // enough to be rendered/read before its cover closes.
-            try? await Task.sleep(for: .seconds(0.4))
+            // enough to be rendered/read before its cover closes. The normal path
+            // uses a shorter linger than Reduce Motion's so that
+            // RewardBeat.totalDuration + this linger stays under DESIGN.md's
+            // "completes in under 1.8 seconds in the normal path" contract
+            // (1.6s + 0.15s = 1.75s); Reduce Motion's own path has no such budget
+            // and keeps the original, longer linger since its settled state is
+            // reached much sooner (0.2s) and its VoiceOver announcement deserves
+            // the same reading time it always had.
+            let postSettleLinger: TimeInterval = reducedMotion ? 0.4 : 0.15
+            try? await Task.sleep(for: .seconds(postSettleLinger))
             guard !Task.isCancelled else { return }
             finish()
         }

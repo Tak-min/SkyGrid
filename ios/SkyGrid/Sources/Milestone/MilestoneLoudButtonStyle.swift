@@ -12,6 +12,7 @@ import SwiftUI
 /// the rule exists to prevent. Keeping it here makes the rule greppable again.
 struct SkyLoudButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -24,6 +25,6 @@ struct SkyLoudButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .opacity(isEnabled ? (configuration.isPressed ? 0.82 : 1) : 0.42)
             .scaleEffect(isEnabled && configuration.isPressed ? 0.985 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .animation(reduceMotion ? nil : SGMotion.press, value: configuration.isPressed)
     }
 }

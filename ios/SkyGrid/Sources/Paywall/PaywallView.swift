@@ -14,6 +14,7 @@ enum PaywallDismissalReason {
 struct PaywallView: View {
     @State private var viewModel: PaywallViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let entryPoint: PaywallEntryPoint
     let onEntitlementGranted: () async -> Void
     let onPresented: () -> Void
@@ -158,7 +159,10 @@ struct PaywallView: View {
     /// forward and back slide in opposite directions so the motion itself signals
     /// which way the person is navigating.
     private var stepTransition: AnyTransition {
-        .asymmetric(
+        if reduceMotion {
+            return .opacity
+        }
+        return .asymmetric(
             insertion: .move(edge: isMovingBackward ? .leading : .trailing).combined(with: .opacity),
             removal: .move(edge: isMovingBackward ? .trailing : .leading).combined(with: .opacity)
         )
@@ -167,7 +171,7 @@ struct PaywallView: View {
     private func advance() {
         guard let next = flow.next(after: step) else { return }
         isMovingBackward = false
-        withAnimation(SGMotion.exchange) {
+        withAnimation(reduceMotion ? nil : SGMotion.exchange) {
             step = next
         }
     }
@@ -175,7 +179,7 @@ struct PaywallView: View {
     private func goBack() {
         guard let previous = flow.previous(before: step) else { return }
         isMovingBackward = true
-        withAnimation(SGMotion.exchange) {
+        withAnimation(reduceMotion ? nil : SGMotion.exchange) {
             step = previous
         }
     }
@@ -254,7 +258,7 @@ struct PaywallView: View {
             flow = flow.appendingSecondChance()
             isMovingBackward = false
             Haptics.navigationConfirmed()
-            withAnimation(SGMotion.exchange) {
+            withAnimation(reduceMotion ? nil : SGMotion.exchange) {
                 step = .secondChance
             }
             if viewModel.secondChanceState == .idle || viewModel.secondChanceState == .disconnected {
