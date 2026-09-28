@@ -1,10 +1,11 @@
 import Observation
 import SwiftUI
 
-enum OnboardingStep: String, Equatable {
+enum OnboardingStep: String, Equatable, CaseIterable {
     case language
     case welcome
     case intention
+    case educationCircadian
     case pace
     case frequency
     case privacy
@@ -66,7 +67,8 @@ final class OnboardingViewModel {
         switch step {
         case .language: step = .welcome
         case .welcome: step = .intention
-        case .intention: step = .pace
+        case .intention: step = .educationCircadian
+        case .educationCircadian: step = .pace
         case .pace: step = .frequency
         case .frequency: step = .privacy
         case .privacy: step = .reminder
@@ -82,7 +84,8 @@ final class OnboardingViewModel {
         case .language: break
         case .welcome: step = .language
         case .intention: step = .welcome
-        case .pace: step = .intention
+        case .educationCircadian: step = .intention
+        case .pace: step = .educationCircadian
         case .frequency: step = .pace
         case .privacy: step = .frequency
         case .reminder: step = .privacy
@@ -140,6 +143,15 @@ struct OnboardingCoordinatorView: View {
                 ) {
                     advance()
                 }
+            case .educationCircadian:
+                EducationSlideView(
+                    headline: L10n.string("onboarding.education.circadian.headline"),
+                    bodyCopy: L10n.string("onboarding.education.circadian.body"),
+                    symbolName: "sun.horizon.fill",
+                    progressStep: 4,
+                    onBack: goBack,
+                    onContinue: advance
+                )
             case .pace:
                 PaceQuestionView(
                     profile: $viewModel.personalizationProfile,
@@ -266,6 +278,7 @@ struct OnboardingCoordinatorView: View {
             viewModel.personalizationProfile.intent.map {
                 String(format: L10n.string("onboarding.companion.intention.answered"), $0.title)
             } ?? L10n.string("onboarding.companion.intention.unanswered")
+        case .educationCircadian: L10n.string("onboarding.companion.educationCircadian")
         case .pace:
             viewModel.personalizationProfile.pace.map {
                 String(format: L10n.string("onboarding.companion.pace.answered"), $0.title)

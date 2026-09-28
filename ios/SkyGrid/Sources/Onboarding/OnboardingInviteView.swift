@@ -29,7 +29,7 @@ struct OnboardingInviteView: View {
                         .foregroundStyle(SGT.ink3)
                 }
 
-                OnboardingProgress(step: 10, total: 10)
+                OnboardingProgress(step: 11, total: OnboardingStep.allCases.count)
 
                 VStack(alignment: .leading, spacing: SGSpacing.md) {
                     Label(L10n.string("MORNINGS TOGETHER"), systemImage: "person.2.fill")

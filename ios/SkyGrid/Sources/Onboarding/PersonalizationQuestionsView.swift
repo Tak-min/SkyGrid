@@ -12,7 +12,7 @@ struct PersonalizationQuestionsView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 onboardingNavigation
-                OnboardingProgress(step: 3, total: 10)
+                OnboardingProgress(step: 3, total: OnboardingStep.allCases.count)
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text("What would make\nmornings easier?")
@@ -84,7 +84,7 @@ private struct SingleQuestionPage<Content: View>: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
                 navigation
-                OnboardingProgress(step: step + 1, total: 10)
+                OnboardingProgress(step: step + 1, total: OnboardingStep.allCases.count)
 
                 VStack(alignment: .leading, spacing: SGSpacing.sm) {
                     Text(heading)
@@ -122,7 +122,7 @@ struct PaceQuestionView: View {
 
     var body: some View {
         SingleQuestionPage(
-            step: 3,
+            step: 4,
             heading: L10n.string("onboarding.question.pace.heading"),
             subheading: L10n.string("onboarding.question.pace.subheading"),
             onBack: onBack,
@@ -144,7 +144,7 @@ struct FrequencyQuestionView: View {
 
     var body: some View {
         SingleQuestionPage(
-            step: 4,
+            step: 5,
             heading: L10n.string("onboarding.question.frequency.heading"),
             subheading: L10n.string("onboarding.question.frequency.subheading"),
             onBack: onBack,
@@ -166,7 +166,7 @@ struct PrivacyQuestionView: View {
 
     var body: some View {
         SingleQuestionPage(
-            step: 5,
+            step: 6,
             heading: L10n.string("onboarding.question.privacy.heading"),
             subheading: L10n.string("onboarding.question.privacy.subheading"),
             onBack: onBack,
@@ -188,7 +188,7 @@ struct ReminderQuestionView: View {
 
     var body: some View {
         SingleQuestionPage(
-            step: 6,
+            step: 7,
             heading: L10n.string("onboarding.question.reminder.heading"),
             subheading: L10n.string("onboarding.question.reminder.subheading"),
             onBack: onBack,
@@ -203,7 +203,7 @@ struct ReminderQuestionView: View {
     }
 }
 
-private func onboardingBackButton(action: @escaping () -> Void) -> some View {
+func onboardingBackButton(action: @escaping () -> Void) -> some View {
     Button(action: action) {
         Label(L10n.string("Back"), systemImage: "chevron.left")
             .labelStyle(.titleAndIcon)
@@ -213,7 +213,7 @@ private func onboardingBackButton(action: @escaping () -> Void) -> some View {
     .accessibilityHint(L10n.string("Returns to the previous setup step"))
 }
 
-private func onboardingContinueButton(action: @escaping () -> Void) -> some View {
+func onboardingContinueButton(action: @escaping () -> Void) -> some View {
     Button(L10n.string("Continue"), action: action)
         .frame(maxWidth: .infinity)
         .buttonStyle(SkyPrimaryButtonStyle())

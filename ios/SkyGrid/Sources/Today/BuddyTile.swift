@@ -33,6 +33,7 @@ struct BuddyTile: View {
     enum Style {
         case compact
         case featured
+        case feed
     }
 
     let displayName: String
@@ -61,6 +62,8 @@ struct BuddyTile: View {
                 compactContent
             case .featured:
                 featuredContent
+            case .feed:
+                feedContent
             }
         }
         .animation(reduceMotion ? nil : SGMotion.settle, value: revealState)
@@ -121,6 +124,50 @@ struct BuddyTile: View {
         .shadow(color: .black.opacity(0.18), radius: 12, y: 6)
     }
 
+    /// The primary Today feed unit: let the authorized sky occupy most of the
+    /// card, while its name and mutual streak remain a compact footer.
+    private var feedContent: some View {
+        VStack(alignment: .leading, spacing: SGSpacing.md) {
+            GeometryReader { proxy in
+                skyArtwork(
+                    width: proxy.size.width,
+                    height: proxy.size.height,
+                    cornerRadius: 20,
+                    isCircle: false
+                )
+            }
+            .aspectRatio(0.82, contentMode: .fit)
+
+            HStack(alignment: .firstTextBaseline, spacing: SGSpacing.xs) {
+                Text(caption)
+                    .font(SGFont.body(17))
+                    .foregroundStyle(SGT.ink)
+                    .lineLimit(1)
+                Spacer(minLength: 0)
+                if isPosted {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(SGT.ink3)
+                        .accessibilityHidden(true)
+                }
+            }
+            if let streak {
+                Text(streak.text)
+                    .font(SGFont.numeric(12, weight: .medium))
+                    .foregroundStyle(SGT.ink2)
+                    .lineLimit(1)
+            }
+        }
+        .padding(SGSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(SGT.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(isPosted ? SGT.accentSecondary.opacity(0.48) : SGT.rule.opacity(0.72), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.18), radius: 12, y: 6)
+    }
+
     @ViewBuilder
     private func skyArtwork(width: CGFloat, height: CGFloat, cornerRadius: CGFloat, isCircle: Bool) -> some View {
         let shape = RoundedRectangle(cornerRadius: isCircle ? min(width, height) / 2 : cornerRadius, style: .continuous)
@@ -143,11 +190,11 @@ struct BuddyTile: View {
                 if case .sealed = revealState {
                     ZStack {
                         Image(systemName: "lock.fill")
-                            .font(.system(size: style == .featured ? 19 : 15, weight: .semibold))
+                            .font(.system(size: lockIconSize, weight: .semibold))
                             .foregroundStyle(SGT.ink3.opacity(0.35))
                             .blur(radius: 4)
                         Image(systemName: "lock.fill")
-                            .font(.system(size: style == .featured ? 19 : 15, weight: .semibold))
+                            .font(.system(size: lockIconSize, weight: .semibold))
                             .foregroundStyle(SGT.ink3)
                             .opacity(isSealedPulsing ? 1 : 0.85)
                     }
@@ -161,6 +208,17 @@ struct BuddyTile: View {
                 }
             }
             .scaleEffect(isPosted ? 1 : 0.96)
+    }
+
+    private var lockIconSize: CGFloat {
+        switch style {
+        case .compact:
+            15
+        case .featured:
+            19
+        case .feed:
+            23
+        }
     }
 
     /// `nil` while sealed/not-yet. `.task(id:)` cancels and restarts whenever this

@@ -12,7 +12,7 @@ struct LanguageSelectionView: View {
 
     var body: some View {
         VStack(spacing: SGSpacing.xl) {
-            OnboardingProgress(step: 1, total: 10)
+            OnboardingProgress(step: 1, total: OnboardingStep.allCases.count)
             Spacer(minLength: SGSpacing.lg)
             MokuView(state: .ready, side: 132)
                 .accessibilityHidden(true)

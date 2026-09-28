@@ -6,7 +6,7 @@ struct WelcomeView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: SGSpacing.xl) {
-                OnboardingProgress(step: 2, total: 10)
+                OnboardingProgress(step: 2, total: OnboardingStep.allCases.count)
                 MokuWelcomeStage()
                 VStack(alignment: .leading, spacing: SGSpacing.md) {
                     Text("Keep one\nmorning sky.")

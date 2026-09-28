@@ -9,6 +9,7 @@ struct OnboardingFlowTests {
         let viewModel = OnboardingViewModel()
 
         viewModel.advance() // intention
+        viewModel.advance() // educationCircadian
         viewModel.advance() // pace
         viewModel.advance() // frequency
         viewModel.advance() // privacy

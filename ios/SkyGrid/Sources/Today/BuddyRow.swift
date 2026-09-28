@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The horizontally scrolling strip displays every buddy status supplied by
-/// `RevealSignal`, which is also the Buddies tab's complete status source. This UI
+/// The inline vertical feed displays every buddy status supplied by `RevealSignal`,
+/// which is also the Buddies tab's complete status source. This UI
 /// does not mirror or expose the server's abuse-prevention limit for Pro Circles.
 ///
 /// Each tile's state already encodes the reveal gate (see `BuddyTile`), so this row
@@ -15,19 +15,16 @@ struct BuddyRow: View {
     let onSelect: (TodayViewModel.BuddyStatus) -> Void
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: SGSpacing.lg) {
-                ForEach(buddies) { buddy in
-                    if buddy.post != nil {
-                        Button { onSelect(buddy) } label: { tile(for: buddy) }
-                            .buttonStyle(.plain)
-                            .accessibilityHint(L10n.string("buddy.row.accessibilityHint"))
-                    } else {
-                        tile(for: buddy)
-                    }
+        LazyVStack(spacing: SGSpacing.lg) {
+            ForEach(buddies) { buddy in
+                if buddy.post != nil {
+                    Button { onSelect(buddy) } label: { tile(for: buddy) }
+                        .buttonStyle(.plain)
+                        .accessibilityHint(L10n.string("buddy.row.accessibilityHint"))
+                } else {
+                    tile(for: buddy)
                 }
             }
-            .padding(.horizontal, 2)
         }
     }
 
@@ -44,7 +41,7 @@ struct BuddyRow: View {
                 )
                 : nil,
             imageFetching: imageFetching,
-            style: .featured
+            style: .feed
         )
     }
 }

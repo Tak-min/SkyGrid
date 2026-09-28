@@ -6913,6 +6913,54 @@
         }
       }
     },
+    "onboarding.companion.educationCircadian": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little morning light can be a gentle cue for your day."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝の光は、一日のやさしい合図になるよ。"
+          }
+        }
+      }
+    },
+    "onboarding.education.circadian.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your body has a natural rhythm. Morning light is one simple way to help it find its footing."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "からだには自然なリズムがあります。朝の光は、その日の足がかりになるシンプルなきっかけのひとつです。"
+          }
+        }
+      }
+    },
+    "onboarding.education.circadian.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with a little light."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小さな光から、はじめよう。"
+          }
+        }
+      }
+    },
     "onboarding.frequency.mostMornings.detail": {
       "localizations": {
         "en": {
