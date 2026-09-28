@@ -116,6 +116,8 @@ struct CameraView: View {
     private func capture() {
         guard !isCapturing else { return }
         isCapturing = true
+        Haptics.navigationConfirmed()
+        SoundEffectPlayer.shared.play(.forwardNavigation)
         Task {
             await viewModel.capture()
             isCapturing = false

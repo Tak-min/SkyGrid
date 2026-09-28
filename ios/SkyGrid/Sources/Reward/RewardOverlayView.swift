@@ -30,6 +30,7 @@ struct RewardOverlayView: View {
                 VStack {
                     content(controller: controller)
                     Button(L10n.string("Continue")) {
+                        Haptics.navigationConfirmed()
                         controller.cancel()
                         onDone()
                     }

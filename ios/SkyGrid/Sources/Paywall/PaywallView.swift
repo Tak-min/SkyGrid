@@ -198,6 +198,7 @@ struct PaywallView: View {
                 usesSecondChanceOffer: step == .secondChance
             ) {
                 hasResolvedExit = true
+                Haptics.rewardLanded()
                 SoundEffectPlayer.shared.play(.purchaseConfirmed)
                 PaywallAnalytics.record(.purchaseConfirmed, entryPoint: entryPoint, period: product.period, step: step)
                 await onEntitlementGranted()
