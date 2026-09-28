@@ -541,10 +541,12 @@ struct TodayView: View {
 
     /// The buddy strip sits between the morning record and the week rhythm: below
     /// the one thing that matters before capture, above the secondary detail. It
-    /// renders as a vertical feed of cards (see `BuddyRow`'s `.feed` style) inside
-    /// this screen's own outer `ScrollView` — not a dedicated feed destination —
-    /// and before you post it is sealed cards, colour only arriving once your own
-    /// capture is done.
+    /// renders as a vertical stack of cards (see `BuddyRow`'s `.feed` style) inline
+    /// inside this screen's own outer `ScrollView`, not a persistent feed tab —
+    /// tapping a revealed card opens `BuddyFeedViewerView` as a full-screen cover
+    /// for the actual browsing experience. Before you post, cards are sealed; once
+    /// mutual reveal clears, each card shows the buddy's actual photo (not just
+    /// their sky colour — see `BuddyTile`'s 2026-08-14 design-history note).
     @ViewBuilder
     private var buddySection: some View {
         if viewModel.buddies.isEmpty {
