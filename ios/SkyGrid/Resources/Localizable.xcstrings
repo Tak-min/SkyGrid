@@ -12680,6 +12680,108 @@
         "ja": { "stringUnit": { "state": "translated", "value": "保存完了" } }
       }
     },
+    "onboarding.reflection.intent.steadierRhythm": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "A steadier morning can start with one small sky." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "小さな空の一枚から、朝のリズムを整えていこう。" } }
+      }
+    },
+    "onboarding.reflection.intent.moreOutside": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "A little outside time has a place in your morning." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "朝に、少し外へ出る時間をつくろう。" } }
+      }
+    },
+    "onboarding.reflection.intent.seasonalRecord": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Your sky can become a small record of the season." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "毎朝の空が、季節の小さな記録になるよ。" } }
+      }
+    },
+    "onboarding.reflection.pace.gentle": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "We'll leave room for a softer start." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "朝は、少しゆっくり始められるようにするね。" } }
+      }
+    },
+    "onboarding.reflection.pace.structured": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "We'll set a clear rhythm for the mornings ahead." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "これからの朝に、はっきりしたリズムをつくろう。" } }
+      }
+    },
+    "onboarding.reflection.pace.flexible": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "We'll keep it easy to fit around your day." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "その日の予定に合わせやすくしておくね。" } }
+      }
+    },
+    "onboarding.reflection.frequency.mostMornings": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "A simple rhythm for most mornings; missed days are okay." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ほとんどの朝に、気負わないリズムを。できない日があっても大丈夫。" } }
+      }
+    },
+    "onboarding.reflection.frequency.weekdays": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Weekdays can hold the rhythm; weekends stay yours." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "平日にリズムをつくって、週末はあなたらしく。" } }
+      }
+    },
+    "onboarding.reflection.frequency.wheneverItFits": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Your sky can wait for the mornings that fit." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "空は、あなたに合う朝を待っていてくれるよ。" } }
+      }
+    },
+    "onboarding.reflection.privacy.privateRitual": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "This can stay a ritual just for you." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "これは、あなただけの習慣のままでいいよ。" } }
+      }
+    },
+    "onboarding.reflection.privacy.shareWithBuddy": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "A shared sky can be a warm hello." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "一緒に見る空が、あたたかい朝のあいさつになるよ。" } }
+      }
+    },
+    "onboarding.reflection.privacy.decideLater": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "You can decide when it feels right." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "決めるのは、そう思えたときで大丈夫。" } }
+      }
+    },
+    "onboarding.reflection.reminder.noReminder": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No prompts; your morning stays in your hands." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "お知らせはなし。朝のペースはあなたのもの。" } }
+      }
+    },
+    "onboarding.reflection.reminder.gentleReminder": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "A gentle nudge can be there when you want it." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "ほしいときに、やさしいひと声を届けるね。" } }
+      }
+    },
+    "onboarding.reflection.reminder.scheduledAlarm": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "We'll prepare a morning alarm around your chosen time." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "選んだ時間に合わせて、朝のアラームを用意するね。" } }
+      }
+    },
+    "onboarding.invite.privateRitual.body": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "If you want to invite someone, choose a person you trust. Each sky stays sealed until you've both captured that morning." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "招待したくなったら、信頼できる人を選んでね。二人ともその朝の空を撮るまで、空は見えないままです。" } }
+      }
+    },
+    "onboarding.invite.shareWithBuddy.body": {
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Invite someone you trust and make room for a shared hello. Each sky stays sealed until you've both captured that morning." } },
+        "ja": { "stringUnit": { "state": "translated", "value": "信頼できる人を招待して、一緒の朝のあいさつを始めよう。二人ともその朝の空を撮るまで、空は見えないままです。" } }
+      }
+    },
     "Alarm ID": {
       "localizations": {
         "en": {

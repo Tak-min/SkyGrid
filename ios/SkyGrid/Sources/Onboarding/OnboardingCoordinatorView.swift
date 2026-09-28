@@ -100,6 +100,8 @@ final class OnboardingViewModel {
         didComplete = true
         LocalDefaults.wakeGoalMinutes = wakeGoalMinutes
         LocalDefaults.personalizationProfile = personalizationProfile
+        LocalDefaults.onboardingInvitePosture = OnboardingInvitePosture(privacy: personalizationProfile.privacy)
+        seedMorningAlarmDefaultIfNeeded()
         LocalDefaults.onboardingDone = true
     }
 
@@ -107,6 +109,21 @@ final class OnboardingViewModel {
         LocalDefaults.openCameraAfterOnboarding = true
         LocalDefaults.pendingOnboardingPaywallAfterFirstCapture = true
         complete()
+    }
+
+    private func seedMorningAlarmDefaultIfNeeded() {
+        guard LocalDefaults.morningAlarmSchedules.isEmpty else { return }
+
+        let enabled = personalizationProfile.reminder == .scheduledAlarm
+        LocalDefaults.morningAlarmEnabled = enabled
+        LocalDefaults.morningAlarmSchedules = MorningAlarmSchedule.onboardingDefault(
+            enabled: enabled,
+            wakeGoalMinutes: wakeGoalMinutes,
+            pace: personalizationProfile.pace
+        )
+        // The migration path has already run conceptually. Marking it complete
+        // keeps it from replacing the pace-specific weekdays with its old all-days default.
+        LocalDefaults.morningAlarmScheduleModelVersion = 1
     }
 }
 

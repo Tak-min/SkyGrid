@@ -28,6 +28,14 @@ enum MorningIntent: String, CaseIterable, Codable, Sendable, Identifiable {
         case .seasonalRecord: return L10n.string("onboarding.intent.seasonalRecord.detail")
         }
     }
+
+    var reflection: String {
+        switch self {
+        case .steadierRhythm: return L10n.string("onboarding.reflection.intent.steadierRhythm")
+        case .moreOutside: return L10n.string("onboarding.reflection.intent.moreOutside")
+        case .seasonalRecord: return L10n.string("onboarding.reflection.intent.seasonalRecord")
+        }
+    }
 }
 
 enum RitualPace: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -50,6 +58,14 @@ enum RitualPace: String, CaseIterable, Codable, Sendable, Identifiable {
         case .gentle: return L10n.string("onboarding.pace.gentle.detail")
         case .structured: return L10n.string("onboarding.pace.structured.detail")
         case .flexible: return L10n.string("onboarding.pace.flexible.detail")
+        }
+    }
+
+    var reflection: String {
+        switch self {
+        case .gentle: return L10n.string("onboarding.reflection.pace.gentle")
+        case .structured: return L10n.string("onboarding.reflection.pace.structured")
+        case .flexible: return L10n.string("onboarding.reflection.pace.flexible")
         }
     }
 }
@@ -76,6 +92,14 @@ enum RitualFrequency: String, CaseIterable, Codable, Sendable, Identifiable {
         case .wheneverItFits: return L10n.string("onboarding.frequency.wheneverItFits.detail")
         }
     }
+
+    var reflection: String {
+        switch self {
+        case .mostMornings: return L10n.string("onboarding.reflection.frequency.mostMornings")
+        case .weekdays: return L10n.string("onboarding.reflection.frequency.weekdays")
+        case .wheneverItFits: return L10n.string("onboarding.reflection.frequency.wheneverItFits")
+        }
+    }
 }
 
 enum RitualPrivacy: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -100,6 +124,14 @@ enum RitualPrivacy: String, CaseIterable, Codable, Sendable, Identifiable {
         case .decideLater: return L10n.string("onboarding.privacy.decideLater.detail")
         }
     }
+
+    var reflection: String {
+        switch self {
+        case .privateRitual: return L10n.string("onboarding.reflection.privacy.privateRitual")
+        case .shareWithBuddy: return L10n.string("onboarding.reflection.privacy.shareWithBuddy")
+        case .decideLater: return L10n.string("onboarding.reflection.privacy.decideLater")
+        }
+    }
 }
 
 enum ReminderPreference: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -122,6 +154,41 @@ enum ReminderPreference: String, CaseIterable, Codable, Sendable, Identifiable {
         case .noReminder: return L10n.string("onboarding.reminder.noReminder.detail")
         case .gentleReminder: return L10n.string("onboarding.reminder.gentleReminder.detail")
         case .scheduledAlarm: return L10n.string("onboarding.reminder.scheduledAlarm.detail")
+        }
+    }
+
+    var reflection: String {
+        switch self {
+        case .noReminder: return L10n.string("onboarding.reflection.reminder.noReminder")
+        case .gentleReminder: return L10n.string("onboarding.reflection.reminder.gentleReminder")
+        case .scheduledAlarm: return L10n.string("onboarding.reflection.reminder.scheduledAlarm")
+        }
+    }
+}
+
+/// The final invite screen stays neutral unless a person explicitly chose a
+/// privacy posture. This is on-device presentation state, never invite data.
+enum OnboardingInvitePosture: String, Codable, Sendable {
+    case neutral
+    case privateRitual
+    case shareWithBuddy
+
+    init(privacy: RitualPrivacy?) {
+        switch privacy {
+        case .privateRitual: self = .privateRitual
+        case .shareWithBuddy: self = .shareWithBuddy
+        case .decideLater, nil: self = .neutral
+        }
+    }
+
+    var bodyCopy: String {
+        switch self {
+        case .neutral:
+            return L10n.string("Invite people you trust. Each sky stays sealed until you've each captured the same morning.")
+        case .privateRitual:
+            return L10n.string("onboarding.invite.privateRitual.body")
+        case .shareWithBuddy:
+            return L10n.string("onboarding.invite.shareWithBuddy.body")
         }
     }
 }

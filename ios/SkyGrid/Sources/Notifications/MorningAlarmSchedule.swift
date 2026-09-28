@@ -16,6 +16,27 @@ struct MorningAlarmSchedule: Codable, Sendable, Identifiable, Equatable {
         )]
     }
 
+    /// First-run schedules preserve the migration's time and stable identifier,
+    /// while letting the selected rhythm make the default meaningfully lighter.
+    static func onboardingDefault(
+        enabled: Bool,
+        wakeGoalMinutes: Int,
+        pace: RitualPace?
+    ) -> [MorningAlarmSchedule] {
+        guard var schedule = migrate(morningAlarmEnabled: enabled, wakeGoalMinutes: wakeGoalMinutes).first else {
+            return []
+        }
+        switch pace {
+        case .structured:
+            schedule.weekdays = Set(1...7)
+        case .gentle, nil:
+            schedule.weekdays = Set(2...6)
+        case .flexible:
+            schedule.weekdays = [2, 4, 6]
+        }
+        return [schedule]
+    }
+
     static func derivedWakeGoalMinutes(from schedules: [MorningAlarmSchedule]) -> Int? {
         schedules
             .filter(\.isEnabled)

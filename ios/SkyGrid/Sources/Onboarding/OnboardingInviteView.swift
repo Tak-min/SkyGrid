@@ -39,7 +39,7 @@ struct OnboardingInviteView: View {
                     Text(L10n.string("onboarding.invite.headline"))
                         .font(.system(size: 38, weight: .black, design: .rounded))
                         .foregroundStyle(SGT.ink)
-                    Text(L10n.string("Invite people you trust. You won't see each other's sky until you've both captured that morning."))
+                    Text(LocalDefaults.onboardingInvitePosture.bodyCopy)
                         .font(SGFont.body(16))
                         .foregroundStyle(SGT.ink2)
                 }

@@ -34,6 +34,8 @@ struct PersonalizationQuestionsView: View {
                         }
                     }
                 }
+
+                PersonalizationReflectionLine(text: profile.intent?.reflection)
             }
             .padding(SGSpacing.xl)
             .padding(.bottom, SGSpacing.md)
@@ -78,6 +80,7 @@ private struct SingleQuestionPage<Content: View>: View {
     let subheading: String
     let onBack: () -> Void
     let onNext: () -> Void
+    let reflection: String?
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -96,6 +99,7 @@ private struct SingleQuestionPage<Content: View>: View {
                 }
 
                 VStack(spacing: 8, content: { content })
+                PersonalizationReflectionLine(text: reflection)
             }
             .padding(SGSpacing.xl)
             .padding(.bottom, SGSpacing.md)
@@ -126,7 +130,8 @@ struct PaceQuestionView: View {
             heading: L10n.string("onboarding.question.pace.heading"),
             subheading: L10n.string("onboarding.question.pace.subheading"),
             onBack: onBack,
-            onNext: onNext
+            onNext: onNext,
+            reflection: profile.pace?.reflection
         ) {
             ForEach(RitualPace.allCases) { pace in
                 ChoiceRow(title: pace.title, detail: pace.detail, isSelected: profile.pace == pace) {
@@ -148,7 +153,8 @@ struct FrequencyQuestionView: View {
             heading: L10n.string("onboarding.question.frequency.heading"),
             subheading: L10n.string("onboarding.question.frequency.subheading"),
             onBack: onBack,
-            onNext: onNext
+            onNext: onNext,
+            reflection: profile.frequency?.reflection
         ) {
             ForEach(RitualFrequency.allCases) { frequency in
                 ChoiceRow(title: frequency.title, detail: frequency.detail, isSelected: profile.frequency == frequency) {
@@ -170,7 +176,8 @@ struct PrivacyQuestionView: View {
             heading: L10n.string("onboarding.question.privacy.heading"),
             subheading: L10n.string("onboarding.question.privacy.subheading"),
             onBack: onBack,
-            onNext: onNext
+            onNext: onNext,
+            reflection: profile.privacy?.reflection
         ) {
             ForEach(RitualPrivacy.allCases) { privacy in
                 ChoiceRow(title: privacy.title, detail: privacy.detail, isSelected: profile.privacy == privacy) {
@@ -192,7 +199,8 @@ struct ReminderQuestionView: View {
             heading: L10n.string("onboarding.question.reminder.heading"),
             subheading: L10n.string("onboarding.question.reminder.subheading"),
             onBack: onBack,
-            onNext: onNext
+            onNext: onNext,
+            reflection: profile.reminder?.reflection
         ) {
             ForEach(ReminderPreference.allCases) { reminder in
                 ChoiceRow(title: reminder.title, detail: reminder.detail, isSelected: profile.reminder == reminder) {
@@ -200,6 +208,36 @@ struct ReminderQuestionView: View {
                 }
             }
         }
+    }
+}
+
+/// A shared response moment for every personalization answer. Selection haptics
+/// remain owned by `OnboardingCoordinatorView`, so one choice produces one tick.
+private struct PersonalizationReflectionLine: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let text: String?
+
+    var body: some View {
+        Group {
+            if let text {
+                Label(text, systemImage: "sparkles")
+                    .font(SGFont.body(14))
+                    .foregroundStyle(SGT.ink)
+                    .padding(.horizontal, SGSpacing.lg)
+                    .padding(.vertical, SGSpacing.md)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(SGT.accentSecondary.opacity(0.14), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .transition(.opacity.combined(with: .scale(scale: 0.96, anchor: .top)).combined(with: .offset(y: SGSpacing.sm)))
+                    .id(text)
+            }
+        }
+        .animation(reflectionAnimation, value: text)
+    }
+
+    private var reflectionAnimation: Animation? {
+        reduceMotion || !MokuMotionPolicy.animationsEnabled
+            ? .easeOut(duration: 0.18)
+            : .spring(response: 0.46, dampingFraction: 0.78)
     }
 }
 

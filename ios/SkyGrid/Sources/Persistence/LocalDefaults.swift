@@ -174,6 +174,23 @@ enum LocalDefaults {
         }
     }
 
+    @UserDefaultBacked(key: "onboardingInvitePosture", defaultValue: nil)
+    private static var onboardingInvitePostureData: Data?
+
+    /// Presentation-only invite tone selected during onboarding. It is never
+    /// uploaded or included in an invite document.
+    static var onboardingInvitePosture: OnboardingInvitePosture {
+        get {
+            guard let onboardingInvitePostureData,
+                  let posture = try? JSONDecoder().decode(OnboardingInvitePosture.self, from: onboardingInvitePostureData)
+            else { return .neutral }
+            return posture
+        }
+        set {
+            onboardingInvitePostureData = try? JSONEncoder().encode(newValue)
+        }
+    }
+
     /// Automatic prompts are based only on a successfully persisted capture's
     /// local calendar date. They never record photos, preference answers, wake
     /// times, or any other personal data.
@@ -404,6 +421,7 @@ enum LocalDefaults {
         pendingOnboardingPaywallAfterFirstCapture = false
         secondChancePaywallPresentedAccountIDsData = nil
         personalizationProfileData = nil
+        onboardingInvitePostureData = nil
         resetAutomaticPaywallState()
         resetUnlockPaywallState()
         resetSoloPaywallState()
