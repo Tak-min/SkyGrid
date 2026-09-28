@@ -540,10 +540,11 @@ struct TodayView: View {
     }
 
     /// The buddy strip sits between the morning record and the week rhythm: below
-    /// the one thing that matters before capture, above the secondary detail. It is
-    /// one object with no decisions attached, so it does not turn the pre-capture
-    /// screen into a feed — before you post it is a row of sealed discs, and it only
-    /// becomes colour after your own capture is done.
+    /// the one thing that matters before capture, above the secondary detail. It
+    /// renders as a vertical feed of cards (see `BuddyRow`'s `.feed` style) inside
+    /// this screen's own outer `ScrollView` — not a dedicated feed destination —
+    /// and before you post it is sealed cards, colour only arriving once your own
+    /// capture is done.
     @ViewBuilder
     private var buddySection: some View {
         if viewModel.buddies.isEmpty {
