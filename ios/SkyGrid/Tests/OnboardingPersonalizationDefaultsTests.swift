@@ -63,7 +63,7 @@ struct OnboardingPersonalizationDefaultsTests {
 
     @Test("neutral invite copy remains the current copy for later or unanswered privacy")
     func keepsNeutralInviteCopy() {
-        let currentCopy = L10n.string("Invite people you trust. Each sky stays sealed until you've each captured the same morning.")
+        let currentCopy = L10n.string("Invite people you trust. You won't see each other's sky until you've both captured that morning.")
 
         #expect(OnboardingInvitePosture(privacy: nil) == .neutral)
         #expect(OnboardingInvitePosture(privacy: .decideLater) == .neutral)

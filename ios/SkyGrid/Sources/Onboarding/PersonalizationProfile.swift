@@ -184,7 +184,11 @@ enum OnboardingInvitePosture: String, Codable, Sendable {
     var bodyCopy: String {
         switch self {
         case .neutral:
-            return L10n.string("Invite people you trust. Each sky stays sealed until you've each captured the same morning.")
+            // Same literal key the invite screen used before this posture existed —
+            // keeps `.decideLater`/unanswered pixel- and locale-identical to the
+            // pre-existing copy (including the Japanese translation), not just the
+            // English fallback.
+            return L10n.string("Invite people you trust. You won't see each other's sky until you've both captured that morning.")
         case .privateRitual:
             return L10n.string("onboarding.invite.privateRitual.body")
         case .shareWithBuddy:
