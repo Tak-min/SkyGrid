@@ -6673,6 +6673,86 @@
         }
       }
     },
+    "onboarding.companion.demoCapture": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try one tap, then watch the sample sky find its place."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1回タップして、サンプルの空が収まる様子を見てみよう。"
+          }
+        }
+      }
+    },
+    "onboarding.companion.educationBuddyReveal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A shared morning opens when you both show up."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2人の朝がそろうと、共有した空がひらくよ。"
+          }
+        }
+      }
+    },
+    "onboarding.companion.educationMorningLight": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Let a little morning light meet you where you are."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝の光を、今の自分のペースで迎えよう。"
+          }
+        }
+      }
+    },
+    "onboarding.companion.educationReady": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first real sky is waiting for you."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最初の本物の空が待っているよ。"
+          }
+        }
+      }
+    },
+    "onboarding.companion.educationRoutine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A small sky moment can belong to your morning."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小さな空の時間を、朝の習慣にできるよ。"
+          }
+        }
+      }
+    },
     "onboarding.companion.frequency.answered": {
       "localizations": {
         "en": {
@@ -6929,6 +7009,182 @@
         }
       }
     },
+    "onboarding.demoCapture.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the shutter to place a sample sky in your mosaic."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シャッターをタップして、サンプルの空をモザイクに置いてみよう。"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.capture": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capture sample sky"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サンプルの空を撮る"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.capture.accessibilityHint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Places a sample sky in the center of the mosaic."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "モザイクの中央にサンプルの空を置きます。"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.capture.accessibilityLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Capture a sample sky"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サンプルの空を撮る"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.captured": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sample sky captured"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サンプルの空を置きました"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a sky capture"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空を撮ってみよう"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.mosaic.accessibilityLabel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sample sky mosaic"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サンプルの空のモザイク"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.mosaic.capturedValue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The center cell is filled."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中央のセルが埋まりました。"
+          }
+        }
+      }
+    },
+    "onboarding.demoCapture.mosaic.emptyValue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The center cell is ready for a sample sky."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中央のセルがサンプルの空を待っています。"
+          }
+        }
+      }
+    },
+    "onboarding.education.buddyReveal.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A buddy's sky stays blurred until you've both posted that day. It opens when you each share your morning."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その日は2人とも投稿するまで、バディの空はぼかされたままです。お互いの朝を共有するとひらきます。"
+          }
+        }
+      }
+    },
+    "onboarding.education.buddyReveal.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveal it together"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いっしょにひらこう"
+          }
+        }
+      }
+    },
     "onboarding.education.circadian.body": {
       "localizations": {
         "en": {
@@ -6957,6 +7213,102 @@
           "stringUnit": {
             "state": "translated",
             "value": "小さな光から、はじめよう。"
+          }
+        }
+      }
+    },
+    "onboarding.education.morningLight.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A quick look outside can be a simple way to begin your day. Take it at your own pace."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外を少し見ることが、一日のシンプルな始まりになります。自分のペースでどうぞ。"
+          }
+        }
+      }
+    },
+    "onboarding.education.morningLight.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meet the morning light"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝の光に会おう"
+          }
+        }
+      }
+    },
+    "onboarding.education.ready.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your first real sky comes next. Capture when the morning feels like yours."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次は最初の本物の空です。自分らしい朝に、撮ってみよう。"
+          }
+        }
+      }
+    },
+    "onboarding.education.ready.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're ready to begin"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備ができました"
+          }
+        }
+      }
+    },
+    "onboarding.education.routine.body": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A small sky check-in can fit into the morning you already have. There is no single right rhythm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小さな空のチェックは、いつもの朝に合わせられます。正しいリズムはひとつではありません。"
+          }
+        }
+      }
+    },
+    "onboarding.education.routine.headline": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make it your own"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自分らしく続けよう"
           }
         }
       }

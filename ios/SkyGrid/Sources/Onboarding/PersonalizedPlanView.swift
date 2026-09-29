@@ -25,7 +25,7 @@ struct PersonalizedPlanView: View {
                 .font(SGFont.caption(14))
                 .foregroundStyle(SGT.ink2)
 
-                OnboardingProgress(step: 10, total: OnboardingStep.allCases.count)
+                OnboardingProgress(step: 15, total: OnboardingStep.allCases.count)
 
                 RitualGridMark(side: 128)
                     .frame(maxWidth: .infinity)

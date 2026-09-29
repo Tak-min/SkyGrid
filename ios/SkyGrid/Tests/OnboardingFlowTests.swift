@@ -4,24 +4,23 @@ import Testing
 @Suite("Onboarding flow")
 @MainActor
 struct OnboardingFlowTests {
-    @Test("six questions lead to the personalized plan")
-    func presentsPlanAfterQuestions() {
-        let viewModel = OnboardingViewModel()
+    @Test("every onboarding step is reversible from language through invite")
+    func walksForwardAndBackwardAcrossEveryStep() {
+        let viewModel = OnboardingViewModel(step: .language)
+        let steps = OnboardingStep.allCases
 
-        viewModel.advance() // intention
-        viewModel.advance() // educationCircadian
-        viewModel.advance() // pace
-        viewModel.advance() // frequency
-        viewModel.advance() // privacy
-        viewModel.advance() // reminder
-        viewModel.advance() // wake goal
-        viewModel.advance() // plan
+        #expect(steps.count == 16)
+        #expect(viewModel.step == .language)
 
-        #expect(viewModel.step == .plan)
-        viewModel.advance()
-        #expect(viewModel.step == .invite)
-        viewModel.goBackOneStep()
-        #expect(viewModel.step == .plan)
+        for expectedStep in steps.dropFirst() {
+            viewModel.advance()
+            #expect(viewModel.step == expectedStep)
+        }
+
+        for expectedStep in steps.dropLast().reversed() {
+            viewModel.goBackOneStep()
+            #expect(viewModel.step == expectedStep)
+        }
     }
 
     @Test("first-sky completion persists camera-first paywall ordering")

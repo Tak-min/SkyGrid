@@ -172,7 +172,7 @@ struct PrivacyQuestionView: View {
 
     var body: some View {
         SingleQuestionPage(
-            step: 6,
+            step: 7,
             heading: L10n.string("onboarding.question.privacy.heading"),
             subheading: L10n.string("onboarding.question.privacy.subheading"),
             onBack: onBack,
@@ -195,7 +195,7 @@ struct ReminderQuestionView: View {
 
     var body: some View {
         SingleQuestionPage(
-            step: 7,
+            step: 9,
             heading: L10n.string("onboarding.question.reminder.heading"),
             subheading: L10n.string("onboarding.question.reminder.subheading"),
             onBack: onBack,

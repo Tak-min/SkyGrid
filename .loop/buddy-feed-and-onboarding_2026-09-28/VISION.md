@@ -80,25 +80,25 @@ unset so Codex self-routes Terra/Sol.
 
 ## Definition of Done — Phase 1 (bounded first checkpoint, not the full 25 screens)
 
-- [ ] Track A: `BuddyRow` relaid out as a vertical scrolling feed; `BuddyTile`'s reveal-gate
+- [x] Track A: `BuddyRow` relaid out as a vertical scrolling feed; `BuddyTile`'s reveal-gate
       logic unchanged and re-verified still correct in the new layout (both revealed and
       not-yet-revealed states, screenshot-checked via the UI-audit harness).
-- [ ] Track B, Ticket 1: build the reusable "education slide" component (image/illustration +
+- [x] Track B, Ticket 1: build the reusable "education slide" component (image/illustration +
       short non-medical copy + Continue) as a new `OnboardingStep` case, styled per DESIGN.md's
       ENERGY 4/5 register.
-- [ ] Track B, Ticket 2: `PersonalizationProfile`'s answers actually drive something downstream —
+- [x] Track B, Ticket 2: `PersonalizationProfile`'s answers actually drive something downstream —
       at minimum `pace`/`reminder` seed `MorningAlarmScheduler`'s initial default, `privacy`
       seeds the buddy-invite default posture — plus an immediate on-screen personalized
       reflection line after each question, using the real stored answer (not a placeholder).
-- [ ] Track B, Ticket 3: insert at least 3 education slides at meaningful points in the flow
+- [x] Track B, Ticket 3: insert at least 3 education slides at meaningful points in the flow
       (after `intention`, after `pace`/`frequency`, before `plan`) using Ticket 1's component,
       and at least one functional demo moment before `plan` (e.g. a simplified real camera-review
       screen touch, not narration).
-- [ ] Track B: onboarding step count grows from 10 to at least 16 (measurable via the
+- [x] Track B: onboarding step count grows from 10 to at least 16 (measurable via the
       `OnboardingStep` enum's case count) — a real step toward the ~25-screen target, not the
       final number; Phase 2 continues from here.
-- [ ] `bash .loop/buddy-feed-and-onboarding_2026-09-28/verify.sh` exits 0.
-- [ ] No CRITICAL/HIGH reviewer findings remain unaddressed.
+- [x] `bash .loop/buddy-feed-and-onboarding_2026-09-28/verify.sh` exits 0.
+- [x] No CRITICAL/HIGH reviewer findings remain unaddressed.
 
 ## Constraints / guardrails (inherited, do not weaken)
 
@@ -117,14 +117,17 @@ unset so Codex self-routes Terra/Sol.
 - 2026-09-28: Loop scaffolded by the owner's interactive session after a senior-designer pass
   and an explicit owner correction on onboarding length/style. Base commit `679e5b1`.
 
+- 2026-09-29: Ticket B3 - 5 education slides + DemoCaptureView (local mosaic demo) inserted, OnboardingStep 10->16, progress numbers renumbered, round-trip test (== 16) passes on iPhone 17; swift-reviewer pass (0 CRITICAL/HIGH; MEDIUM count pin applied). A1/B1/B2 landed earlier (3e7a170, 201ef44). Not run: live UI-audit screenshot of demoCapture.
+
 ## TODO
 
-- [ ] Ticket A1: relayout `BuddyRow` from horizontal to vertical scrolling feed (see Definition
+- [x] Ticket A1: relayout `BuddyRow` from horizontal to vertical scrolling feed (see Definition
       of Done above for acceptance).
-- [ ] Ticket B1: build the reusable education-slide `OnboardingStep`/component.
-- [ ] Ticket B2: wire `PersonalizationProfile` answers to real downstream effects + immediate
+- [x] Ticket B1: build the reusable education-slide `OnboardingStep`/component.
+- [x] Ticket B2: wire `PersonalizationProfile` answers to real downstream effects + immediate
       personalized reflection copy.
-- [ ] Ticket B3: insert 3+ education slides and 1+ functional demo moment using B1's component,
+- [x] Ticket B3: insert 3+ education slides and 1+ functional demo moment using B1's component,
       growing the step count from 10 to 16+.
 - [ ] (Further tickets toward the full ~25-screen target are Phase 2 — append here once Phase 1
       closes.)
+- [ ] Phase 2: derive OnboardingProgress step from enum index instead of literals (reviewer MEDIUM); delete stale advanceToX helpers in OnboardingCoordinatorView; screenshot-audit demoCapture; Dynamic Type check of DemoCaptureView title.

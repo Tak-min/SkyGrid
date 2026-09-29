@@ -201,6 +201,7 @@
 		AC6D5CF00AFA32E554B4FED3 /* WeekRhythm.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0891E1A60B6C28DB901200 /* WeekRhythm.swift */; };
 		AC951EAC9D1AC1FEA36DC492 /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7DD7E9F1F9999D3DF3CCF9 /* ViewModifiers.swift */; };
 		AD1B5443B51963B905F4111F /* RewardBeatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61F7C7F523E9A76536E689A8 /* RewardBeatTests.swift */; };
+		AE3FB02B4FCE8D78D1C17D3B /* DemoCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CE230EA6D3C04D6E2E8BC20 /* DemoCaptureView.swift */; };
 		AF74222FD76218E35029352C /* BuddyPushPayloadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B381BF0CE8B026844084B43 /* BuddyPushPayloadTests.swift */; };
 		AFEB8287D072E597539090B0 /* RewardOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B3F1244F36C7A3929F0AE5 /* RewardOverlayView.swift */; };
 		B15B34758471892550063922 /* PostIntegrityPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = D092127B8762158B82CF2D6E /* PostIntegrityPolicy.swift */; };
@@ -367,6 +368,7 @@
 		1B4CD6E929EB7336FAD59596 /* recoverable_error.caf */ = {isa = PBXFileReference; path = recoverable_error.caf; sourceTree = "<group>"; };
 		1B5D7C1B6464998C35306B26 /* RitualGridMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RitualGridMark.swift; sourceTree = "<group>"; };
 		1CDF3D68ADDC45D125CDDA4D /* PaywallAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallAnalytics.swift; sourceTree = "<group>"; };
+		1CE230EA6D3C04D6E2E8BC20 /* DemoCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCaptureView.swift; sourceTree = "<group>"; };
 		1CEB114493C082271200CF8F /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		1D6E8364DF1BD0DC7912BF56 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		1EE3C43CE6D7E0E96108E4FD /* DisplayImagePipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayImagePipelineTests.swift; sourceTree = "<group>"; };
@@ -1013,6 +1015,7 @@
 		CA1C273648696CD169B136A5 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
+				1CE230EA6D3C04D6E2E8BC20 /* DemoCaptureView.swift */,
 				891DBFE22EB0EBC70696C65C /* EducationSlideView.swift */,
 				582CEB4D22057F17CF616978 /* FirstCaptureJourney.swift */,
 				27FA31C7E869BB07BC2A7E66 /* LanguageSelectionView.swift */,
@@ -1458,6 +1461,7 @@
 				BAE274D953AEEC8F21B4105E /* ContentReport.swift in Sources */,
 				57AEC44E97085242D82EE8CB /* ContentSafetyRepository.swift in Sources */,
 				8C91F4B3E9D311773ACFD125 /* DailyRewardPolicy.swift in Sources */,
+				AE3FB02B4FCE8D78D1C17D3B /* DemoCaptureView.swift in Sources */,
 				D9516C8B2E1CE161AC57EEEF /* DisplayImagePipeline.swift in Sources */,
 				345DE0E50831412AD15126CA /* EarlyAdopterGrantRepository.swift in Sources */,
 				7823C2CD92738356C4454D87 /* EarlyAdopterRevealView.swift in Sources */,

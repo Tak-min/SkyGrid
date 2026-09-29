@@ -8,9 +8,14 @@ enum OnboardingStep: String, Equatable, CaseIterable {
     case educationCircadian
     case pace
     case frequency
+    case educationMorningLight
     case privacy
+    case educationBuddyReveal
     case reminder
+    case educationRoutine
     case wakeGoal
+    case demoCapture
+    case educationReady
     case plan
     case invite
 }
@@ -70,10 +75,15 @@ final class OnboardingViewModel {
         case .intention: step = .educationCircadian
         case .educationCircadian: step = .pace
         case .pace: step = .frequency
-        case .frequency: step = .privacy
-        case .privacy: step = .reminder
-        case .reminder: step = .wakeGoal
-        case .wakeGoal: step = .plan
+        case .frequency: step = .educationMorningLight
+        case .educationMorningLight: step = .privacy
+        case .privacy: step = .educationBuddyReveal
+        case .educationBuddyReveal: step = .reminder
+        case .reminder: step = .educationRoutine
+        case .educationRoutine: step = .wakeGoal
+        case .wakeGoal: step = .demoCapture
+        case .demoCapture: step = .educationReady
+        case .educationReady: step = .plan
         case .plan: step = .invite
         case .invite: break
         }
@@ -87,10 +97,15 @@ final class OnboardingViewModel {
         case .educationCircadian: step = .intention
         case .pace: step = .educationCircadian
         case .frequency: step = .pace
-        case .privacy: step = .frequency
-        case .reminder: step = .privacy
-        case .wakeGoal: step = .reminder
-        case .plan: step = .wakeGoal
+        case .educationMorningLight: step = .frequency
+        case .privacy: step = .educationMorningLight
+        case .educationBuddyReveal: step = .privacy
+        case .reminder: step = .educationBuddyReveal
+        case .educationRoutine: step = .reminder
+        case .wakeGoal: step = .educationRoutine
+        case .demoCapture: step = .wakeGoal
+        case .educationReady: step = .demoCapture
+        case .plan: step = .educationReady
         case .invite: step = .plan
         }
     }
@@ -183,6 +198,15 @@ struct OnboardingCoordinatorView: View {
                 ) {
                     advance()
                 }
+            case .educationMorningLight:
+                EducationSlideView(
+                    headline: L10n.string("onboarding.education.morningLight.headline"),
+                    bodyCopy: L10n.string("onboarding.education.morningLight.body"),
+                    symbolName: "sun.max.fill",
+                    progressStep: 7,
+                    onBack: goBack,
+                    onContinue: advance
+                )
             case .privacy:
                 PrivacyQuestionView(
                     profile: $viewModel.personalizationProfile,
@@ -190,6 +214,15 @@ struct OnboardingCoordinatorView: View {
                 ) {
                     advance()
                 }
+            case .educationBuddyReveal:
+                EducationSlideView(
+                    headline: L10n.string("onboarding.education.buddyReveal.headline"),
+                    bodyCopy: L10n.string("onboarding.education.buddyReveal.body"),
+                    symbolName: "rectangle.on.rectangle.angled",
+                    progressStep: 9,
+                    onBack: goBack,
+                    onContinue: advance
+                )
             case .reminder:
                 ReminderQuestionView(
                     profile: $viewModel.personalizationProfile,
@@ -197,6 +230,15 @@ struct OnboardingCoordinatorView: View {
                 ) {
                     advance()
                 }
+            case .educationRoutine:
+                EducationSlideView(
+                    headline: L10n.string("onboarding.education.routine.headline"),
+                    bodyCopy: L10n.string("onboarding.education.routine.body"),
+                    symbolName: "arrow.triangle.2.circlepath",
+                    progressStep: 11,
+                    onBack: goBack,
+                    onContinue: advance
+                )
             case .wakeGoal:
                 WakeGoalPickerView(
                     minutes: $viewModel.wakeGoalMinutes,
@@ -205,6 +247,20 @@ struct OnboardingCoordinatorView: View {
                 ) {
                     advance()
                 }
+            case .demoCapture:
+                DemoCaptureView(
+                    onBack: goBack,
+                    onContinue: advance
+                )
+            case .educationReady:
+                EducationSlideView(
+                    headline: L10n.string("onboarding.education.ready.headline"),
+                    bodyCopy: L10n.string("onboarding.education.ready.body"),
+                    symbolName: "checkmark.seal.fill",
+                    progressStep: 14,
+                    onBack: goBack,
+                    onContinue: advance
+                )
             case .plan:
                 PersonalizedPlanView(
                     profile: viewModel.personalizationProfile,
@@ -304,15 +360,20 @@ struct OnboardingCoordinatorView: View {
             viewModel.personalizationProfile.frequency.map {
                 String(format: L10n.string("onboarding.companion.frequency.answered"), $0.title)
             } ?? L10n.string("onboarding.companion.frequency.unanswered")
+        case .educationMorningLight: L10n.string("onboarding.companion.educationMorningLight")
         case .privacy:
             viewModel.personalizationProfile.privacy.map {
                 String(format: L10n.string("onboarding.companion.privacy.answered"), $0.title)
             } ?? L10n.string("onboarding.companion.privacy.unanswered")
+        case .educationBuddyReveal: L10n.string("onboarding.companion.educationBuddyReveal")
         case .reminder:
             viewModel.personalizationProfile.reminder.map {
                 String(format: L10n.string("onboarding.companion.reminder.answered"), $0.title)
             } ?? L10n.string("onboarding.companion.reminder.unanswered")
+        case .educationRoutine: L10n.string("onboarding.companion.educationRoutine")
         case .wakeGoal: L10n.string("onboarding.companion.wakeGoal")
+        case .demoCapture: L10n.string("onboarding.companion.demoCapture")
+        case .educationReady: L10n.string("onboarding.companion.educationReady")
         case .plan: L10n.string("onboarding.companion.plan")
         case .invite: L10n.string("onboarding.companion.invite")
         }
